@@ -169,7 +169,16 @@ class DiscordAuthManager {
                 })
             });
             
+            console.log('Token 交换响应状态:', response.status);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API 错误:', errorData);
+                throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const data = await response.json();
+            console.log('Token 交换成功:', data.user ? data.user.username : '用户数据');
             
             if (data.access_token) {
                 this.saveAuthToken(data.access_token, data.expires_in || 3600);

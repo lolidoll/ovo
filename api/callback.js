@@ -1,20 +1,12 @@
 /**
  * Discord OAuth Token Exchange Handler
- * 部署到 Vercel Serverless Function
- * Version: 2.0 (CORS Fix)
+ * CORS 由 vercel.json 配置处理
  */
 
 export default async function handler(req, res) {
-    // 设置 CORS 头 - 这是关键！
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST,PUT,DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Max-Age', '86400');
-
     // 处理 OPTIONS 预检请求
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return res.status(200).end();
     }
 
     // 只允许 POST 请求
