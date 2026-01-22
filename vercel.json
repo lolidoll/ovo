@@ -1,7 +1,4 @@
 {
-  "name": "discord-oauth-handler",
-  "version": 2,
-  "buildCommand": "echo 'No build required'",
   "headers": [
     {
       "source": "/api/:path*",
