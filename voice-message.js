@@ -11,7 +11,7 @@ const VoiceMessageModule = (function() {
     // 初始化语音条功能
     function init() {
         initVoiceButton();
-        initVoiceModal();
+        // initVoiceModal();  // TODO: 定义此函数
     }
 
     // 初始化语音按钮事件

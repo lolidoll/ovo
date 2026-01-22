@@ -12,7 +12,7 @@ const LocationMessageModule = (function() {
     // 初始化地理位置功能
     function init() {
         initLocationButton();
-        initLocationModal();
+        // initLocationModal();  // TODO: 定义此函数
     }
 
     // 初始化地理位置按钮事件
