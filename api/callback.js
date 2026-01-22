@@ -1,20 +1,27 @@
 /**
  * Discord OAuth Token Exchange Handler
- * CORS 由 vercel.json 配置处理
+ * Vercel Serverless Function
  */
 
 export default async function handler(req, res) {
-    // 强制设置 CORS 头
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST,PUT,DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    // ⚠️ 必须在最前面设置 CORS 头 - 这是关键！
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Max-Age': '86400',
+        'Content-Type': 'application/json'
+    };
+    
+    // 为所有响应设置 CORS 头
+    Object.entries(headers).forEach(([key, value]) => {
+        res.setHeader(key, value);
+    });
     
     // 处理 OPTIONS 预检请求
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
-
-    // 只允许 POST 请求
 
     // 只允许 POST 请求
     if (req.method !== 'POST') {
@@ -81,4 +88,3 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
 }
-

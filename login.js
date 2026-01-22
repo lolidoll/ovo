@@ -25,8 +25,10 @@ class DiscordAuthManager {
     
     // 初始化
     init() {
-        // 检查登录状态
+        // 检查是否已登录
         if (this.isUserLoggedIn()) {
+            // 如果是在集成模式下，模态框管理器会处理隐藏
+            // 如果是单独页面，则跳转
             if (window.location.pathname.includes('login.html')) {
                 this.redirectToApp();
             }
@@ -56,11 +58,29 @@ class DiscordAuthManager {
         }
     }
     
-    // 生成随机 state
+    // 获取重定向 URI
+    getRedirectUri() {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port ? `:${window.location.port}` : '';
+        const pathname = 'login.html';
+        return `${protocol}//${hostname}${port}/${pathname}`;
+    }
+    
+    // 生成随机状态码（用于防止 CSRF 攻击）
     generateState() {
         const array = new Uint8Array(32);
         crypto.getRandomValues(array);
-        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        const state = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem(this.STORAGE_KEYS.STATE, state);
+        return state;
+    }
+    
+    // 验证状态码
+    verifyState(state) {
+        const savedState = localStorage.getItem(this.STORAGE_KEYS.STATE);
+        localStorage.removeItem(this.STORAGE_KEYS.STATE);
+        return state === savedState;
     }
     
     // 启动登录流程
@@ -95,9 +115,6 @@ class DiscordAuthManager {
             // 显示加载状态
             this.showLoadingTip();
             
-            // 保存 state 用于验证
-            localStorage.setItem(this.STORAGE_KEYS.STATE, state);
-            
             // 重定向到 Discord 授权页面
             window.location.href = authUrl;
             
@@ -114,22 +131,22 @@ class DiscordAuthManager {
         const code = params.get('code');
         const state = params.get('state');
         
-        if (!code) return; // 没有授权码，不处理
-        
-        // 验证 state（CSRF 保护）
-        const savedState = localStorage.getItem(this.STORAGE_KEYS.STATE);
-        if (state !== savedState) {
-            console.error('状态码验证失败');
-            alert('登录验证失败，请重新尝试');
-            window.location.href = 'index.html';
-            return;
+        if (code && state) {
+            // 验证状态码
+            if (!this.verifyState(state)) {
+                console.error('状态码验证失败');
+                alert('登录安全验证失败，请重新登录');
+                this.clearAuthData();
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 显示认证加载界面
+            this.showAuthLoading();
+            
+            // 交换授权码获取 token
+            this.exchangeCodeForToken(code);
         }
-        
-        localStorage.removeItem(this.STORAGE_KEYS.STATE);
-        this.showLoadingTip();
-        
-        // 交换授权码获取 token
-        this.exchangeCodeForToken(code);
     }
     
     // 交换授权码获取 Token
@@ -168,8 +185,14 @@ class DiscordAuthManager {
             }
             
         } catch (error) {
-            console.error('Token 交换失败:', error);
-            alert('登录失败: ' + error.message);
+            console.error('❌ Token 交换失败:', error);
+            console.error('错误详情:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack
+            });
+            const errorMsg = error.message || '未知错误';
+            alert('登录失败: ' + errorMsg);
             window.location.href = 'index.html';
         }
     }
@@ -177,44 +200,41 @@ class DiscordAuthManager {
     // 获取用户数据
     async fetchUserData(accessToken) {
         try {
-            const response = await fetch('https://discord.com/api/v10/users/@me', {
+            const response = await fetch('https://discord.com/api/users/@me', {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
             
             if (!response.ok) {
-                throw new Error('Failed to fetch user data');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const user = await response.json();
-            console.log('获取用户数据成功:', user);
-            
-            // 保存用户数据
-            this.saveUserData(user);
-            
-            this.hideLoadingTip();
+            const userData = await response.json();
+            this.saveUserData(userData);
             this.redirectToApp();
             
         } catch (error) {
             console.error('获取用户数据失败:', error);
-            alert('获取用户信息失败: ' + error.message);
-            window.location.href = 'index.html';
+            alert('获取用户信息失败，请重新登录');
+            this.clearAuthData();
+            window.location.href = 'login.html';
         }
     }
     
-    // 保存 auth token
+    // 保存 Token
     saveAuthToken(token, expiresIn) {
-        const expiryTime = new Date().getTime() + (expiresIn * 1000);
         localStorage.setItem(this.STORAGE_KEYS.TOKEN, token);
-        localStorage.setItem(this.STORAGE_KEYS.EXPIRY, expiryTime.toString());
-        console.log('✅ Token 已保存');
+        
+        if (expiresIn) {
+            const expiryTime = Date.now() + (expiresIn * 1000);
+            localStorage.setItem(this.STORAGE_KEYS.EXPIRY, expiryTime);
+        }
     }
     
     // 保存用户数据
-    saveUserData(user) {
-        localStorage.setItem(this.STORAGE_KEYS.USER, JSON.stringify(user));
-        console.log('✅ 用户数据已保存:', user.username);
+    saveUserData(userData) {
+        localStorage.setItem(this.STORAGE_KEYS.USER, JSON.stringify(userData));
     }
     
     // 检查用户是否已登录
@@ -222,12 +242,12 @@ class DiscordAuthManager {
         const token = localStorage.getItem(this.STORAGE_KEYS.TOKEN);
         const expiry = localStorage.getItem(this.STORAGE_KEYS.EXPIRY);
         
-        if (!token || !expiry) {
+        if (!token) {
             return false;
         }
         
-        // 检查 token 是否过期
-        if (new Date().getTime() > parseInt(expiry)) {
+        // 检查 Token 是否过期
+        if (expiry && Date.now() > parseInt(expiry)) {
             this.clearAuthData();
             return false;
         }
@@ -235,52 +255,63 @@ class DiscordAuthManager {
         return true;
     }
     
-    // 获取当前用户
+    // 获取当前用户数据
     getCurrentUser() {
-        const userJson = localStorage.getItem(this.STORAGE_KEYS.USER);
-        return userJson ? JSON.parse(userJson) : null;
+        const userData = localStorage.getItem(this.STORAGE_KEYS.USER);
+        return userData ? JSON.parse(userData) : null;
     }
     
-    // 获取 auth token
+    // 获取 Token
     getAuthToken() {
         return localStorage.getItem(this.STORAGE_KEYS.TOKEN);
     }
     
-    // 清除 auth 数据
+    // 清除认证数据
     clearAuthData() {
         localStorage.removeItem(this.STORAGE_KEYS.TOKEN);
         localStorage.removeItem(this.STORAGE_KEYS.USER);
         localStorage.removeItem(this.STORAGE_KEYS.EXPIRY);
-        console.log('✅ Auth 数据已清除');
+        localStorage.removeItem(this.STORAGE_KEYS.STATE);
     }
     
     // 登出
     logout() {
         this.clearAuthData();
-        window.location.href = 'index.html';
-    }
-    
-    // 重定向到应用
-    redirectToApp() {
-        const redirectUrl = sessionStorage.getItem('redirect_after_login') || 'index.html';
-        sessionStorage.removeItem('redirect_after_login');
-        window.location.href = redirectUrl;
+        window.location.href = 'login.html';
     }
     
     // 显示加载提示
     showLoadingTip() {
-        const loadingContainer = document.getElementById('auth-loading');
-        if (loadingContainer) {
-            loadingContainer.style.display = 'flex';
-        }
+        const btn = document.getElementById('discord-login-btn');
+        const tip = document.getElementById('loading-tip');
+        
+        if (btn) btn.style.display = 'none';
+        if (tip) tip.style.display = 'flex';
     }
     
     // 隐藏加载提示
     hideLoadingTip() {
-        const loadingContainer = document.getElementById('auth-loading');
-        if (loadingContainer) {
-            loadingContainer.style.display = 'none';
+        const btn = document.getElementById('discord-login-btn');
+        const tip = document.getElementById('loading-tip');
+        
+        if (btn) btn.style.display = 'flex';
+        if (tip) tip.style.display = 'none';
+    }
+    
+    // 显示认证加载界面
+    showAuthLoading() {
+        const container = document.getElementById('auth-callback-container');
+        if (container) {
+            container.style.display = 'flex';
         }
+    }
+    
+    // 重定向到应用
+    redirectToApp() {
+        // 延迟 1 秒后重定向，给用户看到成功提示
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
     }
 }
 
