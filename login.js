@@ -10,14 +10,14 @@ class DiscordAuthManager {
             // 从 Discord Developer Portal 获取
             CLIENT_ID: '1463827536440983615',
             
-            // 重定向 URI（必须在 Discord Developer Portal 中注册）
-            REDIRECT_URI: this.getRedirectUri(),
+            // 重定向 URI
+            REDIRECT_URI: 'https://lolidoll.github.io/ovo/index.html',
             
             // OAuth 授权 URL
             AUTHORIZE_URL: 'https://discord.com/api/oauth2/authorize',
             
-            // Token 交换端点（需要后端实现）
-            TOKEN_ENDPOINT: '/api/auth/discord/callback',
+            // Token 交换端点（Vercel API）
+            TOKEN_ENDPOINT: 'https://ovo-psi.vercel.app/api/callback',
             
             // 作用域
             SCOPES: ['identify', 'email']
@@ -99,7 +99,6 @@ class DiscordAuthManager {
         try {
             const clientId = this.CONFIG.CLIENT_ID;
             
-            // 检查是否配置了 CLIENT_ID
             if (!clientId || clientId === 'YOUR_DISCORD_CLIENT_ID') {
                 console.error('请配置 Discord CLIENT_ID');
                 alert('登录系统未正确配置，请联系管理员');
@@ -117,6 +116,7 @@ class DiscordAuthManager {
                 `scope=${scopes}&` +
                 `state=${state}`;
             
+            console.log('重定向到:', authUrl);
             // 显示加载状态
             this.showLoadingTip();
             
@@ -157,69 +157,34 @@ class DiscordAuthManager {
     // 交换授权码获取 Token
     async exchangeCodeForToken(code) {
         try {
-            // 方式 1: 使用后端 API（推荐）
-            // 如果您有后端服务，使用此方式更安全
+            // 调用 Vercel API 进行 token 交换
             const response = await fetch(this.CONFIG.TOKEN_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ 
+                    code: code,
+                    client_id: this.CONFIG.CLIENT_ID
+                })
             });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
             
             const data = await response.json();
             
             if (data.access_token) {
-                this.saveAuthToken(data.access_token, data.expires_in);
+                this.saveAuthToken(data.access_token, data.expires_in || 3600);
                 await this.fetchUserData(data.access_token);
+            } else if (data.error) {
+                throw new Error(data.error);
             } else {
                 throw new Error('未获取到访问令牌');
             }
             
         } catch (error) {
             console.error('Token 交换失败:', error);
-            
-            // 如果后端不可用，尝试本地处理（不安全，仅用于演示）
-            // 注意：实际应用中应使用后端处理以保护 CLIENT_SECRET
-            this.handleLocalAuth(code);
+            alert('登录失败: ' + error.message);
+            window.location.href = 'index.html';
         }
-    }
-    
-    // 本地 Token 处理（不推荐用于生产环境）
-    async handleLocalAuth(code) {
-        try {
-            // 这是一个演示方案，实际应用中应在后端处理
-            // 生成一个模拟的认证令牌
-            const token = await this.generateLocalToken(code);
-            
-            // 保存 Token
-            this.saveAuthToken(token, 3600);
-            
-            // 获取用户数据（演示数据）
-            const userData = {
-                id: 'local_user_' + Math.random().toString(36).substr(2, 9),
-                username: 'User_' + Math.floor(Math.random() * 10000),
-                discriminator: '0000',
-                avatar: null
-            };
-            
-            this.saveUserData(userData);
-            this.redirectToApp();
-            
-        } catch (error) {
-            console.error('本地认证失败:', error);
-            alert('登录失败，请确保配置了后端 API 或检查网络连接');
-            window.location.href = 'login.html';
-        }
-    }
-    
-    // 生成本地 Token（演示用）
-    async generateLocalToken(code) {
-        return 'local_token_' + btoa(`${code}_${Date.now()}`).substring(0, 50);
     }
     
     // 获取用户数据

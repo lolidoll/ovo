@@ -1,0 +1,11 @@
+{
+  "name": "discord-oauth-handler",
+  "version": 2,
+  "buildCommand": "echo 'No build required'",
+  "env": [
+    {
+      "key": "DISCORD_CLIENT_SECRET",
+      "description": "Your Discord Client Secret from Developer Portal"
+    }
+  ]
+}
