@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/5t8d45Lh/IMG-20260116-212844.png">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='90' fill='%23333'>薯</text></svg>">
+    <title>薯片机</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="moments.css">
+    <link rel="stylesheet" href="auth-modal.css">
+    <script src="auth-modal.js" defer></script>
+    <script src="login.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="voice-message.js" defer></script>
+    <script src="location-message.js" defer></script>
+  
+</head>
+<body>
+    <!-- 认证模态框 (新设计) -->
+    <div class="auth-modal-overlay" id="auth-modal-overlay">
+        <div class="auth-modal-container">
+            <!-- 背景装饰 -->
+            <div class="auth-bg-decoration"></div>
+            
+            <!-- 模态框内容 -->
+            <div class="auth-modal-content">
+                <!-- 顶部装饰线 -->
+                <div class="auth-top-bar"></div>
+                
+                <!-- Logo 和标题 -->
+                <div class="auth-header">
+                    <div class="auth-logo">
+                        <img class="auth-logo-icon" src="https://i.postimg.cc/G2kr9VST/IMG-20260118-235055.png" alt="Logo">
+                    </div>
+                    <h1 class="auth-title">薯片机</h1>
+                    <p class="auth-subtitle">仅用于个人学习，本代码完全开源设计<br>支持任何二改（但需标注原作者“小薯片”）<br>该小手机完全免费，如遇付费即刻申请退款。</p>
+                </div>
+                
+                <!-- 主要内容 -->
+                <div class="auth-main">
+                    <div class="auth-intro">
+                        <div class="auth-intro-item">
+                            <div class="auth-intro-icon">✨</div>
+                            <div class="auth-intro-text">角色扮演</div>
+                        </div>
+                        <div class="auth-intro-item">
+                            <div class="auth-intro-icon">🎀</div>
+                            <div class="auth-intro-text">虚拟聊天</div>
+                        </div>
+                        <div class="auth-intro-item">
+                            <div class="auth-intro-icon">💕</div>
+                            <div class="auth-intro-text">AI互动</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 登录按钮 -->
+                <div class="auth-actions">
+                    <button class="auth-btn auth-btn-discord" id="auth-discord-btn">
+                        <svg class="auth-btn-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="currentColor" d="M20.317 4.3671C18.7975 3.5373 17.147 2.9708 15.4545 2.7085C15.2087 3.1137 14.9369 3.6137 14.7562 4.0171C12.9712 3.7285 11.2146 3.7285 9.47812 4.0171C9.29745 3.6052 9.01312 3.1137 8.76437 2.7085C7.07382 2.9708 5.40277 3.5373 3.88233 4.3671C0.570533 9.1293 -0.0828944 13.7936 0.261145 18.3886C2.18418 19.7754 4.04779 20.6145 5.88147 21.1274C6.39521 20.4220 6.84365 19.6693 7.20782 18.8720C6.40771 18.5533 5.63360 18.1450 4.91162 17.6620C5.10249 17.5115 5.28905 17.3569 5.46412 17.1997C9.88141 19.4027 14.7457 19.4027 19.0528 17.1997C19.2278 17.3569 19.4149 17.5115 19.6011 17.6620C18.8791 18.1450 18.1045 18.5533 17.3046 18.8720C17.6684 19.6693 18.1169 20.4220 18.6307 21.1274C20.4645 20.6145 22.3281 19.7754 24.2511 18.3886C24.6314 13.3471 23.7067 8.8267 20.317 4.3671ZM8.02109 15.6503C6.8559 15.6503 5.90977 14.6039 5.90977 13.3287C5.90977 12.0535 6.8404 11.0071 8.02109 11.0071C9.20178 11.0071 10.1424 12.0535 10.1424 13.3287C10.1424 14.6039 9.20178 15.6503 8.02109 15.6503ZM15.9775 15.6503C14.8123 15.6503 13.8662 14.6039 13.8662 13.3287C13.8662 12.0535 14.7969 11.0071 15.9775 11.0071C17.1582 11.0071 18.0989 12.0535 18.0989 13.3287C18.0989 14.6039 17.1582 15.6503 15.9775 15.6503Z"/>
+                        </svg>
+                        <span>使用 Discord 登录</span>
+                    </button>
+                    <p class="auth-tips">登录后将在此设备保持登录状态</p>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div class="auth-loading" id="auth-loading" style="display: none;">
+                    <div class="auth-spinner"></div>
+                    <p>正在连接 Discord...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 消息通知栏 -->
+    <div class="notification-bar" id="notification-bar">
+        <div class="notification-content">
+            <div class="notification-left">
+                <div class="notification-avatar" id="notification-avatar">通</div>
+                <div class="notification-info">
+                    <div class="notification-name" id="notification-name">通知名称</div>
+                    <div class="notification-preview" id="notification-preview">通知内容预览</div>
+                </div>
+            </div>
+            <div class="notification-right">
+                <div class="notification-time" id="notification-time">时间</div>
+                <div class="notification-close" id="notification-close">×</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="app-container">
+        <!-- 顶部导航栏 -->
+        <div class="top-nav" id="top-nav">
+            <div class="user-info" id="user-info">
+                <div class="user-avatar" id="user-avatar-display">薯</div>
+                <div class="user-name">薯片机用户</div>
+            </div>
+            <div class="add-btn" id="add-btn">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 添加弹窗 -->
+        <div class="add-popup" id="add-popup">
+            <div class="popup-item" id="add-friend-btn">
+                <div class="popup-icon">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <circle cx="10" cy="8" r="4"></circle>
+                        <path d="M2 20c0-4 4-6 8-6"></path>
+                        <line x1="19" y1="11" x2="19" y2="17"></line>
+                        <line x1="16" y1="14" x2="22" y2="14"></line>
+                    </svg>
+                </div>
+                <div class="popup-text">添加好友</div>
+            </div>
+            <div class="popup-divider"></div>
+            <div class="popup-item" id="create-group-btn">
+                <div class="popup-icon">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <circle cx="9" cy="7" r="3"></circle>
+                        <circle cx="15" cy="7" r="3"></circle>
+                        <path d="M3 19c0-3 3-5 6-5"></path>
+                        <path d="M15 14c3 0 6 2 6 5"></path>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                        <line x1="10" y1="19" x2="14" y2="19"></line>
+                    </svg>
+                </div>
+                <div class="popup-text">创建群聊</div>
+            </div>
+            <div class="popup-divider"></div>
+            <div class="popup-item" id="import-card-btn">
+                <div class="popup-icon">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </div>
+                <div class="popup-text">导入角色卡</div>
+            </div>
+        </div>
+
+        <!-- 侧边功能栏 -->
+        <div class="side-menu" id="side-menu">
+            <div class="card-info" id="card-info">
+                <div class="card-bg" id="card-bg"></div>
+                <div class="card-content">
+                    <div class="card-avatar" id="card-avatar">薯</div>
+                    <div class="card-name" id="display-name">薯片机用户</div>
+                    <div class="card-signature" id="card-signature">这个人很懒，什么都没写~</div>
+                </div>
+            </div>
+            
+            <div class="menu-list">
+                <div class="menu-item" data-func="wallet">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <rect x="2" y="6" width="20" height="14" rx="2"></rect>
+                            <path d="M2 10h20"></path>
+                            <circle cx="16" cy="14" r="1.5"></circle>
+                        </svg>
+                    </div>
+                    <div class="menu-text">钱包</div>
+                </div>
+                
+                <div class="menu-item" data-func="collection">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">收藏</div>
+                </div>
+                
+                <div class="menu-item" data-func="emoji">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                        </svg>
+                    </div>
+                    <div class="menu-text">表情包</div>
+                </div>
+                
+                <div class="menu-item" data-func="worldbook">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                            <path d="M12 13v2"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">世界书</div>
+                </div>
+                
+                <div class="menu-divider"></div>
+                
+                <div class="menu-item" data-func="decoration">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 2v4"></path>
+                            <path d="M12 18v4"></path>
+                            <path d="M4.93 4.93l2.83 2.83"></path>
+                            <path d="M16.24 16.24l2.83 2.83"></path>
+                            <path d="M2 12h4"></path>
+                            <path d="M18 12h4"></path>
+                            <path d="M4.93 19.07l2.83-2.83"></path>
+                            <path d="M16.24 7.76l2.83-2.83"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">个性装扮</div>
+                </div>
+                
+                <div class="menu-item" data-func="api-settings">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                            <circle cx="17.5" cy="17.5" r="3.5"></circle>
+                        </svg>
+                    </div>
+                    <div class="menu-text">API设置</div>
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+                <div class="menu-item" data-func="couples-space">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">情侣空间</div>
+                </div>
+                
+                <div class="menu-divider"></div>
+                
+                <div class="menu-item" data-func="preset">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                    </div>
+                    <div class="menu-text">配置</div>
+                </div>
+                
+                <div class="menu-item" data-func="settings">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">设置</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div class="mask" id="mask"></div>
+
+        <!-- 消息页面 -->
+        <div class="main-content msg-page active" id="msg-page">
+            <div class="search-bar">
+                <div class="search-wrapper">
+                    <svg class="icon-svg search-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="搜索" id="search-input-msg">
+                </div>
+            </div>
+            
+            <div class="msg-list" id="msg-list">
+                <div class="empty-state" id="msg-empty">
+                    <div class="empty-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:100%;height:100%;">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2  2 0 0 1 2 2z"></path>
+                            <line x1="9" y1="10" x2="15" y2="10"></line>
+                        </svg>
+                    </div>
+                    <div class="empty-text">暂无消息<br>点击右上角添加好友开始聊天</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 好友页面 -->
+        <div class="main-content friend-page" id="friend-page">
+            <div class="search-bar">
+                <div class="search-wrapper">
+                    <svg class="icon-svg search-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="搜索好友" id="search-input-friend">
+                </div>
+            </div>
+            
+            <div class="friend-content" id="friend-content">
+                <div class="friend-group">
+                    <div class="group-header" data-group="common">
+                        <div class="group-title-left">
+                            <div class="group-arrow"></div>
+                            <div class="group-title">我的好友</div>
+                            <div class="group-count">(0/0)</div>
+                        </div>
+                        <div class="group-edit">管理</div>
+                    </div>
+                    <div class="friend-list show" data-group="common">
+                        <div class="empty-state" style="padding: 30px 20px;">
+                            <div class="empty-text">暂无好友</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="friend-group">
+                    <div class="group-header collapsed" data-group="groups">
+                        <div class="group-title-left">
+                            <div class="group-arrow"></div>
+                            <div class="group-title">群聊管理</div>
+                            <div class="group-count">(0/0)</div>
+                        </div>
+                        <div class="group-edit">管理</div>
+                    </div>
+                    <div class="friend-list" data-group="groups">
+                        <div class="empty-state" style="padding: 30px 20px;">
+                            <div class="empty-text">暂无群聊</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 动态页面 - 无顶部栏和搜索栏 -->
+        <div class="main-content dynamic-page" id="dynamic-page">
+            <div class="dynamic-content">
+                <div class="func-list" id="func-list">
+                    <!-- 朋友圈 -->
+                    <div class="func-item" data-page="moments-page" data-func-id="moments">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M21 15l-5-5L5 21"></path>
+                                </svg>
+                            </div>
+                            <div class="func-name">朋友圈</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+                    
+                    <!-- 论坛 -->
+                    <div class="func-item" data-page="forum-page" data-func-id="forum">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    <line x1="8" y1="8" x2="16" y2="8"></line>
+                                    <line x1="8" y1="12" x2="14" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="func-name">论坛</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+
+                                        <!-- 阅读 -->
+                    <div class="func-item" data-page="reading-page" data-func-id="reading">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    <line x1="8" y1="7" x2="16" y2="7"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                            <div class="func-name">阅读</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+
+                    <div class="func-divider"></div>
+
+                    <!-- 天气 - 新添加的 -->
+<div class="func-item" data-page="weather-page" data-func-id="weather">
+    <div class="func-left">
+        <div class="func-icon">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="gray">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="3" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="21"/>
+                <line x1="3" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="21" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="6.64" y2="17.36"/>
+                <line x1="17.36" y1="6.64" x2="19.78" y2="4.22"/>
+                <line x1="4.22" y1="4.22" x2="6.64" y2="6.64"/>
+                <line x1="17.36" y1="17.36" x2="19.78" y2="19.78"/>
+            </svg>
+        </div>
+        <div class="func-name">天气</div>
+    </div>
+    <div class="func-arrow"></div>
+</div>
+
+                    <!-- 日历 -->
+                    <div class="func-item" data-page="calendar-page" data-func-id="calendar">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="func-name">日历</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+                    
+                    <div class="func-divider"></div>
+                    
+                    
+    <!-- 购物 - 新添加的 -->
+<div class="func-item" data-page="shopping-page" data-func-id="shopping">
+        <div class="func-left">
+            <div class="func-icon">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+            </div>
+            <div class="func-name">购物</div>
+        </div>
+        <div class="func-arrow"></div>
+    </div>
+
+                    <!-- 游戏中心 -->
+                    <div class="func-item" data-page="game-page" data-func-id="game">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                    <circle cx="6" cy="12" r="1.5"></circle>
+                                    <circle cx="10" cy="12" r="1.5"></circle>
+                                    <path d="M15 10v4"></path>
+                                    <path d="M13 12h4"></path>
+                                </svg>
+                            </div>
+                            <div class="func-name">游戏中心</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+
+                    <div class="func-divider"></div>
+
+                    <!-- 默契大挑战 -->
+                    <div class="func-item" data-page="tacit-page" data-func-id="tacit">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </div>
+                            <div class="func-name">默契大挑战</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+
+                    <!-- 心灵星系 -->
+                    <div class="func-item" data-page="spirit-galaxy-page" data-func-id="spiritGalaxy">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <polygon points="12 2 15.09 10.26 23.77 10.26 17.39 16.01 20.48 24.27 12 18.46 3.52 24.27 6.61 16.01 0.23 10.26 8.91 10.26"></polygon>
+                                </svg>
+                            </div>
+                            <div class="func-name">心灵星系</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+
+                    <!-- 灵感库 -->
+                    <div class="func-item" data-page="idea-library-page" data-func-id="ideaLibrary">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8.5 8.5z"></path>
+                                    <line x1="12" y1="7" x2="12" y2="13"></line>
+                                    <line x1="9" y1="10" x2="15" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="func-name">灵感库</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+
+                    <!-- 观察者 -->
+                    <div class="func-item" data-page="third-party-page" data-func-id="thirdParty">
+                        <div class="func-left">
+                            <div class="func-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                </svg>
+                            </div>
+                            <div class="func-name">观察者</div>
+                        </div>
+                        <div class="func-arrow"></div>
+                    </div>
+                    
+                    
+                    <div class="func-divider"></div>
+
+                </div>
+                
+
+
+                <!-- 更多功能按钮 -->
+                <div class="more-func-item" id="more-func-btn">
+                    <div class="more-func-text">更多功能 ›</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部标签栏 -->
+        <div class="tab-bar" id="tab-bar">
+            <div class="tab-item active" data-tab="msg-page">
+                <div class="tab-icon">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <div class="tab-text">消息</div>
+            </div>
+            <div class="tab-item" data-tab="friend-page">
+                <div class="tab-icon">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div class="tab-text">好友</div>
+            </div>
+            <div class="tab-item" data-tab="dynamic-page">
+                <div class="tab-icon">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                </div>
+                <div class="tab-text">动态</div>
+            </div>
+        </div>
+
+        <!-- 添加好友页面 -->
+        <div class="add-friend-page" id="add-friend-page">
+            <div class="sub-nav">
+                <div class="back-btn" id="add-friend-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">添加好友</div>
+            </div>
+            <div class="add-page-content">
+                <div class="add-section">
+                    <div class="add-section-header">基本信息</div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">名称 *</label>
+                        <input type="text" class="add-input" id="friend-name-input" placeholder="输入好友名称">
+                    </div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">头像URL（可选）</label>
+                        <input type="text" class="add-input" id="friend-avatar-input" placeholder="输入头像图片链接">
+                    </div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">人设描述（可选）</label>
+                        <textarea class="add-textarea" id="friend-desc-input" placeholder="描述TA的性格、背景等..."></textarea>
+                    </div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">开场白（可选）</label>
+                        <textarea class="add-textarea" id="friend-greeting-input" placeholder="TA第一次说的话..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="add-btn-group">
+                    <button class="add-cancel-btn" id="add-friend-cancel">取消</button>
+                    <button class="add-submit-btn" id="add-friend-submit">添加好友</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 创建群聊页面 -->
+        <div class="add-friend-page" id="create-group-page">
+            <div class="sub-nav">
+                <div class="back-btn" id="create-group-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">创建群聊</div>
+            </div>
+            <div class="add-page-content">
+                <div class="add-section">
+                    <div class="add-section-header">群聊信息</div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">群名称 *</label>
+                        <input type="text" class="add-input" id="group-name-input" placeholder="输入群聊名称">
+                    </div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">群头像URL（可选）</label>
+                        <input type="text" class="add-input" id="group-avatar-input" placeholder="输入群头像图片链接">
+                    </div>
+                    <div class="add-input-group">
+                        <label class="add-input-label">群描述（可选）</label>
+                        <textarea class="add-textarea" id="group-desc-input" placeholder="描述群聊的主题..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="add-btn-group">
+                    <button class="add-cancel-btn" id="create-group-cancel">取消</button>
+                    <button class="add-submit-btn" id="create-group-submit">创建群聊</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导入角色卡页面 -->
+        <div class="add-friend-page" id="import-card-page">
+            <div class="sub-nav">
+                <div class="back-btn" id="import-card-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">导入角色卡</div>
+            </div>
+            <div class="add-page-content">
+                <div class="import-section">
+                    <div class="import-title">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        批量导入角色卡
+                    </div>
+                    <div class="import-desc">
+                        支持 SillyTavern 格式的 JSON 角色卡文件，可一次选择多个文件批量导入。
+                    </div>
+                    <div class="import-btn" id="import-file-btn">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        点击选择文件
+                    </div>
+                    <input type="file" class="import-file-input" id="import-file-input" accept=".json" multiple>
+                    
+                    <div class="import-preview" id="import-preview"></div>
+                    <button class="import-all-btn" id="import-all-btn">导入全部角色</button>
+                </div>
+
+                <div class="import-section">
+                    <div class="import-title">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        从图片导入角色卡
+                    </div>
+                    <div class="import-desc">
+                        支持导入含有角色卡信息的图片（如SillyTavern头像卡），可自动识别或手动配置角色信息。
+                    </div>
+                    <div class="import-btn" id="import-image-btn">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        点击选择图片
+                    </div>
+                    <input type="file" class="import-file-input" id="import-image-input" accept="image/*" multiple>
+                </div>
+                
+                <div class="import-section">
+                    <div class="import-title">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        角色卡格式说明
+                    </div>
+                    <div class="import-desc">
+                        支持的JSON格式：<br>
+                        • SillyTavern V2 格式 (spec: chara_card_v2)<br>
+                        • SillyTavern V1 格式<br>
+                        • 简单格式 {name, description, first_mes}<br><br>
+                        必需字段：name（角色名称）<br>
+                        可选字段：description, personality, first_mes, avatar, scenario, mes_example
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 朋友圈 -->
+        <div class="sub-page" id="moments-page">
+            <!-- 顶部导航 - 全透明 -->
+            <div class="moments-top-bar">
+                <button class="back-btn moments-back-btn" data-back="moments-page">返回</button>
+                <div class="moments-icon-group">
+                    <button class="moments-icon-btn" id="notificationBtn">通知</button>
+                    <button class="moments-icon-btn" id="settingBtn">设置</button>
+                </div>
+            </div>
+            <div class="sub-content" style="padding: 0; background: transparent; overflow-y: auto;">
+                <style>
+                    :root {
+                        --bg-image: url('');
+                        --bg-color: #ffffff;
+                        --pixel-font: "Pixelify Sans", sans-serif;
+                        --main-pink: #ff6b9d;
+                        --light-pink: #ffccd5;
+                        --soft-white: #fefefe;
+                    }
+
+                    /* 顶部导航 - 全透明 */
+                    #moments-page .moments-top-bar {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 15px 18px;
+                        position: sticky;
+                        top: 0;
+                        background: transparent;
+                        z-index: 100;
+                        box-shadow: none;
+                        border: none;
+                    }
+
+                    #moments-page .moments-back-btn,
+                    #moments-page .moments-icon-btn {
+                        background: transparent;
+                        border: none;
+                        font-size: 15px;
+                        cursor: pointer;
+                        font-family: var(--pixel-font);
+                        color: #555;
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        transition: all 0.2s;
+                    }
+
+                    #moments-page .moments-back-btn:hover,
+                    #moments-page .moments-icon-btn:hover {
+                        background: var(--light-pink);
+                        color: var(--main-pink);
+                    }
+
+                    #moments-page .moments-icon-group {
+                        display: flex;
+                        gap: 12px;
+                    }
+
+                    #moments-page .profile-section {
+                        display: flex;
+                        align-items: center;
+                        padding: 15px 20px;
+                        gap: 15px;
+                        margin-bottom: 5px;
+                    }
+
+                    #moments-page .avatar {
+                        width: 65px;
+                        height: 65px;
+                        border-radius: 50%;
+                        border: 2px solid var(--light-pink);
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                        object-fit: cover;
+                    }
+
+                    #moments-page .avatar:hover {
+                        transform: scale(1.05);
+                    }
+
+                    #moments-page .profile-info h2 {
+                        font-size: 20px;
+                        color: var(--main-pink);
+                        text-shadow: 1px 1px 0 #fff;
+                        cursor: pointer;
+                        display: inline-block;
+                        margin: 0;
+                    }
+
+                    #moments-page .profile-info h2:hover {
+                        text-decoration: underline;
+                    }
+
+                    #moments-page .profile-info p {
+                        font-size: 14px;
+                        color: #999;
+                        margin: 4px 0 0 0;
+                    }
+
+                    #moments-page .function-nav {
+                        display: flex;
+                        justify-content: space-around;
+                        padding: 12px 0;
+                        margin: 5px 10px;
+                        background: transparent;
+                    }
+
+                    #moments-page .func-btn {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 4px;
+                        text-decoration: none;
+                        color: #333;
+                        font-size: 14px;
+                        font-weight: 500;
+                        transition: color 0.2s;
+                        cursor: pointer;
+                        background: none;
+                        border: none;
+                    }
+
+                    #moments-page .func-btn:hover {
+                        color: var(--main-pink);
+                    }
+
+                    #moments-page .input-wrapper {
+                        margin: 5px 10px;
+                        padding: 10px;
+                        background: transparent;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    #moments-page .input-wrapper input {
+                        flex: 1;
+                        border: none;
+                        background: transparent;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        color: #666;
+                        outline: none;
+                        text-align: left;
+                        padding-left: 0;
+                        cursor: pointer;
+                    }
+
+                    #moments-page .input-wrapper input::placeholder {
+                        color: #ccc;
+                        text-align: left;
+                    }
+
+                    #moments-page .input-wrapper input:focus {
+                        background-color: #f5f5f5;
+                        border-radius: 4px;
+                        padding: 4px 8px;
+                    }
+
+                    #moments-page .feed-list {
+                        padding: 0 10px;
+                        margin-top: 5px;
+                    }
+
+                    #moments-page .feed-item {
+                        background: transparent;
+                        padding: 12px;
+                        margin-bottom: 12px;
+                        border-bottom: 1px solid #f0f0f0;
+                    }
+
+                    #moments-page .feed-header {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 8px;
+                        gap: 10px;
+                    }
+
+                    #moments-page .feed-avatar {
+                        width: 35px;
+                        height: 35px;
+                        border-radius: 50%;
+                        object-fit: cover;
+                    }
+
+                    #moments-page .feed-user-info {
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                    }
+
+                    #moments-page .feed-username {
+                        font-size: 14px;
+                        color: var(--main-pink);
+                        font-weight: 500;
+                    }
+
+                    #moments-page .feed-content {
+                        font-size: 14px;
+                        line-height: 1.5;
+                        margin-bottom: 10px;
+                        padding-left: 45px;
+                    }
+
+                    #moments-page .feed-images {
+                        padding-left: 45px;
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                        margin-bottom: 10px;
+                    }
+
+                    #moments-page .feed-images img {
+                        max-width: 150px;
+                        max-height: 150px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        object-fit: cover;
+                    }
+
+                    #moments-page .feed-actions {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        gap: 15px;
+                    }
+
+                    #moments-page .action-btn {
+                        background: transparent;
+                        border: none;
+                        font-size: 14px;
+                        cursor: pointer;
+                        font-family: var(--pixel-font);
+                        color: #666;
+                        transition: color 0.2s;
+                    }
+
+                    #moments-page .action-btn:hover {
+                        color: var(--main-pink);
+                    }
+
+                    #moments-page .feed-time {
+                        font-size: 12px;
+                        color: #999;
+                    }
+
+                    #moments-page .comment-input {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-top: 12px;
+                        padding: 8px 0 0 0;
+                        padding-left: 45px;
+                    }
+
+                    #moments-page .comment-avatar {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                        object-fit: cover;
+                    }
+
+                    #moments-page .comment-avatar:hover {
+                        transform: scale(1.05);
+                    }
+
+                    #moments-page .comment-input input {
+                        flex: 1;
+                        border: none;
+                        background: transparent;
+                        font-family: var(--pixel-font);
+                        font-size: 13px;
+                        color: #666;
+                        padding: 6px 0;
+                        outline: none;
+                    }
+
+                    #moments-page .comment-input input::placeholder {
+                        color: #ccc;
+                    }
+
+                    #moments-page .comment-input input:focus {
+                        background-color: #f5f5f5;
+                        border-radius: 4px;
+                        padding: 4px 8px;
+                    }
+
+                    #moments-page .modal {
+                        display: none;
+                        position: fixed;
+                        z-index: 200;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0, 0, 0, 0.5);
+                    }
+
+                    #moments-page .modal.show {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    #moments-page .modal-content {
+                        background-color: #fff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        max-width: 500px;
+                        width: 90%;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    }
+
+                    #moments-page .modal-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 15px;
+                        border-bottom: 1px solid #f0f0f0;
+                        padding-bottom: 10px;
+                    }
+
+                    #moments-page .modal-header h3 {
+                        font-size: 18px;
+                        color: var(--main-pink);
+                        margin: 0;
+                    }
+
+                    #moments-page .close-btn {
+                        background: none;
+                        border: none;
+                        font-size: 28px;
+                        cursor: pointer;
+                        color: #999;
+                        transition: color 0.2s;
+                    }
+
+                    #moments-page .close-btn:hover {
+                        color: var(--main-pink);
+                    }
+
+                    #moments-page .modal-body {
+                        margin-bottom: 15px;
+                    }
+
+                    #moments-page #momentText {
+                        width: 100%;
+                        min-height: 100px;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        resize: vertical;
+                        margin-bottom: 10px;
+                    }
+
+                    #moments-page #momentText:focus {
+                        outline: none;
+                        border-color: var(--main-pink);
+                    }
+
+                    #moments-page .image-preview {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        margin-bottom: 10px;
+                        min-height: 20px;
+                    }
+
+                    #moments-page .image-preview>div {
+                        position: relative;
+                        display: inline-block;
+                    }
+
+                    #moments-page .image-preview img {
+                        max-width: 100px;
+                        max-height: 100px;
+                        border-radius: 4px;
+                        object-fit: cover;
+                    }
+
+                    #moments-page .remove-btn {
+                        position: absolute;
+                        top: -8px;
+                        right: -8px;
+                        background: var(--main-pink);
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        width: 24px;
+                        height: 24px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0;
+                    }
+
+                    #moments-page .group-select {
+                        margin-bottom: 15px;
+                    }
+
+                    #moments-page .group-select label {
+                        display: block;
+                        margin-bottom: 5px;
+                        font-size: 14px;
+                        color: #333;
+                    }
+
+                    #moments-page #groupSelect {
+                        width: 100%;
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                    }
+
+                    #moments-page #groupSelect:focus {
+                        outline: none;
+                        border-color: var(--main-pink);
+                    }
+
+                    #moments-page .modal-actions {
+                        display: flex;
+                        gap: 10px;
+                        justify-content: flex-end;
+                    }
+
+                    #moments-page .submit-btn {
+                        background: var(--main-pink);
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        transition: all 0.2s;
+                    }
+
+                    #moments-page .submit-btn:hover {
+                        background: #ff5a8b;
+                    }
+
+                    #moments-page .upload-btn {
+                        background: white;
+                        color: var(--main-pink);
+                        border: 1px solid var(--main-pink);
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        transition: all 0.2s;
+                    }
+
+                    #moments-page .upload-btn:hover {
+                        background: var(--light-pink);
+                    }
+
+                    #moments-page .notification-item {
+                        padding: 10px;
+                        margin-bottom: 10px;
+                        background: #f9f9f9;
+                        border-radius: 4px;
+                        border-left: 3px solid var(--main-pink);
+                    }
+
+                    #moments-page .notification-header {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 5px;
+                    }
+
+                    #moments-page .notification-user {
+                        color: var(--main-pink);
+                        font-weight: 500;
+                    }
+
+                    #moments-page .notification-time {
+                        color: #999;
+                        font-size: 12px;
+                    }
+
+                    #moments-page .notification-text {
+                        color: #333;
+                        font-size: 13px;
+                        line-height: 1.4;
+                    }
+
+                    #moments-page .more-options {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+
+                    #moments-page .option-btn {
+                        padding: 12px;
+                        border: 1px solid var(--light-pink);
+                        background: white;
+                        color: var(--main-pink);
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        transition: all 0.2s;
+                    }
+
+                    #moments-page .option-btn:hover {
+                        background: var(--light-pink);
+                        border-color: var(--main-pink);
+                    }
+
+                    #moments-page .character-select {
+                        margin-bottom: 15px;
+                    }
+
+                    #moments-page .character-select label {
+                        display: block;
+                        margin-bottom: 5px;
+                        font-size: 14px;
+                        color: #333;
+                    }
+
+                    #moments-page #characterSelect {
+                        width: 100%;
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                    }
+
+                    #moments-page #characterSelect:focus {
+                        outline: none;
+                        border-color: var(--main-pink);
+                    }
+
+                    #moments-page .character-moment-options {
+                        margin-bottom: 15px;
+                    }
+
+                    #moments-page .character-moment-options label {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-bottom: 10px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+
+                    #moments-page #characterMomentText {
+                        width: 100%;
+                        min-height: 80px;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        resize: vertical;
+                        margin-bottom: 10px;
+                    }
+
+                    #moments-page .auto-setting {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+
+                    #moments-page .auto-setting label {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 14px;
+                    }
+
+                    #moments-page .auto-setting input[type="number"] {
+                        width: 60px;
+                        padding: 4px 8px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: var(--pixel-font);
+                    }
+
+                    #moments-page .comment-thread {
+                        max-height: 300px;
+                        overflow-y: auto;
+                        margin-bottom: 15px;
+                        padding: 10px;
+                        background: #f9f9f9;
+                        border-radius: 4px;
+                    }
+
+                    #moments-page .comments-section {
+                        margin-top: 12px;
+                        padding-left: 45px;
+                        padding-top: 8px;
+                        border-top: 1px solid #f0f0f0;
+                    }
+
+                    #moments-page .comment-item {
+                        margin-bottom: 10px;
+                        padding: 8px;
+                        background: #f9f9f9;
+                        border-radius: 4px;
+                        font-size: 13px;
+                    }
+
+                    #moments-page .comment-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                        margin-bottom: 4px;
+                    }
+
+                    #moments-page .comment-user {
+                        color: var(--main-pink);
+                        font-weight: 500;
+                    }
+
+                    #moments-page .comment-delete-btn {
+                        color: #bbb;
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        font-family: var(--pixel-font);
+                        font-size: 12px;
+                        padding: 0 2px;
+                        transition: color 0.2s;
+                        line-height: 1;
+                    }
+
+                    #moments-page .comment-delete-btn:hover {
+                        color: #999;
+                    }
+
+                    #moments-page .comment-text {
+                        color: #333;
+                        line-height: 1.4;
+                        margin-top: 4px;
+                    }
+
+                    #moments-page .comment-input-box {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+
+                    #moments-page #commentInputText {
+                        width: 100%;
+                        min-height: 60px;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: var(--pixel-font);
+                        font-size: 13px;
+                        resize: vertical;
+                    }
+
+                    #moments-page #commentInputText:focus {
+                        outline: none;
+                        border-color: var(--main-pink);
+                    }
+
+                    #moments-page .icon-group {
+                        display: flex;
+                        gap: 12px;
+                    }
+
+                    .icon-btn {
+                        background: transparent;
+                        border: none;
+                        font-size: 14px;
+                        cursor: pointer;
+                        color: #555;
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        transition: all 0.2s;
+                        font-family: var(--pixel-font);
+                    }
+
+                    .icon-btn:hover {
+                        background: var(--light-pink);
+                        color: var(--main-pink);
+                    }
+                </style>
+
+                <!-- 个人信息 -->
+                <div class="profile-section">
+                    <img src="" alt="头像" class="avatar" id="profileAvatar" onclick="document.getElementById('profileAvatarInput').click()">
+                    <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;" onchange="changeProfileAvatar(this)">
+                    <div class="profile-info">
+                        <h2 id="profileName">用户名</h2>
+                        <p>访客总量 <span id="visitorCount">0</span></p>
+                    </div>
+                </div>
+
+                <!-- 功能导航 -->
+                <div class="function-nav">
+                    <button class="func-btn" data-tab="moments">说说</button>
+                    <button class="func-btn" data-tab="log">日志</button>
+                    <button class="func-btn" data-tab="photos">相册</button>
+                    <button class="func-btn" data-tab="message">留言</button>
+                    <button class="func-btn" data-tab="more">更多</button>
+                </div>
+
+                <!-- 说说输入框 -->
+                <div class="input-wrapper">
+                    <input type="text" id="momentInput" placeholder="分享新鲜事..." readonly onclick="openMomentDialog()">
+                </div>
+
+                <!-- 说说列表 -->
+                <div class="feed-list" id="feedList">
+                    <!-- 动态内容将在这里插入 -->
+                </div>
+
+                <!-- 发布朋友圈对话框 -->
+                <div class="modal" id="momentModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>发布朋友圈</h3>
+                            <button class="close-btn" onclick="closeMomentDialog()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- 文字输入 -->
+                            <textarea id="momentText" placeholder="说说你的想法..."></textarea>
+                            
+                            <!-- 图片预览 -->
+                            <div id="imagePreview" class="image-preview">
+                                <!-- 图片将在这里显示 -->
+                            </div>
+                            
+                            <!-- 好友分组选择 -->
+                            <div class="group-select">
+                                <label>分组可见：</label>
+                                <select id="groupSelect">
+                                    <!-- 选项将动态生成 -->
+                                </select>
+                            </div>
+                            
+                            <!-- 按钮区 -->
+                            <div class="modal-actions">
+                                <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                                    📷 添加图片
+                                </button>
+                                <input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="handleImageSelect(this)">
+                                <button class="submit-btn" onclick="publishMoment()">发布</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设置背景对话框 -->
+                <input type="file" id="bgFileInput" accept="image/*" onchange="changeBackground(this)" style="display:none;">
+
+                <!-- 通知对话框 -->
+                <div class="modal" id="notificationModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>朋友圈通知</h3>
+                            <button class="close-btn" onclick="closeNotificationModal()">×</button>
+                        </div>
+                        <div class="modal-body" id="notificationList">
+                            <!-- 未读消息将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 更多选项对话框 -->
+                <div class="modal" id="moreModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>更多选项</h3>
+                            <button class="close-btn" onclick="closeMoreModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="more-options">
+                                <button class="option-btn" onclick="openCharacterMomentsDialog()">
+                                    角色发布朋友圈
+                                </button>
+                                <button class="option-btn" onclick="openAutoMomentsDialog()">
+                                    自动生成朋友圈
+                                </button>
+                                <button class="option-btn" onclick="openAutoReplyDialog()">
+                                    自动评论设置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 角色发布朋友圈对话框 -->
+                <div class="modal" id="characterMomentsModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>角色发布朋友圈</h3>
+                            <button class="close-btn" onclick="closeCharacterMomentsDialog()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="character-select">
+                                <label>选择角色：</label>
+                                <select id="characterSelect">
+                                    <!-- 选项将动态生成 -->
+                                </select>
+                            </div>
+                            <div class="character-moment-options">
+                                <label>
+                                    <input type="radio" name="charMomentType" value="auto" checked> 自动生成（AI）
+                                </label>
+                                <label>
+                                    <input type="radio" name="charMomentType" value="manual"> 自定义输入
+                                </label>
+                            </div>
+                            <textarea id="characterMomentText" placeholder="输入朋友圈内容..." style="display:none;"></textarea>
+                            <div class="modal-actions">
+                                <button class="submit-btn" onclick="publishCharacterMoment()">发布</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 自动生成朋友圈对话框 -->
+                <div class="modal" id="autoMomentsModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>自动生成朋友圈</h3>
+                            <button class="close-btn" onclick="closeAutoMomentsDialog()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="auto-setting">
+                                <label>每<input type="number" id="autoInterval" min="1" max="120" value="30"> 分钟</label>
+                                <label>随机<input type="number" id="autoRandomCount" min="1" max="5" value="1"> 条</label>
+                                <label>
+                                    <input type="checkbox" id="autoEnabled"> 启用自动生成
+                                </label>
+                            </div>
+                            <div class="modal-actions" style="margin-top:15px;">
+                                <button class="submit-btn" onclick="saveAutoMomentSettings()">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 自动回复设置对话框 -->
+                <div class="modal" id="autoReplyModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>自动回复设置</h3>
+                            <button class="close-btn" onclick="closeAutoReplyDialog()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <label>
+                                <input type="checkbox" id="autoReplyEnabled"> 启用自动回复
+                            </label>
+                            <div class="modal-actions" style="margin-top:15px;">
+                                <button class="submit-btn" onclick="saveAutoReplySettings()">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 评论/回复对话框 -->
+                <div class="modal" id="commentModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>评论</h3>
+                            <button class="close-btn" onclick="closeCommentModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="comment-thread" id="commentThread">
+                                <!-- 评论将在这里显示 -->
+                            </div>
+                            <div class="comment-input-box">
+                                <textarea id="commentInputText" placeholder="输入评论..."></textarea>
+                                <button class="submit-btn" onclick="submitComment()">发送</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="moments.js"></script>
+            </div>
+        </div>
+
+        <!-- 子页面 - 论坛 -->
+        <div class="sub-page" id="forum-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="forum-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">论坛</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    【论坛功能开发中】
+                </div>
+            </div>
+        </div>
+
+                <!-- 子页面 - 阅读 -->
+        <div class="sub-page" id="reading-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="reading-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">阅读</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    【阅读功能开发中】
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 日历 -->
+        <div class="sub-page" id="calendar-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="calendar-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">日历</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    【日历功能开发中】
+                </div>
+            </div>
+        </div>
+
+        <!-- 天气页面 -->
+<div class="sub-page" id="weather-page">
+    <div class="sub-nav">
+        <div class="back-btn" data-back="weather-page">
+            <div class="back-arrow"></div>
+            <span>返回</span>
+        </div>
+        <div class="sub-title">天气</div>
+    </div>
+    <div class="sub-content">
+        <div class="placeholder-text">
+            【天气功能开发中】
+        </div>
+    </div>
+</div>
+
+
+        <!-- 购物页面 -->
+<div class="sub-page" id="shopping-page">
+    <div class="sub-nav">
+        <div class="back-btn" data-back="shopping-page">
+            <div class="back-arrow"></div>
+            <span>返回</span>
+        </div>
+        <div class="sub-title">购物</div>
+    </div>
+    <div class="sub-content">
+        <div class="placeholder-text">
+            【购物功能开发中】
+        </div>
+    </div>
+</div>
+
+        <!-- 子页面 - 游戏中心 -->
+        <div class="sub-page" id="game-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="game-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">游戏中心</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    【游戏中心开发中】
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 默契大挑战 -->
+        <div class="sub-page" id="tacit-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="tacit-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">默契大挑战</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    等待开发中
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 心灵星系 -->
+        <div class="sub-page" id="spirit-galaxy-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="spirit-galaxy-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">心灵星系</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    等待开发中
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 灵感库 -->
+        <div class="sub-page" id="idea-library-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="idea-library-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">灵感库</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    等待开发中
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 观察者 -->
+        <div class="sub-page" id="third-party-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="third-party-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">观察者</div>
+            </div>
+            <div class="sub-content">
+                <div class="placeholder-text">
+                    等待开发中
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - API设置 -->
+        <div class="sub-page" id="api-settings-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="api-settings-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">API设置</div>
+            </div>
+            <div class="sub-content" style="padding: 0; background-color: #fff; overflow-y: auto; max-height: 100%;">
+                <div class="api-settings-container" style="padding:16px;">
+                    <!-- 主API设置 -->
+                    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">主API设置</h3>
+                        
+                        <div class="setting-row">
+                            <label class="setting-label">API 端点 (Endpoint)</label>
+                            <input id="api-endpoint" class="setting-input" placeholder="例如 https://api.openai.com 或 自建代理端点">
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">API 密钥 (Key)</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input id="api-key" class="setting-input" type="password" placeholder="在此处填写 Bearer Key（可选）" style="flex:1;">
+                                <button id="api-key-toggle" class="small-btn" style="flex-shrink:0;padding:6px 12px;height:36px;">显示</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">拉取模型</label>
+                            <button id="pull-models-btn" class="small-btn">拉取模型</button>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">模型名称</label>
+                            <select id="models-select" class="models-select" style="height:44px;margin-top:8px;"></select>
+                            <div style="margin-top:8px;color:#666;font-size:13px;">目前保存的模型：<span id="selected-model-display">未选择</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 副API设置 -->
+                    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">副API设置（用于翻译、总结等）</h3>
+                        
+                        <div class="setting-row">
+                            <label class="setting-label">副API 端点 (Endpoint)</label>
+                            <input id="secondary-api-endpoint" class="setting-input" placeholder="例如 https://api.example.com（可选）">
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">副API 密钥 (Key)</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input id="secondary-api-key" class="setting-input" type="password" placeholder="副API密钥（可选）" style="flex:1;">
+                                <button id="secondary-api-key-toggle" class="small-btn" style="flex-shrink:0;padding:6px 12px;height:36px;">显示</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">拉取模型</label>
+                            <button id="pull-secondary-models-btn" class="small-btn">拉取模型</button>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">模型名称</label>
+                            <select id="secondary-models-select" class="models-select" style="height:44px;margin-top:8px;"></select>
+                            <div style="margin-top:8px;color:#666;font-size:13px;">目前保存的模型：<span id="secondary-selected-model-display">未选择</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 其他设置 -->
+                    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">其他设置</h3>
+                        
+                        <div class="setting-row">
+                            <label class="setting-label">AI 时间感知</label>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="checkbox" id="ai-time-aware">
+                                <div style="color:#666;font-size:13px;">开启后会将当前时间信息作为 system 指令发送</div>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label">API 上下文条数</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input id="context-lines-input" type="number" placeholder="200" value="200" min="1" max="10000" style="width:100px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                                <div style="color:#666;font-size:13px;">条消息作为上下文（默认200）</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-row" style="margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
+                        <label class="setting-label">API 预设管理</label>
+                        <button id="api-preset-btn" class="small-btn" style="width:100%;">预设管理</button>
+                    </div>
+
+                    <div class="setting-row" style="margin-top:16px;border-top:1px solid #f0f0f0;padding-top:16px;">
+                        <label class="setting-label">提示词管理</label>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button id="add-prompt-btn" class="small-btn">新增提示词</button>
+                            <button id="prompt-list-btn" class="small-btn">查看提示词列表</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <label class="setting-label">当前提示词</label>
+                        <select id="prompts-select" class="models-select" style="margin-top:8px;"></select>
+                        <div id="current-prompt-display" style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:4px;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-wrap:break-word;font-size:12px;color:#666;font-family:monospace;"></div>
+                    </div>
+
+                    <div class="setting-row" style="margin-top:18px;">
+                        <button id="save-settings-btn" class="primary-btn">保存设置</button>
+                    </div>
+
+                    <div style="margin-top:12px;color:#888;font-size:13px;">
+                        使用说明：填写端点与（可选）密钥，点击“拉取模型”获取模型列表。双击顶部用户头像或聊天头像即可将当前会话内容发送到所选模型并获取回复。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 情侣空间 -->
+        <div class="sub-page" id="couples-space-page">
+            <div class="sub-nav">
+                <div class="back-btn" id="couples-space-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">情侣空间</div>
+            </div>
+            <div class="sub-content" style="padding: 16px; background-color: #f5f5f5;overflow-y:auto;">
+                <div id="couples-space-content" style="background: #fff; border-radius: 8px; padding: 40px 20px; text-align: center;">
+                    <div style="color:#999;font-size:16px;">功能开发中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 世界书 -->
+        <div class="sub-page" id="worldbook-page">
+            <div class="sub-nav">
+                <div class="back-btn" data-back="worldbook-page">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">世界书</div>
+            </div>
+            <div class="sub-content" style="padding: 16px; background-color: #fff;">
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <button id="worldbook-add-btn" style="flex:1;padding:10px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;">新增世界书</button>
+                    <button id="worldbook-import-btn" style="flex:1;padding:10px;border:1px solid #ddd;background:#fff;color:#000;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;">导入世界书</button>
+                    <input type="file" id="worldbook-import-input" accept=".json" multiple style="display:none;">
+                </div>
+                
+                <!-- 全局世界书 -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:600;color:#333;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">全局世界书</div>
+                    <div id="global-worldbooks-list" style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="text-align:center;color:#999;padding:20px;background:#f9f9f9;border-radius:4px;font-size:13px;">暂无全局世界书</div>
+                    </div>
+                </div>
+                
+                <!-- 局部世界书 -->
+                <div>
+                    <div style="font-weight:600;color:#333;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">局部世界书（需绑定到角色）</div>
+                    <div id="local-worldbooks-list" style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="text-align:center;color:#999;padding:20px;background:#f9f9f9;border-radius:4px;font-size:13px;">暂无局部世界书</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 聊天页面 -->
+        <div class="chat-page" id="chat-page">
+            <div class="chat-nav">
+                <div class="back-btn" id="chat-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="chat-title-area" style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div class="chat-title" id="chat-title">AI小助手</div>
+                    <div class="chat-typing-status" id="chat-typing-status" style="font-size:13px;color:#999;display:none;white-space:nowrap;">正在打字中...</div>
+                </div>
+                <div class="chat-toolbar-buttons" style="display:flex;gap:0;align-items:center;">
+                    <button id="chat-mind-btn" style="width:40px;height:40px;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                        🖤
+                    </button>
+                    <div class="chat-more">
+                        <div class="chat-more-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages"></div>
+            
+            <div class="quote-message-bar-container" id="quote-message-bar-container" style="display:none;background:#f5f5f5;border-bottom:1px solid #e0e0e0;">
+                <div class="quote-message-bar" id="quote-message-bar" style="padding:8px 12px;display:flex;align-items:center;gap:8px;min-height:40px;max-height:60px;overflow-y:auto;">
+                    <div class="quote-content" id="quote-content" style="flex:1;font-size:12px;color:#666;word-break:break-word;line-height:1.4;"></div>
+                    <button class="quote-cancel-btn" id="quote-cancel-btn" style="border:none;background:none;cursor:pointer;font-size:20px;color:#999;flex-shrink:0;padding:0;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;">×</button>
+                </div>
+            </div>
+
+            <div class="chat-toolbar" id="chat-toolbar">
+                <button class="tb-btn" id="btn-retry" title="重回">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-emoji" title="表情包">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="9" r="1"></circle></svg>
+                </button>
+                <button class="tb-btn" id="btn-voice-msg" title="语音条">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"></path><path d="M8 19a6 6 0 0 0 8 0"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>
+                </button>
+                <button class="tb-btn" id="btn-camera" title="拍照">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M23 19V5a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </button>
+                <button class="tb-btn" id="btn-photo" title="照片">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </button>
+                <button class="tb-btn" id="btn-location" title="地理位置">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </button>
+                <button class="tb-btn" id="btn-voicecall" title="语音通话">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-videocall" title="视频通话">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                </button>
+                <button class="tb-btn" id="btn-offline" title="线下功能">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polyline points="12 5 12 19"></polyline><polyline points="19 12 12 19 5 12"></polyline></svg>
+                </button>
+                <button class="tb-btn" id="btn-takeout" title="点外卖">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-transfer" title="转账">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v10M10 8c-1 0-2 1-2 2s1 2 2 2h4c1 0 2 1 2 2s-1 2-2 2M14 16c1 0 2-1 2-2"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-listen" title="一起听">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M5 10c0-3 2-5 4-5s3 1 3 4"></path><path d="M19 10c0-3-2-5-4-5s-3 1-3 4"></path><circle cx="6" cy="14" r="2.5"></circle><circle cx="18" cy="14" r="2.5"></circle><path d="M12 9v4M12 13l-1 5c0 1-1 2-2 2M12 13l1 5c0 1 1 2 2 2"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-phone" title="查手机">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><rect x="5" y="2" width="14" height="20" rx="2.5" ry="2.5"></rect><path d="M12 21h0"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-frog" title="旅行青蛙">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><ellipse cx="12" cy="12" rx="8" ry="6"></ellipse><circle cx="7" cy="10" r="1.5" fill="#666"></circle><circle cx="17" cy="10" r="1.5" fill="#666"></circle><path d="M9 16c3 1 6 1 6 0"></path><path d="M4 8l-2-1M20 8l2-1"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-anonymous" title="匿名提问">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg>
+                </button>
+                <input type="file" id="toolbar-file-input" accept="image/*" style="display:none">
+            </div>
+
+            <div class="chat-input-area">
+                <textarea class="chat-input" id="chat-input" placeholder="输入消息..." rows="1"></textarea>
+                <button class="chat-send-btn" id="chat-send-btn">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="emoji-library" id="emoji-library" style="display:none;">
+                <div class="emoji-lib-header">
+                    <button class="emoji-lib-btn" id="emoji-add-btn" title="导入文件">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <button class="emoji-lib-btn" id="emoji-add-url-btn" title="导入URL">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                    <button class="emoji-lib-btn" id="emoji-del-btn" title="多选表情包">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M9 11l3 3L22 4"></path><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </button>
+                    <button class="emoji-lib-btn" id="emoji-trash-btn" title="删除选中表情包" style="display:none;">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                    <div class="emoji-groups-bar" id="emoji-groups-bar" style="display:none;"></div>
+                    <button class="emoji-lib-btn" id="emoji-group-btn" title="分组管理">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><circle cx="6" cy="6" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle><line x1="8" y1="6" x2="16" y2="6"></line><line x1="8" y1="18" x2="16" y2="18"></line><line x1="6" y1="8" x2="6" y2="16"></line><line x1="18" y1="8" x2="18" y2="16"></line></svg>
+                    </button>
+                </div>
+                <div class="emoji-grid" id="emoji-grid"></div>
+                <input type="file" id="emoji-upload-input" accept="image/*,.json" multiple style="display:none">
+            </div>
+
+        </div>
+
+        <!-- 个性名片编辑页面 -->
+        <div class="card-edit-page" id="card-edit-page">
+            <div class="sub-nav">
+                <div class="back-btn" id="card-edit-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">编辑资料</div>
+            </div>
+            
+            <div class="card-edit-preview" id="card-edit-preview">
+                <div class="card-edit-preview-avatar" id="card-edit-preview-avatar">薯</div>
+                <div class="card-edit-preview-name" id="card-edit-preview-name">薯片机用户</div>
+                <div class="card-edit-preview-sig" id="card-edit-preview-sig">这个人很懒，什么都没写~</div>
+            </div>
+            
+            <div class="edit-list">
+                <div class="edit-section">
+                    <div class="edit-item" id="edit-avatar-btn">
+                        <div class="edit-label">头像</div>
+                        <div class="edit-value">
+                            <div class="edit-avatar-small" id="edit-avatar-small"></div>
+                            <div class="edit-arrow"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="edit-item" id="edit-bg-btn">
+                        <div class="edit-label">背景图</div>
+                        <div class="edit-value">
+                            <span id="edit-bg-value">默认</span>
+                            <div class="edit-arrow"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="edit-item" id="edit-name-btn">
+                        <div class="edit-label">昵称</div>
+                        <div class="edit-value">
+                            <span id="edit-name-value">薯片机用户</span>
+                            <div class="edit-arrow"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="edit-item" id="edit-signature-btn">
+                        <div class="edit-label">个性签名</div>
+                        <div class="edit-value">
+                            <span id="edit-signature-value">这个人很懒，什么都没写~</span>
+                            <div class="edit-arrow"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图片选择弹窗 -->
+        <div class="image-picker-modal" id="image-picker-modal">
+            <div class="image-picker-content">
+                <div class="picker-title" id="picker-title">选择图片</div>
+                
+                <div class="picker-option" id="picker-local">
+                    <div class="picker-option-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:24px;height:24px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <path d="M21 15l-5-5L5 21"></path>
+                        </svg>
+                    </div>
+                    <div class="picker-option-text">从本地相册选择</div>
+                </div>
+                
+                <div class="picker-option" id="picker-url-toggle">
+                    <div class="picker-option-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width:24px;height:24px;">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3 -3 3-3 3"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                    </div>
+                    <div class="picker-option-text">输入图片URL</div>
+                </div>
+                
+                <input type="text" class="picker-url-input hidden" id="picker-url-input" placeholder="请输入图片URL地址">
+                <button class="picker-url-confirm hidden" id="picker-url-confirm">确认</button>
+                
+                <input type="file" id="picker-file-input" accept="image/*,.jpg,.jpeg,.png,.gif,.webp" style="display:none;">
+                
+                <button class="picker-cancel" id="picker-cancel">取消</button>
+            </div>
+        </div>
+
+        <!-- 更多功能设置弹窗 -->
+        <div class="more-settings-modal" id="more-settings-modal">
+            <div class="more-settings-content">
+                <div class="more-settings-header">
+                    <div class="more-settings-title">动态页面设置</div>
+                    <div class="more-settings-desc">选择要在动态页面显示的功能</div>
+                </div>
+                
+                <div class="more-settings-list" id="more-settings-list">
+                    <div class="more-settings-item" data-func-id="moments">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M21 15l-5-5L5 21"></path>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">朋友圈</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="moments"></div>
+                    </div>
+                    
+                <div class="more-settings-item" data-func-id="forum">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    <line x1="8" y1="8" x2="16" y2="8"></line>
+                                    <line x1="8" y1="12" x2="14" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">论坛</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="forum"></div>
+                    </div>
+
+                <div class="more-settings-item" data-func-id="reading">
+                    <div class="more-settings-item-left">
+                        <div class="more-settings-item-icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                <line x1="8" y1="7" x2="16" y2="7"></line>
+                                <line x1="8" y1="11" x2="14" y2="11"></line>
+                            </svg>
+                        </div>
+                        <div class="more-settings-item-name">阅读</div>
+                    </div>
+                    <div class="toggle-switch active" data-func-id="reading"></div>
+                </div>
+
+                    <div class="more-settings-item" data-func-id="calendar">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">日历</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="calendar"></div>
+                    </div>
+                    
+                    <div class="more-settings-item" data-func-id="weather">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">天气</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="weather"></div>
+                     </div>
+
+                    <div class="more-settings-item" data-func-id="shopping">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">购物</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="shopping"></div>
+                    </div>
+                    
+                    <div class="more-settings-item" data-func-id="game">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                    <circle cx="6" cy="12" r="1.5"></circle>
+                                    <circle cx="10" cy="12" r="1.5"></circle>
+                                    <path d="M15 10v4"></path>
+                                    <path d="M13 12h4"></path>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">游戏中心</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="game"></div>
+                    </div>
+
+                    <div class="more-settings-item" data-func-id="tacit">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">默契大挑战</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="tacit"></div>
+                    </div>
+
+                    <div class="more-settings-item" data-func-id="spiritGalaxy">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <polygon points="12 2 15.09 10.26 23.77 10.26 17.39 16.01 20.48 24.27 12 18.46 3.52 24.27 6.61 16.01 0.23 10.26 8.91 10.26"></polygon>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">心灵星系</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="spiritGalaxy"></div>
+                    </div>
+
+                    <div class="more-settings-item" data-func-id="ideaLibrary">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8.5 8.5z"></path>
+                                    <line x1="12" y1="7" x2="12" y2="13"></line>
+                                    <line x1="9" y1="10" x2="15" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">灵感库</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="ideaLibrary"></div>
+                    </div>
+
+                    <div class="more-settings-item" data-func-id="thirdParty">
+                        <div class="more-settings-item-left">
+                            <div class="more-settings-item-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                </svg>
+                            </div>
+                            <div class="more-settings-item-name">观察者</div>
+                        </div>
+                        <div class="toggle-switch active" data-func-id="thirdParty"></div>
+                    </div>
+                
+                <div class="more-settings-footer">
+                    <button class="more-settings-confirm" id="more-settings-confirm">确定</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+</body>
+</html>
