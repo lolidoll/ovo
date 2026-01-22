@@ -4,11 +4,26 @@
 
 class DiscordAuthManager {
     constructor() {
-        // Discord OAuth 配置
-        // 注意：请在下方配置您的 Discord 应用程序信息
-        this.CONFIG = {
+             this.CONFIG = {
             // 从 Discord Developer Portal 获取
             CLIENT_ID: '1463827536440983615',
+            
+            // 重定向 URI - 必须与 Discord 应用设置匹配
+            // ⚠️ 严格使用这个值，不能改变
+            REDIRECT_URI: 'https://lolidoll.github.io/ovo/index.html',
+            
+            // OAuth 授权 URL
+            AUTHORIZE_URL: 'https://discord.com/api/oauth2/authorize',
+            
+            // Token 交换端点（Vercel API）
+            TOKEN_ENDPOINT: 'https://ovo-psi.vercel.app/api/callback',
+            
+            // 作用域
+            SCOPES: ['identify', 'email']
+        };
+        
+        // 防止运行时修改 - 冻结 CONFIG 对象
+        Object.freeze(this.CONFIG);
             
             // 重定向 URI
             REDIRECT_URI: 'https://lolidoll.github.io/ovo/index.html',
@@ -330,3 +345,4 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = DiscordAuthManager;
 }
+
