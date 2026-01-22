@@ -1,0 +1,576 @@
+/* ========================================
+   认证模态框样式 - 少女心猫耳可爱设计
+   ======================================== */
+
+/* ========================================
+   模态框容器和背景
+   ======================================== */
+
+.auth-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #fff5f9 0%, #ffe4f0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    animation: authOverlayFadeIn 0.3s ease-out;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.auth-modal-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+@keyframes authOverlayFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   模态框容器
+   ======================================== */
+
+.auth-modal-container {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 20px;
+    perspective: 1000px;
+}
+
+.auth-modal-content {
+    position: relative;
+    background: linear-gradient(180deg, #ffffff 0%, #fff9fc 100%);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 60px rgba(255, 105, 180, 0.15),
+        0 0 1px rgba(255, 105, 180, 0.1),
+        inset 0 1px 0 rgba(255, 182, 193, 0.4);
+    overflow: visible;
+    animation: authModalSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid rgba(255, 182, 193, 0.6);
+}
+
+@keyframes authModalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ========================================
+   背景装饰
+   ======================================== */
+
+.auth-bg-decoration {
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(124, 58, 202, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.auth-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(135deg, #ff69b4 0%, #ffb6c1 100%);
+    opacity: 0.08;
+    pointer-events: none;
+}
+
+/* ========================================
+   顶部装饰线
+   ======================================== */
+
+.auth-top-bar {
+    height: 6px;
+    background: linear-gradient(90deg, #ff69b4 0%, #ffb6c1 50%, #ffc0cb 100%);
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
+}
+
+/* ========================================
+   头部区域 - 猫耳装饰
+   ======================================== */
+
+.auth-header {
+    text-align: center;
+    padding: 40px 30px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* 左猫耳 */
+.auth-header::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 35%;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 35px solid #ff69b4;
+    border-radius: 50% 50% 0 0;
+    filter: drop-shadow(0 1px 3px rgba(255, 105, 180, 0.3));
+    z-index: 10;
+}
+
+/* 右猫耳 */
+.auth-header::after {
+    content: '';
+    position: absolute;
+    top: -15px;
+    right: 35%;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 35px solid #ff69b4;
+    border-radius: 50% 50% 0 0;
+    filter: drop-shadow(0 1px 3px rgba(255, 105, 180, 0.3));
+    z-index: 10;
+}
+
+.auth-logo {
+    margin-bottom: 16px;
+    margin-top: 10px;
+    display: inline-block;
+    animation: authLogoBounce 2s ease-in-out infinite;
+    position: relative;
+    z-index: 2;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.auth-logo-icon {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    filter: drop-shadow(0 4px 12px rgba(255, 105, 180, 0.3));
+    border: 3px solid rgba(255, 182, 193, 0.5);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes authLogoBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.auth-title {
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff69b4 0%, #ffb6c1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 8px;
+    letter-spacing: -0.5px;
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: #d97fb2;
+    margin: 0;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    font-style: italic;
+}
+
+/* ========================================
+   主要内容区域
+   ======================================== */
+
+.auth-main {
+    padding: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-intro {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.auth-intro-item {
+    text-align: center;
+    padding: 16px 12px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fff5f9 0%, #ffe4f0 100%);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+    border: 1.5px solid rgba(255, 182, 193, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 蕾丝边装饰 */
+.auth-intro-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 182, 193, 0.2) 10px,
+        rgba(255, 182, 193, 0.2) 12px
+    );
+    pointer-events: none;
+}
+
+.auth-intro-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
+    background: linear-gradient(135deg, #ffb6c1 0%, #ffc0cb 100%);
+    border-color: rgba(255, 105, 180, 0.5);
+}
+
+.auth-intro-item:hover .auth-intro-text {
+    color: #c71585;
+}
+
+.auth-intro-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.auth-intro-text {
+    font-size: 12px;
+    color: #d97fb2;
+    font-weight: 600;
+    transition: color 0.3s;
+    position: relative;
+    z-index: 1;
+}
+
+/* ========================================
+   操作按钮区域
+   ======================================== */
+
+.auth-actions {
+    padding: 0 30px 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: left 0.5s;
+}
+
+.auth-btn:hover::before {
+    left: 100%;
+}
+
+.auth-btn-discord {
+    background: linear-gradient(135deg, #ff69b4 0%, #ffb6c1 100%);
+    color: white;
+    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.4);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.auth-btn-discord:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(255, 105, 180, 0.5);
+    filter: brightness(1.1);
+}
+
+.auth-btn-discord:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+}
+
+.auth-btn-discord:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.auth-btn-icon {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.auth-tips {
+    font-size: 12px;
+    color: #d97fb2;
+    text-align: center;
+    margin: 16px 0 0;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* ========================================
+   加载状态
+   ======================================== */
+
+.auth-loading {
+    padding: 40px 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-loading p {
+    font-size: 14px;
+    color: #d97fb2;
+    margin: 0;
+    font-weight: 500;
+}
+
+.auth-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 182, 193, 0.3);
+    border-top: 3px solid #ff69b4;
+    border-radius: 50%;
+    animation: authSpinRotate 1s linear infinite;
+}
+
+@keyframes authSpinRotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   响应式设计
+   ======================================== */
+
+@media (max-width: 600px) {
+    .auth-modal-container {
+        margin: 0 16px;
+    }
+    
+    .auth-header {
+        padding: 40px 24px 24px;
+    }
+    
+    .auth-header::before {
+        left: 25%;
+    }
+    
+    .auth-header::after {
+        right: 25%;
+    }
+    
+    .auth-title {
+        font-size: 28px;
+    }
+    
+    .auth-subtitle {
+        font-size: 13px;
+    }
+    
+    .auth-main {
+        padding: 24px;
+    }
+    
+    .auth-intro {
+        gap: 12px;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .auth-intro-item {
+        padding: 12px 8px;
+    }
+    
+    .auth-intro-icon {
+        font-size: 24px;
+        margin-bottom: 6px;
+    }
+    
+    .auth-intro-text {
+        font-size: 11px;
+    }
+    
+    .auth-actions {
+        padding: 0 24px 32px;
+    }
+    
+    .auth-btn {
+        padding: 14px 20px;
+        font-size: 14px;
+        gap: 8px;
+    }
+    
+    .auth-tips {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 360px) {
+    .auth-header {
+        padding: 32px 16px 16px;
+    }
+    
+    .auth-header::before {
+        left: 20%;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-bottom: 28px solid #ff69b4;
+    }
+    
+    .auth-header::after {
+        right: 20%;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-bottom: 28px solid #ff69b4;
+    }
+    
+    .auth-title {
+        font-size: 24px;
+    }
+    
+    .auth-main {
+        padding: 16px;
+    }
+    
+    .auth-intro {
+        gap: 10px;
+    }
+    
+    .auth-actions {
+        padding: 0 16px 24px;
+    }
+}
+
+/* ========================================
+   深色模式支持
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+    .auth-modal-overlay {
+        background: linear-gradient(135deg, #4a2a3f 0%, #5a3a4f 100%);
+    }
+    
+    .auth-modal-content {
+        background: linear-gradient(180deg, #5a3a4f 0%, #4a2a3f 100%);
+        box-shadow: 
+            0 20px 60px rgba(255, 105, 180, 0.2),
+            0 0 1px rgba(255, 182, 193, 0.2);
+        border: 2px solid rgba(255, 105, 180, 0.3);
+    }
+    
+    .auth-title {
+        background: linear-gradient(135deg, #ff69b4 0%, #ffb6c1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .auth-subtitle {
+        color: #ffb6c1;
+    }
+    
+    .auth-intro-item {
+        background: linear-gradient(135deg, #3a1a2f 0%, #4a2a3f 100%);
+        border-color: rgba(255, 105, 180, 0.3);
+    }
+    
+    .auth-intro-item:hover {
+        background: linear-gradient(135deg, #c71585 0%, #ff69b4 100%);
+        border-color: rgba(255, 182, 193, 0.6);
+    }
+    
+    .auth-intro-text {
+        color: #ffb6c1;
+    }
+    
+    .auth-intro-item:hover .auth-intro-text {
+        color: white;
+    }
+    
+    .auth-loading p {
+        color: #ffb6c1;
+    }
+    
+    .auth-tips {
+        color: #ffb6c1;
+    }
+    
+    .auth-spinner {
+        border-color: rgba(255, 182, 193, 0.3);
+        border-top-color: #ff69b4;
+    }
+}
+
+/* ========================================
+   打印样式
+   ======================================== */
+
+@media print {
+    .auth-modal-overlay {
+        display: none;
+    }
+}

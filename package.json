@@ -1,0 +1,33 @@
+{
+  "name": "discord-auth-server",
+  "version": "1.0.0",
+  "description": "Discord OAuth2 认证服务 - 薯片机应用后端",
+  "main": "auth-server.js",
+  "scripts": {
+    "start": "node auth-server.js",
+    "dev": "node --watch auth-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord",
+    "oauth2",
+    "authentication",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}

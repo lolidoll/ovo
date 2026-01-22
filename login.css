@@ -1,0 +1,456 @@
+/* ========================================
+   登录页面样式 - 黑白灰简约设计 + 猫耳装饰
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* ========================================
+   背景装饰
+   ======================================== */
+
+.background-blur {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(0, 0, 0, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.01) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ========================================
+   登录容器
+   ======================================== */
+
+.login-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* ========================================
+   登录卡片
+   ======================================== */
+
+.login-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 60px 40px 40px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.08),
+        0 0 1px rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   猫耳装饰
+   ======================================== */
+
+.cat-ears {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 50px;
+    z-index: 20;
+}
+
+.cat-ear-left,
+.cat-ear-right {
+    position: absolute;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 0 solid transparent;
+    border-bottom: 40px solid #333333;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+    animation: earWiggle 3s ease-in-out infinite;
+}
+
+.cat-ear-left {
+    left: 5px;
+    border-left: 18px solid #333333;
+    border-right: 2px solid transparent;
+    border-bottom: 40px solid #333333;
+    clip-path: polygon(20% 0%, 100% 0%, 85% 100%, 0% 100%);
+}
+
+.cat-ear-right {
+    right: 5px;
+    border-right: 18px solid #333333;
+    border-left: 2px solid transparent;
+    border-bottom: 40px solid #333333;
+    clip-path: polygon(0% 0%, 80% 0%, 100% 100%, 15% 100%);
+}
+
+@keyframes earWiggle {
+    0%, 100% {
+        transform: rotateZ(-2deg);
+    }
+    50% {
+        transform: rotateZ(2deg);
+    }
+}
+
+/* ========================================
+   Logo
+   ======================================== */
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo-icon {
+    font-size: 48px;
+    font-weight: bold;
+    color: #333333;
+    letter-spacing: -2px;
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* ========================================
+   标题和副标题
+   ======================================== */
+
+.login-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: #808080;
+    text-align: center;
+    margin-bottom: 40px;
+    font-weight: 400;
+}
+
+/* ========================================
+   Discord 登录按钮
+   ======================================== */
+
+.discord-login-btn {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #7289da 0%, #5672c4 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 
+        0 8px 24px rgba(114, 137, 218, 0.3),
+        0 1px 3px rgba(0, 0, 0, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.discord-login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.discord-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 12px 32px rgba(114, 137, 218, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.discord-login-btn:hover::before {
+    left: 100%;
+}
+
+.discord-login-btn:active {
+    transform: translateY(0px);
+    box-shadow: 
+        0 4px 12px rgba(114, 137, 218, 0.3),
+        0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.discord-login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.discord-icon {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* ========================================
+   加载状态
+   ======================================== */
+
+.loading-tip {
+    text-align: center;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.loading-tip p {
+    font-size: 14px;
+    color: #666666;
+    margin: 0;
+}
+
+/* ========================================
+   加载动画
+   ======================================== */
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #f0f0f0;
+    border-top: 3px solid #7289da;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.spinner-large {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #f0f0f0;
+    border-top: 4px solid #7289da;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   底部提示
+   ======================================== */
+
+.login-footer {
+    font-size: 12px;
+    color: #999999;
+    text-align: center;
+    margin-top: 32px;
+    line-height: 1.6;
+}
+
+/* ========================================
+   授权回调页面
+   ======================================== */
+
+.auth-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.auth-loading p {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #333333;
+    font-weight: 500;
+}
+
+/* ========================================
+   响应式设计
+   ======================================== */
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 50px 24px 32px;
+        border-radius: 20px;
+        margin: 0 16px;
+    }
+    
+    .login-title {
+        font-size: 28px;
+    }
+    
+    .login-subtitle {
+        font-size: 13px;
+        margin-bottom: 32px;
+    }
+    
+    .discord-login-btn {
+        padding: 14px 20px;
+        font-size: 15px;
+        gap: 10px;
+    }
+    
+    .logo-icon {
+        font-size: 44px;
+    }
+    
+    .cat-ears {
+        top: -25px;
+        width: 80px;
+        height: 40px;
+    }
+    
+    .cat-ear-left,
+    .cat-ear-right {
+        border-bottom-width: 35px;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-card {
+        padding: 45px 16px 24px;
+    }
+    
+    .login-title {
+        font-size: 24px;
+    }
+    
+    .discord-login-btn span {
+        font-size: 14px;
+    }
+}
+
+/* ========================================
+   深色模式支持
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+    }
+    
+    .login-card {
+        background: #2a2a2a;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            0 0 1px rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .login-title {
+        color: #f5f5f5;
+    }
+    
+    .login-subtitle,
+    .login-footer {
+        color: #a0a0a0;
+    }
+    
+    .cat-ear-left,
+    .cat-ear-right {
+        border-bottom-color: #888888;
+    }
+    
+    .logo-icon {
+        color: #e0e0e0;
+    }
+    
+    .spinner {
+        border-color: #444444;
+        border-top-color: #7289da;
+    }
+    
+    .spinner-large {
+        border-color: #444444;
+        border-top-color: #7289da;
+    }
+    
+    .auth-loading {
+        background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+    }
+    
+    .auth-loading p {
+        color: #f5f5f5;
+    }
+}
+
+/* ========================================
+   打印样式
+   ======================================== */
+
+@media print {
+    body {
+        display: none;
+    }
+}

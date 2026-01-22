@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff">
+    <title>登录 - 薯片机</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- 背景装饰 -->
+        <div class="background-blur"></div>
+        
+        <!-- 登录卡片 -->
+        <div class="login-card">
+            <!-- 猫耳装饰 -->
+            <div class="cat-ears">
+                <div class="cat-ear-left"></div>
+                <div class="cat-ear-right"></div>
+            </div>
+            
+            <!-- Logo -->
+            <div class="login-logo">
+                <div class="logo-icon">薯</div>
+            </div>
+            
+            <!-- 标题 -->
+            <h1 class="login-title">薯片机</h1>
+            <p class="login-subtitle">使用 Discord 登录</p>
+            
+            <!-- 登录按钮 -->
+            <button class="discord-login-btn" id="discord-login-btn">
+                <svg class="discord-icon" viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="currentColor" d="M20.317 4.3671C18.7975 3.5373 17.147 2.9708 15.4545 2.7085C15.2087 3.1137 14.9369 3.6137 14.7562 4.0171C12.9712 3.7285 11.2146 3.7285 9.47812 4.0171C9.29745 3.6052 9.01312 3.1137 8.76437 2.7085C7.07382 2.9708 5.40277 3.5373 3.88233 4.3671C0.570533 9.1293 -0.0828944 13.7936 0.261145 18.3886C2.18418 19.7754 4.04779 20.6145 5.88147 21.1274C6.39521 20.4220 6.84365 19.6693 7.20782 18.8720C6.40771 18.5533 5.63360 18.1450 4.91162 17.6620C5.10249 17.5115 5.28905 17.3569 5.46412 17.1997C9.88141 19.4027 14.7457 19.4027 19.0528 17.1997C19.2278 17.3569 19.4149 17.5115 19.6011 17.6620C18.8791 18.1450 18.1045 18.5533 17.3046 18.8720C17.6684 19.6693 18.1169 20.4220 18.6307 21.1274C20.4645 20.6145 22.3281 19.7754 24.2511 18.3886C24.6314 13.3471 23.7067 8.8267 20.317 4.3671ZM8.02109 15.6503C6.8559 15.6503 5.90977 14.6039 5.90977 13.3287C5.90977 12.0535 6.8404 11.0071 8.02109 11.0071C9.20178 11.0071 10.1424 12.0535 10.1424 13.3287C10.1424 14.6039 9.20178 15.6503 8.02109 15.6503ZM15.9775 15.6503C14.8123 15.6503 13.8662 14.6039 13.8662 13.3287C13.8662 12.0535 14.7969 11.0071 15.9775 11.0071C17.1582 11.0071 18.0989 12.0535 18.0989 13.3287C18.0989 14.6039 17.1582 15.6503 15.9775 15.6503Z"/>
+                </svg>
+                <span>使用 Discord 登录</span>
+            </button>
+            
+            <!-- 加载提示 -->
+            <div class="loading-tip" id="loading-tip" style="display: none;">
+                <div class="spinner"></div>
+                <p>正在跳转到 Discord...</p>
+            </div>
+            
+            <!-- 底部提示 -->
+            <p class="login-footer">登录后将在此设备上保持登录状态</p>
+        </div>
+    </div>
+    
+    <!-- 授权回调页面（隐藏） -->
+    <div id="auth-callback-container" style="display: none;">
+        <div class="auth-loading">
+            <div class="spinner-large"></div>
+            <p>正在验证您的身份...</p>
+        </div>
+    </div>
+    
+    <script src="login.js" defer></script>
+</body>
+</html>
