@@ -183,10 +183,7 @@ const LocationMessageModule = (function() {
         // 关闭弹窗
         closeLocationModal();
 
-        // 触发AI回复
-        if (typeof callApiWithConversation === 'function') {
-            callApiWithConversation();
-        }
+        // 注意：不自动触发AI回复，用户需要手动双击头像来让AI回复
     }
 
     // 显示地理位置详情

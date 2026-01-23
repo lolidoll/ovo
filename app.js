@@ -38,7 +38,6 @@
                 secondarySelectedModel: '', // 副API选定的模型
                 // 副API功能提示词
                 secondaryPrompts: {
-                    mindState: '根据以下对话内容，深入分析角色的当前心理状态和真实想法。请严格按照以下格式返回，不能省略任何字段，不能为空：\n\n【心声】\n穿搭：{具体描述角色的衣着、配饰、整体风格}\n心情：{细腻描述角色的情绪状态，可包含矛盾}\n动作：{描述角色正在做或习惯的小动作}\n心声：{角色内心真实想法，可包含犹豫、期待等}\n坏心思：{角色的真实想法或小计划，必须填写}\n好感度：{0-100的整数}\n好感度变化：{变化数值，如+5或-2或0}\n好感度原因：{简短说明，10字以内}\n\n要求：\n- 每个字段必须有内容，不能为空\n- 穿搭、心情、动作、心声、坏心思各100字左右\n- 好感度必须是0-100之间的整数\n- 好感度变化必须是整数，首次对话为0\n- 好感度原因简洁准确，如"共鸣"、"理解"、"冒犯"等',
                     translateChinese: '你是一个翻译助手。将用户提供的非中文文本翻译成简体中文。只返回翻译结果，不要有其他内容。',
                     translateEnglish: '你是一个翻译助手。将用户提供的中文文本翻译成英文。只返回翻译结果，不要有其他内容。',
                     summarize: '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。总结应该：1. 抓住对话的核心内容和主题；2. 保留重要信息和决策；3. 简洁明了，长度适中（200-300字）；4. 用简体中文或原语言撰写。'
@@ -222,6 +221,15 @@
                         if (key !== 'user' && key !== 'conversationStates') {
                             AppState[key] = parsed[key];
                         }
+                    }
+                    
+                    // 【新增】为所有对话初始化 mindStates 数组（如果不存在）
+                    if (AppState.conversations && Array.isArray(AppState.conversations)) {
+                        AppState.conversations.forEach(conv => {
+                            if (!conv.mindStates) {
+                                conv.mindStates = [];
+                            }
+                        });
                     }
                     
                     AppState.conversationStates = {};
@@ -811,10 +819,8 @@
                 toggleEmojiLibrary();
             });
 
-            const btnVoiceMsg = document.getElementById('btn-voice-msg');
-            if (btnVoiceMsg) {
-                btnVoiceMsg.addEventListener('click', function() { showToast('语音条功能尚未实现'); });
-            }
+            // 注意：btn-voice-msg 和 btn-location 的事件处理器由各自的模块负责
+            // 不需要在这里重复绑定事件
 
             const btnCamera = document.getElementById('btn-camera');
             const btnPhoto = document.getElementById('btn-photo');
@@ -1153,10 +1159,10 @@
                             ${avatarContent}
                             ${conv.unread > 0 ? `<div class="msg-badge">${conv.unread > 99 ? '99+' : conv.unread}</div>` : ''}
                         </div>
-                        <div class="msg-content">
+                        <div class="msg-content" style="flex:1;">
                             <div class="msg-header">
-                                <div class="msg-title">${conv.name}</div>
-                                <div class="msg-time">${conv.time || ''}</div>
+                                <div class="msg-title" style="flex:1;">${conv.name}</div>
+                                <div class="msg-time" style="white-space:nowrap;">${conv.time || ''}</div>
                             </div>
                             <div class="msg-desc">${conv.lastMsg || ''}</div>
                         </div>
@@ -2316,7 +2322,8 @@
                             time: formatTime(new Date()),
                             lastMessageTime: new Date().toISOString(),
                             unread: 0,
-                            boundWorldbooks: [existingWb.id]  // 绑定世界书
+                            boundWorldbooks: [existingWb.id],  // 绑定世界书
+                            mindStates: []  // 【新增】初始化心声数据数组
                         };
                         AppState.conversations.unshift(conv);
                     }
@@ -2416,7 +2423,8 @@
                     lastMsg: friend.greeting || '',
                     time: formatTime(new Date()),
                     lastMessageTime: new Date().toISOString(),  // 保存完整时间戳用于排序
-                    unread: 0
+                    unread: 0,
+                    mindStates: []  // 【新增】初始化心声数据数组
                 };
                 AppState.conversations.unshift(conv);
                 
@@ -2454,7 +2462,8 @@
                     lastMsg: '',
                     time: formatTime(new Date()),
                     lastMessageTime: new Date().toISOString(),  // 保存完整时间戳用于排序
-                    unread: 0
+                    unread: 0,
+                    mindStates: []  // 【新增】初始化心声数据数组
                 };
                 AppState.conversations.unshift(conv);
                 
@@ -2538,9 +2547,9 @@
                         const replyContent = replyMsg.emojiUrl ? '[表情包]' : replyMsg.content.substring(0, 40);
                         const replyAuthor = replyMsg.type === 'sent' ? AppState.user.name : AppState.currentChat.name;
                         const replyId = msg.replyTo;
-                        textContent += `<div style="padding:6px;margin-bottom:8px;border-left:3px solid #ddd;background:#f5f5f5;border-radius:4px;font-size:11px;color:#999;max-width:200px;cursor:pointer;" data-scroll-to="${replyId}">
-                            <div style="margin-bottom:3px;font-weight:500;color:#666;font-size:11px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${replyAuthor}</div>
-                            <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;font-size:11px;">${escapeHtml(replyContent)}</div>
+                        textContent += `<div style="padding:6px 8px;margin-bottom:8px;border-left:3px solid #ddd;background:#f5f5f5;border-radius:4px;font-size:11px;color:#999;max-width:280px;cursor:pointer;word-break:break-word;" data-scroll-to="${replyId}">
+                            <div style="margin-bottom:3px;font-weight:500;color:#666;font-size:11px;max-width:270px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${replyAuthor}</div>
+                            <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:270px;font-size:11px;">${escapeHtml(replyContent)}</div>
                         </div>`;
                     }
                 }
@@ -2595,10 +2604,10 @@
                 if (msg.translation && !(msg.isForward && msg.forwardedMoment)) {
                     const transText = msg.translation.result;
                     textContent += `
-                        <div style="padding:8px;margin-top:8px;background:#f9f9f9;border-radius:4px;font-size:12px;color:#666;border-left:2px solid #ddd;">
+                        <div style="padding:10px;margin-top:8px;background:#f9f9f9;border-radius:4px;font-size:12px;color:#666;border-left:2px solid #ddd;max-height:150px;overflow-y:auto;word-break:break-word;">
                             <div style="font-weight:500;margin-bottom:4px;color:#999;font-size:11px;">${msg.translation.targetLanguage}</div>
-                            <div>${escapeHtml(transText)}</div>
-                            <button class="close-trans-btn" data-msg-id="${msg.id}" style="margin-top:4px;background:none;border:none;color:#999;cursor:pointer;font-size:12px;padding:0;">关闭</button>
+                            <div style="max-width:350px;">${escapeHtml(transText)}</div>
+                            <button class="close-trans-btn" data-msg-id="${msg.id}" style="margin-top:6px;background:none;border:none;color:#999;cursor:pointer;font-size:12px;padding:0;">关闭</button>
                         </div>
                     `;
                 }
@@ -6162,7 +6171,7 @@
             // 注意：这个提示告诉AI生成心声数据，但这些数据会在客户端被完全清理，用户无法看到
             systemPrompts.push(`【重要】必须每次在回复最后添加以下格式的心声信息，不能省略、不能变更格式、不能使用多消息格式：
 
-【心声】穿搭：{描述角色的服装、配饰、整体风格与细节。要求：符合角色设定，场景合理，细节具体} 心情：{描述角色当前的情绪状态。要求：细腻真实，可包含矛盾情绪，用比喻或意象增强画面感。} 动作：{描述角色正在进行或习惯性的小动作。要求：自然流畅，体现角色性格，符合当前场景。} 心声：{角色内心未说出口的想法。要求：真实、细腻，可包含矛盾、犹豫、期待等复杂情绪} 坏心思：{角色偷偷打的算盘、恶作剧念头、或不愿让他人知道的小计划。要求：符合人设，带点狡黠或俏皮。} 好感度：{0-100的整数} 好感度变化：{变化数值，如+5或-2或0} 好感度原因：{简短说明，10字以内}
+【心声】穿搭：{描述角色的服装、配饰、整体风格与细节。要求：符合角色设定，场景合理，细节具体。举例参考：'上身穿着一件淡蓝色的棉麻衬衫，袖口微微卷起；下装是深灰色的休闲九分裤，脚踩一双白色帆布鞋。左手腕系着一条编织红绳，胸前挂着一枚小小的银杏叶胸针。整体风格干净简约，带着几分慵懒随性。'} 心情：{描述角色当前的情绪状态。要求：细腻真实，可包含矛盾情绪，用比喻或意象增强画面感。举例参考：'平静中带着一丝雀跃，像是阴天里透过云层洒下的微弱阳光。上午的事情顺利完成，下午还有期待已久的独处时间。内心有些小满足，但表面上依然维持着淡漠从容的样子。'} 动作：{描述角色正在进行或习惯性的小动作。要求：自然流畅，体现角色性格，符合当前场景。举例参考：'靠在窗边的懒人沙发上，手指无意识地轻轻敲击着扶手。偶尔抬头望向窗外，似乎在思考什么，又像只是单纯地发呆。翻开一半的书放在手边，茶杯里的水已经凉透了。'} 心声：{角色内心未说出口的想法。要求：真实、细腻，可包含矛盾、犹豫、期待等复杂情绪举例参考：'今天的阳光真好，要是能一直这样就好了。那件事要不要找个机会说出口呢？其实……有点在意他今天说的那句话。'} 坏心思：{角色偷偷打的算盘、恶作剧念头、或不愿让他人知道的小计划。要求：符合人设，带点狡黠或俏皮。举例参考：'计划偷偷把冰箱里的蛋糕吃掉，然后嫁祸给那只经常来窗台的流浪猫。打算在朋友面前装作若无其事，其实早就猜到了他要说的惊喜是什么。如果明天有人问起，就说自己一整天都在看书，什么都没做。'} 好感度：{0-100的整数} 好感度变化：{变化数值，增减的数值都不可超过3，如+3或-2或0} 好感度原因：{简短说明，10字以内,举例参考：'对当前话题感到无趣且烦躁'}
 
 IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
 1. 心声MUST be placed at the very end of your response on a separate line
@@ -6503,15 +6512,31 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
 
         // ========== 心声提取函数（新架构：从主API响应中提取） ==========
         function extractMindStateFromText(text) {
+            console.log(`\n🔍 extractMindStateFromText 被调用`);
+            console.log(`   输入文本长度: ${text?.length || 0}`);
+            
             if (!text || typeof text !== 'string') {
+                console.warn(`⚠️ 输入文本无效`);
                 return null;
             }
             
             // 查找【心声】标记
             const mindMarkerIndex = text.indexOf('【心声】');
             
+            console.log(`   查找【心声】标记: ${mindMarkerIndex >= 0 ? '✅ 找到' : '❌ 未找到'}`);
+            console.log(`   标记位置: ${mindMarkerIndex}`);
+            
             if (mindMarkerIndex === -1) {
-                console.log('🔎 未在主API响应中找到【心声】标记');
+                console.error('❌ 未在主API响应中找到【心声】标记');
+                console.error('API响应长度:', text.length);
+                console.error('响应包含【:', text.includes('【'));
+                console.error('响应包含心声:', text.includes('心声'));
+                // 尝试查找类似的模式
+                if (text.includes('心声') && !text.includes('【心声】')) {
+                    console.error('⚠️ 提示：找到【心声】字样，但格式错误（缺少【】）');
+                    console.error('   查找到的位置:', text.indexOf('心声'));
+                    console.error('   该位置前后100字:', text.substring(Math.max(0, text.indexOf('心声')-50), Math.min(text.length, text.indexOf('心声')+150)));
+                }
                 return null;
             }
             
@@ -6519,12 +6544,12 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             const mindContent = text.substring(mindMarkerIndex + 5).trim();
             
             if (!mindContent) {
-                console.log('🔎 【心声】标记后没有内容');
+                console.error('❌ 【心声】标记后没有内容');
                 return null;
             }
             
-            console.log('📋 从主API响应中提取到心声内容，长度:', mindContent.length);
-            console.log('📋 心声原始内容:', mindContent.substring(0, 200));
+            console.log('✅ 成功找到【心声】标记，长度:', mindContent.length);
+            console.log('📋 心声原始内容（前200字）:', mindContent.substring(0, 200));
             
             let mindState = {};
             
@@ -6546,22 +6571,24 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 
                 // 尝试所有可能的标签
                 for (const label of fieldDef.labels) {
-                    // 创建更灵活的匹配模式
+                    // 创建更灵活的匹配模式 - 修复了正则表达式的双反斜杠问题
                     const patterns = [
-                        // 模式1：标签：内容（到下一个标签或结尾）
-                        new RegExp(`${label}[：:]+\\s*([^\\n]*?)(?=\\n(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)|$)`, 'i'),
-                        // 模式2：标签：内容（到空行）
-                        new RegExp(`${label}[：:]+\\s*([^\\n]+)`, 'i'),
-                        // 模式3：标签: 内容（支持多行到下一个标签）
-                        new RegExp(`${label}[：:]+([\\s\\S]*?)(?=(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]+|$)`, 'i')
+                        // 模式1：标签：内容（到下一个已知标签或结尾）- 不跨行
+                        new RegExp(`${label}[：:]+\\s*([^\\n【]*?)\\s*(?=\\n|(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]|$)`, 'i'),
+                        // 模式2：标签：内容（单行，包括空格）
+                        new RegExp(`${label}[：:]+\\s*([^\\n]+?)\\s*$`, 'gmi'),
+                        // 模式3：标签：内容（更宽松，匹配到任何非【】字符）
+                        new RegExp(`${label}[：:]\\s*([^【]*?)(?=\\s*(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]|\\s*$)`, 'i')
                     ];
                     
                     for (const pattern of patterns) {
                         const match = mindContent.match(pattern);
                         if (match && match[1]) {
                             value = match[1].trim();
+                            // 移除多余的标点和标记
+                            value = value.replace(/^[：:]/, '').trim();
                             // 如果找到了有效值，就停止寻找
-                            if (value.length > 0) {
+                            if (value && value.length > 0) {
                                 break;
                             }
                         }
@@ -6574,34 +6601,42 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 }
                 
                 if (value && value.length > 0) {
-                    // 清理值：移除可能的多余标记和换行
-                    value = value.replace(/【.*?】/g, '').replace(/\n/g, ' ').trim();
+                    // 清理值：移除可能的多余标记和换行，但保留有意义的内容
+                    value = value.replace(/【.*?】/g, '').replace(/\s+/g, ' ').trim();
+                    
+                    // 防止字段值过长被其他字段内容污染
+                    if (value.length > 500) {
+                        value = value.substring(0, 500);
+                    }
                     
                     // 特殊处理数值字段
                     if (fieldDef.key === 'affinity' || fieldDef.key === 'affinityChange') {
                         // 尝试提取数字
-                        const numberMatch = value.match(/(-?\\d+)/);
+                        const numberMatch = value.match(/(-?\d+)/);
                         if (numberMatch) {
                             mindState[fieldDef.key] = parseInt(numberMatch[1]);
                         } else {
                             mindState[fieldDef.key] = null;
                         }
                     } else {
-                        mindState[fieldDef.key] = value || null;
+                        // 确保文本字段不为空
+                        if (value.length > 0) {
+                            mindState[fieldDef.key] = value;
+                        }
                     }
                     
-                    console.log(`  ✓ ${fieldDef.key}:`, mindState[fieldDef.key]);
+                    console.log(`  ✓ ${fieldDef.key}: "${value.substring(0, 50)}${value.length > 50 ? '...' : ''}"`);
                 }
             }
             
             // 检查是否有有效的心声数据
             if (Object.keys(mindState).length === 0 || Object.values(mindState).every(v => !v)) {
-                console.log('⚠️ 心声数据解析失败，内容可能格式不正确');
-                console.log('解析的内容:', mindContent);
+                console.error('⚠️ 心声数据解析失败，内容可能格式不正确');
+                console.error('解析的内容:', mindContent);
                 return null;
             }
             
-            console.log('✅ 成功从主API响应中提取心声数据:', mindState);
+            console.log('✅ 成功从API响应中提取心声数据:', mindState);
             return mindState;
         }
 
@@ -6667,32 +6702,56 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         let currentApiCallRound = null;
 
         function appendAssistantMessage(convId, text) {
+            // ========== 【第0步】提取心声信息 - 必须在所有处理之前！==========
+            // 【关键】心声可能在最后的消息块之后，所以必须从完整的API响应中提取
+            console.log(`📝 appendAssistantMessage 被调用，text长度: ${text.length}`);
+            
+            const mindStateData = extractMindStateFromText(text);
+            
+            console.log(`📋 extractMindStateFromText 返回:`, mindStateData);
+            console.log(`📋 mindStateData类型:`, typeof mindStateData);
+            console.log(`📋 mindStateData是否为null:`, mindStateData === null);
+            console.log(`📋 mindStateData是否为undefined:`, mindStateData === undefined);
+            
+            if (mindStateData) {
+                console.log('✅ 心声从完整API响应中提取成功', mindStateData);
+            } else {
+                console.warn('⚠️ 完整API响应中未找到心声标记或心声为空');
+            }
+            
             // 首先检查是否包含思考过程格式
             const thinkingData = parseThinkingProcess(text);
             
+            console.log(`🔍 parseThinkingProcess 返回:`, thinkingData ? `有多条消息 (${thinkingData.messages?.length || 0}条)` : '单条消息');
+            
             if (thinkingData) {
                 // 存在思考过程，分批添加消息
-                appendMultipleAssistantMessages(convId, thinkingData);
+                console.log(`📤 调用 appendMultipleAssistantMessages，传入mindStateData:`, mindStateData);
+                appendMultipleAssistantMessages(convId, thinkingData, mindStateData);
             } else {
                 // 普通消息，按原有逻辑处理
-                appendSingleAssistantMessage(convId, text);
+                console.log(`📤 调用 appendSingleAssistantMessage，传入mindStateData:`, mindStateData);
+                appendSingleAssistantMessage(convId, text, mindStateData);
             }
         }
 
-        function appendSingleAssistantMessage(convId, text) {
-            // ========== 第一步：提取心声信息（新架构） ==========
-            const mindStateData = extractMindStateFromText(text);
+        function appendSingleAssistantMessage(convId, text, preExtractedMindData = null) {
+            // ========== 第一步：使用预提取的心声数据或重新提取 ==========
+            // 如果已经从 appendAssistantMessage 中提取过，则使用预提取的数据
+            let mindStateData = preExtractedMindData;
             
-            // 如果心声提取失败，输出诊断信息
             if (!mindStateData) {
-                console.warn('⚠️ 心声提取失败 - 可能的原因：');
-                console.warn('  1. AI没有在回复末尾添加【心声】标记');
-                console.warn('  2. 【心声】后面的格式不符合预期');
-                console.warn('  3. 心声被分割到多条[MSG]消息中');
-                console.warn('  API响应文本（前500字）:', text.substring(0, 500));
+                // 如果没有预提取的数据，则尝试重新提取（兼容直接调用的情况）
+                mindStateData = extractMindStateFromText(text);
             }
             
-            // ========== 第二步：清理AI回复（移除心声标记） ==========
+            if (mindStateData) {
+                console.log('✅ 心声提取成功（已有数据或重新提取）');
+            } else {
+                console.warn('⚠️ 心声未找到 - AI响应中可能没有【心声】标记');
+            }
+            
+            // ========== 第二步：清理AI回复（移除心声标记及其他内部标记） ==========
             // 首先应用强大的清理函数
             text = cleanAIResponse(text);
             
@@ -6796,32 +6855,45 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             // ========== 第六步：保存心声数据（如果有） ==========
             const conv = AppState.conversations.find(c => c.id === convId);
             const aiMsg = AppState.messages[convId][AppState.messages[convId].length - 1];
-            if (conv && mindStateData && Object.keys(mindStateData).length > 0) {
+            
+            console.log(`\n📊 心声保存检查 - convId: ${convId}`);
+            console.log(`   找到对话: ${conv ? '✅ 是' : '❌ 否'}`);
+            console.log(`   心声数据: ${mindStateData ? '✅ 有' : '❌ 无'}`);
+            
+            // 检查心声数据是否有效 - 至少需要有一个字段有值
+            const hasValidMindData = mindStateData && Object.values(mindStateData).some(v => v !== null && v !== undefined && v !== '');
+            console.log(`   有效心声: ${hasValidMindData ? '✅ 是' : '❌ 否'}`);
+            
+            if (conv && hasValidMindData) {
                 if (!conv.mindStates) {
                     conv.mindStates = [];
                 }
                 // 添加时间戳和消息ID
                 mindStateData.timestamp = new Date().toISOString();
                 mindStateData.messageId = aiMsg.id;
+                mindStateData.failed = false;
                 conv.mindStates.push(mindStateData);
-                console.log('💾 心声数据已保存到会话:', convId);
-            } else if (!mindStateData) {
-                // 心声提取失败 - 创建一个占位符或空记录
-                if (!conv) {
-                    // 会话不存在，无法保存
-                    console.warn('❌ 无法保存心声 - 会话未找到');
-                } else {
+                console.log(`✅ 心声数据已成功保存！`);
+                console.log(`   保存位置: AppState.conversations[${convId}].mindStates`);
+                console.log(`   当前mindStates长度: ${conv.mindStates.length}`);
+                console.log(`   数据内容:`, mindStateData);
+            } else if (!mindStateData || !hasValidMindData) {
+                // 心声提取失败或为空 - 创建一个失败记录
+                if (conv) {
                     if (!conv.mindStates) {
                         conv.mindStates = [];
                     }
                     // 添加一个标记，说明这一条消息的心声需要生成
                     conv.mindStates.push({
                         timestamp: new Date().toISOString(),
-                        messageId: aiMsg.id,
+                        messageId: aiMsg ? aiMsg.id : '',
                         failed: true,  // 标记为失败
-                        reason: '自动提取失败，请检查API回复格式'
+                        reason: !mindStateData ? '【心声】标记未找到，请检查API回复' : '心声数据为空，请确保AI返回了完整的心声信息',
+                        failedReason: !mindStateData ? 'NO_MINDSTATE_MARKER' : 'EMPTY_MINDSTATE_DATA'
                     });
-                    console.log('⚠️ 已记录心声提取失败');
+                    console.log(`⚠️ 已记录心声提取失败:`, !mindStateData ? '【心声】标记未找到' : '心声数据为空');
+                } else {
+                    console.warn('❌ 无法保存心声 - 会话未找到');
                 }
             }
             
@@ -6843,7 +6915,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             triggerNotificationIfLeftChat(convId);
         }
 
-        function appendMultipleAssistantMessages(convId, thinkingData) {
+        function appendMultipleAssistantMessages(convId, thinkingData, mindStateData = null) {
             // 处理多条消息的情况，按延迟依次添加
             let currentDelay = 0;
             const messages = thinkingData.messages || [];
@@ -6872,8 +6944,6 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                         content = content.replace(emojiRegex, '').trim();
                     }
                     
-                    // 【新架构】心声已在 appendSingleAssistantMessage 中从主API响应自动提取
-                    
                     content = cleanAIResponse(content);
                     
                     if (!content) return;
@@ -6885,7 +6955,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                         content: content,
                         emojiUrl: emojiUrl,
                         isEmoji: emojiUrl ? true : false,
-                        time: new Date().toISOString()
+                        time: new Date().toISOString(),
+                        apiCallRound: currentApiCallRound  // 添加API调用回合标记，确保删除时能识别
                     };
                     
                     if (!AppState.messages[convId]) {
@@ -6905,8 +6976,40 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                     if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
                     renderConversations();
                     
-                    // 只在最后一条消息后触发通知
+                    // 【关键】只在最后一条消息后才保存心声数据和触发通知
                     if (index === messages.length - 1) {
+                        console.log(`\n✅ 处理多消息的最后一条，开始保存心声数据...`);
+                        console.log(`   conv 存在: ${conv ? '✅ 是' : '❌ 否'}`);
+                        console.log(`   mindStateData 存在: ${mindStateData ? '✅ 是' : '❌ 否'}`);
+                        console.log(`   mindStateData 内容:`, mindStateData);
+                        
+                        // 保存心声数据（如果有）
+                        if (mindStateData && conv) {
+                            if (!conv.mindStates) {
+                                conv.mindStates = [];
+                            }
+                            // 检查是否有有效的心声数据
+                            const hasValidMindData = Object.values(mindStateData).some(v => v !== null && v !== undefined && v !== '');
+                            
+                            console.log(`   hasValidMindData: ${hasValidMindData}`);
+                            console.log(`   Object.values(mindStateData):`, Object.values(mindStateData));
+                            
+                            if (hasValidMindData) {
+                                mindStateData.timestamp = new Date().toISOString();
+                                mindStateData.messageId = aiMsg.id;
+                                mindStateData.failed = false;
+                                conv.mindStates.push(mindStateData);
+                                console.log(`✅ 心声数据已保存到多消息会话: ${convId}`);
+                                console.log(`   保存的数据:`, mindStateData);
+                                console.log(`   当前mindStates长度:`, conv.mindStates.length);
+                            } else {
+                                console.warn(`⚠️ mindStateData 为空，不保存`);
+                            }
+                            saveToStorage();
+                        } else {
+                            console.warn(`⚠️ 无法保存心声 - mindStateData:${mindStateData}, conv:${conv}`);
+                        }
+                        
                         triggerNotificationIfLeftChat(convId);
                     }
                 }, currentDelay);
@@ -8709,6 +8812,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
 
         // ===== 角色心声系统 =====
         function openCharacterMindState(chat) {
+            console.log(`\n🎬 打开心声页面 - 角色: ${chat.name}, ID: ${chat.id}`);
+            
             let modal = document.getElementById('mind-state-modal');
             if (modal) modal.remove();
             
@@ -8728,6 +8833,11 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 chat.mindStates = [];
             }
             
+            console.log(`   mindStates长度: ${chat.mindStates.length}`);
+            if (chat.mindStates.length > 0) {
+                console.log(`   最后一条心声数据:`, chat.mindStates[chat.mindStates.length - 1]);
+            }
+            
             const mindItems = [
                 { key: 'affinity', label: '好感度', format: 'affinity' },
                 { key: 'outfit', label: '穿搭' },
@@ -8741,6 +8851,21 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             const currentState = chat.mindStates[chat.mindStates.length - 1] || {};
             const isFailedState = currentState.failed;
             
+            // 【修复】检查是否有真实的心声数据（而不是仅有系统字段）
+            // 只要有以下任一字段有值，就认为有心声数据：affinity, outfit, mood, action, thought, badThought
+            const hasRealMindData = currentState.affinity !== undefined 
+                || currentState.outfit 
+                || currentState.mood 
+                || currentState.action 
+                || currentState.thought 
+                || currentState.badThought;
+            
+            const hasNoMindState = chat.mindStates.length === 0 || !hasRealMindData;
+            
+            console.log(`   isFailedState: ${isFailedState}`);
+            console.log(`   hasRealMindData: ${hasRealMindData}`);
+            console.log(`   hasNoMindState: ${hasNoMindState}`);
+            
             let content = `
                 <div class="emoji-mgmt-content" style="max-width:400px;background:#f5f5f5;display:flex;flex-direction:column;max-height:80vh;">
                     <div style="padding:16px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;background:#fff;flex-shrink:0;">
@@ -8748,32 +8873,38 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                         <button onclick="document.getElementById('mind-state-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
                     </div>
                     ${isFailedState ? `<div style="padding:12px;background:#fff3cd;border-bottom:1px solid #ffc107;color:#856404;font-size:12px;">⚠️ 心声提取失败：请确保API已配置正确，且AI在回复末尾添加了完整的【心声】标记。</div>` : ''}
-                    
-                    <div style="padding:16px;background:#fff;margin-bottom:0;flex:1;overflow-y:auto;overflow-x:hidden;">
             `;
             
-            mindItems.forEach(item => {
-                // 不使用默认值"暂无"，直接显示空或已生成的值
-                let value = currentState[item.key] !== undefined ? currentState[item.key] : null;
-                let displayValue = value;
+            if (hasNoMindState) {
+                content += `<div style="padding:20px;background:#fff;margin-bottom:0;flex:1;overflow-y:auto;overflow-x:hidden;display:flex;align-items:center;justify-content:center;text-align:center;"><div style="color:#999;"><div style="font-size:32px;margin-bottom:12px;">💭</div><div style="font-size:14px;margin-bottom:8px;">暂无心声数据</div><div style="font-size:12px;color:#bbb;">双击角色头像生成首条心声</div></div></div>`;
+            } else {
+                content += `<div style="padding:16px;background:#fff;margin-bottom:0;flex:1;overflow-y:auto;overflow-x:hidden;">`;
                 
-                // 检查是否有失败标记
-                if (currentState.failed) {
-                    displayValue = '⚠️ ' + (currentState.reason || '自动提取失败，请检查API回复格式');
-                }
+                // 【优化】先单独处理好感度，确保它总是第一个显示
+                const affinityItem = mindItems.find(item => item.key === 'affinity');
+                const otherItems = mindItems.filter(item => item.key !== 'affinity');
                 
-                // 好感度特殊处理（移到最前面，并显示变化和原因）
-                if (item.key === 'affinity' && typeof value === 'number') {
-                    const affinityColor = value >= 70 ? '#4CAF50' : (value >= 40 ? '#FFC107' : '#F44336');
+                console.log(`   🎨 开始渲染心声内容...`);
+                console.log(`   affinity字段在currentState中:`, Object.keys(currentState).includes('affinity'));
+                console.log(`   affinity值:`, currentState.affinity);
+                console.log(`   affinity类型:`, typeof currentState.affinity);
+                
+                // 先渲染好感度（如果有）
+                const affinityValue = currentState[affinityItem.key] !== undefined ? currentState[affinityItem.key] : null;
+                console.log(`   ✓ 最终affinityValue:`, affinityValue, `(类型: ${typeof affinityValue})`);
+                
+                if (affinityValue !== null && typeof affinityValue === 'number') {
+                    console.log(`   ✅ 好感度存在，开始渲染...`);
+                    const affinityColor = affinityValue >= 70 ? '#4CAF50' : (affinityValue >= 40 ? '#FFC107' : '#F44336');
                     const change = currentState.affinityChange || 0;
                     const changeDisplay = change > 0 ? `+${change}` : change;
                     const reason = currentState.affinityReason || '';
                     
                     const affinityBar = `
                         <div style="width:100%;height:8px;background:#e0e0e0;border-radius:4px;margin-top:4px;overflow:hidden;">
-                            <div style="width:${value}%;height:100%;background:${affinityColor};transition:width 0.3s;"></div>
+                            <div style="width:${affinityValue}%;height:100%;background:${affinityColor};transition:width 0.3s;"></div>
                         </div>
-                        <div style="font-size:12px;color:${affinityColor};margin-top:4px;font-weight:bold;">${value}/100</div>
+                        <div style="font-size:12px;color:${affinityColor};margin-top:4px;font-weight:bold;">${affinityValue}/100</div>
                     `;
                     
                     let changeReasonHtml = '';
@@ -8784,36 +8915,60 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                             changeReasonHtml += `<div style="color:${changeColor};font-weight:bold;">变化：${changeDisplay}</div>`;
                         }
                         if (reason) {
-                            changeReasonHtml += `<div style="color:#666;margin-top:4px;">原因：${escapeHtml(reason)}</div>`;
+                            changeReasonHtml += `<div style="color:#666;margin-top:4px;">原因：${escapeHtml(String(reason))}</div>`;
                         }
                         changeReasonHtml += `</div>`;
                     }
                     
                     content += `
                         <div style="margin-bottom:12px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid ${affinityColor};">
-                            <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:4px;">${item.label}</div>
+                            <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:4px;display:flex;align-items:center;">
+                                <span>好感度</span>
+                                <span style="margin-left:auto;font-size:11px;background:${affinityColor};color:#fff;padding:2px 6px;border-radius:3px;font-weight:bold;">${affinityValue}</span>
+                            </div>
                             ${affinityBar}
                             ${changeReasonHtml}
                         </div>
                     `;
-                    return;
+                } else {
+                    console.log(`   ⚠️ 好感度值为null或不是数字:`, affinityValue);
                 }
                 
-                // 检查是否为失败状态
-                const isFailedState = currentState.failed && item.key !== 'affinity';
-                const itemColor = isFailedState ? '#ff9800' : '#333';
+                // 显示失败提示（如果有）
+                if (currentState.failed) {
+                    content += `
+                        <div style="margin-bottom:12px;padding:12px;background:#fff3cd;border-radius:4px;border-left:3px solid #ff9800;">
+                            <div style="font-size:13px;color:#ff9800;word-break:break-all;">⚠️ ${currentState.reason || '心声数据提取失败'}</div>
+                        </div>
+                    `;
+                }
                 
-                content += `
-                    <div style="margin-bottom:12px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid ${itemColor};">
-                        <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:4px;">${item.label}</div>
-                        <div style="font-size:13px;color:${displayValue === null || isFailedState ? '#ff9800' : '#666'};word-break:break-all;">${displayValue === null ? '尚未生成' : escapeHtml(String(displayValue))}</div>
-                    </div>
-                `;
-            });
+                // 再渲染其他字段
+                otherItems.forEach(item => {
+                    let value = currentState[item.key] !== undefined ? currentState[item.key] : null;
+                    let displayValue = value;
+                    
+                    // 只显示非空的字段
+                    if (value === null || value === undefined || value === '') {
+                        return;
+                    }
+                    
+                    // 检查字段值是否被污染（包含其他标签的内容）
+                    const hasOtherLabels = /穿搭|心情|动作|心声|坏心思|好感度/.test(String(value));
+                    const itemColor = hasOtherLabels ? '#ff9800' : '#333';
+                    
+                    content += `
+                        <div style="margin-bottom:12px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid ${itemColor};">
+                            <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:4px;">${item.label}</div>
+                            <div style="font-size:13px;color:${hasOtherLabels ? '#ff9800' : '#666'};word-break:break-all;">${escapeHtml(String(displayValue))}</div>
+                        </div>
+                    `;
+                });
+                
+                content += `</div>`;
+            }
             
             content += `
-                    </div>
-                    
                     <div style="padding:12px;background:#fff;border-top:1px solid #ddd;display:flex;gap:8px;flex-shrink:0;">
                         <button onclick="showCharacterMindHistory('${chat.id}');" style="flex:1;padding:10px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-size:13px;">历史心声</button>
                         <button onclick="document.getElementById('mind-state-modal').remove();" style="flex:1;padding:10px;border:none;background:#333;color:#fff;border-radius:4px;cursor:pointer;font-size:13px;">关闭</button>
