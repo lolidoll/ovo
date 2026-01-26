@@ -2521,9 +2521,6 @@
                 if (isSelected) {
                     className += ' selected';
                 }
-                bubble.className = className;
-                bubble.dataset.msgId = msg.id;
-                bubble.dataset.msgIndex = index;
                 
                 // 判断是否应该隐藏头像（连续同侧消息只显示第一个头像）
                 let shouldHideAvatar = false;
@@ -2535,6 +2532,15 @@
                         shouldHideAvatar = (currentSide === prevSide);
                     }
                 }
+                
+                // 如果需要隐藏头像，添加hide-avatar class到bubble
+                if (shouldHideAvatar) {
+                    className += ' hide-avatar';
+                }
+                
+                bubble.className = className;
+                bubble.dataset.msgId = msg.id;
+                bubble.dataset.msgIndex = index;
                 
                 let avatarContent;
                 if (msg.type === 'sent') {

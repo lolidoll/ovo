@@ -1726,7 +1726,16 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 }
 
 .chat-avatar.hidden {
-    visibility: hidden;
+    display: none;
+}
+
+/* 连续消息隐藏头像后，用margin保持气泡对齐 */
+.chat-bubble.received.hide-avatar {
+    margin-left: 44px;
+}
+
+.chat-bubble.sent.hide-avatar {
+    margin-right: 44px;
 }
 
 .chat-avatar img {
