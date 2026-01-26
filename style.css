@@ -1778,34 +1778,6 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     flex-shrink: 0;
 }
 
-.chat-avatar.hidden {
-    display: none;
-}
-
-/* 连续消息隐藏头像后，用margin保持气泡对齐 */
-.chat-bubble.received.hide-avatar {
-    margin-left: 43px;
-}
-
-.chat-bubble.sent.hide-avatar {
-    margin-right: 43px;
-}
-
-/* 特殊消息类型（图片、表情包、地理位置、转发朋友圈）隐藏头像时的对齐 */
-.chat-bubble.emoji-message.received.hide-avatar,
-.chat-bubble.image-message.received.hide-avatar,
-.chat-bubble.location-message.received.hide-avatar,
-.chat-bubble.forward-moment-message.received.hide-avatar {
-    margin-left: 43px !important;
-}
-
-.chat-bubble.emoji-message.sent.hide-avatar,
-.chat-bubble.image-message.sent.hide-avatar,
-.chat-bubble.location-message.sent.hide-avatar,
-.chat-bubble.forward-moment-message.sent.hide-avatar {
-    margin-right: 43px !important;
-}
-
 .chat-avatar img {
     width: 100%;
     height: 100%;
