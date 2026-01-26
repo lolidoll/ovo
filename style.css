@@ -38,6 +38,7 @@
             stroke-linejoin: round;
         }
 
+
         /* 顶部导航栏 */
         .top-nav {
             height: 50px;
@@ -2873,9 +2874,6 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     white-space: pre-wrap;
     line-height: 1.5;
 }
-    justify-content: center;
-    transition: all 0.2s ease;
-}
 
 .transcript-close:hover {
     opacity: 1;
@@ -2886,26 +2884,8 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     display: none;
 }
 
-.transcript-copy {
-    display: none;
-}
 
-/* 语音条通知 */
-.voice-notification {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    padding: 12px 24px;
-    background: rgba(0, 0, 0, 0.8);
-    color: #ffffff;
-    border-radius: 6px;
-    font-size: 14px;
-    z-index: 999;
-    opacity: 0;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-}
+
 
 .voice-notification.show {
     opacity: 1;
