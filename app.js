@@ -856,10 +856,7 @@
             if (btnOffline) btnOffline.addEventListener('click', function() { showToast('线下功能尚未实现'); });
 
             const btnTakeout = document.getElementById('btn-takeout');
-            if (btnTakeout) btnTakeout.addEventListener('click', function() { showToast('点外卖功能尚未实现'); });
-
-            const btnTransfer = document.getElementById('btn-transfer');
-            if (btnTransfer) btnTransfer.addEventListener('click', function() { showToast('转账功能尚未实现'); });
+            if (btnTakeout) btnTakeout.addEventListener('click', function() { showToast('交易功能尚未实现'); });
 
             const btnListen = document.getElementById('btn-listen');
             if (btnListen) btnListen.addEventListener('click', function() { showToast('一起听功能尚未实现'); });
@@ -867,11 +864,44 @@
             const btnPhone = document.getElementById('btn-phone');
             if (btnPhone) btnPhone.addEventListener('click', function() { showToast('查手机功能尚未实现'); });
 
-            const btnFrog = document.getElementById('btn-frog');
-            if (btnFrog) btnFrog.addEventListener('click', function() { showToast('旅行青蛙功能尚未实现'); });
+            // 更多按钮
+            const btnMore = document.getElementById('btn-more');
+            const morePanel = document.getElementById('toolbar-more-panel');
+            if (btnMore && morePanel) {
+                btnMore.addEventListener('click', function() {
+                    const isShown = morePanel.classList.contains('show');
+                    if (isShown) {
+                        morePanel.classList.remove('show');
+                    } else {
+                        morePanel.classList.add('show');
+                    }
+                });
+            }
 
-            const btnAnonymous = document.getElementById('btn-anonymous');
-            if (btnAnonymous) btnAnonymous.addEventListener('click', function() { showToast('匿名提问功能尚未实现'); });
+            // 更多面板中的功能按钮
+            const moreDiary = document.getElementById('more-diary');
+            if (moreDiary) moreDiary.addEventListener('click', function() { 
+                showToast('日记功能尚未实现'); 
+                if (morePanel) morePanel.classList.remove('show');
+            });
+
+            const moreMemo = document.getElementById('more-memo');
+            if (moreMemo) moreMemo.addEventListener('click', function() { 
+                showToast('备忘录功能尚未实现'); 
+                if (morePanel) morePanel.classList.remove('show');
+            });
+
+            const btnFrog = document.getElementById('more-frog');
+            if (btnFrog) btnFrog.addEventListener('click', function() { 
+                showToast('旅行青蛙功能尚未实现'); 
+                if (morePanel) morePanel.classList.remove('show');
+            });
+
+            const btnAnonymous = document.getElementById('more-anonymous');
+            if (btnAnonymous) btnAnonymous.addEventListener('click', function() { 
+                showToast('匿名提问功能尚未实现'); 
+                if (morePanel) morePanel.classList.remove('show');
+            });
 
             // 心声按钮
             const mindBtn = document.getElementById('chat-mind-btn');
@@ -969,6 +999,8 @@
                 const btnEmoji = document.getElementById('btn-emoji');
                 const inputArea = document.querySelector('.chat-input-area');
                 const toolbar = document.getElementById('chat-toolbar');
+                const morePanel = document.getElementById('toolbar-more-panel');
+                const btnMore = document.getElementById('btn-more');
                 
                 if (emojiLib && emojiLib.classList.contains('show')) {
                     if (!e.target.closest('#emoji-library') && !e.target.closest('#btn-emoji')) {
@@ -977,6 +1009,13 @@
                         // 恢复输入框和工具栏到初始位置
                         if (inputArea) inputArea.style.transform = 'translateY(0)';
                         if (toolbar) toolbar.style.transform = 'translateY(0)';
+                    }
+                }
+                
+                // 点击更多面板外部关闭
+                if (morePanel && morePanel.classList.contains('show')) {
+                    if (!e.target.closest('#toolbar-more-panel') && !e.target.closest('#btn-more')) {
+                        morePanel.classList.remove('show');
                     }
                 }
             });
@@ -4320,7 +4359,7 @@
             // 清空输入
             input.value = '';
             input.style.height = 'auto';
-            input.placeholder = '输入消息...';
+            input.placeholder = '输入消息...双击任意头像触发角色回复';
             
             // 移除引用显示栏（旧版本）和隐藏新版引用栏
             const replyBar = document.getElementById('reply-bar');
