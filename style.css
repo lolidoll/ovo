@@ -920,7 +920,7 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     position:relative;
     display:flex;
     gap:0px;
-    padding:2px 0px 2px 0px;
+    padding:0px;
     align-items:center;
     background:#fff;
     border-bottom:none;
@@ -931,15 +931,17 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
     scrollbar-width: none;
+    height:auto;
+    min-height:auto;
 }
 
 .chat-toolbar::-webkit-scrollbar {
     display: none;
 }
 .tb-btn {
-    width:12px;
-    height:12px;
-    border-radius:1px;
+    width:10px;
+    height:10px;
+    border-radius:0px;
     background:transparent;
     border:none;
     display:flex;
@@ -948,15 +950,18 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     cursor:pointer;
     color:#999;
     padding:0px;
-    margin:0px;
+    margin:0px -1px;
     transition:all 0.2s ease;
     flex-shrink:0;
-    min-width:14px;
-    min-height:14px;
+    min-width:10px;
+    min-height:10px;
+    max-width:10px;
+    max-height:10px;
 }
 .tb-btn svg {
-    width:12px !important;
-    height:12px !important;
+    width:10px !important;
+    height:10px !important;
+    display:block;
 }
 .tb-btn:active { 
     background:#f5f5f5;
