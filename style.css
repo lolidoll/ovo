@@ -919,8 +919,8 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 .chat-toolbar {
     position:relative;
     display:flex;
-    gap:2px;
-    padding:4px 2px 4px 2px;
+    gap:0px;
+    padding:4px 0px 4px 0px;
     align-items:center;
     background:#fff;
     border-bottom:1px solid #f0f0f0;
@@ -947,11 +947,11 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     justify-content:center;
     cursor:pointer;
     color:#999;
-    padding:2px;
+    padding:1px;
     transition:all 0.2s ease;
     flex-shrink:0;
-    min-width:20px;
-    min-height:20px;
+    min-width:18px;
+    min-height:18px;
 }
 .tb-btn svg {
     width:14px !important;
@@ -1740,7 +1740,7 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 
 .chat-bubble {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     max-width: 90%;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -1783,11 +1783,11 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 
 /* 连续消息隐藏头像后，用margin保持气泡对齐 */
 .chat-bubble.received.hide-avatar {
-    margin-left: 44px;
+    margin-left: 43px;
 }
 
 .chat-bubble.sent.hide-avatar {
-    margin-right: 44px;
+    margin-right: 43px;
 }
 
 .chat-avatar img {
@@ -1816,7 +1816,7 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     color: #2d2d2d;
 }
 .chat-bubble.sent .chat-text {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.5);
     color: #2d2d2d;
     box-shadow: 0 0 0 0.5px #f8f8f8;
 }

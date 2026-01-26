@@ -868,7 +868,9 @@
             const btnMore = document.getElementById('btn-more');
             const morePanel = document.getElementById('toolbar-more-panel');
             if (btnMore && morePanel) {
-                btnMore.addEventListener('click', function() {
+                btnMore.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const isShown = morePanel.classList.contains('show');
                     if (isShown) {
                         morePanel.classList.remove('show');
