@@ -67,6 +67,32 @@
                         </svg>
                         <span>使用 Discord 登录</span>
                     </button>
+                    
+                    <div class="auth-divider">
+                        <span>或</span>
+                    </div>
+                    
+                    <button class="auth-btn auth-btn-admin" id="auth-admin-btn">
+                        <svg class="auth-btn-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="currentColor" d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M17.13,17C15.92,18.85 14.11,20.24 12,20.92C9.89,20.24 8.08,18.85 6.87,17C6.53,16.5 6.24,16 6,15.47C6,13.82 8.71,12.47 12,12.47C15.29,12.47 18,13.79 18,15.47C17.76,16 17.47,16.5 17.13,17Z"/>
+                        </svg>
+                        <span>管理员登录</span>
+                    </button>
+                    
+                    <!-- 管理员登录表单 -->
+                    <div class="auth-admin-form" id="auth-admin-form" style="display: none;">
+                        <input type="password" 
+                               class="auth-admin-input" 
+                               id="auth-admin-key" 
+                               placeholder="请输入管理员密钥"
+                               autocomplete="off">
+                        <div class="auth-admin-btns">
+                            <button class="auth-btn-small auth-btn-submit" id="auth-admin-submit">确认</button>
+                            <button class="auth-btn-small auth-btn-cancel" id="auth-admin-cancel">取消</button>
+                        </div>
+                        <p class="auth-error" id="auth-admin-error" style="display: none;"></p>
+                    </div>
+                    
                     <p class="auth-tips">登录后将在此设备保持登录状态</p>
                 </div>
                 

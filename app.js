@@ -2574,11 +2574,6 @@
                     }
                 }
                 
-                // 如果需要隐藏头像，添加hide-avatar class到bubble
-                if (shouldHideAvatar) {
-                    className += ' hide-avatar';
-                }
-                
                 bubble.className = className;
                 bubble.dataset.msgId = msg.id;
                 bubble.dataset.msgIndex = index;
@@ -2679,9 +2674,9 @@
                 if (msg.type === 'voice') {
                     // 语音条消息渲染
                     const duration = msg.duration || 1;
-                    const avatarClass = shouldHideAvatar ? 'chat-avatar hidden' : 'chat-avatar';
+                    const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                     bubble.innerHTML = `
-                        <div class="${avatarClass}">${avatarContent}</div>
+                        <div class="chat-avatar">${avatarContent_inner}</div>
                         <div class="voice-bubble">
                             <div class="voice-waveform">
                                 <span class="wave"></span>
@@ -2698,9 +2693,9 @@
                     const locationAddress = msg.locationAddress ? escapeHtml(msg.locationAddress) : '';
                     const locationDistance = msg.locationDistance || 5;
                     const senderName = msg.type === 'sent' ? AppState.user.name : AppState.currentChat.name;
-                    const avatarClass = shouldHideAvatar ? 'chat-avatar hidden' : 'chat-avatar';
+                    const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                     bubble.innerHTML = `
-                        <div class="${avatarClass}">${avatarContent}</div>
+                        <div class="chat-avatar">${avatarContent_inner}</div>
                         <div class="location-bubble" style="cursor:pointer;">
                             <div class="location-map-preview"></div>
                             <div class="location-info">
@@ -2738,10 +2733,10 @@
                     const momentAuthor = escapeHtml(forwarded.author || '用户');
                     const momentContent = escapeHtml(forwarded.content || '').trim().split('\n').map(line => line.trim()).join('\n');
                     const momentDate = forwarded.timestamp ? new Date(forwarded.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit' }) : '';
-                    const avatarClass = shouldHideAvatar ? 'chat-avatar hidden' : 'chat-avatar';
+                    const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                     
                     bubble.innerHTML = `
-                        <div class="${avatarClass}">${avatarContent}</div>
+                        <div class="chat-avatar">${avatarContent_inner}</div>
                         <div style="
                             width: 240px;
                         ">
@@ -2824,9 +2819,9 @@
                     bubble.classList.add('forward-moment-message');
                 } else if (msg.isImage && msg.imageData) {
                     // 图片消息：限制大小为100px（与表情包相同），保持纵横比，对齐头像
-                    const avatarClass = shouldHideAvatar ? 'chat-avatar hidden' : 'chat-avatar';
+                    const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                     bubble.innerHTML = `
-                        <div class="${avatarClass}">${avatarContent}</div>
+                        <div class="chat-avatar">${avatarContent_inner}</div>
                         <img src="${msg.imageData}" alt="图片" style="max-width:100px;max-height:100px;width:auto;height:auto;border-radius:8px;display:block;">
                     `;
                     // 为图片消息添加特殊class
@@ -2835,16 +2830,17 @@
                     // 表情包消息：显示头像 + 100px表情包（统一处理AI和用户发送的表情包）
                     // emojiUrl是新格式，isEmoji标记的旧格式也需要支持
                     const emojiImageUrl = msg.emojiUrl || (msg.isEmoji && AppState.emojis.find(e => e.text === msg.content)?.url);
-                    const avatarClass = shouldHideAvatar ? 'chat-avatar hidden' : 'chat-avatar';
+                    const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                     if (emojiImageUrl) {
                         bubble.innerHTML = `
-                            <div class="${avatarClass}">${avatarContent}</div>
+                            <div class="chat-avatar">${avatarContent_inner}</div>
                             <img src="${emojiImageUrl}" alt="表情" style="max-width:100px;max-height:100px;width:auto;height:auto;border-radius:8px;display:block;">
                         `;
                     } else {
                         // 如果找不到表情包图片，显示文字
+                        const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                         bubble.innerHTML = `
-                            <div class="${avatarClass}">${avatarContent}</div>
+                            <div class="chat-avatar">${avatarContent_inner}</div>
                             ${textContent}
                         `;
                     }
@@ -2852,9 +2848,9 @@
                     bubble.classList.add('emoji-message');
                 } else {
                     // 其他消息（普通文本、表情+文字、有描述的图片等）
-                    const avatarClass = shouldHideAvatar ? 'chat-avatar hidden' : 'chat-avatar';
+                    const avatarContent_inner = shouldHideAvatar ? '' : avatarContent;
                     bubble.innerHTML = `
-                        <div class="${avatarClass}">${avatarContent}</div>
+                        <div class="chat-avatar">${avatarContent_inner}</div>
                         ${textContent}
                     `;
                 }

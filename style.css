@@ -1,4 +1,4 @@
-
+/* Updated: 2026-01-26 22:50 - Reduced bubble spacing to 1px */
         * {
             margin: 0;
             padding: 0;
@@ -1731,16 +1731,16 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 6px 8px;
+    padding: 3px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 1px;
     -webkit-overflow-scrolling: touch;
 }
 
 .chat-bubble {
     display: flex;
-    gap: 3px;
+    gap: 1px;
     max-width: 90%;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -1750,10 +1750,10 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     align-items: center;
 }
 .chat-bubble.received {
-    align-self: flex-start;
+    /* 左侧消息自然靠左 */
 }
 .chat-bubble.sent {
-    align-self: flex-end;
+    margin-left: auto;
     flex-direction: row-reverse;
 }
 
@@ -1777,18 +1777,16 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     flex-shrink: 0;
 }
 
+/* 空头像不显示背景 */
+.chat-avatar:empty {
+    background-color: transparent;
+}
+
 .chat-avatar.hidden {
-    display: none;
+    visibility: hidden;
 }
 
-/* 连续消息隐藏头像后，用margin保持气泡对齐 */
-.chat-bubble.received.hide-avatar {
-    margin-left: 43px;
-}
 
-.chat-bubble.sent.hide-avatar {
-    margin-right: 43px;
-}
 
 .chat-avatar img {
     width: 100%;
@@ -1825,31 +1823,28 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
         .chat-bubble:has(> img) {
             background: transparent;
             padding: 0;
-            gap: 8px;
+            gap: 3px;
         }
         
         /* 表情包消息样式 - 隐藏气泡背景但保留头像和图片 */
         .chat-bubble.emoji-message {
             background: transparent !important;
             padding: 0 !important;
-            gap: 6px !important;
-            margin: 0 !important;
+            gap: 3px !important;
         }
         
         /* 图片消息样式 - 隐藏气泡背景但保留头像和图片 */
         .chat-bubble.image-message {
             background: transparent !important;
             padding: 0 !important;
-            gap: 6px !important;
-            margin: 0 !important;
+            gap: 3px !important;
         }
         
         /* 地理位置消息样式 - 隐藏气泡背景但保留头像 */
         .chat-bubble.location-message {
             background: transparent !important;
             padding: 0 !important;
-            gap: 8px !important;
-            margin: 0 !important;
+            gap: 3px !important;
             align-items: flex-start !important;
         }
         

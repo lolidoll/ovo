@@ -7,6 +7,12 @@ class AuthModalManager {
     constructor() {
         this.modal = document.getElementById('auth-modal-overlay');
         this.discordBtn = document.getElementById('auth-discord-btn');
+        this.adminBtn = document.getElementById('auth-admin-btn');
+        this.adminForm = document.getElementById('auth-admin-form');
+        this.adminKeyInput = document.getElementById('auth-admin-key');
+        this.adminSubmitBtn = document.getElementById('auth-admin-submit');
+        this.adminCancelBtn = document.getElementById('auth-admin-cancel');
+        this.adminError = document.getElementById('auth-admin-error');
         this.loadingContainer = document.getElementById('auth-loading');
         this.init();
     }
@@ -31,6 +37,36 @@ class AuthModalManager {
             this.discordBtn.addEventListener('click', () => {
                 this.showLoading();
                 authManager.initiateLogin();
+            });
+        }
+        
+        // 管理员登录按钮
+        if (this.adminBtn) {
+            this.adminBtn.addEventListener('click', () => {
+                this.showAdminForm();
+            });
+        }
+        
+        // 管理员表单提交
+        if (this.adminSubmitBtn) {
+            this.adminSubmitBtn.addEventListener('click', () => {
+                this.handleAdminLogin();
+            });
+        }
+        
+        // 管理员表单取消
+        if (this.adminCancelBtn) {
+            this.adminCancelBtn.addEventListener('click', () => {
+                this.hideAdminForm();
+            });
+        }
+        
+        // 回车键提交
+        if (this.adminKeyInput) {
+            this.adminKeyInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleAdminLogin();
+                }
             });
         }
     }
@@ -75,6 +111,84 @@ class AuthModalManager {
         }
         if (this.loadingContainer) {
             this.loadingContainer.style.display = 'none';
+        }
+    }
+    
+    showAdminForm() {
+        // 隐藏登录按钮
+        if (this.discordBtn) {
+            this.discordBtn.style.display = 'none';
+        }
+        if (this.adminBtn) {
+            this.adminBtn.style.display = 'none';
+        }
+        
+        // 显示表单
+        if (this.adminForm) {
+            this.adminForm.style.display = 'block';
+        }
+        
+        // 清空输入和错误
+        if (this.adminKeyInput) {
+            this.adminKeyInput.value = '';
+            this.adminKeyInput.focus();
+        }
+        if (this.adminError) {
+            this.adminError.style.display = 'none';
+        }
+    }
+    
+    hideAdminForm() {
+        // 显示登录按钮
+        if (this.discordBtn) {
+            this.discordBtn.style.display = 'flex';
+        }
+        if (this.adminBtn) {
+            this.adminBtn.style.display = 'flex';
+        }
+        
+        // 隐藏表单
+        if (this.adminForm) {
+            this.adminForm.style.display = 'none';
+        }
+        
+        // 清空输入和错误
+        if (this.adminKeyInput) {
+            this.adminKeyInput.value = '';
+        }
+        if (this.adminError) {
+            this.adminError.style.display = 'none';
+        }
+    }
+    
+    handleAdminLogin() {
+        const key = this.adminKeyInput ? this.adminKeyInput.value.trim() : '';
+        
+        if (!key) {
+            this.showAdminError('请输入管理员密钥');
+            return;
+        }
+        
+        // 调用登录验证
+        const result = authManager.adminLogin(key);
+        
+        if (result.success) {
+            // 登录成功
+            this.hide();
+            // 可以选择刷新页面或者触发登录成功事件
+            if (typeof location !== 'undefined') {
+                location.reload();
+            }
+        } else {
+            // 显示错误
+            this.showAdminError(result.message);
+        }
+    }
+    
+    showAdminError(message) {
+        if (this.adminError) {
+            this.adminError.textContent = message;
+            this.adminError.style.display = 'block';
         }
     }
 }

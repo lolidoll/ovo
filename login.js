@@ -9,7 +9,8 @@ class DiscordAuthManager {
             REDIRECT_URI: 'https://lolidoll.github.io/ovo/index.html',
             AUTHORIZE_URL: 'https://discord.com/api/oauth2/authorize',
             TOKEN_ENDPOINT: 'https://ovo-psi.vercel.app/api/callback',
-            SCOPES: ['identify', 'email']
+            SCOPES: ['identify', 'email'],
+            ADMIN_KEY: 'poiuytrewq0123456789' // 管理员密钥
         };
         
         // 本地存储键
@@ -17,7 +18,9 @@ class DiscordAuthManager {
             TOKEN: 'discord_auth_token',
             USER: 'discord_user_data',
             EXPIRY: 'discord_token_expiry',
-            STATE: 'oauth_state'
+            STATE: 'oauth_state',
+            ADMIN_AUTH: 'admin_authenticated', // 管理员认证状态
+            ADMIN_USER: 'admin_user_data' // 管理员用户数据
         };
         
         this.init();
@@ -239,6 +242,13 @@ class DiscordAuthManager {
     
     // 检查用户是否已登录
     isUserLoggedIn() {
+        // 检查管理员登录
+        const adminAuth = localStorage.getItem(this.STORAGE_KEYS.ADMIN_AUTH);
+        if (adminAuth === 'true') {
+            return true;
+        }
+        
+        // 检查Discord登录
         const token = localStorage.getItem(this.STORAGE_KEYS.TOKEN);
         const expiry = localStorage.getItem(this.STORAGE_KEYS.EXPIRY);
         
@@ -257,6 +267,14 @@ class DiscordAuthManager {
     
     // 获取当前用户数据
     getCurrentUser() {
+        // 优先检查管理员登录
+        const adminAuth = localStorage.getItem(this.STORAGE_KEYS.ADMIN_AUTH);
+        if (adminAuth === 'true') {
+            const adminUser = localStorage.getItem(this.STORAGE_KEYS.ADMIN_USER);
+            return adminUser ? JSON.parse(adminUser) : null;
+        }
+        
+        // 返回Discord用户数据
         const userData = localStorage.getItem(this.STORAGE_KEYS.USER);
         return userData ? JSON.parse(userData) : null;
     }
@@ -272,6 +290,35 @@ class DiscordAuthManager {
         localStorage.removeItem(this.STORAGE_KEYS.USER);
         localStorage.removeItem(this.STORAGE_KEYS.EXPIRY);
         localStorage.removeItem(this.STORAGE_KEYS.STATE);
+        localStorage.removeItem(this.STORAGE_KEYS.ADMIN_AUTH);
+        localStorage.removeItem(this.STORAGE_KEYS.ADMIN_USER);
+    }
+    
+    // 管理员密钥登录
+    adminLogin(key) {
+        if (key === this.CONFIG.ADMIN_KEY) {
+            // 创建管理员用户数据
+            const adminUserData = {
+                id: 'admin_' + Date.now(),
+                username: '管理员',
+                discriminator: '0000',
+                avatar: null,
+                isAdmin: true,
+                loginTime: new Date().toISOString()
+            };
+            
+            localStorage.setItem(this.STORAGE_KEYS.ADMIN_AUTH, 'true');
+            localStorage.setItem(this.STORAGE_KEYS.ADMIN_USER, JSON.stringify(adminUserData));
+            
+            return { success: true, message: '管理员登录成功' };
+        } else {
+            return { success: false, message: '密钥错误，请重试' };
+        }
+    }
+    
+    // 检查是否为管理员
+    isAdmin() {
+        return localStorage.getItem(this.STORAGE_KEYS.ADMIN_AUTH) === 'true';
     }
     
     // 登出
