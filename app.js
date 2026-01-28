@@ -5779,11 +5779,14 @@
             let timeoutId = null;
 
             try {
+                const controller = new AbortController();
+                timeoutId = setTimeout(() => controller.abort(), 60000);
+                
                 const fetchOptions = {
                     method: 'POST',
                     headers: Object.assign({ 'Content-Type': 'application/json' }, apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}),
                     body: JSON.stringify(body),
-                    timeout: 60000
+                    signal: controller.signal
                 };
 
                 console.log('📤 发送API请求:', {
@@ -5800,131 +5803,126 @@
                     contentPreview: m.content.substring(0, 50) + (m.content.length > 50 ? '...' : '')
                 })));
 
-                const controller = new AbortController();
-                timeoutId = setTimeout(() => controller.abort(), 60000);
-                fetchOptions.signal = controller.signal;
-
                 const res = await fetch(endpoint, fetchOptions);
                 clearTimeout(timeoutId);
 
                 console.log('📥 API响应状态:', res.status, res.statusText);
 
-                // 检查在等待期间用户是否离开该对话
-                if (AppState.currentChat && AppState.currentChat.id === convId) {
-                    if (!res.ok) {
-                        lastError = `${res.status}: ${res.statusText}`;
-                        console.error(`❌ API 请求失败 [${res.status}]:`, endpoint);
+                // 🔧 修复：无论用户是否离开对话，都处理API响应
+                // 这样即使用户切换到其他页面，API调用也能正常完成并触发通知
+                if (!res.ok) {
+                    lastError = `${res.status}: ${res.statusText}`;
+                    console.error(`❌ API 请求失败 [${res.status}]:`, endpoint);
+                    
+                    // 尝试解析错误响应体
+                    try {
+                        const errorData = await res.text();
+                        if (errorData) {
+                            console.error('错误详情:', errorData);
+                        }
+                    } catch (e) {}
+                } else {
+                    let data;
+                    try {
+                        data = await res.json();
+                        console.log('✅ JSON解析成功，响应结构:', {
+                            hasChoices: !!data.choices,
+                            hasCandidates: !!data.candidates,
+                            keys: Object.keys(data).slice(0, 10)
+                        });
+                    } catch (parseErr) {
+                        lastError = '响应内容不是有效的JSON';
+                        console.error('❌ JSON 解析错误:', parseErr);
+                        console.error('响应文本:', await res.text());
+                    }
+
+                    if (data) {
+                        let assistantText = '';
                         
-                        // 尝试解析错误响应体
-                        try {
-                            const errorData = await res.text();
-                            if (errorData) {
-                                console.error('错误详情:', errorData);
+                        // 辅助函数：从嵌套对象中提取第一个非空字符串
+                        function extractFirstString(obj, maxDepth = 5) {
+                            if (typeof obj === 'string' && obj.trim()) return obj;
+                            if (maxDepth <= 0 || !obj || typeof obj !== 'object') return '';
+                            
+                            for (let key in obj) {
+                                if (typeof obj[key] === 'string' && obj[key].trim()) {
+                                    return obj[key];
+                                }
+                                if (typeof obj[key] === 'object') {
+                                    const nested = extractFirstString(obj[key], maxDepth - 1);
+                                    if (nested) return nested;
+                                }
                             }
-                        } catch (e) {}
-                    } else {
-                        let data;
-                        try {
-                            data = await res.json();
-                            console.log('✅ JSON解析成功，响应结构:', {
-                                hasChoices: !!data.choices,
-                                hasCandidates: !!data.candidates,
-                                keys: Object.keys(data).slice(0, 10)
-                            });
-                        } catch (parseErr) {
-                            lastError = '响应内容不是有效的JSON';
-                            console.error('❌ JSON 解析错误:', parseErr);
-                            console.error('响应文本:', await res.text());
+                            return '';
+                        }
+                            
+                        // 尝试多种可能的响应格式（按优先级排序）
+                        if (data.choices && Array.isArray(data.choices) && data.choices[0]) {
+                            const choice = data.choices[0];
+                            // OpenAI格式：message.content
+                            if (choice.message?.content) {
+                                assistantText = choice.message.content;
+                            }
+                            // Anthropic格式 (text字段)
+                            else if (choice.text) {
+                                assistantText = choice.text;
+                            }
+                            // 其他消息格式（可能是字符串或对象）
+                            else if (choice.message) {
+                                assistantText = typeof choice.message === 'string'
+                                    ? choice.message
+                                    : (choice.message.content || extractFirstString(choice.message));
+                            }
+                            // 尝试从整个choice对象中提取文本
+                            else {
+                                assistantText = extractFirstString(choice);
+                            }
+                        }
+                        // Google Gemini格式
+                        else if (data.candidates && Array.isArray(data.candidates) && data.candidates[0]) {
+                            const candidate = data.candidates[0];
+                            if (candidate.content?.parts?.[0]?.text) {
+                                assistantText = candidate.content.parts[0].text;
+                            } else {
+                                assistantText = extractFirstString(candidate);
+                            }
+                        }
+                        // 其他常见的一级字段
+                        else if (data.output && typeof data.output === 'string') {
+                            assistantText = data.output;
+                        }
+                        else if (data.result && typeof data.result === 'string') {
+                            assistantText = data.result;
+                        }
+                        else if (data.reply && typeof data.reply === 'string') {
+                            assistantText = data.reply;
+                        }
+                        else if (data.content && typeof data.content === 'string') {
+                            assistantText = data.content;
+                        }
+                        else if (data.text && typeof data.text === 'string') {
+                            assistantText = data.text;
+                        }
+                        else if (data.message && typeof data.message === 'string') {
+                            assistantText = data.message;
+                        }
+                        else if (data.response && typeof data.response === 'string') {
+                            assistantText = data.response;
+                        }
+                        // 最后的兜底方案：深度搜索第一个有效的字符串
+                        else {
+                            assistantText = extractFirstString(data);
                         }
 
-                        if (data) {
-                            let assistantText = '';
-                            
-                            // 辅助函数：从嵌套对象中提取第一个非空字符串
-                            function extractFirstString(obj, maxDepth = 5) {
-                                if (typeof obj === 'string' && obj.trim()) return obj;
-                                if (maxDepth <= 0 || !obj || typeof obj !== 'object') return '';
-                                
-                                for (let key in obj) {
-                                    if (typeof obj[key] === 'string' && obj[key].trim()) {
-                                        return obj[key];
-                                    }
-                                    if (typeof obj[key] === 'object') {
-                                        const nested = extractFirstString(obj[key], maxDepth - 1);
-                                        if (nested) return nested;
-                                    }
-                                }
-                                return '';
-                            }
-                            
-                            // 尝试多种可能的响应格式（按优先级排序）
-                            if (data.choices && Array.isArray(data.choices) && data.choices[0]) {
-                                const choice = data.choices[0];
-                                // OpenAI格式：message.content
-                                if (choice.message?.content) {
-                                    assistantText = choice.message.content;
-                                } 
-                                // Anthropic格式 (text字段)
-                                else if (choice.text) {
-                                    assistantText = choice.text;
-                                }
-                                // 其他消息格式（可能是字符串或对象）
-                                else if (choice.message) {
-                                    assistantText = typeof choice.message === 'string' 
-                                        ? choice.message 
-                                        : (choice.message.content || extractFirstString(choice.message));
-                                }
-                                // 尝试从整个choice对象中提取文本
-                                else {
-                                    assistantText = extractFirstString(choice);
-                                }
-                            } 
-                            // Google Gemini格式
-                            else if (data.candidates && Array.isArray(data.candidates) && data.candidates[0]) {
-                                const candidate = data.candidates[0];
-                                if (candidate.content?.parts?.[0]?.text) {
-                                    assistantText = candidate.content.parts[0].text;
-                                } else {
-                                    assistantText = extractFirstString(candidate);
-                                }
-                            }
-                            // 其他常见的一级字段
-                            else if (data.output && typeof data.output === 'string') {
-                                assistantText = data.output;
-                            }
-                            else if (data.result && typeof data.result === 'string') {
-                                assistantText = data.result;
-                            }
-                            else if (data.reply && typeof data.reply === 'string') {
-                                assistantText = data.reply;
-                            }
-                            else if (data.content && typeof data.content === 'string') {
-                                assistantText = data.content;
-                            }
-                            else if (data.text && typeof data.text === 'string') {
-                                assistantText = data.text;
-                            }
-                            else if (data.message && typeof data.message === 'string') {
-                                assistantText = data.message;
-                            }
-                            else if (data.response && typeof data.response === 'string') {
-                                assistantText = data.response;
-                            }
-                            // 最后的兜底方案：深度搜索第一个有效的字符串
-                            else {
-                                assistantText = extractFirstString(data);
-                            }
-
-                            if (assistantText && assistantText.trim()) {
-                                console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
-                                appendAssistantMessage(convId, assistantText);
-                                success = true;
-                            } else {
-                                lastError = '未在返回中找到文本回复';
-                                console.error('❌ 无法从API响应中提取文本。完整响应数据:');
-                                console.error(JSON.stringify(data, null, 2));
-                                console.error('响应keys:', Object.keys(data));
-                            }
+                        if (assistantText && assistantText.trim()) {
+                            console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
+                            appendAssistantMessage(convId, assistantText);
+                            success = true;
+                        } else {
+                            lastError = '未在返回中找到文本回复';
+                            console.error('❌ 无法从API响应中提取文本。完整响应数据:');
+                            console.error(JSON.stringify(data, null, 2));
+                            console.error('响应keys:', Object.keys(data));
                         }
                     }
                 }
@@ -5943,7 +5941,8 @@
                 }
             }
 
-            if (!success && AppState.currentChat && AppState.currentChat.id === convId) {
+            // 🔧 修复：无论用户是否在当前对话，都显示错误提示
+            if (!success) {
                 const errorMsg = lastError || '未知错误';
                 showToast(`API 请求失败: ${errorMsg}`);
                 
@@ -6037,24 +6036,37 @@
 
         // 获取表情包使用说明
         function getEmojiInstructions(conv) {
-            if (!conv.boundEmojiGroup) {
+            // 支持旧版单个绑定和新版多个绑定
+            const boundGroups = conv.boundEmojiGroups || (conv.boundEmojiGroup ? [conv.boundEmojiGroup] : []);
+            
+            if (!boundGroups || boundGroups.length === 0) {
                 return null;  // 如果没有绑定表情包，不添加指令
             }
             
-            const emojiGroup = AppState.emojiGroups.find(g => g.id === conv.boundEmojiGroup);
-            if (!emojiGroup) return null;
+            // 收集所有绑定分组中的表情包
+            let allEmojis = [];
+            let groupNames = [];
             
-            const emojisInGroup = AppState.emojis.filter(e => e.groupId === conv.boundEmojiGroup);
-            if (emojisInGroup.length === 0) return null;
+            boundGroups.forEach(groupId => {
+                const emojiGroup = AppState.emojiGroups.find(g => g.id === groupId);
+                if (emojiGroup) {
+                    groupNames.push(emojiGroup.name);
+                    const emojisInGroup = AppState.emojis.filter(e => e.groupId === groupId);
+                    allEmojis = allEmojis.concat(emojisInGroup);
+                }
+            });
+            
+            if (allEmojis.length === 0) return null;
             
             // 构建表情包列表
-            const emojiList = emojisInGroup.map(e => `"${e.text}"`).join('、');
+            const emojiList = allEmojis.map(e => `"${e.text}"`).join('、');
+            const groupNameStr = groupNames.length > 1 ? groupNames.join('、') : groupNames[0];
             
             return `【表情包系统】你可以在回复中发送表情包，但不是每次都要发。根据上下文内容判断是否合适发送表情包，发送的概率应该是有选择性的。
-你有权访问以下表情包分组【${emojiGroup.name}】中的表情：${emojiList}
+你有权访问以下表情包分组【${groupNameStr}】中的表情：${emojiList}
 
 发送表情包的方法：在你的回复中任何位置，使用以下格式包含表情包：
-【表情包】${emojisInGroup.length > 0 ? emojisInGroup[0].text : '表情'}【/表情包】
+【表情包】${allEmojis.length > 0 ? allEmojis[0].text : '表情'}【/表情包】
 
 格式说明：
 - 【表情包】和【/表情包】必须成对出现
@@ -6309,12 +6321,15 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 out.push({ role: 'system', content: worldbookParts.join('\n') });
             }
             
-            // 添加绑定的表情包分组信息
-            if (conv.boundEmojiGroup) {
-                const emojiGroup = AppState.emojiGroups && AppState.emojiGroups.find(g => g.id === conv.boundEmojiGroup);
-                if (emojiGroup && emojiGroup.description) {
-                    out.push({ role: 'system', content: `表情包分组【${emojiGroup.name}】描述：${emojiGroup.description}` });
-                }
+            // 添加绑定的表情包分组信息（支持多个分组）
+            const boundGroups = conv.boundEmojiGroups || (conv.boundEmojiGroup ? [conv.boundEmojiGroup] : []);
+            if (boundGroups && boundGroups.length > 0) {
+                boundGroups.forEach(groupId => {
+                    const emojiGroup = AppState.emojiGroups && AppState.emojiGroups.find(g => g.id === groupId);
+                    if (emojiGroup && emojiGroup.description) {
+                        out.push({ role: 'system', content: `表情包分组【${emojiGroup.name}】描述：${emojiGroup.description}` });
+                    }
+                });
             }
             
             // 单独处理时间信息：不在worldbookParts中，而是在单独的system消息中
