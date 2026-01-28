@@ -621,13 +621,13 @@
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     width: 100%;
-                    padding: 14px 16px;
+                    padding: 10px 14px;
                     border: none;
                     background: transparent;
                     text-align: center;
                     cursor: pointer;
-                    border-radius: 8px;
-                    font-size: 15px;
+                    border-radius: 6px;
+                    font-size: 14px;
                     color: ${opt.color || '#333'};
                     transition: all 0.2s;
                     font-weight: 500;
@@ -655,7 +655,7 @@
             
             // 定位菜单
             const rect = itemElement.getBoundingClientRect();
-            const menuWidth = 160;
+            const menuWidth = menu.offsetWidth;
             const menuHeight = menu.offsetHeight;
             
             let left = rect.left + rect.width / 2 - menuWidth / 2;
