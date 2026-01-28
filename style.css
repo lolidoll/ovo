@@ -3739,15 +3739,20 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 /* 功能按钮区 */
 .emoji-manager-toolbar {
-    padding: 10px;
+    padding: 10px 12px;
     background: #ffffff;
     border-bottom: 1px solid #f0f0f0;
     display: flex;
-    gap: 6px;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.emoji-toolbar-row {
+    display: flex;
+    gap: 8px;
     justify-content: center;
     align-items: center;
-    flex-shrink: 0;
-    flex-wrap: wrap;
 }
 
 .emoji-manager-btn {
@@ -3755,28 +3760,26 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 10px 12px;
-    background: #f8f8f8;
+    padding: 10px 14px;
+    background: #f5f5f5;
     border: none;
-    border-radius: 12px;
-    font-size: 12px;
+    border-radius: 10px;
+    font-size: 13px;
     color: #333;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
     font-weight: 500;
     flex: 1;
-    min-width: 70px;
-    max-width: 110px;
 }
 
 .emoji-manager-btn:hover {
-    background: #f0f0f0;
+    background: #ebebeb;
 }
 
 .emoji-manager-btn:active {
-    background: #e8e8e8;
-    transform: scale(0.96);
+    background: #e0e0e0;
+    transform: scale(0.97);
 }
 
 .emoji-manager-btn.active {
@@ -3789,15 +3792,24 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 @media (max-width: 400px) {
+    .emoji-manager-toolbar {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+    
+    .emoji-toolbar-row {
+        gap: 6px;
+    }
+    
     .emoji-manager-btn {
-        font-size: 11px;
-        padding: 9px 10px;
+        font-size: 12px;
+        padding: 9px 12px;
         gap: 3px;
     }
     
     .emoji-manager-btn svg {
-        width: 16px !important;
-        height: 16px !important;
+        width: 14px !important;
+        height: 14px !important;
     }
 }
 

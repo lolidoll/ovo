@@ -71,11 +71,20 @@
                     this.toggleSelectMode();
                 });
             }
+            
+            // 取消选择按钮
+            const cancelSelectBtn = document.getElementById('emoji-manager-cancel-select');
+            if (cancelSelectBtn) {
+                cancelSelectBtn.addEventListener('click', () => {
+                    this.exitSelectMode();
+                });
+            }
         },
         
         // 切换选择模式
         toggleSelectMode: function() {
             const btn = document.getElementById('emoji-manager-select-mode');
+            const cancelBtn = document.getElementById('emoji-manager-cancel-select');
             const contentArea = document.getElementById('emoji-manager-content');
             
             if (!btn || !contentArea) return;
@@ -84,31 +93,267 @@
                 // 执行批量删除
                 const selectedItems = contentArea.querySelectorAll('.emoji-manager-item.selected');
                 if (selectedItems.length === 0) {
-                    alert('请先选择要删除的表情包');
+                    this.showAlert('请先选择要删除的表情包');
                     return;
                 }
                 
-                if (!confirm(`确定要删除选中的 ${selectedItems.length} 个表情包吗？`)) return;
-                
-                const idsToDelete = Array.from(selectedItems).map(item => item.dataset.id);
-                AppState.emojis = AppState.emojis.filter(e => !idsToDelete.includes(e.id));
-                
-                saveToStorage();
-                
-                // 退出选择模式并重新渲染
-                btn.classList.remove('active');
-                btn.querySelector('span').textContent = '批量选择';
-                const activeGroup = document.querySelector('.emoji-group-btn.active');
-                if (activeGroup) {
-                    this.renderEmojis(activeGroup.dataset.groupId);
-                }
+                this.showConfirm(`确定要删除选中的 ${selectedItems.length} 个表情包吗？`, () => {
+                    const idsToDelete = Array.from(selectedItems).map(item => item.dataset.id);
+                    AppState.emojis = AppState.emojis.filter(e => !idsToDelete.includes(e.id));
+                    
+                    saveToStorage();
+                    this.exitSelectMode();
+                });
             } else {
                 // 进入选择模式
                 btn.classList.add('active');
                 btn.querySelector('span').textContent = '删除选中';
+                if (cancelBtn) {
+                    cancelBtn.style.display = 'flex';
+                }
                 contentArea.querySelectorAll('.emoji-manager-item').forEach(item => {
                     item.classList.add('selecting');
                 });
+            }
+        },
+        
+        // 退出选择模式
+        exitSelectMode: function() {
+            const btn = document.getElementById('emoji-manager-select-mode');
+            const cancelBtn = document.getElementById('emoji-manager-cancel-select');
+            const contentArea = document.getElementById('emoji-manager-content');
+            
+            if (btn) {
+                btn.classList.remove('active');
+                btn.querySelector('span').textContent = '批量选择';
+            }
+            if (cancelBtn) {
+                cancelBtn.style.display = 'none';
+            }
+            
+            // 重新渲染当前分组
+            const activeGroup = document.querySelector('.emoji-group-btn.active');
+            if (activeGroup) {
+                this.renderEmojis(activeGroup.dataset.groupId);
+            }
+        },
+        
+        // 自定义Alert弹窗
+        showAlert: function(message) {
+            this.showDialog({
+                title: '提示',
+                message: message,
+                buttons: [
+                    { text: '确定', primary: true, callback: null }
+                ]
+            });
+        },
+        
+        // 自定义Confirm弹窗
+        showConfirm: function(message, onConfirm) {
+            this.showDialog({
+                title: '确认',
+                message: message,
+                buttons: [
+                    { text: '取消', primary: false, callback: null },
+                    { text: '确定', primary: true, callback: onConfirm }
+                ]
+            });
+        },
+        
+        // 自定义Prompt弹窗
+        showPrompt: function(message, defaultValue, onConfirm) {
+            this.showDialog({
+                title: '输入',
+                message: message,
+                input: true,
+                defaultValue: defaultValue || '',
+                buttons: [
+                    { text: '取消', primary: false, callback: null },
+                    { text: '确定', primary: true, callback: onConfirm }
+                ]
+            });
+        },
+        
+        // 通用对话框
+        showDialog: function(options) {
+            // 移除已存在的对话框
+            const existing = document.getElementById('emoji-custom-dialog');
+            if (existing) existing.remove();
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'emoji-custom-dialog';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                animation: fadeIn 0.2s ease;
+            `;
+            
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 20px;
+                max-width: 320px;
+                width: 85%;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                animation: slideUp 0.3s ease;
+            `;
+            
+            // 标题
+            if (options.title) {
+                const title = document.createElement('div');
+                title.textContent = options.title;
+                title.style.cssText = `
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 12px;
+                    text-align: center;
+                `;
+                dialog.appendChild(title);
+            }
+            
+            // 消息
+            if (options.message) {
+                const message = document.createElement('div');
+                message.textContent = options.message;
+                message.style.cssText = `
+                    font-size: 14px;
+                    color: #666;
+                    line-height: 1.6;
+                    margin-bottom: ${options.input ? '16px' : '20px'};
+                    text-align: center;
+                `;
+                dialog.appendChild(message);
+            }
+            
+            // 输入框
+            let input;
+            if (options.input) {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.value = options.defaultValue || '';
+                input.style.cssText = `
+                    width: 100%;
+                    padding: 10px 12px;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    margin-bottom: 20px;
+                    box-sizing: border-box;
+                    outline: none;
+                `;
+                input.addEventListener('focus', () => {
+                    input.style.borderColor = '#667eea';
+                });
+                input.addEventListener('blur', () => {
+                    input.style.borderColor = '#e0e0e0';
+                });
+                dialog.appendChild(input);
+                setTimeout(() => input.focus(), 100);
+            }
+            
+            // 按钮容器
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.cssText = `
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+            `;
+            
+            // 按钮
+            options.buttons.forEach(btnConfig => {
+                const btn = document.createElement('button');
+                btn.textContent = btnConfig.text;
+                btn.style.cssText = `
+                    flex: 1;
+                    padding: 11px 20px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    ${btnConfig.primary ?
+                        'background: #667eea; color: #ffffff;' :
+                        'background: #f5f5f5; color: #666;'}
+                `;
+                
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-1px)';
+                    if (btnConfig.primary) {
+                        btn.style.background = '#5568d3';
+                    } else {
+                        btn.style.background = '#ebebeb';
+                    }
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0)';
+                    if (btnConfig.primary) {
+                        btn.style.background = '#667eea';
+                    } else {
+                        btn.style.background = '#f5f5f5';
+                    }
+                });
+                
+                btn.addEventListener('click', () => {
+                    if (btnConfig.callback) {
+                        if (options.input) {
+                            btnConfig.callback(input.value);
+                        } else {
+                            btnConfig.callback();
+                        }
+                    }
+                    overlay.remove();
+                });
+                
+                buttonContainer.appendChild(btn);
+            });
+            
+            dialog.appendChild(buttonContainer);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            // 点击外部关闭（仅非必须确认的对话框）
+            if (options.buttons.length === 1) {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.remove();
+                    }
+                });
+            }
+            
+            // 添加动画样式
+            if (!document.getElementById('emoji-dialog-styles')) {
+                const style = document.createElement('style');
+                style.id = 'emoji-dialog-styles';
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(20px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
             }
         },
         
@@ -193,9 +438,9 @@
                     deleteBtn.title = '删除分组';
                     deleteBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        if (confirm(`确定要删除分组"${group.name}"吗？该分组下的所有表情包也会被删除。`)) {
+                        this.showConfirm(`确定要删除分组"${group.name}"吗？该分组下的所有表情包也会被删除。`, () => {
                             this.deleteGroup(group.id);
-                        }
+                        });
                     });
                     actionsContainer.appendChild(deleteBtn);
                 }
@@ -342,7 +587,6 @@
             
             const options = [
                 {
-                    icon: '✏️',
                     text: '编辑描述',
                     action: () => {
                         menu.remove();
@@ -350,27 +594,25 @@
                     }
                 },
                 {
-                    icon: '📁',
-                    text: '移动到...',
+                    text: '移动到分组',
                     action: () => {
                         menu.remove();
                         this.moveEmojiToGroup(emoji);
                     }
                 },
                 {
-                    icon: '🗑️',
                     text: '删除',
                     color: '#ff4757',
                     action: () => {
                         menu.remove();
-                        if (confirm('确定要删除这个表情包吗？')) {
+                        this.showConfirm('确定要删除这个表情包吗？', () => {
                             AppState.emojis = AppState.emojis.filter(e => e.id !== emoji.id);
                             saveToStorage();
                             const activeGroup = document.querySelector('.emoji-group-btn.active');
                             if (activeGroup) {
                                 this.renderEmojis(activeGroup.dataset.groupId);
                             }
-                        }
+                        });
                     }
                 }
             ];
@@ -379,26 +621,32 @@
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     width: 100%;
-                    padding: 12px;
+                    padding: 14px 16px;
                     border: none;
                     background: transparent;
-                    text-align: left;
+                    text-align: center;
                     cursor: pointer;
                     border-radius: 8px;
-                    font-size: 14px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
+                    font-size: 15px;
                     color: ${opt.color || '#333'};
-                    transition: background 0.2s;
+                    transition: all 0.2s;
+                    font-weight: 500;
                 `;
-                btn.innerHTML = `<span>${opt.icon}</span><span>${opt.text}</span>`;
+                btn.textContent = opt.text;
                 btn.addEventListener('click', opt.action);
                 btn.addEventListener('mouseenter', () => {
-                    btn.style.background = '#f5f5f5';
+                    btn.style.background = opt.color ? '#fff5f5' : '#f5f5f5';
                 });
                 btn.addEventListener('mouseleave', () => {
                     btn.style.background = 'transparent';
+                });
+                btn.addEventListener('touchstart', () => {
+                    btn.style.background = opt.color ? '#fff5f5' : '#f5f5f5';
+                });
+                btn.addEventListener('touchend', () => {
+                    setTimeout(() => {
+                        btn.style.background = 'transparent';
+                    }, 150);
                 });
                 menu.appendChild(btn);
             });
@@ -445,7 +693,7 @@
         moveEmojiToGroup: function(emoji) {
             this.showGroupSelectDialog((groupId) => {
                 if (groupId === emoji.groupId) {
-                    alert('表情包已在该分组中');
+                    this.showAlert('表情包已在该分组中');
                     return;
                 }
                 
@@ -457,7 +705,7 @@
                     this.renderEmojis(activeGroup.dataset.groupId);
                 }
                 
-                alert('移动成功！');
+                this.showAlert('移动成功！');
             }, '移动到分组');
         },
         
@@ -467,7 +715,7 @@
             
             const filesArray = Array.from(files).filter(f => f.type.startsWith('image/'));
             if (filesArray.length === 0) {
-                alert('请选择图片文件');
+                this.showAlert('请选择图片文件');
                 return;
             }
             
@@ -491,7 +739,7 @@
                         if (processed === filesArray.length) {
                             saveToStorage();
                             this.renderGroups();
-                            alert('已导入 ' + filesArray.length + ' 个表情包');
+                            this.showAlert('已导入 ' + filesArray.length + ' 个表情包');
                         }
                     };
                     reader.readAsDataURL(file);
@@ -534,7 +782,7 @@
                     }
                     
                     if (emojis.length === 0) {
-                        alert('JSON文件中未找到有效的表情数据');
+                        this.showAlert('JSON文件中未找到有效的表情数据');
                         return;
                     }
                     
@@ -552,10 +800,10 @@
                         
                         saveToStorage();
                         this.renderGroups();
-                        alert('已导入 ' + emojis.length + ' 个表情包');
+                        this.showAlert('已导入 ' + emojis.length + ' 个表情包');
                     });
                 } catch (err) {
-                    alert('JSON文件解析失败：' + err.message);
+                    this.showAlert('JSON文件解析失败：' + err.message);
                 }
             };
             reader.readAsText(file);
@@ -639,29 +887,30 @@
         
         // 显示URL导入对话框
         showUrlImportDialog: function() {
-            const text = prompt('请输入表情包URL（格式：名称:链接，多个用分号分隔）\n例如：开心:https://example.com/1.jpg;难过:https://example.com/2.jpg');
-            if (!text) return;
-            
-            const emojis = this.parseUrlText(text);
-            if (emojis.length === 0) {
-                alert('未找到有效的URL链接');
-                return;
-            }
-            
-            this.showGroupSelectDialog((groupId) => {
-                emojis.forEach(emoji => {
-                    AppState.emojis.push({
-                        id: 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                        url: emoji.url,
-                        text: emoji.text,
-                        groupId: groupId,
-                        createdAt: new Date().toISOString()
-                    });
-                });
+            this.showPrompt('请输入表情包URL\n格式：名称:链接，多个用分号分隔\n例如：开心:https://example.com/1.jpg', '', (text) => {
+                if (!text || !text.trim()) return;
                 
-                saveToStorage();
-                this.renderGroups();
-                alert('已导入 ' + emojis.length + ' 个表情包');
+                const emojis = this.parseUrlText(text);
+                if (emojis.length === 0) {
+                    this.showAlert('未找到有效的URL链接');
+                    return;
+                }
+                
+                this.showGroupSelectDialog((groupId) => {
+                    emojis.forEach(emoji => {
+                        AppState.emojis.push({
+                            id: 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                            url: emoji.url,
+                            text: emoji.text,
+                            groupId: groupId,
+                            createdAt: new Date().toISOString()
+                        });
+                    });
+                    
+                    saveToStorage();
+                    this.renderGroups();
+                    this.showAlert('已导入 ' + emojis.length + ' 个表情包');
+                });
             });
         },
         
@@ -691,20 +940,21 @@
         
         // 创建新分组
         createNewGroup: function() {
-            const name = prompt('请输入新分组的名称：');
-            if (!name || name.trim() === '') return;
+            this.showPrompt('请输入新分组的名称：', '', (name) => {
+                if (!name || name.trim() === '') return;
             
-            const newGroup = {
-                id: 'group_' + Date.now(),
-                name: name.trim(),
-                createdAt: new Date().toISOString()
-            };
-            
-            AppState.emojiGroups.push(newGroup);
-            saveToStorage();
-            
-            this.renderGroups();
-            this.renderEmojis(newGroup.id);
+                const newGroup = {
+                    id: 'group_' + Date.now(),
+                    name: name.trim(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                AppState.emojiGroups.push(newGroup);
+                saveToStorage();
+                
+                this.renderGroups();
+                this.renderEmojis(newGroup.id);
+            });
         },
         
         // 编辑分组名称
@@ -712,13 +962,14 @@
             const group = AppState.emojiGroups.find(g => g.id === groupId);
             if (!group) return;
             
-            const newName = prompt('请输入新的分组名称：', group.name);
-            if (!newName || newName.trim() === '') return;
-            
-            group.name = newName.trim();
-            saveToStorage();
-            
-            this.renderGroups();
+            this.showPrompt('请输入新的分组名称：', group.name, (newName) => {
+                if (!newName || newName.trim() === '') return;
+                
+                group.name = newName.trim();
+                saveToStorage();
+                
+                this.renderGroups();
+            });
         },
         
         // 删除分组
@@ -738,16 +989,17 @@
         
         // 编辑表情描述
         editEmojiDescription: function(emoji) {
-            const newDesc = prompt('修改表情包描述：', emoji.text || '');
-            if (newDesc !== null && newDesc.trim()) {
-                emoji.text = newDesc.trim();
-                saveToStorage();
-                
-                const activeGroup = document.querySelector('.emoji-group-btn.active');
-                if (activeGroup) {
-                    this.renderEmojis(activeGroup.dataset.groupId);
+            this.showPrompt('修改表情包描述：', emoji.text || '', (newDesc) => {
+                if (newDesc && newDesc.trim()) {
+                    emoji.text = newDesc.trim();
+                    saveToStorage();
+                    
+                    const activeGroup = document.querySelector('.emoji-group-btn.active');
+                    if (activeGroup) {
+                        this.renderEmojis(activeGroup.dataset.groupId);
+                    }
                 }
-            }
+            });
         }
     };
 })();
