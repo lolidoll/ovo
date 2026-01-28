@@ -6756,20 +6756,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         let currentApiCallRound = null;
 
         function appendAssistantMessage(convId, text) {
-            // 首先检查是否包含思考过程格式
-            const thinkingData = parseThinkingProcess(text);
-            
-            if (thinkingData) {
-                // 存在思考过程，分批添加消息
-                appendMultipleAssistantMessages(convId, thinkingData);
-            } else {
-                // 普通消息，按原有逻辑处理
-                appendSingleAssistantMessage(convId, text);
-            }
-        }
-
-        function appendSingleAssistantMessage(convId, text) {
-            // ========== 第一步：提取心声信息（新架构） ==========
+            // ========== 第一步：提前提取心声数据（无论单消息还是多消息） ==========
             const mindStateData = extractMindStateFromText(text);
             
             // 如果心声提取失败，输出诊断信息
@@ -6781,7 +6768,56 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 console.warn('  API响应文本（前500字）:', text.substring(0, 500));
             }
             
-            // ========== 第二步：清理AI回复（移除心声标记） ==========
+            // ========== 第二步：保存心声数据到会话（提前保存） ==========
+            const conv = AppState.conversations.find(c => c.id === convId);
+            const hasValidMindData = mindStateData && Object.values(mindStateData).some(v => v !== null && v !== undefined && v !== '');
+            
+            if (conv && hasValidMindData) {
+                if (!conv.mindStates) {
+                    conv.mindStates = [];
+                }
+                // 添加时间戳（消息ID稍后添加）
+                mindStateData.timestamp = new Date().toISOString();
+                mindStateData.messageId = 'pending';  // 临时标记，稍后更新
+                mindStateData.failed = false;
+                conv.mindStates.push(mindStateData);
+                console.log('💾 心声数据已提前保存到会话:', convId, mindStateData);
+            } else if (!mindStateData || !hasValidMindData) {
+                // 心声提取失败或为空 - 创建一个失败记录
+                if (conv) {
+                    if (!conv.mindStates) {
+                        conv.mindStates = [];
+                    }
+                    conv.mindStates.push({
+                        timestamp: new Date().toISOString(),
+                        messageId: 'pending',
+                        failed: true,
+                        reason: !mindStateData ? '【心声】标记未找到，请检查API回复' : '心声数据为空，请确保AI返回了完整的心声信息',
+                        failedReason: !mindStateData ? 'NO_MINDSTATE_MARKER' : 'EMPTY_MINDSTATE_DATA'
+                    });
+                    console.log('⚠️ 已记录心声提取失败:', !mindStateData ? '【心声】标记未找到' : '心声数据为空');
+                }
+            }
+            
+            // ========== 第三步：检查是否包含思考过程格式 ==========
+            const thinkingData = parseThinkingProcess(text);
+            
+            if (thinkingData) {
+                // 存在思考过程，分批添加消息
+                appendMultipleAssistantMessages(convId, thinkingData);
+            } else {
+                // 普通消息，按原有逻辑处理
+                appendSingleAssistantMessage(convId, text, true); // 传递skipMindStateExtraction=true，避免重复提取
+            }
+            
+            // ========== 第四步：更新心声按钮 ==========
+            if (AppState.currentChat && AppState.currentChat.id === convId && conv) {
+                updateMindStateButton(conv);
+            }
+        }
+
+        function appendSingleAssistantMessage(convId, text, skipMindStateExtraction = false) {
+            // ========== 第一步：清理AI回复（移除心声标记） ==========
             // 首先应用强大的清理函数
             text = cleanAIResponse(text);
             
@@ -6882,44 +6918,20 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 AppState.messages[convId].push(aiMsg);
             }
             
-            // ========== 第六步：保存心声数据（如果有） ==========
+            // ========== 第六步：更新会话信息和心声消息ID ==========
             const conv = AppState.conversations.find(c => c.id === convId);
             const aiMsg = AppState.messages[convId][AppState.messages[convId].length - 1];
             
-            // 检查心声数据是否有效 - 至少需要有一个字段有值
-            const hasValidMindData = mindStateData && Object.values(mindStateData).some(v => v !== null && v !== undefined && v !== '');
-            
-            if (conv && hasValidMindData) {
-                if (!conv.mindStates) {
-                    conv.mindStates = [];
-                }
-                // 添加时间戳和消息ID
-                mindStateData.timestamp = new Date().toISOString();
-                mindStateData.messageId = aiMsg.id;
-                mindStateData.failed = false;
-                conv.mindStates.push(mindStateData);
-                console.log('💾 心声数据已保存到会话:', convId, mindStateData);
-            } else if (!mindStateData || !hasValidMindData) {
-                // 心声提取失败或为空 - 创建一个失败记录
-                if (conv) {
-                    if (!conv.mindStates) {
-                        conv.mindStates = [];
-                    }
-                    // 添加一个标记，说明这一条消息的心声需要生成
-                    conv.mindStates.push({
-                        timestamp: new Date().toISOString(),
-                        messageId: aiMsg ? aiMsg.id : '',
-                        failed: true,  // 标记为失败
-                        reason: !mindStateData ? '【心声】标记未找到，请检查API回复' : '心声数据为空，请确保AI返回了完整的心声信息',
-                        failedReason: !mindStateData ? 'NO_MINDSTATE_MARKER' : 'EMPTY_MINDSTATE_DATA'
-                    });
-                    console.log('⚠️ 已记录心声提取失败:', !mindStateData ? '【心声】标记未找到' : '心声数据为空');
-                } else {
-                    console.warn('❌ 无法保存心声 - 会话未找到');
+            // 更新最后一条心声记录的消息ID（如果心声已经被提前保存）
+            if (conv && conv.mindStates && conv.mindStates.length > 0) {
+                const lastMindState = conv.mindStates[conv.mindStates.length - 1];
+                if (lastMindState.messageId === 'pending') {
+                    lastMindState.messageId = aiMsg.id;
+                    console.log('✅ 已更新心声记录的消息ID:', aiMsg.id);
                 }
             }
             
-            // ========== 第六步：更新会话信息 ==========
+            // 更新会话信息
             if (conv) {
                 conv.lastMsg = text || '[表情包]';
                 conv.time = formatTime(new Date());
@@ -6930,11 +6942,6 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
             renderConversations();
 
-            // 更新心声按钮（如果当前正在查看这个会话）
-            if (AppState.currentChat && AppState.currentChat.id === convId) {
-                updateMindStateButton(conv);
-            }
-
             // 检查是否需要自动总结
             checkAndAutoSummarize(convId);
 
@@ -6943,6 +6950,149 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         }
 
         function appendMultipleAssistantMessages(convId, thinkingData) {
+            // 处理多条消息的情况，按延迟依次添加
+            let currentDelay = 0;
+            const messages = thinkingData.messages || [];
+            
+            messages.forEach((msgData, index) => {
+                setTimeout(() => {
+                    // 每条消息都进行独立的清理和处理
+                    let content = msgData.content.trim();
+                    
+                    if (!content) return;
+                    
+                    // 清理内容
+                    content = cleanAIResponse(content);
+                    
+                    // 处理表情包
+                    let emojiUrl = null;
+                    const emojiRegex = /【表情包】([^【]+?)【\/表情包】/;
+                    const emojiMatch = content.match(emojiRegex);
+                    
+                    if (emojiMatch && emojiMatch[1]) {
+                        const emojiName = emojiMatch[1].trim();
+                        const emoji = AppState.emojis.find(e => e.text === emojiName);
+                        if (emoji) {
+                            emojiUrl = emoji.url;
+                        }
+                        content = content.replace(emojiRegex, '').trim();
+                    }
+                    
+                    // 【新架构】心声已在 appendAssistantMessage 中从主API响应自动提取
+                    
+                    content = cleanAIResponse(content);
+                    
+                    if (!content) return;
+                    
+                    // 创建消息
+                    const aiMsg = {
+                        id: 'msg_' + Date.now() + '_' + Math.random(),
+                        type: 'received',
+                        content: content,
+                        emojiUrl: emojiUrl,
+                        isEmoji: emojiUrl ? true : false,
+                        time: new Date().toISOString(),
+                        apiCallRound: currentApiCallRound  // 添加API调用回合标记，确保删除时能识别
+                    };
+                    
+                    if (!AppState.messages[convId]) {
+                        AppState.messages[convId] = [];
+                    }
+                    AppState.messages[convId].push(aiMsg);
+                    
+                    // 更新会话信息
+                    const conv = AppState.conversations.find(c => c.id === convId);
+                    if (conv) {
+                        conv.lastMsg = content || '[表情包]';
+                        conv.time = formatTime(new Date());
+                        conv.lastMessageTime = aiMsg.time;
+                    }
+                    
+                    // 更新最后一条心声记录的消息ID（只在最后一条消息时）
+                    if (index === messages.length - 1) {
+                        if (conv && conv.mindStates && conv.mindStates.length > 0) {
+                            const lastMindState = conv.mindStates[conv.mindStates.length - 1];
+                            if (lastMindState.messageId === 'pending') {
+                                lastMindState.messageId = aiMsg.id;
+                                console.log('✅ 已更新心声记录的消息ID（多消息）:', aiMsg.id);
+                            }
+                        }
+                    }
+                    
+                    saveToStorage();
+                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
+                    renderConversations();
+                    
+                    // 只在最后一条消息后触发通知
+                    if (index === messages.length - 1) {
+                        triggerNotificationIfLeftChat(convId);
+                    }
+                }, currentDelay);
+                
+                // 累加延迟时间
+                currentDelay += msgData.delay || 0;
+            });
+        }
+        function formatTime(date) {
+            const now = new Date();
+            const d = new Date(date);
+            
+            if (d.toDateString() === now.toDateString()) {
+                return d.getHours().toString().padStart(2, '0') + ':' +
+                       d.getMinutes().toString().padStart(2, '0');
+            }
+            
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (d.toDateString() === yesterday.toDateString()) {
+                return '昨天';
+            }
+            
+            return (d.getMonth() + 1) + '/' + d.getDate();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 生成唯一ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        // ========== 表情包管理相关 ==========
+        function toggleEmojiLibrary() {
+            const lib = document.getElementById('emoji-library');
+            const inputArea = document.querySelector('.chat-input-area');
+            const toolbar = document.getElementById('chat-toolbar');
+            
+            const isShowing = lib.classList.contains('show');
+            
+            if (isShowing) {
+                // 隐藏表情库
+                lib.classList.remove('show');
+                // 隐藏工具栏
+                toolbar.classList.remove('show');
+                // 恢复输入框和工具栏到初始位置
+                inputArea.style.transform = 'translateY(0)';
+                toolbar.style.transform = 'translateY(0)';
+            } else {
+                // 显示表情库
+                lib.classList.add('show');
+                // 显示工具栏
+                toolbar.classList.add('show');
+                renderEmojiLibrary();
+                renderEmojiGroups('chat');
+                
+                // 立即计算位置（不需要 requestAnimationFrame）
+                setTimeout(() => {
+                    updateInputAreaPosition();
+                }, 0);
+            }
+        }
+        
+        function updateInputAreaPosition() {
             // 处理多条消息的情况，按延迟依次添加
             let currentDelay = 0;
             const messages = thinkingData.messages || [];
