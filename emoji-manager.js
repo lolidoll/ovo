@@ -578,11 +578,10 @@
             menu.style.cssText = `
                 position: fixed;
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
                 z-index: 10001;
-                padding: 8px;
-                min-width: 160px;
+                padding: 3px 0;
             `;
             
             const options = [
@@ -621,16 +620,17 @@
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     width: 100%;
-                    padding: 10px 14px;
+                    padding: 10px 12px;
                     border: none;
                     background: transparent;
                     text-align: center;
                     cursor: pointer;
-                    border-radius: 6px;
+                    border-radius: 0;
                     font-size: 14px;
                     color: ${opt.color || '#333'};
                     transition: all 0.2s;
                     font-weight: 500;
+                    white-space: nowrap;
                 `;
                 btn.textContent = opt.text;
                 btn.addEventListener('click', opt.action);
