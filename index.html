@@ -17,6 +17,7 @@
     <script src="login.js" defer></script>
     <script src="voice-message.js" defer></script>
     <script src="location-message.js" defer></script>
+    <script src="emoji-manager.js" defer></script>
     <script src="app.js" defer></script>
   
 </head>
@@ -1974,8 +1975,33 @@
                     <div class="chat-typing-status" id="chat-typing-status" style="font-size:13px;color:#999;display:none;white-space:nowrap;">正在打字中...</div>
                 </div>
                 <div class="chat-toolbar-buttons" style="display:flex;gap:0;align-items:center;">
-                    <button id="chat-mind-btn" style="width:40px;height:40px;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:20px;">
-                        🖤
+                    <button id="chat-mind-btn" style="width:40px;height:40px;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative;">
+                        <svg id="chat-mind-heart" viewBox="0 0 24 24" style="width:24px;height:24px;position:relative;">
+                            <!-- 空心爱心轮廓 -->
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                  stroke="#d0d0d0"
+                                  stroke-width="1.5"
+                                  fill="none"/>
+                            <!-- 填充部分（根据好感度动态变化） -->
+                            <defs>
+                                <clipPath id="heart-clip">
+                                    <rect id="heart-fill-rect" x="0" y="0" width="24" height="24"/>
+                                </clipPath>
+                            </defs>
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                  fill="#d0d0d0"
+                                  clip-path="url(#heart-clip)"
+                                  style="transition: all 0.3s ease;"/>
+                            <!-- 好感度数值 -->
+                            <text id="heart-affinity-text"
+                                  x="12"
+                                  y="14"
+                                  text-anchor="middle"
+                                  font-size="7"
+                                  font-weight="bold"
+                                  fill="#666"
+                                  style="pointer-events: none;">0</text>
+                        </svg>
                     </button>
                     <div class="chat-more">
                         <div class="chat-more-dots">
@@ -1989,10 +2015,10 @@
             
             <div class="chat-messages" id="chat-messages"></div>
             
-            <div class="quote-message-bar-container" id="quote-message-bar-container" style="display:none;background:#f5f5f5;border-bottom:1px solid #e0e0e0;">
+            <div class="quote-message-bar-container" id="quote-message-bar-container" style="display:none;background:#f5f5f5;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;position:relative;z-index:10;">
                 <div class="quote-message-bar" id="quote-message-bar" style="padding:8px 12px;display:flex;align-items:center;gap:8px;min-height:40px;max-height:60px;overflow-y:auto;">
-                    <div class="quote-content" id="quote-content" style="flex:1;font-size:12px;color:#666;word-break:break-word;line-height:1.4;"></div>
-                    <button class="quote-cancel-btn" id="quote-cancel-btn" style="border:none;background:none;cursor:pointer;font-size:20px;color:#999;flex-shrink:0;padding:0;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;">×</button>
+                    <div class="quote-content" id="quote-content" style="flex:1;font-size:13px;color:#666;word-break:break-word;line-height:1.5;"></div>
+                    <button class="quote-cancel-btn" id="quote-cancel-btn" style="border:none;background:none;cursor:pointer;font-size:24px;color:#999;flex-shrink:0;padding:0;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
                 </div>
             </div>
 
@@ -2021,14 +2047,14 @@
                 <button class="tb-btn" id="btn-videocall" title="视频通话">
                     <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
                 </button>
-                <button class="tb-btn" id="btn-offline" title="线下功能">
-                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polyline points="12 5 12 19"></polyline><polyline points="19 12 12 19 5 12"></polyline></svg>
-                </button>
                 <button class="tb-btn" id="btn-takeout" title="交易">
                     <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                 </button>
                 <button class="tb-btn" id="btn-listen" title="一起听">
                     <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#999999;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 1a9 9 0 0 0-9 9v3a9 9 0 0 0 18 0v-3a9 9 0 0 0-9-9z"></path><path d="M6 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path><path d="M16 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path></svg>
+                </button>
+                <button class="tb-btn" id="btn-offline" title="线下功能">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polyline points="12 5 12 19"></polyline><polyline points="19 12 12 19 5 12"></polyline></svg>
                 </button>
                 <button class="tb-btn" id="btn-phone" title="查手机">
                     <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><rect x="5" y="2" width="14" height="20" rx="2.5" ry="2.5"></rect><path d="M12 21h0"></path></svg>
@@ -2062,11 +2088,11 @@
             </div>
 
             <div class="chat-input-area">
-                <textarea class="chat-input" id="chat-input" placeholder="输入消息..." rows="1"></textarea>
+                <textarea class="chat-input" id="chat-input" placeholder="输入消息（双击任意头像触发回复）" rows="1"></textarea>
                 <button class="chat-send-btn" id="chat-send-btn">
                     <svg viewBox="0 0 24 24">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
                     </svg>
                 </button>
             </div>
@@ -2147,6 +2173,64 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- 表情包管理页面 (全屏子页面) -->
+        <div class="emoji-manager-page" id="emoji-manager-page" style="display:none;">
+            <!-- 顶部导航栏 -->
+            <div class="sub-nav">
+                <div class="back-btn" id="emoji-manager-back-btn">
+                    <div class="back-arrow"></div>
+                    <span>返回</span>
+                </div>
+                <div class="sub-title">表情包管理</div>
+            </div>
+            
+            <!-- 提示信息 -->
+            <div class="emoji-manager-tips">
+                双击表情包可修改文字描述
+            </div>
+            
+            <!-- 功能按钮区 -->
+            <div class="emoji-manager-toolbar">
+                <button class="emoji-manager-btn" id="emoji-manager-import-file">
+                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>导入文件</span>
+                </button>
+                <button class="emoji-manager-btn" id="emoji-manager-import-url">
+                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    <span>导入URL</span>
+                </button>
+                <button class="emoji-manager-btn" id="emoji-manager-delete-mode">
+                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>删除选中</span>
+                </button>
+            </div>
+            
+            <!-- 分组标签栏 -->
+            <div class="emoji-manager-groups" id="emoji-manager-groups">
+                <!-- 分组标签将在这里动态生成 -->
+            </div>
+            
+            <!-- 表情包内容区 -->
+            <div class="emoji-manager-content" id="emoji-manager-content">
+                <div class="emoji-manager-empty">
+                    <div style="font-size:48px;margin-bottom:8px;">🙂</div>
+                    <div>该分组下暂无表情包</div>
+                </div>
+            </div>
+            
+            <!-- 隐藏的文件输入 -->
+            <input type="file" id="emoji-manager-file-input" accept="image/*,.json" multiple style="display:none">
         </div>
 
         <!-- 图片选择弹窗 -->
