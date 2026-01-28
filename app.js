@@ -7014,7 +7014,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
-            return div.innerHTML;
+            // 将换行符转换为<br>标签，避免在消息气泡中出现空行
+            return div.innerHTML.replace(/\n/g, '<br>');
         }
 
         // 生成唯一ID
