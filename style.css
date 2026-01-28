@@ -917,13 +917,13 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 /* 聊天工具栏 */
 .chat-toolbar {
     display:flex;
-    gap:4px;
-    padding:4px 6px 4px 6px;
+    gap:0.5%;
+    padding:4px 1% 4px 1%;
     align-items:center;
     background:#fff;
     border-bottom:1px solid #f0f0f0;
     flex-wrap:nowrap;
-    justify-content:flex-start;
+    justify-content:space-between;
     flex-shrink:0;
     overflow-x:auto;
     overflow-y:hidden;
@@ -935,7 +935,8 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     display: none;
 }
 .tb-btn {
-    width:22px;
+    width:7.5%;
+    max-width:32px;
     height:22px;
     border-radius:2px;
     background:transparent;
@@ -944,16 +945,40 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    color:#666;
+    color:#999999;
     padding:5px;
     transition:all 0.2s ease;
     flex-shrink:0;
-    min-width:32px;
+    min-width:28px;
     min-height:32px;
 }
-.tb-btn:active { 
+.tb-btn svg {
+    stroke:#999999 !important;
+    fill: none !important;
+}
+.tb-btn svg path,
+.tb-btn svg line,
+.tb-btn svg circle,
+.tb-btn svg rect,
+.tb-btn svg polygon,
+.tb-btn svg polyline {
+    stroke:#999999 !important;
+    fill: none !important;
+}
+.tb-btn:hover {
+    background:#f8f8f8;
+}
+.tb-btn:hover svg,
+.tb-btn:hover svg * {
+    stroke:#666 !important;
+}
+.tb-btn:active {
     background:#f5f5f5;
     border-color:#999;
+}
+.tb-btn:active svg,
+.tb-btn:active svg * {
+    stroke:#333 !important;
 }
 
 /* 表情包库 */
@@ -1701,6 +1726,7 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
         .chat-bubble {
             display: flex;
             gap: 10px;
+            width: fit-content;
             max-width: 80%;
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -1719,6 +1745,50 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
         /* 多选模式下的样式 */
         .chat-bubble.selected {
             background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 平板端优化 */
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .chat-toolbar {
+                gap: 1%;
+                padding: 8px 2%;
+                justify-content: space-between;
+            }
+            
+            .tb-btn {
+                width: 7%;
+                max-width: 40px;
+                min-width: 32px;
+                height: 36px;
+                padding: 8px;
+            }
+            
+            .tb-btn svg {
+                width: 20px !important;
+                height: 20px !important;
+            }
+        }
+        
+        /* 小屏手机优化 (iPhone SE, 小米等) */
+        @media (max-width: 375px) {
+            .chat-toolbar {
+                padding: 3px 0.5%;
+                gap: 0;
+            }
+            
+            .tb-btn {
+                width: 7.6%;
+                min-width: 24px;
+                max-width: 28px;
+                height: 20px;
+                min-height: 28px;
+                padding: 3px;
+            }
+            
+            .tb-btn svg {
+                width: 16px !important;
+                height: 16px !important;
+            }
         }
         
         .chat-avatar {
@@ -1754,18 +1824,25 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
             overflow-wrap: break-word;
             -webkit-user-select: text;
             user-select: text;
+            width: fit-content;
             max-width: 100%;
             min-width: 0;
         }
         .chat-bubble.received .chat-text {
-            background-color: #fff;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: #333;
             border-top-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
         .chat-bubble.sent .chat-text {
-            background-color: #000;
-            color: #fff;
+            background-color: rgba(240, 240, 240, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #333;
             border-top-right-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
         
         /* 图片消息样式 - 隐藏气泡背景 */
@@ -2200,24 +2277,32 @@ input[type="checkbox"] { width:16px; height:16px; cursor:pointer; accent-color:#
 @media (max-width: 600px) {
     .chat-toolbar {
         flex-wrap: nowrap;
-        overflow-x: auto;
+        overflow-x: hidden;
         overflow-y: hidden;
-        gap: 3px;
-        padding: 4px 6px 4px 6px;
+        gap: 0;
+        padding: 4px 1% 4px 1%;
         -webkit-overflow-scrolling: touch;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         min-height: 38px;
+        width: 100%;
     }
     
     .tb-btn {
-        width: 22px;
+        width: 7.8%;
         height: 22px;
         flex-shrink: 0;
-        min-width: 32px;
+        min-width: 26px;
+        max-width: 32px;
         min-height: 32px;
-        padding: 5px;
+        padding: 4px;
         gap: 0;
+    }
+    
+    .tb-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke:#999999 !important;
     }
     
     .emoji-library {
@@ -2873,6 +2958,8 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     white-space: pre-wrap;
     line-height: 1.5;
 }
+
+.transcript-close {
     justify-content: center;
     transition: all 0.2s ease;
 }
