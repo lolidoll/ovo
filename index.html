@@ -1830,13 +1830,19 @@
             </div>
             <div class="sub-content" style="padding: 0; background-color: #fff; overflow-y: auto; max-height: 100%;">
                 <div class="api-settings-container" style="padding:16px;">
+                    <!-- API预设管理 -->
+                    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">API 预设管理</h3>
+                        <button id="api-preset-btn" class="small-btn" style="width:100%;">预设管理</button>
+                    </div>
+
                     <!-- 主API设置 -->
                     <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
                         <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">主API设置</h3>
                         
                         <div class="setting-row">
                             <label class="setting-label">API 端点 (Endpoint)</label>
-                            <input id="api-endpoint" class="setting-input" placeholder="例如 https://api.openai.com 或 自建代理端点">
+                            <input id="api-endpoint" class="setting-input" placeholder="例如 https://api.openai.com/v1">
                         </div>
 
                         <div class="setting-row">
@@ -1865,7 +1871,7 @@
                         
                         <div class="setting-row">
                             <label class="setting-label">副API 端点 (Endpoint)</label>
-                            <input id="secondary-api-endpoint" class="setting-input" placeholder="例如 https://api.example.com（可选）">
+                            <input id="secondary-api-endpoint" class="setting-input" placeholder="例如 https://api.example.com/v1">
                         </div>
 
                         <div class="setting-row">
@@ -1888,6 +1894,59 @@
                         </div>
                     </div>
 
+                    <!-- 主API参数设置 -->
+                    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">主API参数设置</h3>
+                        
+                        <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>温度 (Temperature)</span>
+                                <span id="temperature-value" style="color:#0066cc;font-weight:600;font-size:14px;">0.8</span>
+                            </label>
+                            <input id="temperature-input" type="range" min="0" max="2" step="0.01" value="0.8" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:#e0e0e0;" oninput="document.getElementById('temperature-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:4px;color:#999;font-size:12px;">
+                                <span>0 (确定性)</span>
+                                <span>2 (随机性)</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>频率惩罚 (Frequency Penalty)</span>
+                                <span id="frequency-penalty-value" style="color:#0066cc;font-weight:600;font-size:14px;">0.2</span>
+                            </label>
+                            <input id="frequency-penalty-input" type="range" min="-2" max="2" step="0.01" value="0.2" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:#e0e0e0;" oninput="document.getElementById('frequency-penalty-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:4px;color:#999;font-size:12px;">
+                                <span>-2 (鼓励重复)</span>
+                                <span>2 (避免重复)</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>存在惩罚 (Presence Penalty)</span>
+                                <span id="presence-penalty-value" style="color:#0066cc;font-weight:600;font-size:14px;">0.1</span>
+                            </label>
+                            <input id="presence-penalty-input" type="range" min="-2" max="2" step="0.01" value="0.1" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:#e0e0e0;" oninput="document.getElementById('presence-penalty-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:4px;color:#999;font-size:12px;">
+                                <span>-2 (重复话题)</span>
+                                <span>2 (新话题)</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>Top P (核采样)</span>
+                                <span id="top-p-value" style="color:#0066cc;font-weight:600;font-size:14px;">1.0</span>
+                            </label>
+                            <input id="top-p-input" type="range" min="0" max="1" step="0.01" value="1.0" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:#e0e0e0;" oninput="document.getElementById('top-p-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:4px;color:#999;font-size:12px;">
+                                <span>0 (保守)</span>
+                                <span>1 (多样)</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 其他设置 -->
                     <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
                         <h3 style="margin:0 0 16px 0;font-size:16px;color:#333;font-weight:600;">其他设置</h3>
@@ -1899,22 +1958,9 @@
                                 <div style="color:#666;font-size:13px;">开启后会将当前时间信息作为 system 指令发送</div>
                             </div>
                         </div>
-
-                        <div class="setting-row">
-                            <label class="setting-label">API 上下文条数</label>
-                            <div style="display:flex;gap:8px;align-items:center;">
-                                <input id="context-lines-input" type="number" placeholder="200" value="200" min="1" max="10000" style="width:100px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-                                <div style="color:#666;font-size:13px;">条消息作为上下文（默认200）</div>
-                            </div>
-                        </div>
                     </div>
 
-                    <div class="setting-row" style="margin-top:24px;border-top:1px solid #f0f0f0;padding-top:16px;">
-                        <label class="setting-label">API 预设管理</label>
-                        <button id="api-preset-btn" class="small-btn" style="width:100%;">预设管理</button>
-                    </div>
-
-                    <div class="setting-row" style="margin-top:16px;border-top:1px solid #f0f0f0;padding-top:16px;">
+                    <div class="setting-row" style="margin-top:16px;padding-top:16px;">
                         <label class="setting-label">提示词管理</label>
                         <div style="display:flex;gap:8px;margin-top:8px;">
                             <button id="add-prompt-btn" class="small-btn">新增提示词</button>
@@ -1933,7 +1979,7 @@
                     </div>
 
                     <div style="margin-top:12px;color:#888;font-size:13px;">
-                        使用说明：填写端点与（可选）密钥，点击“拉取模型”获取模型列表。双击顶部用户头像或聊天头像即可将当前会话内容发送到所选模型并获取回复。
+                        使用说明：填写端点与（可选）密钥，点击“拉取模型”获取模型列表，务必记得点击保存设置。
                     </div>
                 </div>
             </div>

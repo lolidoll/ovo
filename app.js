@@ -24,7 +24,11 @@
                 models: [],
                 selectedModel: '',
                 aiTimeAware: false,
-                contextLines: 200, // 上下文条数，默认200条
+                // 主API参数设置
+                temperature: 0.8, // 温度，默认0.8
+                frequencyPenalty: 0.2, // 频率惩罚，默认0.2
+                presencePenalty: 0.1, // 存在惩罚，默认0.1
+                topP: 1.0, // Top P，默认1.0
                 prompts: [],
                 selectedPromptId: '',
                 defaultPrompt: 'null',
@@ -2521,6 +2525,21 @@
                     return;
                 }
                 
+                // 撤回消息：显示为中心提示，不是气泡
+                if (msg.isRetracted) {
+                    const retractNotice = document.createElement('div');
+                    retractNotice.style.cssText = `
+                        text-align: center;
+                        color: #999;
+                        font-size: 12px;
+                        margin: 8px 0;
+                        padding: 4px 0;
+                    `;
+                    retractNotice.textContent = msg.content;
+                    container.appendChild(retractNotice);
+                    return;
+                }
+                
                 const bubble = document.createElement('div');
                 const isSelected = AppState.selectedMessages.includes(msg.id);
                 // 对于语音和地理位置消息，使用sender属性来设置样式（sent/received）；其他消息使用type
@@ -2567,9 +2586,6 @@
                 } else if (msg.forwardedMoment && !msg.isForwarded) {
                     // ⭐ 防御性检查：如果有 forwardedMoment 但其他标记不对，也认为是转发朋友圈
                     textContent = `</div>`; // 只添加关闭标签，不添加任何内容
-                } else if (msg.isRetracted) {
-                    // 撤回消息：显示撤回提示文字，灰色风格
-                    textContent += `<div style="color:#999;font-size:12px;font-style:italic;">${escapeHtml(msg.content)}</div>`;
                 } else if (msg.type === 'voice') {
                     // 语音条消息：显示语音气泡
                     textContent = ``; // 清空，由下面的bubble.innerHTML处理
@@ -5192,8 +5208,13 @@
                 const selEl = document.getElementById('models-select');
                 const displayEl = document.getElementById('selected-model-display');
                 const aiToggle = document.getElementById('ai-time-aware');
-                const contextLinesEl = document.getElementById('context-lines-input');
                 const apiKeyToggle = document.getElementById('api-key-toggle');
+                
+                // 新增的主API参数元素
+                const temperatureEl = document.getElementById('temperature-input');
+                const frequencyPenaltyEl = document.getElementById('frequency-penalty-input');
+                const presencePenaltyEl = document.getElementById('presence-penalty-input');
+                const topPEl = document.getElementById('top-p-input');
 
                 if (endpointEl) endpointEl.value = s.endpoint || '';
                 
@@ -5209,9 +5230,30 @@
                 
                 if (aiToggle) aiToggle.checked = !!s.aiTimeAware;
                 
-                // 上下文条数
-                if (contextLinesEl) {
-                    contextLinesEl.value = s.contextLines || 200;
+                // 加载主API参数并更新显示值
+                if (temperatureEl) {
+                    const tempValue = s.temperature !== undefined ? s.temperature : 0.8;
+                    temperatureEl.value = tempValue;
+                    const tempDisplay = document.getElementById('temperature-value');
+                    if (tempDisplay) tempDisplay.textContent = tempValue;
+                }
+                if (frequencyPenaltyEl) {
+                    const fpValue = s.frequencyPenalty !== undefined ? s.frequencyPenalty : 0.2;
+                    frequencyPenaltyEl.value = fpValue;
+                    const fpDisplay = document.getElementById('frequency-penalty-value');
+                    if (fpDisplay) fpDisplay.textContent = fpValue;
+                }
+                if (presencePenaltyEl) {
+                    const ppValue = s.presencePenalty !== undefined ? s.presencePenalty : 0.1;
+                    presencePenaltyEl.value = ppValue;
+                    const ppDisplay = document.getElementById('presence-penalty-value');
+                    if (ppDisplay) ppDisplay.textContent = ppValue;
+                }
+                if (topPEl) {
+                    const topPValue = s.topP !== undefined ? s.topP : 1.0;
+                    topPEl.value = topPValue;
+                    const topPDisplay = document.getElementById('top-p-value');
+                    if (topPDisplay) topPDisplay.textContent = topPValue;
                 }
 
                 if (selEl) {
@@ -5485,7 +5527,12 @@
             const apiKey = (document.getElementById('api-key') || {}).value || '';
             const selected = (document.getElementById('models-select') || {}).value || '';
             const aiTime = !!((document.getElementById('ai-time-aware') || {}).checked);
-            const contextLines = parseInt((document.getElementById('context-lines-input') || {}).value || 200);
+            
+            // 主API参数
+            const temperature = parseFloat((document.getElementById('temperature-input') || {}).value || 0.8);
+            const frequencyPenalty = parseFloat((document.getElementById('frequency-penalty-input') || {}).value || 0.2);
+            const presencePenalty = parseFloat((document.getElementById('presence-penalty-input') || {}).value || 0.1);
+            const topP = parseFloat((document.getElementById('top-p-input') || {}).value || 1.0);
 
             // 副API设置
             const secondaryEndpoint = (document.getElementById('secondary-api-endpoint') || {}).value || '';
@@ -5497,7 +5544,12 @@
             AppState.apiSettings.apiKey = apiKey.trim();
             AppState.apiSettings.selectedModel = selected;
             AppState.apiSettings.aiTimeAware = aiTime;
-            AppState.apiSettings.contextLines = isNaN(contextLines) || contextLines < 1 ? 200 : contextLines;
+            
+            // 保存主API参数（添加范围验证）
+            AppState.apiSettings.temperature = isNaN(temperature) ? 0.8 : Math.max(0, Math.min(2, temperature));
+            AppState.apiSettings.frequencyPenalty = isNaN(frequencyPenalty) ? 0.2 : Math.max(-2, Math.min(2, frequencyPenalty));
+            AppState.apiSettings.presencePenalty = isNaN(presencePenalty) ? 0.1 : Math.max(-2, Math.min(2, presencePenalty));
+            AppState.apiSettings.topP = isNaN(topP) ? 1.0 : Math.max(0, Math.min(1, topP));
 
             // 保存副API设置
             AppState.apiSettings.secondaryEndpoint = secondaryEndpoint.trim();
@@ -5765,10 +5817,11 @@
             const body = {
                 model: api.selectedModel,
                 messages: messages,
-                temperature: 0.8,      // 提高到0.8，增加随机性
-                max_tokens: 10000,       // 限制最大回复长度
-                frequency_penalty: 0.2, // 降低重复
-                presence_penalty: 0.1   // 鼓励新话题
+                temperature: api.temperature !== undefined ? api.temperature : 0.8,
+                max_tokens: 10000,
+                frequency_penalty: api.frequencyPenalty !== undefined ? api.frequencyPenalty : 0.2,
+                presence_penalty: api.presencePenalty !== undefined ? api.presencePenalty : 0.1,
+                top_p: api.topP !== undefined ? api.topP : 1.0
             };
 
             // 固定使用 /v1 路径
@@ -6267,6 +6320,46 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 systemPrompts.push(emojiInstructions);
             }
             
+            // 添加语音消息和地理位置发送说明
+            systemPrompts.push(`【语音消息和地理位置发送格式】
+你可以主动发送语音消息和地理位置，使用以下格式：
+
+1. 【语音消息】使用格式：【语音条】语音内容文字|时长【/语音条】
+   - 语音内容：你想说的话（会被转换为语音条显示）
+   - 时长：语音时长（秒），建议1-60秒，根据内容长度合理设置
+   - 示例：【语音条】嗯...我在想要不要去那边看看|3【/语音条】
+   - 示例：【语音条】好啊，我也想去！|2【/语音条】
+   - 注意：语音条适合表达犹豫、思考、私密的话，或者想要更亲密的交流时使用
+
+2. 【地理位置】使用格式：【地理位置】位置名称|详细地址|距离【/地理位置】
+   - 位置名称：地点的名字（必填）
+   - 详细地址：具体地址（选填，可以为空）
+   - 距离：距离范围，单位米（选填，默认5米）
+   - 示例：【地理位置】星巴克咖啡|北京市朝阳区建国路1号|10【/地理位置】
+   - 示例：【地理位置】天安门广场||【/地理位置】
+   - 注意：分享位置时适合约见面、推荐地点、告诉对方你在哪里
+
+3. 【撤回消息】使用格式：【撤回】消息ID【/撤回】
+   - 消息ID：你要撤回的之前发送的消息的ID（从上下文中获取）
+   - 示例：【撤回】msg_1738070123456【/撤回】
+   - 使用场景：
+     * 说错话或发错内容时（如口误、信息错误）
+     * 后悔刚才说的话时（如太冲动、情绪失控）
+     * 需要改口或纠正之前的说法时
+     * 意识到信息不应该透露时
+   - 重要提示：
+     * 只在真正需要时使用，不要频繁撤回
+     * 撤回后用户会看到"角色名撤回了一条消息"的提示
+     * 撤回的原始内容会被保存，但用户看不到
+     * 通常在撤回后需要重新表达或解释
+
+使用建议：
+- 语音条：适合表达情绪、犹豫、私密内容，或想要更真实的交流感时
+- 地理位置：适合约见面、分享你在的地方、推荐好去处
+- 撤回消息：只在说错话、后悔、需要改口等特殊情况下使用，不要滥用
+- 不要每次都使用这些功能，根据对话情境自然地选择
+- 可以和普通文字消息结合使用，先发文字再发语音/位置，或反之`);
+            
             // 合并所有系统提示
             if (systemPrompts.length > 0) {
                 out.push({ role: 'system', content: systemPrompts.join('\n') });
@@ -6338,11 +6431,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 out.push({ role: 'system', content: '当前时间：' + new Date().toLocaleString('zh-CN') });
             }
 
-            // 获取上下文条数限制（默认200条）
-            const contextLimit = AppState.apiSettings && AppState.apiSettings.contextLines ? AppState.apiSettings.contextLines : 200;
-            const messagesToSend = msgs.slice(-contextLimit);
-
-            messagesToSend.forEach((m, index) => {
+            // 直接使用所有消息，不再限制上下文条数
+            msgs.forEach((m, index) => {
                 let messageContent = m.content;
                 
                 // 如果消息是系统消息，直接作为系统提示发送
@@ -6781,6 +6871,52 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             // 首先应用强大的清理函数
             text = cleanAIResponse(text);
             
+            // ========== 第二步：处理撤回标记 ==========
+            // 匹配撤回标记：【撤回】消息ID【/撤回】
+            const retractRegex = /【撤回】([^【]+?)【\/撤回】/;
+            const retractMatch = text.match(retractRegex);
+            
+            if (retractMatch && retractMatch[1]) {
+                const targetMsgId = retractMatch[1].trim();
+                // AI主动撤回某条消息
+                if (!AppState.messages[convId]) {
+                    AppState.messages[convId] = [];
+                }
+                const messages = AppState.messages[convId];
+                const msgIndex = messages.findIndex(m => m.id === targetMsgId);
+                
+                if (msgIndex > -1) {
+                    const originalMsg = messages[msgIndex];
+                    const characterName = AppState.conversations.find(c => c.id === convId)?.name || 'AI';
+                    const retractText = `${characterName}撤回了一条消息`;
+                    
+                    // 创建撤回占位符消息
+                    const retractMsg = {
+                        id: targetMsgId,
+                        type: originalMsg.type,
+                        content: retractText,
+                        timestamp: originalMsg.timestamp,
+                        isRetracted: true,
+                        retractedContent: originalMsg.content
+                    };
+                    
+                    // 替换原消息
+                    messages[msgIndex] = retractMsg;
+                    
+                    saveToStorage();
+                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
+                    renderConversations();
+                }
+                
+                // 从文本中移除撤回标记
+                text = text.replace(retractRegex, '').trim();
+                
+                // 如果移除撤回标记后没有其他内容，直接返回
+                if (!text || !text.trim()) {
+                    return;
+                }
+            }
+            
             // ========== 第三步：处理表情包信息 ==========
             let emojiUrl = null;
             let emojiText = null;
@@ -6801,7 +6937,29 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 text = text.replace(emojiRegex, '').trim();
             }
             
-            // ========== 第四步：处理地理位置信息 ==========
+            // ========== 第四步：处理语音消息信息 ==========
+            // 匹配语音条标记：【语音条】语音内容|时长【/语音条】
+            const voiceRegex = /【语音条】([^|【]+)\|?([^【]*)【\/语音条】/;
+            const voiceMatch = text.match(voiceRegex);
+            let voiceContent = null;
+            let voiceDuration = 1;
+            let isVoice = false;
+            
+            if (voiceMatch && voiceMatch[1]) {
+                isVoice = true;
+                voiceContent = voiceMatch[1].trim();
+                if (voiceMatch[2]) {
+                    const durationStr = voiceMatch[2].trim();
+                    const parsedDuration = parseInt(durationStr);
+                    if (!isNaN(parsedDuration) && parsedDuration > 0) {
+                        voiceDuration = parsedDuration;
+                    }
+                }
+                // 从文本中移除语音条标记
+                text = text.replace(voiceRegex, '').trim();
+            }
+            
+            // ========== 第五步：处理地理位置信息 ==========
             // 匹配地理位置标记：【地理位置】位置名称|地址|距离【/地理位置】或【地理位置】位置名称|地址【/地理位置】
             const locationRegex = /【地理位置】([^|【]+)\|?([^|【]*)\|?([^【]*)【\/地理位置】/;
             const locationMatch = text.match(locationRegex);
@@ -6828,10 +6986,27 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             // 第二次清理：确保没有遗漏
             text = cleanAIResponse(text);
             
-            // ========== 第五步：创建并添加AI消息 ==========
-            // 如果检测到地理位置消息，创建地理位置消息；否则创建普通消息
+            // ========== 第六步：创建并添加AI消息 ==========
+            if (!AppState.messages[convId]) {
+                AppState.messages[convId] = [];
+            }
+            
+            // 如果检测到语音消息，创建语音消息
+            if (isVoice && voiceContent) {
+                const aiVoiceMsg = {
+                    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    type: 'voice',
+                    content: voiceContent,
+                    sender: 'received',
+                    duration: voiceDuration,
+                    time: new Date().toISOString(),
+                    apiCallRound: currentApiCallRound
+                };
+                AppState.messages[convId].push(aiVoiceMsg);
+            }
+            
+            // 如果检测到地理位置消息，创建地理位置消息
             if (isLocation && locationName) {
-                // 创建地理位置消息
                 const aiLocationMsg = {
                     id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     type: 'location',
@@ -6841,27 +7016,13 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                     locationDistance: locationDistance,
                     sender: 'received',
                     time: new Date().toISOString(),
-                    apiCallRound: currentApiCallRound  // 添加API调用回合标记
+                    apiCallRound: currentApiCallRound
                 };
-                
-                if (!AppState.messages[convId]) {
-                    AppState.messages[convId] = [];
-                }
                 AppState.messages[convId].push(aiLocationMsg);
-                
-                // 如果AI还发送了其他文本内容，添加到消息
-                if (text && text.trim()) {
-                    const aiTextMsg = {
-                        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                        type: 'received',
-                        content: text,
-                        time: new Date().toISOString(),
-                        apiCallRound: currentApiCallRound  // 添加API调用回合标记
-                    };
-                    AppState.messages[convId].push(aiTextMsg);
-                }
-            } else {
-                // 创建普通消息或表情包消息
+            }
+            
+            // 如果还有其他文本内容或表情包，创建普通消息
+            if (text && text.trim()) {
                 const aiMsg = {
                     id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     type: 'received',
@@ -6869,16 +7030,24 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                     emojiUrl: emojiUrl,
                     isEmoji: emojiUrl ? true : false,
                     time: new Date().toISOString(),
-                    apiCallRound: currentApiCallRound  // 添加API调用回合标记
+                    apiCallRound: currentApiCallRound
                 };
-                
-                if (!AppState.messages[convId]) {
-                    AppState.messages[convId] = [];
-                }
+                AppState.messages[convId].push(aiMsg);
+            } else if (!isVoice && !isLocation && emojiUrl) {
+                // 如果只有表情包，没有文本，创建纯表情包消息
+                const aiMsg = {
+                    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    type: 'received',
+                    content: '',
+                    emojiUrl: emojiUrl,
+                    isEmoji: true,
+                    time: new Date().toISOString(),
+                    apiCallRound: currentApiCallRound
+                };
                 AppState.messages[convId].push(aiMsg);
             }
             
-            // ========== 第六步：更新会话信息和心声消息ID ==========
+            // ========== 第七步：更新会话信息和心声消息ID ==========
             const conv = AppState.conversations.find(c => c.id === convId);
             const aiMsg = AppState.messages[convId][AppState.messages[convId].length - 1];
             
@@ -6893,7 +7062,16 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             
             // 更新会话信息
             if (conv) {
-                conv.lastMsg = text || '[表情包]';
+                // 根据消息类型设置不同的显示文本
+                let lastMsgDisplay = text || '[表情包]';
+                if (isVoice) {
+                    lastMsgDisplay = '[语音]';
+                } else if (isLocation) {
+                    lastMsgDisplay = '[位置]';
+                } else if (emojiUrl && !text) {
+                    lastMsgDisplay = '[表情包]';
+                }
+                conv.lastMsg = lastMsgDisplay;
                 conv.time = formatTime(new Date());
                 conv.lastMessageTime = aiMsg.time;  // 保存完整时间戳用于排序
             }
@@ -6938,27 +7116,97 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                         content = content.replace(emojiRegex, '').trim();
                     }
                     
+                    // 处理语音消息
+                    const voiceRegex = /【语音条】([^|【]+)\|?([^【]*)【\/语音条】/;
+                    const voiceMatch = content.match(voiceRegex);
+                    let isVoice = false;
+                    let voiceContent = null;
+                    let voiceDuration = 1;
+                    
+                    if (voiceMatch && voiceMatch[1]) {
+                        isVoice = true;
+                        voiceContent = voiceMatch[1].trim();
+                        if (voiceMatch[2]) {
+                            const parsedDuration = parseInt(voiceMatch[2].trim());
+                            if (!isNaN(parsedDuration) && parsedDuration > 0) {
+                                voiceDuration = parsedDuration;
+                            }
+                        }
+                        content = content.replace(voiceRegex, '').trim();
+                    }
+                    
+                    // 处理地理位置
+                    const locationRegex = /【地理位置】([^|【]+)\|?([^|【]*)\|?([^【]*)【\/地理位置】/;
+                    const locationMatch = content.match(locationRegex);
+                    let isLocation = false;
+                    let locationName = null;
+                    let locationAddress = null;
+                    let locationDistance = 5;
+                    
+                    if (locationMatch && locationMatch[1]) {
+                        isLocation = true;
+                        locationName = locationMatch[1].trim();
+                        locationAddress = locationMatch[2] ? locationMatch[2].trim() : '';
+                        if (locationMatch[3]) {
+                            const parsedDistance = parseInt(locationMatch[3].trim());
+                            if (!isNaN(parsedDistance) && parsedDistance > 0) {
+                                locationDistance = parsedDistance;
+                            }
+                        }
+                        content = content.replace(locationRegex, '').trim();
+                    }
+                    
                     // 【新架构】心声已在 appendAssistantMessage 中从主API响应自动提取
                     
                     content = cleanAIResponse(content);
                     
-                    if (!content) return;
-                    
-                    // 创建消息
-                    const aiMsg = {
-                        id: 'msg_' + Date.now() + '_' + Math.random(),
-                        type: 'received',
-                        content: content,
-                        emojiUrl: emojiUrl,
-                        isEmoji: emojiUrl ? true : false,
-                        time: new Date().toISOString(),
-                        apiCallRound: currentApiCallRound  // 添加API调用回合标记，确保删除时能识别
-                    };
-                    
                     if (!AppState.messages[convId]) {
                         AppState.messages[convId] = [];
                     }
-                    AppState.messages[convId].push(aiMsg);
+                    
+                    // 创建语音消息
+                    if (isVoice && voiceContent) {
+                        const aiVoiceMsg = {
+                            id: 'msg_' + Date.now() + '_' + Math.random(),
+                            type: 'voice',
+                            content: voiceContent,
+                            sender: 'received',
+                            duration: voiceDuration,
+                            time: new Date().toISOString(),
+                            apiCallRound: currentApiCallRound
+                        };
+                        AppState.messages[convId].push(aiVoiceMsg);
+                    }
+                    
+                    // 创建地理位置消息
+                    if (isLocation && locationName) {
+                        const aiLocationMsg = {
+                            id: 'msg_' + Date.now() + '_' + Math.random(),
+                            type: 'location',
+                            content: `${locationName}${locationAddress ? ' - ' + locationAddress : ''} (${locationDistance}米范围)`,
+                            locationName: locationName,
+                            locationAddress: locationAddress || '',
+                            locationDistance: locationDistance,
+                            sender: 'received',
+                            time: new Date().toISOString(),
+                            apiCallRound: currentApiCallRound
+                        };
+                        AppState.messages[convId].push(aiLocationMsg);
+                    }
+                    
+                    // 创建普通文本或表情包消息
+                    if (content || emojiUrl) {
+                        const aiMsg = {
+                            id: 'msg_' + Date.now() + '_' + Math.random(),
+                            type: 'received',
+                            content: content,
+                            emojiUrl: emojiUrl,
+                            isEmoji: emojiUrl ? true : false,
+                            time: new Date().toISOString(),
+                            apiCallRound: currentApiCallRound
+                        };
+                        AppState.messages[convId].push(aiMsg);
+                    }
                     
                     // 更新会话信息
                     const conv = AppState.conversations.find(c => c.id === convId);
