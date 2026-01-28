@@ -20,19 +20,38 @@
                 });
             }
             
-            // 导入文件按钮
-            const importFileBtn = document.getElementById('emoji-manager-import-file');
-            if (importFileBtn) {
-                importFileBtn.addEventListener('click', () => {
-                    document.getElementById('emoji-manager-file-input').click();
+            // 导入图片按钮
+            const importImageBtn = document.getElementById('emoji-manager-import-image');
+            if (importImageBtn) {
+                importImageBtn.addEventListener('click', () => {
+                    document.getElementById('emoji-manager-image-input').click();
                 });
             }
             
-            // 文件输入
-            const fileInput = document.getElementById('emoji-manager-file-input');
-            if (fileInput) {
-                fileInput.addEventListener('change', (e) => {
-                    this.handleFileImport(e.target.files);
+            // 导入JSON按钮
+            const importJsonBtn = document.getElementById('emoji-manager-import-json');
+            if (importJsonBtn) {
+                importJsonBtn.addEventListener('click', () => {
+                    document.getElementById('emoji-manager-json-input').click();
+                });
+            }
+            
+            // 图片文件输入
+            const imageInput = document.getElementById('emoji-manager-image-input');
+            if (imageInput) {
+                imageInput.addEventListener('change', (e) => {
+                    this.handleImageImport(e.target.files);
+                    e.target.value = '';
+                });
+            }
+            
+            // JSON文件输入
+            const jsonInput = document.getElementById('emoji-manager-json-input');
+            if (jsonInput) {
+                jsonInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        this.handleJsonImport(e.target.files[0]);
+                    }
                     e.target.value = '';
                 });
             }
@@ -45,11 +64,50 @@
                 });
             }
             
-            // 删除模式按钮
-            const deleteModeBtn = document.getElementById('emoji-manager-delete-mode');
-            if (deleteModeBtn) {
-                deleteModeBtn.addEventListener('click', () => {
-                    this.toggleDeleteMode();
+            // 批量选择按钮
+            const selectModeBtn = document.getElementById('emoji-manager-select-mode');
+            if (selectModeBtn) {
+                selectModeBtn.addEventListener('click', () => {
+                    this.toggleSelectMode();
+                });
+            }
+        },
+        
+        // 切换选择模式
+        toggleSelectMode: function() {
+            const btn = document.getElementById('emoji-manager-select-mode');
+            const contentArea = document.getElementById('emoji-manager-content');
+            
+            if (!btn || !contentArea) return;
+            
+            if (btn.classList.contains('active')) {
+                // 执行批量删除
+                const selectedItems = contentArea.querySelectorAll('.emoji-manager-item.selected');
+                if (selectedItems.length === 0) {
+                    alert('请先选择要删除的表情包');
+                    return;
+                }
+                
+                if (!confirm(`确定要删除选中的 ${selectedItems.length} 个表情包吗？`)) return;
+                
+                const idsToDelete = Array.from(selectedItems).map(item => item.dataset.id);
+                AppState.emojis = AppState.emojis.filter(e => !idsToDelete.includes(e.id));
+                
+                saveToStorage();
+                
+                // 退出选择模式并重新渲染
+                btn.classList.remove('active');
+                btn.querySelector('span').textContent = '批量选择';
+                const activeGroup = document.querySelector('.emoji-group-btn.active');
+                if (activeGroup) {
+                    this.renderEmojis(activeGroup.dataset.groupId);
+                }
+            } else {
+                // 进入选择模式
+                btn.classList.add('active');
+                btn.querySelector('span').textContent = '删除选中';
+                contentArea.querySelectorAll('.emoji-manager-item').forEach(item => {
+                    item.classList.add('selecting');
                 });
             }
         },
@@ -202,17 +260,59 @@
                 item.appendChild(text);
                 item.appendChild(checkbox);
                 
-                // 双击编辑描述
+                // 检查是否处于选择模式
+                const selectModeBtn = document.getElementById('emoji-manager-select-mode');
+                const isSelectMode = selectModeBtn && selectModeBtn.classList.contains('active');
+                
+                if (isSelectMode) {
+                    // 选择模式下添加selecting类
+                    item.classList.add('selecting');
+                }
+                
+                // 点击事件
+                item.addEventListener('click', () => {
+                    const selectBtn = document.getElementById('emoji-manager-select-mode');
+                    if (selectBtn && selectBtn.classList.contains('active')) {
+                        // 选择模式下切换选中状态
+                        item.classList.toggle('selected');
+                    }
+                });
+                
+                // 长按菜单（移动端）
+                let longPressTimer;
+                item.addEventListener('touchstart', (e) => {
+                    const selectBtn = document.getElementById('emoji-manager-select-mode');
+                    if (selectBtn && selectBtn.classList.contains('active')) {
+                        return; // 选择模式下不触发长按
+                    }
+                    longPressTimer = setTimeout(() => {
+                        this.showEmojiMenu(emoji, item);
+                    }, 500);
+                });
+                item.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                item.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                // 双击编辑描述（桌面端）
                 item.addEventListener('dblclick', () => {
+                    const selectBtn = document.getElementById('emoji-manager-select-mode');
+                    if (selectBtn && selectBtn.classList.contains('active')) {
+                        return; // 选择模式下不触发双击
+                    }
                     this.editEmojiDescription(emoji);
                 });
                 
-                // 单击选择（删除模式下）
-                item.addEventListener('click', () => {
-                    const deleteBtn = document.getElementById('emoji-manager-delete-mode');
-                    if (deleteBtn && deleteBtn.classList.contains('active')) {
-                        item.classList.toggle('selected');
+                // 右键菜单（桌面端）
+                item.addEventListener('contextmenu', (e) => {
+                    const selectBtn = document.getElementById('emoji-manager-select-mode');
+                    if (selectBtn && selectBtn.classList.contains('active')) {
+                        return; // 选择模式下不触发右键菜单
                     }
+                    e.preventDefault();
+                    this.showEmojiMenu(emoji, item);
                 });
                 
                 grid.appendChild(item);
@@ -222,71 +322,154 @@
             contentArea.appendChild(grid);
         },
         
-        // 切换删除模式
-        toggleDeleteMode: function() {
-            const btn = document.getElementById('emoji-manager-delete-mode');
-            const contentArea = document.getElementById('emoji-manager-content');
+        // 显示表情包菜单
+        showEmojiMenu: function(emoji, itemElement) {
+            // 移除已存在的菜单
+            const existingMenu = document.getElementById('emoji-context-menu');
+            if (existingMenu) existingMenu.remove();
             
-            if (!btn || !contentArea) return;
+            const menu = document.createElement('div');
+            menu.id = 'emoji-context-menu';
+            menu.style.cssText = `
+                position: fixed;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                z-index: 10001;
+                padding: 8px;
+                min-width: 160px;
+            `;
             
-            if (btn.classList.contains('active')) {
-                // 执行删除
-                const selectedItems = contentArea.querySelectorAll('.emoji-manager-item.selected');
-                if (selectedItems.length === 0) {
-                    alert('请先选择要删除的表情包');
+            const options = [
+                {
+                    icon: '✏️',
+                    text: '编辑描述',
+                    action: () => {
+                        menu.remove();
+                        this.editEmojiDescription(emoji);
+                    }
+                },
+                {
+                    icon: '📁',
+                    text: '移动到...',
+                    action: () => {
+                        menu.remove();
+                        this.moveEmojiToGroup(emoji);
+                    }
+                },
+                {
+                    icon: '🗑️',
+                    text: '删除',
+                    color: '#ff4757',
+                    action: () => {
+                        menu.remove();
+                        if (confirm('确定要删除这个表情包吗？')) {
+                            AppState.emojis = AppState.emojis.filter(e => e.id !== emoji.id);
+                            saveToStorage();
+                            const activeGroup = document.querySelector('.emoji-group-btn.active');
+                            if (activeGroup) {
+                                this.renderEmojis(activeGroup.dataset.groupId);
+                            }
+                        }
+                    }
+                }
+            ];
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.style.cssText = `
+                    width: 100%;
+                    padding: 12px;
+                    border: none;
+                    background: transparent;
+                    text-align: left;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: ${opt.color || '#333'};
+                    transition: background 0.2s;
+                `;
+                btn.innerHTML = `<span>${opt.icon}</span><span>${opt.text}</span>`;
+                btn.addEventListener('click', opt.action);
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = '#f5f5f5';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.background = 'transparent';
+                });
+                menu.appendChild(btn);
+            });
+            
+            document.body.appendChild(menu);
+            
+            // 定位菜单
+            const rect = itemElement.getBoundingClientRect();
+            const menuWidth = 160;
+            const menuHeight = menu.offsetHeight;
+            
+            let left = rect.left + rect.width / 2 - menuWidth / 2;
+            let top = rect.bottom + 8;
+            
+            // 边界检查
+            if (left + menuWidth > window.innerWidth) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+            if (left < 10) {
+                left = 10;
+            }
+            if (top + menuHeight > window.innerHeight) {
+                top = rect.top - menuHeight - 8;
+            }
+            
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+            
+            // 点击外部关闭
+            setTimeout(() => {
+                const closeMenu = (e) => {
+                    if (!menu.contains(e.target)) {
+                        menu.remove();
+                        document.removeEventListener('click', closeMenu);
+                        document.removeEventListener('touchstart', closeMenu);
+                    }
+                };
+                document.addEventListener('click', closeMenu);
+                document.addEventListener('touchstart', closeMenu);
+            }, 100);
+        },
+        
+        // 移动表情包到其他分组
+        moveEmojiToGroup: function(emoji) {
+            this.showGroupSelectDialog((groupId) => {
+                if (groupId === emoji.groupId) {
+                    alert('表情包已在该分组中');
                     return;
                 }
                 
-                if (!confirm(`确定要删除选中的 ${selectedItems.length} 个表情包吗？`)) return;
-                
-                const idsToDelete = Array.from(selectedItems).map(item => item.dataset.id);
-                AppState.emojis = AppState.emojis.filter(e => !idsToDelete.includes(e.id));
-                
+                emoji.groupId = groupId;
                 saveToStorage();
                 
-                // 重新渲染当前分组
                 const activeGroup = document.querySelector('.emoji-group-btn.active');
                 if (activeGroup) {
                     this.renderEmojis(activeGroup.dataset.groupId);
                 }
                 
-                // 退出删除模式
-                btn.classList.remove('active');
-                contentArea.querySelectorAll('.emoji-manager-item').forEach(item => {
-                    item.classList.remove('selecting');
-                });
-            } else {
-                // 进入删除模式
-                btn.classList.add('active');
-                contentArea.querySelectorAll('.emoji-manager-item').forEach(item => {
-                    item.classList.add('selecting');
-                });
-            }
+                alert('移动成功！');
+            }, '移动到分组');
         },
         
-        // 处理文件导入
-        handleFileImport: function(files) {
+        // 处理图片导入
+        handleImageImport: function(files) {
             if (!files || files.length === 0) return;
             
-            if (files.length > 1) {
-                // 多个文件：直接导入
-                this.importMultipleFiles(files);
-            } else {
-                // 单个文件
-                const file = files[0];
-                if (file.type === 'application/json' || file.name.endsWith('.json')) {
-                    this.handleJsonImport(file);
-                } else if (file.type.startsWith('image/')) {
-                    this.showSingleImageDialog(file);
-                } else {
-                    alert('不支持的文件类型');
-                }
+            const filesArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (filesArray.length === 0) {
+                alert('请选择图片文件');
+                return;
             }
-        },
-        
-        // 导入多个文件
-        importMultipleFiles: function(files) {
-            const filesArray = Array.from(files);
             
             // 选择分组
             this.showGroupSelectDialog((groupId) => {
@@ -378,32 +561,8 @@
             reader.readAsText(file);
         },
         
-        // 显示单个图片描述对话框
-        showSingleImageDialog: function(file) {
-            const desc = prompt('请输入表情包描述：', file.name.replace(/\.[^.]+$/, ''));
-            if (!desc) return;
-            
-            this.showGroupSelectDialog((groupId) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    AppState.emojis.push({
-                        id: 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                        url: e.target.result,
-                        text: desc,
-                        groupId: groupId,
-                        createdAt: new Date().toISOString()
-                    });
-                    
-                    saveToStorage();
-                    this.renderGroups();
-                    alert('已导入表情包');
-                };
-                reader.readAsDataURL(file);
-            });
-        },
-        
         // 显示分组选择对话框
-        showGroupSelectDialog: function(callback) {
+        showGroupSelectDialog: function(callback, title = '选择分组') {
             let modal = document.getElementById('emoji-group-select-modal');
             if (modal) modal.remove();
             
@@ -433,7 +592,7 @@
             `;
             
             content.innerHTML = `
-                <h3 style="margin:0 0 16px 0;font-size:16px;">选择分组</h3>
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">${title}</h3>
                 <div id="group-select-list"></div>
             `;
             
@@ -445,18 +604,27 @@
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     width: 100%;
-                    padding: 12px;
-                    margin-bottom: 8px;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    background: white;
+                    padding: 14px;
+                    margin-bottom: 10px;
+                    border: none;
+                    border-radius: 10px;
+                    background: #f5f5f5;
+                    color: #333;
                     cursor: pointer;
-                    font-size: 14px;
+                    font-size: 15px;
+                    font-weight: 500;
+                    transition: all 0.2s;
                 `;
                 btn.textContent = group.name;
                 btn.addEventListener('click', () => {
                     modal.remove();
                     callback(group.id);
+                });
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = '#e8e8e8';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.background = '#f5f5f5';
                 });
                 list.appendChild(btn);
             });

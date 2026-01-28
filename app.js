@@ -957,61 +957,6 @@
                 showUrlImportDialog('chat');
             });
 
-            const btnEmojiDel = document.getElementById('emoji-del-btn');
-            const btnEmojiTrash = document.getElementById('emoji-trash-btn');
-            
-            if (btnEmojiDel) {
-                btnEmojiDel.addEventListener('click', function() {
-                    const grid = document.getElementById('emoji-grid');
-                    const mode = this.dataset.mode || 'normal'; // normal <-> selecting
-                    
-                    if (mode === 'normal') {
-                        // 进入多选模式
-                        this.dataset.mode = 'selecting';
-                        this.style.background = '#f0f0f0';
-                        grid.querySelectorAll('.emoji-item').forEach(item => {
-                            item.classList.add('selecting');
-                        });
-                        // 显示垃圾桶按钮
-                        if (btnEmojiTrash) btnEmojiTrash.style.display = 'flex';
-                    } else if (mode === 'selecting') {
-                        // 退出多选模式
-                        this.dataset.mode = 'normal';
-                        this.style.background = '';
-                        grid.querySelectorAll('.emoji-item').forEach(item => {
-                            item.classList.remove('selecting');
-                            item.classList.remove('selected');
-                        });
-                        // 隐藏垃圾桶按钮
-                        if (btnEmojiTrash) btnEmojiTrash.style.display = 'none';
-                    }
-                });
-            }
-            
-            // 垃圾桶按钮 - 删除选中
-            if (btnEmojiTrash) {
-                btnEmojiTrash.addEventListener('click', function() {
-                    const grid = document.getElementById('emoji-grid');
-                    const selectedItems = grid.querySelectorAll('.emoji-item.selected');
-                    
-                    if (selectedItems.length === 0) {
-                        showToast('请先选择要删除的表情包');
-                        return;
-                    }
-                    
-                    if (!confirm(`确定要删除选中的 ${selectedItems.length} 个表情包吗？`)) return;
-                    
-                    selectedItems.forEach(item => {
-                        const emojiId = item.dataset.id;
-                        AppState.emojis = AppState.emojis.filter(e => e.id !== emojiId);
-                    });
-                    
-                    saveToStorage();
-                    renderEmojiLibrary();
-                    renderEmojiGroups('chat');
-                });
-            }
-
             // 分组管理按钮
             const btnEmojiGroup = document.getElementById('emoji-group-btn');
             if (btnEmojiGroup) {
@@ -7361,12 +7306,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 
                 if (context === 'chat') {
                     item.addEventListener('click', function(e) {
-                        if (document.getElementById('emoji-del-btn').dataset.active === 'true') {
-                            this.classList.toggle('selected');
-                            checkbox.classList.toggle('checked');
-                        } else {
-                            sendEmojiWithText(emoji);
-                        }
+                        sendEmojiWithText(emoji);
                     });
                 } else if (context === 'mgmt') {
                     // 在管理界面中，支持长按编辑或右键编辑
