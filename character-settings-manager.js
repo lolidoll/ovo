@@ -57,7 +57,7 @@
             const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
             
             page.innerHTML = `
-                <div class="sub-nav">
+                <div class="sub-nav char-settings-nav">
                     <div class="back-btn" id="char-settings-back-btn">
                         <div class="back-arrow"></div>
                         <span>返回</span>
@@ -65,108 +65,152 @@
                     <div class="sub-title">角色设置</div>
                 </div>
                 
-                <div class="sub-content" style="padding:16px;background:#f5f5f5;">
-                    <!-- 头像区域 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="text-align:center;">
-                            <div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;margin-bottom:12px;">
-                                <!-- 角色头像 -->
-                                <div>
-                                    <div id="settings-char-avatar-display" style="width:70px;height:70px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-bottom:8px;border:2px solid #000;overflow:hidden;">
-                                        ${chat.avatar ? `<img src="${chat.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span style="font-size:28px;">' + chat.name.charAt(0) + '</span>'}
-                                    </div>
-                                    <button id="char-avatar-btn" style="padding:6px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;width:100%;">修改</button>
-                                    <div style="font-size:12px;color:#666;margin-top:4px;">角色头像</div>
+                <div class="sub-content char-settings-content">
+                    <!-- 头像区域 - 公主风格 -->
+                    <div class="char-avatar-section">
+                        <div class="avatar-container">
+                            <div class="avatar-wrapper char-avatar-wrapper">
+                                <div class="avatar-glow"></div>
+                                <div id="settings-char-avatar-display" class="avatar-display">
+                                    ${chat.avatar ? `<img src="${chat.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span class="avatar-initial">' + chat.name.charAt(0) + '</span>'}
                                 </div>
-                                
-                                <!-- 用户头像 -->
-                                <div>
-                                    <div id="settings-user-avatar-display" style="width:70px;height:70px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-bottom:8px;border:2px solid #ddd;overflow:hidden;">
-                                        ${chat.userAvatar ? `<img src="${chat.userAvatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span style="font-size:28px;">' + window.AppState.user.name.charAt(0) + '</span>'}
-                                    </div>
-                                    <button id="user-avatar-btn" style="padding:6px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;width:100%;">修改</button>
-                                    <div style="font-size:12px;color:#666;margin-top:4px;">你的头像</div>
+                                <button id="char-avatar-btn" class="avatar-edit-btn">
+                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                                <div class="avatar-label">角色</div>
+                            </div>
+                            
+                            <div class="avatar-heart">
+                                <svg viewBox="0 0 24 24" style="width:32px;height:32px;fill:#ff69b4;">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </div>
+                            
+                            <div class="avatar-wrapper user-avatar-wrapper">
+                                <div class="avatar-glow"></div>
+                                <div id="settings-user-avatar-display" class="avatar-display">
+                                    ${chat.userAvatar ? `<img src="${chat.userAvatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span class="avatar-initial">' + window.AppState.user.name.charAt(0) + '</span>'}
+                                </div>
+                                <button id="user-avatar-btn" class="avatar-edit-btn">
+                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                                <div class="avatar-label">你</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 基本信息 - 公主风格卡片 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span>基本信息</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">角色名称</label>
+                                <input type="text" id="char-name-input" value="${this.escapeHtml(chat.name || '')}" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">备注名称</label>
+                                <input type="text" id="char-remark-input" value="${this.escapeHtml(chat.remark || '')}" placeholder="设置专属备注" class="form-input">
+                                <div class="form-hint">设置后将优先显示备注而非角色名称</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">角色设定</label>
+                                <textarea id="char-desc-input" class="form-textarea">${this.escapeHtml(chat.description || '')}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用户人设 - 公主风格卡片 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span>用户人设</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">用户名称</label>
+                                <input type="text" id="user-name-for-char" value="${this.escapeHtml(userNameForChar)}" class="form-input">
+                                <div class="form-hint">在与该角色对话时使用此名称</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">选择人设</label>
+                                <select id="user-persona-select" class="form-select">
+                                    <option value="">使用默认人设</option>
+                                    ${window.AppState.userPersonas && window.AppState.userPersonas.map(p => `
+                                        <option value="${p.id}" ${chat.boundPersonaId === p.id ? 'selected' : ''}>
+                                            ${this.escapeHtml(p.name)}${p.id === window.AppState.defaultPersonaId ? ' (默认)' : ''}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <div class="button-group">
+                                    <button id="manage-personas-btn" class="btn-secondary">管理人设</button>
+                                    <button id="apply-persona-btn" class="btn-primary">应用人设</button>
                                 </div>
                             </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">人设内容</label>
+                                <textarea id="user-desc-input" class="form-textarea" style="min-height:80px;">${this.escapeHtml(userPersonality)}</textarea>
+                                <div class="form-hint">当前显示的是实际使用的人设内容</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 基本信息 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">角色名称</label>
-                            <input type="text" id="char-name-input" value="${this.escapeHtml(chat.name || '')}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <!-- 绑定设置 - 公主风格卡片 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                            <span>绑定设置</span>
                         </div>
-                        
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">备注</label>
-                            <input type="text" id="char-remark-input" value="${this.escapeHtml(chat.remark || '')}" placeholder="设置备注后将优先显示备注" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-                            <div style="font-size:11px;color:#999;margin-top:4px;">设置备注后，好友列表和聊天页面会优先显示备注而非角色名称</div>
-                        </div>
-                        
-                        <div>
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">角色人物设定</label>
-                            <textarea id="char-desc-input" style="width:100%;min-height:100px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:monospace;resize:vertical;">${this.escapeHtml(chat.description || '')}</textarea>
-                        </div>
-                    </div>
-
-                    <!-- 用户人设 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">用户名称</label>
-                            <input type="text" id="user-name-for-char" value="${this.escapeHtml(userNameForChar)}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-                            <div style="font-size:11px;color:#999;margin-top:4px;">在与该角色对话时，AI会读取此名称（不影响个人资料昵称）</div>
-                        </div>
-                        
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">选择用户人设</label>
-                            <select id="user-persona-select" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;margin-bottom:8px;">
-                                <option value="">使用默认人设</option>
-                                ${window.AppState.userPersonas && window.AppState.userPersonas.map(p => `
-                                    <option value="${p.id}" ${chat.boundPersonaId === p.id ? 'selected' : ''}>
-                                        ${this.escapeHtml(p.name)}${p.id === window.AppState.defaultPersonaId ? ' (默认)' : ''}
-                                    </option>
-                                `).join('')}
-                            </select>
-                            <div style="display:flex;gap:8px;margin-bottom:8px;">
-                                <button id="manage-personas-btn" style="flex:1;padding:6px 12px;border:1px solid #4CAF50;border-radius:4px;background:#fff;color:#4CAF50;cursor:pointer;font-size:12px;">管理人设</button>
-                                <button id="apply-persona-btn" style="flex:1;padding:6px 12px;border:none;border-radius:4px;background:#4CAF50;color:#fff;cursor:pointer;font-size:12px;">应用人设</button>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">表情包分组</label>
+                                <div id="char-emoji-groups-list" class="tag-list">
+                                    ${window.AppState.emojiGroups.map(g => `
+                                        <label class="tag-item">
+                                            <input type="checkbox" class="eg-checkbox" value="${g.id}">
+                                            <span class="tag-text">${this.escapeHtml(g.name)}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                                <div class="form-hint">支持多选，向右滑动查看更多</div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">用户人物设定</label>
-                            <textarea id="user-desc-input" style="width:100%;min-height:80px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:monospace;resize:vertical;">${this.escapeHtml(userPersonality)}</textarea>
-                            <div style="font-size:11px;color:#999;margin-top:4px;">当前显示的是实际使用的人设内容</div>
-                        </div>
-                    </div>
-
-                    <!-- 绑定设置 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">绑定表情包分组</label>
-                            <div id="char-emoji-groups-list" style="background:#f9f9f9;border-radius:8px;overflow-x:auto;overflow-y:hidden;display:flex;flex-wrap:nowrap;gap:8px;padding:8px;border:1px solid #ddd;scroll-behavior:smooth;">
-                                ${window.AppState.emojiGroups.map(g => `
-                                    <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #ddd;border-radius:20px;cursor:pointer;font-size:13px;user-select:none;flex-shrink:0;white-space:nowrap;transition:all 0.2s;">
-                                        <input type="checkbox" class="eg-checkbox" value="${g.id}" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;margin:0;">
-                                        <span>${this.escapeHtml(g.name)}</span>
-                                    </label>
-                                `).join('')}
+                            
+                            <div class="form-group">
+                                <label class="form-label">局部世界书</label>
+                                <div id="char-worldbooks-list" class="tag-list">
+                                    ${localWbs.map(w => `
+                                        <label class="tag-item">
+                                            <input type="checkbox" class="wb-checkbox" value="${w.id}">
+                                            <span class="tag-text">${this.escapeHtml(w.name)}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                                <div class="form-hint">支持多选，向右滑动查看更多</div>
                             </div>
-                            <div style="font-size:11px;color:#999;margin-top:4px;">支持多选，向右滑动查看更多</div>
-                        </div>
-                        
-                        <div>
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">绑定局部世界书</label>
-                            <div id="char-worldbooks-list" style="background:#f9f9f9;border-radius:8px;overflow-x:auto;overflow-y:hidden;display:flex;flex-wrap:nowrap;gap:8px;padding:8px;border:1px solid #ddd;scroll-behavior:smooth;">
-                                ${localWbs.map(w => `
-                                    <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #ddd;border-radius:20px;cursor:pointer;font-size:13px;user-select:none;flex-shrink:0;white-space:nowrap;transition:all 0.2s;">
-                                        <input type="checkbox" class="wb-checkbox" value="${w.id}" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;margin:0;">
-                                        <span>${this.escapeHtml(w.name)}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
-                            <div style="font-size:11px;color:#999;margin-top:4px;">支持多选，向右滑动查看更多</div>
                         </div>
                     </div>
 
@@ -310,15 +354,28 @@
                         </div>
                     </div>
 
-                    <!-- 操作按钮 -->
-                    <div style="display:flex;gap:8px;margin-bottom:12px;">
-                        <button id="save-char-settings-btn" style="flex:1;padding:12px;border:none;border-radius:8px;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">保存设置</button>
-                        <button id="delete-char-btn" style="flex:1;padding:12px;border:1px solid #f44;border-radius:8px;background:#fff;color:#f44;cursor:pointer;font-size:14px;font-weight:500;">删除角色</button>
+                    <!-- 操作按钮 - 公主风格 -->
+                    <div class="action-buttons">
+                        <button id="save-char-settings-btn" class="btn-save">
+                            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            <span>保存设置</span>
+                        </button>
+                        <button id="delete-char-btn" class="btn-delete">
+                            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>删除角色</span>
+                        </button>
                     </div>
                     
                     <!-- 删除所有聊天记录按钮 -->
-                    <div style="margin-bottom:100px;">
-                        <button id="delete-all-messages-btn" style="width:100%;padding:12px;border:1px solid #ff6b6b;border-radius:8px;background:#fff;color:#ff6b6b;cursor:pointer;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <div class="danger-zone">
+                        <button id="delete-all-messages-btn" class="btn-danger-full">
                             <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -327,7 +384,7 @@
                             </svg>
                             <span>删除所有聊天记录</span>
                         </button>
-                        <div style="font-size:11px;color:#999;text-align:center;margin-top:6px;">此操作将清空该角色的所有对话记录和心声，无法恢复</div>
+                        <div class="danger-hint">此操作将清空该角色的所有对话记录和心声，无法恢复</div>
                     </div>
                 </div>
             `;

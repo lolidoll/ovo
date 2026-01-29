@@ -8608,7 +8608,7 @@
             });
         }
 
-        // 打开收藏页面
+        // 打开收藏页面 - 现代化设计
         function openCollectionPage() {
             let page = document.getElementById('collection-page');
             if (!page) {
@@ -8618,30 +8618,75 @@
                 document.getElementById('app-container').appendChild(page);
             }
 
-            const collectionsHTML = AppState.collections.length === 0 ? 
-                '<div class="empty-state"><div class="empty-text">暂无收藏</div></div>' :
-                `<div class="collection-list">
-                    ${AppState.collections.map(item => `
-                        <div class="collection-item" style="padding:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">
-                            <div style="flex:1;">
-                                <div style="font-size:12px;color:#999;margin-bottom:4px;">${item.senderName}</div>
-                                <div style="font-size:14px;color:#333;word-break:break-all;">${item.messageContent.substring(0, 100)}</div>
-                                <div style="font-size:12px;color:#ccc;margin-top:4px;">${new Date(item.collectedAt).toLocaleString()}</div>
+            const collectionsHTML = AppState.collections.length === 0 ?
+                `<div class="empty-state" style="padding:80px 40px;text-align:center;">
+                    <div style="width:120px;height:120px;margin:0 auto 24px;background:linear-gradient(135deg,#f5f5f5 0%,#ffffff 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+                        <svg viewBox="0 0 24 24" style="width:60px;height:60px;stroke:#666;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div style="font-size:16px;color:#999;font-weight:500;margin-bottom:8px;">暂无收藏</div>
+                    <div style="font-size:13px;color:#ccc;">收藏的消息会显示在这里</div>
+                </div>` :
+                `<div class="collection-list" style="padding:16px;">
+                    ${AppState.collections.map((item, index) => `
+                        <div class="collection-item" style="background:linear-gradient(135deg,#ffffff 0%,#f8f8f8 100%);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #e8e8e8;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)'">
+                            <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,#333 0%,#1a1a1a 100%);"></div>
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                                <div style="flex:1;min-width:0;">
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#333 0%,#1a1a1a 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+                                            ${item.senderName.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:2px;">${item.senderName}</div>
+                                            <div style="font-size:11px;color:#999;">
+                                                <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;stroke-width:2;fill:none;display:inline-block;vertical-align:middle;margin-right:4px;">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <path d="M12 6v6l4 2"></path>
+                                                </svg>
+                                                ${new Date(item.collectedAt).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="font-size:14px;color:#555;line-height:1.6;word-break:break-all;padding-left:40px;margin-bottom:8px;">
+                                        ${item.messageContent.length > 150 ? item.messageContent.substring(0, 150) + '...' : item.messageContent}
+                                    </div>
+                                    ${item.originalMessageTime ? `
+                                        <div style="font-size:11px;color:#bbb;padding-left:40px;display:flex;align-items:center;gap:4px;">
+                                            <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none;">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                            原消息时间: ${new Date(item.originalMessageTime).toLocaleString('zh-CN')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <button class="delete-collection-btn" onclick="deleteCollectionItem('${item.id}')" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#666 0%,#444 100%);border:none;color:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.1) rotate(90deg)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)'">
+                                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none;stroke-linecap:round;">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
                             </div>
-                            <button class="delete-collection-btn" onclick="deleteCollectionItem('${item.id}')" style="background:none;border:none;color:#f56c6c;cursor:pointer;font-size:14px;padding:0 8px;">×</button>
                         </div>
                     `).join('')}
                 </div>`;
 
             page.innerHTML = `
-                <div class="sub-nav">
-                    <div class="back-btn" id="collection-back-btn">
-                        <div class="back-arrow"></div>
+                <div class="sub-nav" style="background:linear-gradient(135deg,#2c2c2c 0%,#1a1a1a 100%);border:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                    <div class="back-btn" id="collection-back-btn" style="color:#fff;background:rgba(255,255,255,0.15);border-radius:20px;padding:6px 14px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);transition:all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='translateX(-3px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)';this.style.transform=''">
+                        <div class="back-arrow" style="border-left-color:#fff;border-bottom-color:#fff;"></div>
                         <span>返回</span>
                     </div>
-                    <div class="sub-title">收藏</div>
+                    <div class="sub-title" style="color:#fff;font-weight:600;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none;">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        我的收藏
+                    </div>
+                    <div style="width:40px;"></div>
                 </div>
-                <div class="sub-content" style="overflow-y:auto;padding:0;">
+                <div class="sub-content" style="overflow-y:auto;padding:0;background:linear-gradient(180deg,#f8f8f8 0%,#ffffff 100%);">
                     ${collectionsHTML}
                 </div>
             `;

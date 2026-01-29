@@ -35,40 +35,40 @@
             }
         },
 
-        // 打开新增世界书对话框（白浅灰色简约样式）
+        // 打开新增世界书对话框（现代化黑白灰设计）
         openAddDialog: function() {
             const modal = document.createElement('div');
             modal.id = 'add-worldbook-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px);';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             modal.innerHTML = `
-                <div style="background:#fafafa;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                        <h3 style="margin:0;font-size:16px;font-weight:600;color:#333;">新建世界书</h3>
-                        <button onclick="document.getElementById('add-worldbook-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:24px;color:#999;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">×</button>
+                <div style="background:#fff;border-radius:20px;padding:28px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;letter-spacing:0.3px;">新建世界书</h3>
+                        <button onclick="document.getElementById('add-worldbook-modal').remove();" style="border:none;background:#f5f5f5;cursor:pointer;font-size:20px;color:#666;padding:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s;">×</button>
                     </div>
                     
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:8px;font-weight:500;">世界书名称</label>
-                        <input id="wb-name-input" type="text" placeholder="例如：赛博朋克2077世界观" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;box-sizing:border-box;font-size:14px;background:#fff;transition:border-color 0.2s;">
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;letter-spacing:0.2px;">世界书名称</label>
+                        <input id="wb-name-input" type="text" placeholder="例如：赛博朋克2077世界观" style="width:100%;padding:14px 16px;border:2px solid #e8e8e8;border-radius:12px;box-sizing:border-box;font-size:15px;background:#fafafa;transition:all 0.3s;font-weight:500;">
                     </div>
                     
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:8px;font-weight:500;">世界书内容</label>
-                        <textarea id="wb-content-input" placeholder="描述此世界的设定、背景、规则等...&#10;&#10;支持使用占位符：&#10;{{char}} - 角色名称&#10;{{user}} - 用户名称" style="width:100%;height:180px;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;box-sizing:border-box;font-size:14px;resize:vertical;background:#fff;line-height:1.6;transition:border-color 0.2s;"></textarea>
-                        <div style="font-size:12px;color:#999;margin-top:6px;">💡 AI会在回复前读取这些内容以保持话题背景</div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;letter-spacing:0.2px;">世界书内容</label>
+                        <textarea id="wb-content-input" placeholder="描述此世界的设定、背景、规则等...&#10;&#10;支持使用占位符：&#10;{{char}} - 角色名称&#10;{{user}} - 用户名称" style="width:100%;height:200px;padding:14px 16px;border:2px solid #e8e8e8;border-radius:12px;box-sizing:border-box;font-size:14px;resize:vertical;background:#fafafa;line-height:1.7;transition:all 0.3s;font-family:inherit;"></textarea>
+                        <div style="font-size:12px;color:#999;margin-top:10px;padding:10px 14px;background:#f8f8f8;border-radius:8px;border-left:3px solid #ddd;">💡 AI会在回复前读取这些内容以保持话题背景</div>
                     </div>
                     
-                    <div style="margin-bottom:24px;">
-                        <label style="display:flex;align-items:center;font-size:13px;cursor:pointer;padding:8px;background:#f5f5f5;border-radius:6px;transition:background 0.2s;">
-                            <input id="wb-global-checkbox" type="checkbox" style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
-                            <span style="color:#555;">设为全局世界书（所有角色都会使用）</span>
+                    <div style="margin-bottom:28px;">
+                        <label style="display:flex;align-items:center;font-size:14px;cursor:pointer;padding:14px 16px;background:linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);border-radius:12px;transition:all 0.3s;border:2px solid transparent;">
+                            <input id="wb-global-checkbox" type="checkbox" style="margin-right:12px;cursor:pointer;width:20px;height:20px;accent-color:#2c2c2c;">
+                            <span style="color:#333;font-weight:500;">设为全局世界书（所有角色都会使用）</span>
                         </label>
                     </div>
                     
-                    <div style="display:flex;gap:10px;justify-content:flex-end;">
-                        <button onclick="document.getElementById('add-worldbook-modal').remove();" style="padding:10px 20px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.2s;">取消</button>
-                        <button onclick="window.WorldbookManager.saveNew();" style="padding:10px 20px;border:none;border-radius:6px;background:#555;color:#fff;cursor:pointer;font-size:14px;font-weight:500;transition:background 0.2s;">创建</button>
+                    <div style="display:flex;gap:12px;justify-content:flex-end;">
+                        <button onclick="document.getElementById('add-worldbook-modal').remove();" style="padding:12px 28px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.3s;font-weight:600;">取消</button>
+                        <button onclick="window.WorldbookManager.saveNew();" style="padding:12px 28px;border:none;border-radius:12px;background:linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);color:#fff;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,0,0,0.2);">创建</button>
                     </div>
                 </div>
             `;
@@ -80,16 +80,66 @@
                 document.getElementById('wb-name-input').focus();
             }, 100);
             
-            // 添加输入框聚焦样式
+            // 添加输入框聚焦样式和按钮悬停效果
             const inputs = modal.querySelectorAll('input[type="text"], textarea');
             inputs.forEach(input => {
                 input.addEventListener('focus', function() {
-                    this.style.borderColor = '#999';
+                    this.style.borderColor = '#2c2c2c';
+                    this.style.background = '#fff';
+                    this.style.boxShadow = '0 0 0 3px rgba(44,44,44,0.1)';
                 });
                 input.addEventListener('blur', function() {
-                    this.style.borderColor = '#e0e0e0';
+                    this.style.borderColor = '#e8e8e8';
+                    this.style.background = '#fafafa';
+                    this.style.boxShadow = 'none';
                 });
             });
+            
+            // 按钮悬停效果
+            const buttons = modal.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.textContent.includes('创建')) {
+                    btn.addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-2px)';
+                        this.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+                    });
+                    btn.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                        this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                    });
+                } else if (btn.textContent.includes('取消')) {
+                    btn.addEventListener('mouseenter', function() {
+                        this.style.background = '#f8f8f8';
+                        this.style.borderColor = '#ccc';
+                    });
+                    btn.addEventListener('mouseleave', function() {
+                        this.style.background = '#fff';
+                        this.style.borderColor = '#e0e0e0';
+                    });
+                } else if (btn.textContent === '×') {
+                    btn.addEventListener('mouseenter', function() {
+                        this.style.background = '#e8e8e8';
+                        this.style.transform = 'rotate(90deg)';
+                    });
+                    btn.addEventListener('mouseleave', function() {
+                        this.style.background = '#f5f5f5';
+                        this.style.transform = 'rotate(0)';
+                    });
+                }
+            });
+            
+            // Checkbox悬停效果
+            const checkbox = modal.querySelector('label[style*="cursor:pointer"]');
+            if (checkbox) {
+                checkbox.addEventListener('mouseenter', function() {
+                    this.style.background = 'linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%)';
+                    this.style.borderColor = '#ccc';
+                });
+                checkbox.addEventListener('mouseleave', function() {
+                    this.style.background = 'linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%)';
+                    this.style.borderColor = 'transparent';
+                });
+            }
             
             // 点击背景关闭
             modal.addEventListener('click', (e) => {
@@ -290,31 +340,31 @@
             });
         },
 
-        // 显示导入选择对话框（白浅灰色简约样式）
+        // 显示导入选择对话框（现代化黑白灰设计）
         showImportDialog: function(worldbooks, fileName) {
             let modal = document.getElementById('wb-import-dialog-modal');
             if (modal) modal.remove();
             
             modal = document.createElement('div');
             modal.id = 'wb-import-dialog-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px);';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             const wbList = worldbooks.map((wb, idx) => `
-                <div style="padding:12px;background:#fff;border-radius:8px;margin-bottom:10px;border:1px solid #e8e8e8;transition:all 0.2s;" onmouseover="this.style.borderColor='#bbb'" onmouseout="this.style.borderColor='#e8e8e8'">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                        <input type="radio" name="wb-import-type" id="wb-type-${idx}" value="${idx}" ${idx === 0 ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;accent-color:#555;">
-                        <label for="wb-type-${idx}" style="flex:1;cursor:pointer;font-size:14px;font-weight:500;color:#333;margin:0;">
+                <div style="padding:16px;background:#fff;border-radius:14px;margin-bottom:12px;border:2px solid #e8e8e8;transition:all 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.04);" onmouseover="this.style.borderColor='#2c2c2c';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e8e8e8';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)';this.style.transform='translateY(0)'">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <input type="radio" name="wb-import-type" id="wb-type-${idx}" value="${idx}" ${idx === 0 ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:#2c2c2c;">
+                        <label for="wb-type-${idx}" style="flex:1;cursor:pointer;font-size:15px;font-weight:600;color:#1a1a1a;margin:0;letter-spacing:0.2px;">
                             ${this.escapeHtml(wb.name)}
                         </label>
                     </div>
-                    <div style="margin-left:28px;display:flex;flex-direction:column;gap:6px;">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#666;padding:4px;border-radius:4px;transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
-                            <input type="radio" name="wb-import-scope-${idx}" value="global" style="width:16px;height:16px;cursor:pointer;accent-color:#555;">
-                            <span>全局世界书（所有角色可用）</span>
+                    <div style="margin-left:32px;display:flex;flex-direction:column;gap:8px;">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#666;padding:8px 10px;border-radius:8px;transition:all 0.2s;background:#fafafa;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
+                            <input type="radio" name="wb-import-scope-${idx}" value="global" style="width:18px;height:18px;cursor:pointer;accent-color:#2c2c2c;">
+                            <span style="font-weight:500;">全局世界书（所有角色可用）</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#666;padding:4px;border-radius:4px;transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
-                            <input type="radio" name="wb-import-scope-${idx}" value="local" checked style="width:16px;height:16px;cursor:pointer;accent-color:#555;">
-                            <span>局部世界书（需绑定到角色）</span>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#666;padding:8px 10px;border-radius:8px;transition:all 0.2s;background:#fafafa;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
+                            <input type="radio" name="wb-import-scope-${idx}" value="local" checked style="width:18px;height:18px;cursor:pointer;accent-color:#2c2c2c;">
+                            <span style="font-weight:500;">局部世界书（需绑定到角色）</span>
                         </label>
                     </div>
                 </div>
@@ -324,22 +374,22 @@
             window.pendingWorldbookImport = worldbooks;
             
             modal.innerHTML = `
-                <div style="background:#fafafa;border-radius:12px;max-width:480px;width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                    <div style="padding:20px 24px;border-bottom:1px solid #e8e8e8;">
+                <div style="background:#fff;border-radius:20px;max-width:520px;width:90%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="padding:24px 28px;border-bottom:2px solid #f0f0f0;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">选择导入的世界书</h3>
-                            <button onclick="document.getElementById('wb-import-dialog-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:24px;color:#999;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">×</button>
+                            <h3 style="margin:0;font-size:20px;color:#1a1a1a;font-weight:700;letter-spacing:0.3px;">选择导入的世界书</h3>
+                            <button onclick="document.getElementById('wb-import-dialog-modal').remove();" style="border:none;background:#f5f5f5;cursor:pointer;font-size:20px;color:#666;padding:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s;" onmouseenter="this.style.background='#e8e8e8';this.style.transform='rotate(90deg)'" onmouseleave="this.style.background='#f5f5f5';this.style.transform='rotate(0)'">×</button>
                         </div>
-                        <div style="margin-top:8px;font-size:12px;color:#999;">文件：${this.escapeHtml(fileName)}</div>
+                        <div style="margin-top:10px;font-size:13px;color:#999;padding:8px 12px;background:#f8f8f8;border-radius:8px;border-left:3px solid #ddd;">📁 文件：${this.escapeHtml(fileName)}</div>
                     </div>
                     
-                    <div style="padding:16px 24px;flex:1;overflow-y:auto;">
+                    <div style="padding:20px 28px;flex:1;overflow-y:auto;">
                         ${wbList}
                     </div>
                     
-                    <div style="padding:16px 24px;border-top:1px solid #e8e8e8;display:flex;gap:10px;justify-content:flex-end;">
-                        <button onclick="document.getElementById('wb-import-dialog-modal').remove();" style="padding:10px 20px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.2s;">取消</button>
-                        <button onclick="window.WorldbookManager.confirmImport();" style="padding:10px 20px;background:#555;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:background 0.2s;">导入</button>
+                    <div style="padding:20px 28px;border-top:2px solid #f0f0f0;display:flex;gap:12px;justify-content:flex-end;">
+                        <button onclick="document.getElementById('wb-import-dialog-modal').remove();" style="padding:12px 28px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.3s;font-weight:600;" onmouseenter="this.style.background='#f8f8f8';this.style.borderColor='#ccc'" onmouseleave="this.style.background='#fff';this.style.borderColor='#e0e0e0'">取消</button>
+                        <button onclick="window.WorldbookManager.confirmImport();" style="padding:12px 28px;background:linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,0,0,0.2);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)'">导入</button>
                     </div>
                 </div>
             `;
@@ -398,7 +448,7 @@
             window.pendingWorldbookImport = null;
         },
 
-        // 编辑世界书（白浅灰色简约样式）
+        // 编辑世界书（现代化黑白灰设计）
         edit: function(wbId) {
             const wb = window.AppState.worldbooks.find(w => w.id === wbId);
             if (!wb) return;
@@ -408,28 +458,28 @@
             
             modal = document.createElement('div');
             modal.id = 'edit-worldbook-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px);';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             modal.innerHTML = `
-                <div style="background:#fafafa;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                        <h3 style="margin:0;font-size:16px;font-weight:600;color:#333;">编辑世界书</h3>
-                        <button onclick="document.getElementById('edit-worldbook-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:24px;color:#999;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">×</button>
+                <div style="background:#fff;border-radius:20px;padding:28px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                        <h3 style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;letter-spacing:0.3px;">编辑世界书</h3>
+                        <button onclick="document.getElementById('edit-worldbook-modal').remove();" style="border:none;background:#f5f5f5;cursor:pointer;font-size:20px;color:#666;padding:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.2s;" onmouseenter="this.style.background='#e8e8e8';this.style.transform='rotate(90deg)'" onmouseleave="this.style.background='#f5f5f5';this.style.transform='rotate(0)'">×</button>
                     </div>
                     
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:8px;font-weight:500;">世界书名称</label>
-                        <input id="edit-wb-name-input" type="text" value="${this.escapeHtml(wb.name)}" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;box-sizing:border-box;font-size:14px;background:#fff;transition:border-color 0.2s;">
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;letter-spacing:0.2px;">世界书名称</label>
+                        <input id="edit-wb-name-input" type="text" value="${this.escapeHtml(wb.name)}" style="width:100%;padding:14px 16px;border:2px solid #e8e8e8;border-radius:12px;box-sizing:border-box;font-size:15px;background:#fafafa;transition:all 0.3s;font-weight:500;">
                     </div>
                     
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:8px;font-weight:500;">世界书内容</label>
-                        <textarea id="edit-wb-content-input" style="width:100%;height:180px;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;box-sizing:border-box;font-size:14px;resize:vertical;background:#fff;line-height:1.6;transition:border-color 0.2s;">${this.escapeHtml(wb.content)}</textarea>
+                    <div style="margin-bottom:24px;">
+                        <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;letter-spacing:0.2px;">世界书内容</label>
+                        <textarea id="edit-wb-content-input" style="width:100%;height:200px;padding:14px 16px;border:2px solid #e8e8e8;border-radius:12px;box-sizing:border-box;font-size:14px;resize:vertical;background:#fafafa;line-height:1.7;transition:all 0.3s;font-family:inherit;">${this.escapeHtml(wb.content)}</textarea>
                     </div>
                     
-                    <div style="display:flex;gap:10px;justify-content:flex-end;">
-                        <button onclick="document.getElementById('edit-worldbook-modal').remove();" style="padding:10px 20px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.2s;">取消</button>
-                        <button onclick="window.WorldbookManager.saveEdit('${wbId}');" style="padding:10px 20px;border:none;border-radius:6px;background:#555;color:#fff;cursor:pointer;font-size:14px;font-weight:500;transition:background 0.2s;">保存</button>
+                    <div style="display:flex;gap:12px;justify-content:flex-end;">
+                        <button onclick="document.getElementById('edit-worldbook-modal').remove();" style="padding:12px 28px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.3s;font-weight:600;" onmouseenter="this.style.background='#f8f8f8';this.style.borderColor='#ccc'" onmouseleave="this.style.background='#fff';this.style.borderColor='#e0e0e0'">取消</button>
+                        <button onclick="window.WorldbookManager.saveEdit('${wbId}');" style="padding:12px 28px;border:none;border-radius:12px;background:linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);color:#fff;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,0,0,0.2);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)'">保存</button>
                     </div>
                 </div>
             `;
@@ -440,10 +490,14 @@
             const inputs = modal.querySelectorAll('input[type="text"], textarea');
             inputs.forEach(input => {
                 input.addEventListener('focus', function() {
-                    this.style.borderColor = '#999';
+                    this.style.borderColor = '#2c2c2c';
+                    this.style.background = '#fff';
+                    this.style.boxShadow = '0 0 0 3px rgba(44,44,44,0.1)';
                 });
                 input.addEventListener('blur', function() {
-                    this.style.borderColor = '#e0e0e0';
+                    this.style.borderColor = '#e8e8e8';
+                    this.style.background = '#fafafa';
+                    this.style.boxShadow = 'none';
                 });
             });
             
@@ -477,24 +531,31 @@
             this.showToast('世界书已更新', 'success');
         },
 
-        // 删除世界书（白浅灰色简约确认框）
+        // 删除世界书（现代化黑白灰确认框）
         delete: function(wbId) {
             const wb = window.AppState.worldbooks.find(w => w.id === wbId);
             if (!wb) return;
             
             const modal = document.createElement('div');
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px);';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             modal.innerHTML = `
-                <div style="background:#fafafa;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                    <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#333;">确认删除</h3>
-                    <p style="margin:0 0 20px 0;font-size:14px;color:#666;line-height:1.6;">
-                        确定要删除世界书<strong style="color:#333;">「${this.escapeHtml(wb.name)}」</strong>吗？<br>
-                        此操作无法撤销。
+                <div style="background:#fff;border-radius:20px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="width:56px;height:56px;margin:0 auto 20px;background:linear-gradient(135deg, #ff4444 0%, #cc0000 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(255,68,68,0.3);">
+                        <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </div>
+                    <h3 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#1a1a1a;text-align:center;letter-spacing:0.3px;">确认删除</h3>
+                    <p style="margin:0 0 28px 0;font-size:15px;color:#666;line-height:1.7;text-align:center;">
+                        确定要删除世界书<br>
+                        <strong style="color:#1a1a1a;font-weight:600;font-size:16px;">「${this.escapeHtml(wb.name)}」</strong>吗？<br>
+                        <span style="font-size:13px;color:#999;margin-top:8px;display:inline-block;">⚠️ 此操作无法撤销</span>
                     </p>
-                    <div style="display:flex;gap:10px;justify-content:flex-end;">
-                        <button onclick="this.closest('[style*=fixed]').remove();" style="padding:10px 20px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.2s;">取消</button>
-                        <button onclick="window.WorldbookManager.confirmDelete('${wbId}'); this.closest('[style*=fixed]').remove();" style="padding:10px 20px;border:none;border-radius:6px;background:#d9534f;color:#fff;cursor:pointer;font-size:14px;font-weight:500;transition:background 0.2s;">删除</button>
+                    <div style="display:flex;gap:12px;">
+                        <button onclick="this.closest('[style*=fixed]').remove();" style="flex:1;padding:12px 20px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;cursor:pointer;font-size:14px;color:#666;transition:all 0.3s;font-weight:600;" onmouseenter="this.style.background='#f8f8f8';this.style.borderColor='#ccc'" onmouseleave="this.style.background='#fff';this.style.borderColor='#e0e0e0'">取消</button>
+                        <button onclick="window.WorldbookManager.confirmDelete('${wbId}'); this.closest('[style*=fixed]').remove();" style="flex:1;padding:12px 20px;border:none;border-radius:12px;background:linear-gradient(135deg, #ff4444 0%, #cc0000 100%);color:#fff;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s;box-shadow:0 4px 12px rgba(255,68,68,0.3);" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255,68,68,0.4)'" onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(255,68,68,0.3)'">删除</button>
                     </div>
                 </div>
             `;
@@ -529,7 +590,7 @@
             this.showToast('世界书已删除', 'success');
         },
 
-        // 渲染世界书列表（白浅灰色简约样式）
+        // 渲染世界书列表（现代化黑白灰设计）
         render: function() {
             const globalContainer = document.getElementById('global-worldbooks-list');
             const localContainer = document.getElementById('local-worldbooks-list');
@@ -541,47 +602,49 @@
             
             // 渲染全局世界书
             globalContainer.innerHTML = globalWbs.map(wb => `
-                <div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #e8e8e8;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
-                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-                        <h4 style="margin:0;font-size:14px;font-weight:600;flex:1;color:#333;">${this.escapeHtml(wb.name)}</h4>
-                        <div style="display:flex;gap:8px;flex-shrink:0;">
-                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:none;color:#666;cursor:pointer;font-size:12px;padding:4px 8px;text-decoration:underline;transition:color 0.2s;">编辑</button>
-                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:none;color:#d9534f;cursor:pointer;font-size:18px;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s;">×</button>
+                <div style="background:#fff;border-radius:16px;padding:18px;margin-bottom:12px;border:2px solid #e8e8e8;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)';this.style.borderColor='#2c2c2c';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)';this.style.borderColor='#e8e8e8';this.style.transform='translateY(0)'">
+                    <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg, #2c2c2c 0%, #666 100%);"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;padding-left:8px;">
+                        <h4 style="margin:0;font-size:16px;font-weight:700;flex:1;color:#1a1a1a;letter-spacing:0.2px;">${this.escapeHtml(wb.name)}</h4>
+                        <div style="display:flex;gap:6px;flex-shrink:0;">
+                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:#f5f5f5;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#2c2c2c';this.style.color='#fff'" onmouseleave="this.style.background='#f5f5f5';this.style.color='#666'">编辑</button>
+                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:#fff;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:2px solid #ffe8e8;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff';this.style.borderColor='#ff4444'" onmouseleave="this.style.background='#fff';this.style.color='#ff4444';this.style.borderColor='#ffe8e8'">×</button>
                         </div>
                     </div>
-                    <p style="margin:0;font-size:13px;color:#666;line-height:1.5;max-height:65px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
-                    <div style="font-size:11px;color:#999;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;">
-                        <span style="background:#f5f5f5;padding:2px 8px;border-radius:10px;">🌍 全局</span>
-                        <span style="margin-left:8px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
+                    <p style="margin:0 0 12px 8px;font-size:14px;color:#666;line-height:1.7;max-height:80px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
+                    <div style="font-size:12px;color:#999;margin-top:12px;padding:10px 12px 10px 20px;background:linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);border-radius:10px;display:flex;align-items:center;gap:12px;">
+                        <span style="background:linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);color:#fff;padding:4px 12px;border-radius:12px;font-weight:600;font-size:11px;letter-spacing:0.3px;">🌍 全局</span>
+                        <span style="color:#999;font-size:12px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
                     </div>
                 </div>
             `).join('');
             
             // 渲染局部世界书
             localContainer.innerHTML = localWbs.map(wb => `
-                <div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #e8e8e8;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
-                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-                        <h4 style="margin:0;font-size:14px;font-weight:600;flex:1;color:#333;">${this.escapeHtml(wb.name)}</h4>
-                        <div style="display:flex;gap:8px;flex-shrink:0;">
-                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:none;color:#666;cursor:pointer;font-size:12px;padding:4px 8px;text-decoration:underline;transition:color 0.2s;">编辑</button>
-                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:none;color:#d9534f;cursor:pointer;font-size:18px;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s;">×</button>
+                <div style="background:#fff;border-radius:16px;padding:18px;margin-bottom:12px;border:2px solid #e8e8e8;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);box-shadow:0 2px 8px rgba(0,0,0,0.04);position:relative;overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)';this.style.borderColor='#666';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)';this.style.borderColor='#e8e8e8';this.style.transform='translateY(0)'">
+                    <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg, #666 0%, #999 100%);"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;padding-left:8px;">
+                        <h4 style="margin:0;font-size:16px;font-weight:700;flex:1;color:#1a1a1a;letter-spacing:0.2px;">${this.escapeHtml(wb.name)}</h4>
+                        <div style="display:flex;gap:6px;flex-shrink:0;">
+                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:#f5f5f5;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#666';this.style.color='#fff'" onmouseleave="this.style.background='#f5f5f5';this.style.color='#666'">编辑</button>
+                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:#fff;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:2px solid #ffe8e8;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff';this.style.borderColor='#ff4444'" onmouseleave="this.style.background='#fff';this.style.color='#ff4444';this.style.borderColor='#ffe8e8'">×</button>
                         </div>
                     </div>
-                    <p style="margin:0;font-size:13px;color:#666;line-height:1.5;max-height:65px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
-                    <div style="font-size:11px;color:#999;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;">
-                        <span style="background:#f5f5f5;padding:2px 8px;border-radius:10px;">📍 局部</span>
-                        <span style="margin-left:8px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
+                    <p style="margin:0 0 12px 8px;font-size:14px;color:#666;line-height:1.7;max-height:80px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
+                    <div style="font-size:12px;color:#999;margin-top:12px;padding:10px 12px 10px 20px;background:linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);border-radius:10px;display:flex;align-items:center;gap:12px;">
+                        <span style="background:linear-gradient(135deg, #666 0%, #888 100%);color:#fff;padding:4px 12px;border-radius:12px;font-weight:600;font-size:11px;letter-spacing:0.3px;">📍 局部</span>
+                        <span style="color:#999;font-size:12px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
                     </div>
                 </div>
             `).join('');
             
-            // 空状态
+            // 空状态已在HTML中定义，这里不需要再设置
             if (globalWbs.length === 0) {
-                globalContainer.innerHTML = '<div style="text-align:center;color:#999;padding:40px 20px;background:#fafafa;border-radius:10px;font-size:13px;">暂无全局世界书</div>';
+                globalContainer.innerHTML = '<div style="text-align:center;color:#999;padding:48px 20px;background:#fff;border-radius:16px;font-size:14px;border:2px dashed #e8e8e8;"><div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;">📚</div><div style="font-weight: 500;">暂无全局世界书</div><div style="font-size: 12px; color: #bbb; margin-top: 8px;">点击上方按钮创建或导入</div></div>';
             }
             
             if (localWbs.length === 0) {
-                localContainer.innerHTML = '<div style="text-align:center;color:#999;padding:40px 20px;background:#fafafa;border-radius:10px;font-size:13px;">暂无局部世界书</div>';
+                localContainer.innerHTML = '<div style="text-align:center;color:#999;padding:48px 20px;background:#fff;border-radius:16px;font-size:14px;border:2px dashed #e8e8e8;"><div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;">📖</div><div style="font-weight: 500;">暂无局部世界书</div><div style="font-size: 12px; color: #bbb; margin-top: 8px;">点击上方按钮创建或导入</div></div>';
             }
         },
 
