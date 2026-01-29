@@ -214,143 +214,168 @@
                         </div>
                     </div>
 
-                    <!-- 对话总结功能 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;">对话总结</div>
-                        
-                        <!-- 自动总结设置 -->
-                        <div style="margin-bottom:16px;padding:12px;background:#f9f9f9;border-radius:8px;">
-                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;">
-                                <input type="checkbox" id="auto-summary-enabled" ${window.AppState.apiSettings.summaryEnabled ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;">
-                                <span style="font-size:14px;color:#333;font-weight:500;">启用自动总结</span>
-                            </label>
-                            <div style="font-size:11px;color:#999;margin-bottom:12px;">当消息达到设定数量后自动进行总结</div>
-                            
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">每多少条消息后自动总结</label>
-                                <input type="number" id="summary-interval" value="${window.AppState.apiSettings.summaryInterval}" min="5" max="200" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-                            </div>
-                            
-                            <div>
-                                <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">总结后保留最新消息数</label>
-                                <input type="number" id="summary-keep-latest" value="${window.AppState.apiSettings.summaryKeepLatest}" min="5" max="50" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-                            </div>
+                    <!-- 对话总结功能 - 公主风格卡片 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>对话总结</span>
                         </div>
+                        <div class="card-body">
+                            <div class="summary-settings">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="auto-summary-enabled" ${window.AppState.apiSettings.summaryEnabled ? 'checked' : ''} class="custom-checkbox">
+                                    <span>启用自动总结</span>
+                                </label>
+                                <div class="form-hint">当消息达到设定数量后自动进行总结</div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">自动总结间隔</label>
+                                    <input type="number" id="summary-interval" value="${window.AppState.apiSettings.summaryInterval}" min="5" max="200" class="form-input">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">保留最新消息数</label>
+                                    <input type="number" id="summary-keep-latest" value="${window.AppState.apiSettings.summaryKeepLatest}" min="5" max="50" class="form-input">
+                                </div>
+                            </div>
 
-                        <!-- 手动总结按钮 -->
-                        <button id="manual-summary-btn" style="width:100%;padding:10px;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;margin-bottom:16px;">
-                            立即生成总结
-                        </button>
+                            <button id="manual-summary-btn" class="btn-primary btn-full">
+                                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span>立即生成总结</span>
+                            </button>
 
-                        <!-- 总结历史列表 -->
-                        <div id="summaries-container">
-                            ${hasSummaries ? this.renderSummariesList(conv.summaries, chat.id) : '<div style="text-align:center;color:#999;padding:20px;font-size:13px;">暂无总结记录</div>'}
+                            <div id="summaries-container" class="summaries-list">
+                                ${hasSummaries ? this.renderSummariesList(conv.summaries, chat.id) : '<div class="empty-state">暂无总结记录</div>'}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 聊天背景图片 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">聊天背景图片</label>
-                        <div style="width:100%;height:80px;border:1px solid #ddd;border-radius:4px;background-size:cover;background-position:center;background-image:${chat.chatBgImage ? `url('${chat.chatBgImage}')` : 'none'};display:flex;align-items:center;justify-content:center;margin-bottom:8px;background-color:#f5f5f5;">
-                            ${!chat.chatBgImage ? '<span style="color:#999;font-size:12px;">无背景图</span>' : ''}
+                    <!-- 聊天背景图片 - 公主风格卡片 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>聊天背景</span>
                         </div>
-                        <button id="chat-bg-upload-btn" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;width:100%;margin-bottom:6px;">选择背景图</button>
-                        ${chat.chatBgImage ? `<button id="chat-bg-clear-btn" style="padding:8px 12px;border:1px solid #f44;border-radius:4px;background:#fff;color:#f44;cursor:pointer;font-size:12px;width:100%;">清除背景</button>` : ''}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <div class="bg-preview" style="background-image:${chat.chatBgImage ? `url('${chat.chatBgImage}')` : 'none'};">
+                                    ${!chat.chatBgImage ? '<span class="bg-placeholder">暂无背景图</span>' : ''}
+                                </div>
+                                <div class="button-group">
+                                    <button id="chat-bg-upload-btn" class="btn-primary">选择背景图</button>
+                                    ${chat.chatBgImage ? `<button id="chat-bg-clear-btn" class="btn-danger">清除背景</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 消息气泡颜色设置 -->
-                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                            <div style="font-size:15px;font-weight:600;color:#333;">消息气泡颜色</div>
-                            <button id="bubble-color-lock-btn" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;color:#666;transition:all 0.3s;" title="锁定防止误触">
-                                <svg id="bubble-lock-icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                    <!-- 消息气泡颜色设置 - 公主风格卡片 -->
+                    <div class="settings-card bubble-color-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                            </svg>
+                            <span>消息气泡颜色</span>
+                            <button id="bubble-color-lock-btn" class="bubble-lock-btn" title="锁定防止误触">
+                                <svg id="bubble-lock-icon" viewBox="0 0 24 24" class="lock-icon">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
                                 <span id="bubble-lock-text">解锁</span>
                             </button>
                         </div>
-                        
+                        <div class="card-body">
                         <!-- 角色消息气泡（左侧） -->
-                        <div style="margin-bottom:20px;padding:12px;background:#f9f9f9;border-radius:8px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;">角色消息气泡（左侧）</label>
+                        <div class="bubble-section">
+                            <label class="bubble-label">角色消息气泡（左侧）</label>
                             
-                            <!-- RGB颜色控制 -->
-                            <div style="margin-bottom:12px;">
-                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-                                    <div>
-                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">红 (R)</label>
-                                        <input type="range" id="char-bubble-r" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
-                                        <input type="number" id="char-bubble-r-input" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
+                            <div class="color-controls">
+                                <div class="rgb-grid">
+                                    <div class="color-control">
+                                        <label class="color-label">红 (R)</label>
+                                        <input type="range" id="char-bubble-r" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" class="bubble-slider">
+                                        <input type="number" id="char-bubble-r-input" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" class="bubble-input">
                                     </div>
-                                    <div>
-                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">绿 (G)</label>
-                                        <input type="range" id="char-bubble-g" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
-                                        <input type="number" id="char-bubble-g-input" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
+                                    <div class="color-control">
+                                        <label class="color-label">绿 (G)</label>
+                                        <input type="range" id="char-bubble-g" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" class="bubble-slider">
+                                        <input type="number" id="char-bubble-g-input" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" class="bubble-input">
                                     </div>
-                                    <div>
-                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">蓝 (B)</label>
-                                        <input type="range" id="char-bubble-b" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
-                                        <input type="number" id="char-bubble-b-input" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
-                                    </div>
-                                </div>
-                                
-                                <!-- 透明度控制 -->
-                                <div style="margin-bottom:8px;">
-                                    <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">透明度</label>
-                                    <div style="display:flex;gap:8px;align-items:center;">
-                                        <input type="range" id="char-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.char?.alpha ?? 0.85) * 100}" style="flex:1;" class="bubble-slider">
-                                        <input type="number" id="char-bubble-alpha-input" min="0" max="100" value="${Math.round((chat.bubbleColor?.char?.alpha ?? 0.85) * 100)}" style="width:50px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
-                                        <span style="font-size:11px;color:#666;width:20px;">%</span>
+                                    <div class="color-control">
+                                        <label class="color-label">蓝 (B)</label>
+                                        <input type="range" id="char-bubble-b" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" class="bubble-slider">
+                                        <input type="number" id="char-bubble-b-input" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" class="bubble-input">
                                     </div>
                                 </div>
                                 
-                                <!-- 预览 -->
-                                <div style="padding:10px;border-radius:8px;background-color:rgba(${chat.bubbleColor?.char?.r ?? 240}, ${chat.bubbleColor?.char?.g ?? 240}, ${chat.bubbleColor?.char?.b ?? 240}, ${chat.bubbleColor?.char?.alpha ?? 0.85});color:#333;font-size:13px;text-align:center;" id="char-bubble-preview">
+                                <div class="alpha-control">
+                                    <label class="color-label">透明度</label>
+                                    <div class="alpha-input-group">
+                                        <input type="range" id="char-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.char?.alpha ?? 0.85) * 100}" class="bubble-slider">
+                                        <input type="number" id="char-bubble-alpha-input" min="0" max="100" value="${Math.round((chat.bubbleColor?.char?.alpha ?? 0.85) * 100)}" class="bubble-input alpha-number">
+                                        <span class="percent-sign">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bubble-preview" style="background-color:rgba(${chat.bubbleColor?.char?.r ?? 240}, ${chat.bubbleColor?.char?.g ?? 240}, ${chat.bubbleColor?.char?.b ?? 240}, ${chat.bubbleColor?.char?.alpha ?? 0.85});" id="char-bubble-preview">
                                     预览效果
                                 </div>
                             </div>
                         </div>
                         
                         <!-- 用户消息气泡（右侧） -->
-                        <div style="padding:12px;background:#f9f9f9;border-radius:8px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;">用户消息气泡（右侧）</label>
+                        <div class="bubble-section">
+                            <label class="bubble-label">用户消息气泡（右侧）</label>
                             
-                            <!-- RGB颜色控制 -->
-                            <div style="margin-bottom:12px;">
-                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-                                    <div>
-                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">红 (R)</label>
-                                        <input type="range" id="user-bubble-r" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
-                                        <input type="number" id="user-bubble-r-input" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
+                            <div class="color-controls">
+                                <div class="rgb-grid">
+                                    <div class="color-control">
+                                        <label class="color-label">红 (R)</label>
+                                        <input type="range" id="user-bubble-r" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" class="bubble-slider">
+                                        <input type="number" id="user-bubble-r-input" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" class="bubble-input">
                                     </div>
-                                    <div>
-                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">绿 (G)</label>
-                                        <input type="range" id="user-bubble-g" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
-                                        <input type="number" id="user-bubble-g-input" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
+                                    <div class="color-control">
+                                        <label class="color-label">绿 (G)</label>
+                                        <input type="range" id="user-bubble-g" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" class="bubble-slider">
+                                        <input type="number" id="user-bubble-g-input" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" class="bubble-input">
                                     </div>
-                                    <div>
-                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">蓝 (B)</label>
-                                        <input type="range" id="user-bubble-b" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
-                                        <input type="number" id="user-bubble-b-input" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
-                                    </div>
-                                </div>
-                                
-                                <!-- 透明度控制 -->
-                                <div style="margin-bottom:8px;">
-                                    <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">透明度</label>
-                                    <div style="display:flex;gap:8px;align-items:center;">
-                                        <input type="range" id="user-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.user?.alpha ?? 0.85) * 100}" style="flex:1;" class="bubble-slider">
-                                        <input type="number" id="user-bubble-alpha-input" min="0" max="100" value="${Math.round((chat.bubbleColor?.user?.alpha ?? 0.85) * 100)}" style="width:50px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
-                                        <span style="font-size:11px;color:#666;width:20px;">%</span>
+                                    <div class="color-control">
+                                        <label class="color-label">蓝 (B)</label>
+                                        <input type="range" id="user-bubble-b" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" class="bubble-slider">
+                                        <input type="number" id="user-bubble-b-input" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" class="bubble-input">
                                     </div>
                                 </div>
                                 
-                                <!-- 预览 -->
-                                <div style="padding:10px;border-radius:8px;background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 200}, ${chat.bubbleColor?.user?.b ?? 230}, ${chat.bubbleColor?.user?.alpha ?? 0.85});color:#333;font-size:13px;text-align:center;" id="user-bubble-preview">
+                                <div class="alpha-control">
+                                    <label class="color-label">透明度</label>
+                                    <div class="alpha-input-group">
+                                        <input type="range" id="user-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.user?.alpha ?? 0.85) * 100}" class="bubble-slider">
+                                        <input type="number" id="user-bubble-alpha-input" min="0" max="100" value="${Math.round((chat.bubbleColor?.user?.alpha ?? 0.85) * 100)}" class="bubble-input alpha-number">
+                                        <span class="percent-sign">%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bubble-preview" style="background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 200}, ${chat.bubbleColor?.user?.b ?? 230}, ${chat.bubbleColor?.user?.alpha ?? 0.85});" id="user-bubble-preview">
                                     预览效果
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </div>
 

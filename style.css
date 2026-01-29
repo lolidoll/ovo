@@ -170,7 +170,7 @@
     border-bottom: none;
     cursor: pointer;
     overflow: hidden;
-    min-height: 240px;
+    min-height: 160px;
     background-size: cover;
     background-position: center;
     background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
@@ -243,23 +243,23 @@
 
 /* 头像 - 添加光晕效果 */
 .card-avatar {
-    width: 80px;
-    height: 80px;
-    min-width: 80px;
-    min-height: 80px;
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    min-height: 60px;
     border-radius: 50%;
     background-color: transparent;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: bold;
     color: #fff;
     overflow: hidden;
     flex-shrink: 0;
-    border: 4px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 8px rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2), 0 0 0 6px rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
@@ -290,10 +290,10 @@
 
 /* 用户名 - 增强视觉效果 */
 .card-name {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
     letter-spacing: 0.5px;
     transition: all 0.3s ease;
@@ -306,9 +306,9 @@
 
 /* 个性签名 - 优化显示 */
 .card-signature {
-    font-size: 13px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.95);
-    padding: 8px 24px;
+    padding: 6px 20px;
     text-align: center;
     max-width: 100%;
     overflow: hidden;
@@ -329,7 +329,7 @@
         
         .menu-list {
             flex: 1;
-            padding: 16px 0;
+            padding: 8px 0;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
@@ -343,11 +343,11 @@
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 14px 16px;
-            margin: 4px 12px;
+            gap: 12px;
+            padding: 10px 14px;
+            margin: 2px 12px;
             cursor: pointer;
-            border-radius: 12px;
+            border-radius: 10px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -383,15 +383,15 @@
         
         /* 菜单图标容器 - 黑白灰配色 */
         .menu-icon {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-            min-height: 40px;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            min-height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            border-radius: 10px;
+            border-radius: 9px;
             background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
             transition: all 0.25s ease;
@@ -406,8 +406,8 @@
         }
         
         .menu-icon .icon-svg {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             stroke: #666666;
             transition: all 0.25s ease;
         }
@@ -418,7 +418,7 @@
         }
         
         .menu-text {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
             color: #333;
             letter-spacing: 0.3px;
@@ -436,7 +436,7 @@
         .menu-divider {
             height: 1px;
             background: linear-gradient(90deg, transparent 0%, #e8e8e8 20%, #e8e8e8 80%, transparent 100%);
-            margin: 12px 20px;
+            margin: 8px 20px;
             position: relative;
         }
         
@@ -544,6 +544,7 @@
             font-size: 14px;
             text-align: center;
             line-height: 1.6;
+            color: #999999;
         }
         
         .msg-item {
@@ -4850,10 +4851,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
    角色设置页面 - 白粉公主风格
    ======================================== */
 
-/* 导航栏 - 粉色渐变 */
+/* 导航栏 - 更粉嫩的渐变 */
 .char-settings-nav {
-    background: linear-gradient(135deg, #ffc0cb 0%, #ffb6c1 50%, #ff69b4 100%);
-    box-shadow: 0 2px 12px rgba(255, 105, 180, 0.2);
+    background: linear-gradient(135deg, #ffe4e9 0%, #ffd4e0 50%, #ffc0d4 100%);
+    box-shadow: 0 2px 12px rgba(255, 182, 193, 0.3);
 }
 
 .char-settings-nav .back-btn {
@@ -4870,19 +4871,19 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     letter-spacing: 0.5px;
 }
 
-/* 内容区域 - 柔和背景 */
+/* 内容区域 - 更粉嫩的背景 */
 .char-settings-content {
-    background: linear-gradient(180deg, #fff5f8 0%, #ffe4ec 50%, #ffd4e5 100%);
+    background: linear-gradient(180deg, #fff9fb 0%, #ffeff5 50%, #ffe4ed 100%);
     padding: 20px 16px 100px;
 }
 
-/* 头像区域 - 公主风格 */
+/* 头像区域 - 更粉嫩的公主风格 */
 .char-avatar-section {
-    background: linear-gradient(135deg, #ffffff 0%, #fff0f5 100%);
+    background: linear-gradient(135deg, #fff5f9 0%, #ffe9f3 100%);
     border-radius: 24px;
     padding: 32px 20px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.15);
+    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.2);
     position: relative;
     overflow: hidden;
 }
@@ -4894,7 +4895,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 192, 203, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 218, 230, 0.3) 0%, transparent 70%);
     animation: avatarFloat 10s ease-in-out infinite;
 }
 
@@ -4926,7 +4927,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     left: -10px;
     right: -10px;
     bottom: -10px;
-    background: radial-gradient(circle, rgba(255, 105, 180, 0.3) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 182, 193, 0.4) 0%, transparent 70%);
     border-radius: 50%;
     animation: glowPulse 3s ease-in-out infinite;
     z-index: 0;
@@ -4941,13 +4942,13 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ffc0cb 0%, #ff69b4 100%);
+    background: linear-gradient(135deg, #ffd4e0 0%, #ffb6c8 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     border: 4px solid #fff;
-    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.3);
+    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.35);
     position: relative;
     z-index: 1;
     transition: all 0.3s ease;
@@ -4955,7 +4956,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .avatar-display:hover {
     transform: scale(1.05) rotate(5deg);
-    box-shadow: 0 12px 32px rgba(255, 105, 180, 0.4);
+    box-shadow: 0 12px 32px rgba(255, 182, 193, 0.45);
 }
 
 .avatar-initial {
@@ -4972,20 +4973,20 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
     border: 3px solid #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 157, 184, 0.35);
     transition: all 0.3s ease;
     z-index: 2;
 }
 
 .avatar-edit-btn:hover {
     transform: scale(1.1) rotate(15deg);
-    box-shadow: 0 6px 16px rgba(255, 20, 147, 0.4);
+    box-shadow: 0 6px 16px rgba(255, 157, 184, 0.45);
 }
 
 .avatar-edit-btn svg {
@@ -4995,7 +4996,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .avatar-label {
     font-size: 13px;
     font-weight: 600;
-    color: #ff69b4;
+    color: #ffb6c8;
     letter-spacing: 0.5px;
 }
 
@@ -5009,18 +5010,19 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     50% { transform: scale(1); }
 }
 
-/* 设置卡片 - 公主风格 */
+/* 设置卡片 - 更粉嫩的公主风格 */
 .settings-card {
     background: #ffffff;
     border-radius: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 4px 16px rgba(255, 105, 180, 0.1);
+    box-shadow: 0 4px 16px rgba(255, 182, 193, 0.12);
     overflow: hidden;
     transition: all 0.3s ease;
+    border: 1px solid #ffe9f3;
 }
 
 .settings-card:hover {
-    box-shadow: 0 8px 24px rgba(255, 105, 180, 0.15);
+    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.18);
     transform: translateY(-2px);
 }
 
@@ -5029,14 +5031,14 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     align-items: center;
     gap: 12px;
     padding: 18px 20px;
-    background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 100%);
-    border-bottom: 2px solid #ffd4e5;
+    background: linear-gradient(135deg, #fff5f9 0%, #ffeff5 100%);
+    border-bottom: 2px solid #ffe4ed;
 }
 
 .card-icon {
     width: 22px;
     height: 22px;
-    stroke: #ff69b4;
+    stroke: #ffb6c8;
     stroke-width: 2;
     fill: none;
     stroke-linecap: round;
@@ -5046,7 +5048,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .card-header span {
     font-size: 16px;
     font-weight: 600;
-    color: #ff1493;
+    color: #ff9db8;
     letter-spacing: 0.3px;
 }
 
@@ -5067,7 +5069,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     display: block;
     font-size: 14px;
     font-weight: 600;
-    color: #ff69b4;
+    color: #ffb6c8;
     margin-bottom: 10px;
     letter-spacing: 0.3px;
 }
@@ -5077,11 +5079,11 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .form-textarea {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #ffd4e5;
+    border: 2px solid #ffe4ed;
     border-radius: 12px;
     font-size: 14px;
     color: #333;
-    background: #fff;
+    background: #fffbfc;
     transition: all 0.3s ease;
     font-family: inherit;
 }
@@ -5090,8 +5092,9 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .form-select:focus,
 .form-textarea:focus {
     outline: none;
-    border-color: #ff69b4;
-    box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.1);
+    border-color: #ffb6c8;
+    box-shadow: 0 0 0 4px rgba(255, 182, 200, 0.15);
+    background: #fff;
 }
 
 .form-textarea {
@@ -5103,9 +5106,9 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .form-hint {
     font-size: 12px;
-    color: #ff69b4;
+    color: #ffb6c8;
     margin-top: 8px;
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
 /* 按钮组 */
@@ -5136,15 +5139,15 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 157, 184, 0.35);
     flex: 1;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 20, 147, 0.4);
+    box-shadow: 0 6px 16px rgba(255, 157, 184, 0.45);
 }
 
 .btn-primary:active {
@@ -5152,14 +5155,14 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .btn-secondary {
-    background: #fff;
-    color: #ff69b4;
-    border: 2px solid #ff69b4;
+    background: #fffbfc;
+    color: #ffb6c8;
+    border: 2px solid #ffb6c8;
     flex: 1;
 }
 
 .btn-secondary:hover {
-    background: #fff0f5;
+    background: #fff5f9;
     transform: translateY(-2px);
 }
 
@@ -5179,13 +5182,13 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     transform: translateY(-2px);
 }
 
-/* 标签列表 */
+/* 标签列表 - 更粉嫩 */
 .tag-list {
     display: flex;
     flex-wrap: nowrap;
     gap: 10px;
     padding: 12px;
-    background: linear-gradient(135deg, #fff5f8 0%, #ffe4ec 100%);
+    background: linear-gradient(135deg, #fff9fb 0%, #ffeff5 100%);
     border-radius: 12px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -5198,12 +5201,12 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .tag-list::-webkit-scrollbar-track {
-    background: #ffd4e5;
+    background: #ffe4ed;
     border-radius: 2px;
 }
 
 .tag-list::-webkit-scrollbar-thumb {
-    background: #ff69b4;
+    background: #ffb6c8;
     border-radius: 2px;
 }
 
@@ -5212,8 +5215,8 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: #fff;
-    border: 2px solid #ffd4e5;
+    background: #fffbfc;
+    border: 2px solid #ffe4ed;
     border-radius: 20px;
     cursor: pointer;
     font-size: 13px;
@@ -5223,8 +5226,8 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .tag-item:hover {
-    border-color: #ff69b4;
-    background: #fff0f5;
+    border-color: #ffb6c8;
+    background: #fff5f9;
     transform: translateY(-2px);
 }
 
@@ -5232,7 +5235,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     width: 18px;
     height: 18px;
     cursor: pointer;
-    accent-color: #ff69b4;
+    accent-color: #ffb6c8;
 }
 
 .tag-text {
@@ -5257,14 +5260,14 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .bg-placeholder {
-    color: #ff69b4;
+    color: #ffb6c8;
     font-size: 13px;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
-/* 总结设置 */
+/* 总结设置 - 更粉嫩 */
 .summary-settings {
-    background: linear-gradient(135deg, #fff5f8 0%, #ffe4ec 100%);
+    background: linear-gradient(135deg, #fff9fb 0%, #ffeff5 100%);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
@@ -5282,13 +5285,13 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     width: 20px;
     height: 20px;
     cursor: pointer;
-    accent-color: #ff69b4;
+    accent-color: #ffb6c8;
 }
 
 .checkbox-label span {
     font-size: 15px;
     font-weight: 600;
-    color: #ff1493;
+    color: #ff9db8;
 }
 
 .summaries-list {
@@ -5297,10 +5300,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .empty-state {
     text-align: center;
-    color: #ff69b4;
+    color: #ffb6c8;
     padding: 32px 20px;
     font-size: 14px;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 /* 操作按钮区域 */
@@ -5360,8 +5363,180 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 /* 气泡颜色卡片特殊样式 */
-.bubble-color-card .card-body {
+.bubble-color-card .card-header {
+    position: relative;
+}
+
+.bubble-lock-btn {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 2px solid #ffe4ed;
+    border-radius: 20px;
+    background: #fffbfc;
+    cursor: pointer;
+    font-size: 12px;
+    color: #ffb6c8;
+    transition: all 0.3s ease;
+}
+
+.bubble-lock-btn:hover {
+    background: #fff5f9;
+    border-color: #ffb6c8;
+}
+
+.lock-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+.bubble-section {
+    margin-bottom: 20px;
     padding: 16px;
+    background: linear-gradient(135deg, #fff9fb 0%, #ffeff5 100%);
+    border-radius: 12px;
+}
+
+.bubble-section:last-child {
+    margin-bottom: 0;
+}
+
+.bubble-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ff9db8;
+    margin-bottom: 12px;
+}
+
+.color-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rgb-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.color-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.color-label {
+    font-size: 11px;
+    color: #ffb6c8;
+    font-weight: 500;
+}
+
+.bubble-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #ffe4ed 0%, #ffb6c8 100%);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.bubble-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(255, 157, 184, 0.3);
+    transition: all 0.2s ease;
+}
+
+.bubble-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(255, 157, 184, 0.4);
+}
+
+.bubble-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 157, 184, 0.3);
+    transition: all 0.2s ease;
+}
+
+.bubble-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(255, 157, 184, 0.4);
+}
+
+.bubble-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 2px solid #ffe4ed;
+    border-radius: 8px;
+    font-size: 11px;
+    text-align: center;
+    background: #fffbfc;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.bubble-input:focus {
+    outline: none;
+    border-color: #ffb6c8;
+    background: #fff;
+}
+
+.alpha-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.alpha-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.alpha-input-group .bubble-slider {
+    flex: 1;
+}
+
+.alpha-number {
+    width: 50px;
+}
+
+.percent-sign {
+    font-size: 11px;
+    color: #ffb6c8;
+    font-weight: 500;
+    width: 20px;
+}
+
+.bubble-preview {
+    padding: 12px;
+    border-radius: 12px;
+    color: #333;
+    font-size: 13px;
+    text-align: center;
+    border: 2px solid #ffe4ed;
+    font-weight: 500;
 }
 
 /* 响应式调整 */

@@ -14,731 +14,9 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="moments.css">
     <link rel="stylesheet" href="auth-modal.css">
+    <link rel="stylesheet" href="api-settings-styles.css">
+    <link rel="stylesheet" href="wallet.css">
     <style>
-        /* 钱包页面样式 - 现代化设计 */
-        #wallet-page {
-            background: linear-gradient(180deg, #f0f9ff 0%, #fafbfc 50%, #ffffff 100%);
-        }
-        
-        #wallet-page .wallet-header {
-            height: 56px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
-            backdrop-filter: blur(10px);
-        }
-        
-        #wallet-page .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        #wallet-page .wallet-back-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 7px 15px 7px 11px;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-        }
-        
-        #wallet-page .wallet-back-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateX(-3px);
-        }
-        
-        #wallet-page .wallet-back-btn:active {
-            transform: translateX(-1px) scale(0.98);
-        }
-        
-        #wallet-page .wallet-back-btn i {
-            font-size: 14px;
-        }
-        
-        #wallet-page .setting-btn {
-            cursor: pointer;
-            font-size: 20px;
-            transition: all 0.3s ease;
-            padding: 8px;
-            border-radius: 50%;
-        }
-        
-        #wallet-page .setting-btn:hover {
-            transform: rotate(90deg) scale(1.1);
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        #wallet-page .title {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        
-        #wallet-page .content-container {
-            position: fixed;
-            top: 56px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 20px 16px 30px;
-            background: linear-gradient(180deg, #f0f9ff 0%, #fafbfc 50%, #ffffff 100%);
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        /* 资产卡片 - 高级渐变设计 */
-        #wallet-page .asset-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 28px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-            min-height: 180px;
-        }
-        
-        /* 装饰性背景元素 */
-        #wallet-page .asset-card::before {
-            content: "";
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        #wallet-page .asset-card::after {
-            content: "";
-            position: absolute;
-            bottom: -30px;
-            left: -30px;
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 8s ease-in-out infinite reverse;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(-10px, -10px) scale(1.05); }
-        }
-        
-        #wallet-page .asset-amount {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        #wallet-page .amount-text {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-        
-        #wallet-page .amount-text strong {
-            color: #fff;
-            font-size: 36px;
-            font-weight: 700;
-            margin-left: 8px;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            letter-spacing: 1px;
-        }
-        
-        #wallet-page .eye-btn {
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 20px;
-            transition: all 0.3s ease;
-            padding: 6px;
-            border-radius: 50%;
-            position: relative;
-            z-index: 2;
-        }
-        
-        #wallet-page .eye-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-        
-        #wallet-page .asset-desc {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.85);
-            text-align: center;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 2;
-            letter-spacing: 0.3px;
-        }
-        
-        #wallet-page .asset-btns {
-            display: flex;
-            gap: 12px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        #wallet-page .btn {
-            flex: 1;
-            height: 42px;
-            border-radius: 21px;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            letter-spacing: 0.5px;
-        }
-        
-        #wallet-page .recharge-btn {
-            background: #fff;
-            color: #667eea;
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
-        }
-        
-        #wallet-page .recharge-btn:hover {
-            box-shadow: 0 6px 16px rgba(255, 255, 255, 0.4);
-            transform: translateY(-2px);
-        }
-        
-        #wallet-page .recharge-btn:active {
-            transform: translateY(0);
-        }
-        
-        #wallet-page .trade-record-btn {
-            background: rgba(255, 255, 255, 0.25);
-            color: #fff;
-            border: 1.5px solid rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-        }
-        
-        #wallet-page .trade-record-btn:hover {
-            background: rgba(255, 255, 255, 0.35);
-            border-color: rgba(255, 255, 255, 0.6);
-            transform: translateY(-2px);
-        }
-        
-        #wallet-page .trade-record-btn:active {
-            transform: translateY(0);
-        }
-        
-        /* 功能网格 - 卡片式设计 */
-        #wallet-page .function-grid {
-            background: #fff;
-            border-radius: 20px;
-            padding: 20px 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        #wallet-page .grid-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 16px 8px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            border: 1px solid #f0f0f0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        #wallet-page .grid-item::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        #wallet-page .grid-item:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
-            border-color: rgba(102, 126, 234, 0.3);
-        }
-        
-        #wallet-page .grid-item:hover::before {
-            opacity: 1;
-        }
-        
-        #wallet-page .grid-item:active {
-            transform: translateY(-2px) scale(1);
-        }
-        
-        #wallet-page .grid-item .func-name-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        #wallet-page .grid-item i {
-            font-size: 26px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            width: auto;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-        
-        #wallet-page .grid-item:hover i {
-            transform: scale(1.15) rotate(5deg);
-        }
-        
-        #wallet-page .grid-item .func-name {
-            font-size: 12px;
-            color: #333;
-            font-weight: 600;
-            white-space: nowrap;
-            letter-spacing: 0.3px;
-        }
-        
-        #wallet-page .grid-item .func-cost {
-            font-size: 10px;
-            color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            padding: 4px 10px;
-            border-radius: 10px;
-            white-space: nowrap;
-            font-weight: 500;
-            position: relative;
-            z-index: 1;
-        }
-        /* 交易记录模态框 - 现代化设计 */
-        #wallet-page .trade-record-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        #wallet-page .modal-content {
-            background: #fff;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 75vh;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        
-        #wallet-page .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px;
-            border-bottom: 1px solid #f0f0f0;
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            flex-shrink: 0;
-        }
-        
-        #wallet-page .modal-title {
-            font-size: 18px;
-            color: #333;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-        
-        #wallet-page .close-modal {
-            font-size: 22px;
-            color: #999;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-        
-        #wallet-page .close-modal:hover {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-            transform: rotate(90deg);
-        }
-        
-        #wallet-page .record-list {
-            padding: 16px 24px 24px;
-            overflow-y: auto;
-            flex: 1;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        #wallet-page .record-item {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            border: 1px solid #f0f0f0;
-            transition: all 0.3s ease;
-        }
-        
-        #wallet-page .record-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-            border-color: rgba(102, 126, 234, 0.2);
-        }
-        
-        #wallet-page .record-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        #wallet-page .record-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 14px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-        
-        #wallet-page .record-icon i {
-            color: #fff;
-            font-size: 18px;
-        }
-        
-        #wallet-page .record-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        #wallet-page .record-title {
-            font-size: 14px;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 4px;
-            letter-spacing: 0.3px;
-        }
-        
-        #wallet-page .record-time {
-            font-size: 12px;
-            color: #999;
-            letter-spacing: 0.2px;
-        }
-        
-        #wallet-page .record-amount {
-            font-size: 16px;
-            font-weight: 700;
-            flex-shrink: 0;
-            margin-left: 12px;
-        }
-        
-        #wallet-page .amount-in {
-            color: #52c41a;
-        }
-        
-        #wallet-page .amount-out {
-            color: #ff4d4f;
-        }
-        
-        /* 移动端优化 */
-        @media (max-width: 768px) {
-            #wallet-page .content-container {
-                padding: 16px 12px 40px;
-            }
-            
-            #wallet-page .asset-card {
-                padding: 24px 20px;
-                margin-bottom: 20px;
-                min-height: 170px;
-            }
-            
-            #wallet-page .amount-text strong {
-                font-size: 32px;
-            }
-            
-            #wallet-page .function-grid {
-                padding: 16px 12px;
-                gap: 10px;
-                margin-bottom: 30px;
-            }
-            
-            #wallet-page .grid-item {
-                padding: 14px 6px;
-                min-height: 95px;
-            }
-            
-            #wallet-page .grid-item i {
-                font-size: 24px;
-            }
-            
-            #wallet-page .grid-item .func-name {
-                font-size: 11px;
-            }
-            
-            #wallet-page .modal-content {
-                max-height: 80vh;
-                border-radius: 20px 20px 0 0;
-                margin-top: auto;
-            }
-            
-            #wallet-page .record-list {
-                padding: 12px 16px 20px;
-            }
-            
-            #wallet-page .record-item {
-                padding: 14px;
-            }
-        }
-        
-        /* 小屏幕优化 */
-        @media (max-width: 375px) {
-            #wallet-page .function-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-            }
-            
-            #wallet-page .grid-item {
-                padding: 12px 4px;
-                min-height: 90px;
-            }
-            
-            #wallet-page .grid-item i {
-                font-size: 22px;
-            }
-            
-            #wallet-page .grid-item .func-name {
-                font-size: 10px;
-            }
-            
-            #wallet-page .grid-item .func-cost {
-                font-size: 9px;
-                padding: 3px 8px;
-            }
-        }
-        
-        /* 确保内容区域填充整个可视区域 */
-        #wallet-page .content-container::after {
-            content: "";
-            display: block;
-            height: 1px;
-            width: 100%;
-        }
-        
-        /* 钱包自定义弹窗样式 - 蓝白简约风格 */
-        .wallet-custom-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .wallet-custom-modal.show {
-            opacity: 1;
-        }
-        
-        .wallet-modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        
-        .wallet-modal-box {
-            position: relative;
-            background-color: #fff;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 8px 24px rgba(22, 191, 253, 0.2);
-            overflow: hidden;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        
-        .wallet-custom-modal.show .wallet-modal-box {
-            transform: scale(1);
-        }
-        
-        .wallet-modal-header {
-            background: linear-gradient(90deg, #16bffd 0%, #0fb8e9 100%);
-            padding: 18px 20px;
-            color: #fff;
-        }
-        
-        .wallet-modal-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .wallet-modal-body {
-            padding: 24px 20px;
-        }
-        
-        .wallet-input-group {
-            margin-bottom: 16px;
-        }
-        
-        .wallet-input-label {
-            display: block;
-            font-size: 14px;
-            color: #4e5969;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .wallet-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e5e6eb;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #1d2129;
-            background-color: #f5f7fa;
-            transition: all 0.2s;
-            box-sizing: border-box;
-        }
-        
-        .wallet-input:focus {
-            outline: none;
-            border-color: #16bffd;
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(22, 191, 253, 0.1);
-        }
-        
-        .wallet-input-hint {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #86909c;
-        }
-        
-        .wallet-confirm-message {
-            font-size: 15px;
-            color: #1d2129;
-            line-height: 1.6;
-            text-align: center;
-        }
-        
-        .wallet-modal-footer {
-            padding: 16px 20px;
-            display: flex;
-            gap: 12px;
-            border-top: 1px solid #f2f3f5;
-        }
-        
-        .wallet-modal-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .wallet-btn-cancel {
-            background-color: #f5f7fa;
-            color: #4e5969;
-        }
-        
-        .wallet-btn-cancel:hover {
-            background-color: #e5e6eb;
-        }
-        
-        .wallet-btn-confirm {
-            background: linear-gradient(90deg, #16bffd 0%, #0fb8e9 100%);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(22, 191, 253, 0.3);
-        }
-        
-        .wallet-btn-confirm:hover {
-            box-shadow: 0 4px 12px rgba(22, 191, 253, 0.4);
-            transform: translateY(-1px);
-        }
-        
-        .wallet-btn-confirm:active {
-            transform: translateY(0);
-        }
     </style>
     <script src="auth-modal.js" defer></script>
     <script src="login.js" defer></script>
@@ -2587,85 +1865,85 @@
 
         <!-- 子页面 - API设置 -->
         <div class="sub-page" id="api-settings-page">
-            <div class="sub-nav" style="background:#ffffff;border-bottom:1px solid #e8e8e8;">
-                <div class="back-btn" data-back="api-settings-page" style="color:#666;">
-                    <div class="back-arrow" style="border-left-color:#666;border-bottom-color:#666;"></div>
+            <div class="sub-nav">
+                <div class="back-btn" data-back="api-settings-page">
+                    <div class="back-arrow"></div>
                     <span>返回</span>
                 </div>
-                <div class="sub-title" style="color:#333;font-weight:600;">API设置</div>
+                <div class="sub-title">API设置</div>
             </div>
-            <div class="sub-content" style="padding: 0; background: #f5f5f5; overflow-y: auto; max-height: 100%;">
-                <div class="api-settings-container" style="padding:20px;">
+            <div class="sub-content">
+                <div class="api-settings-container">
                     <!-- API预设管理 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="margin:0 0 14px 0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;">
-                            <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                    <div class="settings-card">
+                        <h3 class="card-title">
+                            <span class="title-indicator"></span>
                             API 预设管理
                         </h3>
-                        <button id="api-preset-btn" class="small-btn" style="width:100%;">预设管理</button>
+                        <button id="api-preset-btn" class="modern-btn" style="width:100%;">预设管理</button>
                     </div>
 
                     <!-- 主API设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="margin:0 0 14px 0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;">
-                            <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                    <div class="settings-card">
+                        <h3 class="card-title">
+                            <span class="title-indicator"></span>
                             主API设置
                         </h3>
                         
                         <div class="setting-row">
-                            <label class="setting-label">API 端点 (Endpoint)</label>
-                            <input id="api-endpoint" class="setting-input" placeholder="例如 https://api.openai.com/v1">
+                            <label class="modern-label">API 端点 (Endpoint)</label>
+                            <input id="api-endpoint" class="modern-input" placeholder="例如 https://api.openai.com/v1">
                         </div>
 
                         <div class="setting-row">
-                            <label class="setting-label">API 密钥 (Key)</label>
-                            <div style="display:flex;gap:8px;align-items:center;">
-                                <input id="api-key" class="setting-input" type="password" placeholder="在此处填写 Bearer Key（可选）" style="flex:1;">
-                                <button id="api-key-toggle" class="small-btn" style="flex-shrink:0;padding:6px 12px;height:36px;">显示</button>
+                            <label class="modern-label">API 密钥 (Key)</label>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <input id="api-key" class="modern-input" type="password" placeholder="在此处填写 Bearer Key（可选）" style="flex:1;">
+                                <button id="api-key-toggle" class="modern-btn modern-btn-small">显示</button>
                             </div>
                         </div>
 
                         <div class="setting-row">
-                            <label class="setting-label">拉取模型</label>
-                            <button id="pull-models-btn" class="small-btn">拉取模型</button>
+                            <label class="modern-label">拉取模型</label>
+                            <button id="pull-models-btn" class="modern-btn" style="width:100%;">拉取模型</button>
                         </div>
 
                         <div class="setting-row">
-                            <label class="setting-label">模型名称</label>
-                            <select id="models-select" class="models-select" style="height:44px;margin-top:8px;"></select>
-                            <div style="margin-top:8px;color:#999;font-size:13px;">目前保存的模型：<span id="selected-model-display" style="color:#666;font-weight:500;">未选择</span></div>
+                            <label class="modern-label">模型名称</label>
+                            <select id="models-select" class="modern-select" style="margin-top:8px;"></select>
+                            <div class="info-box">目前保存的模型：<span id="selected-model-display" class="highlight">未选择</span></div>
                         </div>
                     </div>
                     
                     <!-- 副API设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="margin:0 0 14px 0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;">
-                            <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                    <div class="settings-card">
+                        <h3 class="card-title">
+                            <span class="title-indicator"></span>
                             副API设置（用于翻译、总结等）
                         </h3>
                         
                         <div class="setting-row">
-                            <label class="setting-label">副API 端点 (Endpoint)</label>
-                            <input id="secondary-api-endpoint" class="setting-input" placeholder="例如 https://api.example.com/v1">
+                            <label class="modern-label">副API 端点 (Endpoint)</label>
+                            <input id="secondary-api-endpoint" class="modern-input" placeholder="例如 https://api.example.com/v1">
                         </div>
 
                         <div class="setting-row">
-                            <label class="setting-label">副API 密钥 (Key)</label>
-                            <div style="display:flex;gap:8px;align-items:center;">
-                                <input id="secondary-api-key" class="setting-input" type="password" placeholder="副API密钥（可选）" style="flex:1;">
-                                <button id="secondary-api-key-toggle" class="small-btn" style="flex-shrink:0;padding:6px 12px;height:36px;">显示</button>
+                            <label class="modern-label">副API 密钥 (Key)</label>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <input id="secondary-api-key" class="modern-input" type="password" placeholder="副API密钥（可选）" style="flex:1;">
+                                <button id="secondary-api-key-toggle" class="modern-btn modern-btn-small">显示</button>
                             </div>
                         </div>
 
                         <div class="setting-row">
-                            <label class="setting-label">拉取模型</label>
-                            <button id="pull-secondary-models-btn" class="small-btn">拉取模型</button>
+                            <label class="modern-label">拉取模型</label>
+                            <button id="pull-secondary-models-btn" class="modern-btn" style="width:100%;">拉取模型</button>
                         </div>
 
                         <div class="setting-row">
-                            <label class="setting-label">模型名称</label>
-                            <select id="secondary-models-select" class="models-select" style="height:44px;margin-top:8px;"></select>
-                            <div style="margin-top:8px;color:#999;font-size:13px;">目前保存的模型：<span id="secondary-selected-model-display" style="color:#666;font-weight:500;">未选择</span></div>
+                            <label class="modern-label">模型名称</label>
+                            <select id="secondary-models-select" class="modern-select" style="margin-top:8px;"></select>
+                            <div class="info-box">目前保存的模型：<span id="secondary-selected-model-display" class="highlight">未选择</span></div>
                         </div>
                     </div>
 
@@ -2734,41 +2012,43 @@
                     </div>
 
                     <!-- 其他设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="margin:0 0 14px 0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;">
-                            <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                    <div class="settings-card">
+                        <h3 class="card-title">
+                            <span class="title-indicator"></span>
                             其他设置
                         </h3>
                         
                         <div class="setting-row">
-                            <label class="setting-label">AI 时间感知</label>
+                            <label class="modern-label">AI 时间感知</label>
                             <div style="display:flex;align-items:center;gap:10px;">
-                                <input type="checkbox" id="ai-time-aware" style="width:18px;height:18px;cursor:pointer;accent-color:#999;">
+                                <input type="checkbox" id="ai-time-aware" style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
                                 <div style="color:#666;font-size:13px;">开启后会将当前时间信息作为 system 指令发送</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="setting-row" style="margin-top:16px;padding-top:16px;">
-                        <label class="setting-label">提示词管理</label>
-                        <div style="display:flex;gap:8px;margin-top:8px;">
-                            <button id="add-prompt-btn" class="small-btn">新增提示词</button>
-                            <button id="prompt-list-btn" class="small-btn">查看提示词列表</button>
+                    <div class="settings-card">
+                        <div class="setting-row">
+                            <label class="modern-label">提示词管理</label>
+                            <div style="display:flex;gap:10px;margin-top:8px;">
+                                <button id="add-prompt-btn" class="modern-btn" style="flex:1;">新增提示词</button>
+                                <button id="prompt-list-btn" class="modern-btn" style="flex:1;">查看提示词列表</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="modern-label">当前提示词</label>
+                            <select id="prompts-select" class="modern-select" style="margin-top:8px;"></select>
+                            <div id="current-prompt-display" style="margin-top:12px;padding:14px;background:#fafafa;border:1px solid #e8e8e8;border-radius:10px;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-wrap:break-word;font-size:12px;color:#666;font-family:monospace;line-height:1.6;"></div>
+                        </div>
+
+                        <div class="setting-row">
+                            <button id="save-settings-btn" class="primary-btn-modern">保存设置</button>
                         </div>
                     </div>
 
-                    <div class="setting-row">
-                        <label class="setting-label">当前提示词</label>
-                        <select id="prompts-select" class="models-select" style="margin-top:8px;"></select>
-                        <div id="current-prompt-display" style="margin-top:10px;padding:12px;background:#fafafa;border:1px solid #f0f0f0;border-radius:8px;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-wrap:break-word;font-size:12px;color:#666;font-family:monospace;line-height:1.6;"></div>
-                    </div>
-
-                    <div class="setting-row" style="margin-top:18px;">
-                        <button id="save-settings-btn" class="primary-btn">保存设置</button>
-                    </div>
-
-                    <div style="margin-top:14px;padding:12px;background:#f5f5f5;border-left:3px solid #ccc;border-radius:6px;color:#666;font-size:13px;line-height:1.6;">
-                        💡 使用说明：填写端点与（可选）密钥，点击"拉取模型"获取模型列表，务必记得点击保存设置。
+                    <div class="tip-box">
+                        使用说明：填写端点与（可选）密钥，点击"拉取模型"获取模型列表，务必记得点击保存设置。
                     </div>
                 </div>
             </div>

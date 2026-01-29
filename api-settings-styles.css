@@ -1,0 +1,270 @@
+/* API设置页面 - 现代白灰色系设计 */
+
+/* 导航栏样式 */
+#api-settings-page .sub-nav {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    border-bottom: 1px solid #e5e5e5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+#api-settings-page .back-btn {
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+#api-settings-page .back-btn:hover {
+    color: #333;
+    transform: translateX(-2px);
+}
+
+#api-settings-page .sub-title {
+    color: #1a1a1a;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+}
+
+/* 内容区域 */
+#api-settings-page .sub-content {
+    background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
+}
+
+#api-settings-page .api-settings-container {
+    padding: 24px 16px;
+}
+
+/* 卡片通用样式 */
+#api-settings-page .settings-card {
+    margin-bottom: 16px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+#api-settings-page .settings-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+/* 标题样式 */
+#api-settings-page .card-title {
+    margin: 0 0 18px 0;
+    font-size: 15px;
+    color: #2c2c2c;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.3px;
+}
+
+#api-settings-page .title-indicator {
+    display: inline-block;
+    width: 3px;
+    height: 18px;
+    background: linear-gradient(180deg, #666 0%, #999 100%);
+    border-radius: 2px;
+}
+
+/* 输入框样式 */
+#api-settings-page .modern-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+#api-settings-page .modern-input:focus {
+    border-color: #999;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(153, 153, 153, 0.1);
+}
+
+#api-settings-page .modern-input::placeholder {
+    color: #aaa;
+}
+
+/* 按钮样式 */
+#api-settings-page .modern-btn {
+    height: 44px;
+    padding: 0 20px;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    outline: none;
+}
+
+#api-settings-page .modern-btn:hover {
+    background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+    border-color: #d0d0d0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#api-settings-page .modern-btn:active {
+    transform: translateY(0);
+}
+
+#api-settings-page .modern-btn-small {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    min-width: 70px;
+}
+
+/* 标签样式 */
+#api-settings-page .modern-label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+    letter-spacing: 0.2px;
+}
+
+/* 信息提示框 */
+#api-settings-page .info-box {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    color: #888;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+}
+
+#api-settings-page .info-box .highlight {
+    color: #555;
+    font-weight: 600;
+}
+
+/* 滑块样式 */
+#api-settings-page .modern-range {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    background: linear-gradient(90deg, #e5e5e5, #d0d0d0);
+    cursor: pointer;
+}
+
+#api-settings-page .modern-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #666 0%, #999 100%);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+#api-settings-page .modern-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+#api-settings-page .range-value {
+    color: #333;
+    font-weight: 600;
+    font-size: 13px;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
+    padding: 6px 12px;
+    border-radius: 8px;
+    min-width: 45px;
+    text-align: center;
+    border: 1px solid #e5e5e5;
+}
+
+#api-settings-page .range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: #999;
+    font-size: 11px;
+    letter-spacing: 0.2px;
+}
+
+/* 选择框样式 */
+#api-settings-page .modern-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    outline: none;
+    cursor: pointer;
+}
+
+#api-settings-page .modern-select:focus {
+    border-color: #999;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(153, 153, 153, 0.1);
+}
+
+/* 主按钮样式 */
+#api-settings-page .primary-btn-modern {
+    width: 100%;
+    height: 48px;
+    background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%);
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#api-settings-page .primary-btn-modern:hover {
+    background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+#api-settings-page .primary-btn-modern:active {
+    transform: translateY(0);
+}
+
+/* 提示说明框 */
+#api-settings-page .tip-box {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f5f5f5 100%);
+    border-left: 3px solid #999;
+    border-radius: 8px;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 0.2px;
+}
+
+/* 间距调整 */
+#api-settings-page .setting-row {
+    margin-bottom: 16px;
+}
+
+#api-settings-page .setting-row:last-child {
+    margin-bottom: 0;
+}

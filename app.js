@@ -8673,18 +8673,14 @@
                 </div>`;
 
             page.innerHTML = `
-                <div class="sub-nav" style="background:linear-gradient(135deg,#2c2c2c 0%,#1a1a1a 100%);border:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-                    <div class="back-btn" id="collection-back-btn" style="color:#fff;background:rgba(255,255,255,0.15);border-radius:20px;padding:6px 14px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);transition:all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='translateX(-3px)'" onmouseout="this.style.background='rgba(255,255,255,0.15)';this.style.transform=''">
+                <div class="sub-nav" style="background:linear-gradient(135deg,#2c2c2c 0%,#1a1a1a 100%);border:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;position:relative;">
+                    <div class="back-btn" id="collection-back-btn" style="color:#fff;background:transparent;border:none;padding:6px 14px;transition:all 0.3s ease;position:absolute;left:0;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
                         <div class="back-arrow" style="border-left-color:#fff;border-bottom-color:#fff;"></div>
                         <span>返回</span>
                     </div>
-                    <div class="sub-title" style="color:#fff;font-weight:600;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;">
-                        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none;">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                        </svg>
+                    <div class="sub-title" style="color:#fff;font-weight:600;letter-spacing:0.5px;font-size:17px;">
                         我的收藏
                     </div>
-                    <div style="width:40px;"></div>
                 </div>
                 <div class="sub-content" style="overflow-y:auto;padding:0;background:linear-gradient(180deg,#f8f8f8 0%,#ffffff 100%);">
                     ${collectionsHTML}
