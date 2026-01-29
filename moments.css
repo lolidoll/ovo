@@ -208,6 +208,24 @@ body {
   font-weight: 500;
 }
 
+/* 可见范围徽章 */
+.visibility-badge {
+  display: inline-block;
+  font-size: 12px;
+  color: #999999;
+  background: transparent;
+  padding: 0 8px;
+  margin: 0 4px;
+  font-weight: normal;
+  border: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.visibility-badge:hover {
+  opacity: 1;
+}
+
 /* 删除朋友圈按钮 */
 .feed-delete-btn {
   background: transparent;
@@ -261,18 +279,18 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 0;
+  gap: 4px;
 }
 
 .action-btn {
   background: transparent;
   border: none;
-  font-size: 14px;
+  font-size: 11px;
   cursor: pointer;
   font-family: var(--pixel-font);
   color: #666;
   transition: color 0.2s;
-  padding: 4px 6px;
+  padding: 2px 4px;
 }
 
 .action-btn:hover {

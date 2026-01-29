@@ -79,6 +79,34 @@ class MomentsManager {
         console.error('加载朋友圈数据失败:', e);
       }
     }
+    
+    // 加载朋友圈独立的个人资料数据
+    const profileSaved = localStorage.getItem('momentsProfileData');
+    if (profileSaved) {
+      try {
+        this.profileData = JSON.parse(profileSaved);
+      } catch (e) {
+        console.error('加载朋友圈个人资料失败:', e);
+        this.profileData = {
+          name: '薯片机用户',
+          avatar: '',
+          visitorCount: 0,
+          bgImage: ''
+        };
+      }
+    } else {
+      this.profileData = {
+        name: '薯片机用户',
+        avatar: '',
+        visitorCount: 0,
+        bgImage: ''
+      };
+    }
+    
+    // 如果没有bgImage属性，添加默认值
+    if (!this.profileData.hasOwnProperty('bgImage')) {
+      this.profileData.bgImage = '';
+    }
   }
 
   // 保存数据到 localStorage
@@ -94,367 +122,99 @@ class MomentsManager {
     } catch (e) {
       console.error('保存朋友圈数据失败:', e);
     }
+    
+    // 保存朋友圈独立的个人资料数据
+    try {
+      localStorage.setItem('momentsProfileData', JSON.stringify(this.profileData));
+      console.log('朋友圈个人资料已保存:', this.profileData);
+    } catch (e) {
+      console.error('保存朋友圈个人资料失败:', e);
+    }
   }
 
-  // 初始化个人资料数据
+  // 初始化个人资料数据（完全独立，不与侧边栏同步）
   initProfileData() {
     try {
-      let userName = null;
-      let userAvatar = null;
+      console.log('=== 朋友圈个人资料初始化 ===');
+      console.log('独立存储的个人资料:', this.profileData);
       
-      // 第一阶段：从localStorage读取已保存的数据（优先级最高 - 确保持久化）
-      try {
-        const saved = localStorage.getItem('cachedAppState');
-        if (saved) {
-          const appState = JSON.parse(saved);
-          if (appState.user) {
-            if (appState.user.name) userName = appState.user.name;
-            if (appState.user.avatar) userAvatar = appState.user.avatar;
+      // 设置用户名
+      const nameEl = document.getElementById('profileName');
+      if (nameEl) {
+        nameEl.textContent = this.profileData.name;
+        nameEl.style.cursor = 'pointer';
+        nameEl.title = '点击修改用户名';
+        
+        // 创建新的元素来替换旧元素，这样可以移除所有事件监听器
+        const newNameEl = nameEl.cloneNode(true);
+        nameEl.parentNode.replaceChild(newNameEl, nameEl);
+        
+        // 添加点击事件
+        newNameEl.addEventListener('click', () => {
+          const newName = prompt('修改朋友圈用户名:', this.profileData.name);
+          if (newName && newName.trim()) {
+            this.profileData.name = newName.trim();
+            newNameEl.textContent = newName.trim();
+            this.saveToStorage();
+            console.log('朋友圈用户名已更新:', this.profileData.name);
           }
+        });
+      }
+      
+      // 设置头像
+      const avatarEl = document.getElementById('profileAvatar');
+      if (avatarEl) {
+        if (this.profileData.avatar) {
+          avatarEl.src = this.profileData.avatar;
         }
-      } catch (e) {
-        console.log('从localStorage读取用户信息出错:', e.message);
-      }
-      
-      // 第二阶段：从侧边栏补充（如果localStorage没有）
-      if (!userName || !userAvatar) {
-        try {
-          // 尝试从父窗口侧边栏获取
-          if (window.parent && window.parent !== window) {
-            if (!userName) {
-              const displayName = window.parent.document.getElementById('display-name');
-              if (displayName && displayName.textContent) {
-                userName = displayName.textContent.trim();
-              }
-              if (!userName) {
-                const userNameEl = window.parent.document.querySelector('.user-name');
-                if (userNameEl && userNameEl.textContent) {
-                  userName = userNameEl.textContent.trim();
-                }
-              }
-            }
-            
-            if (!userAvatar) {
-              const cardAvatar = window.parent.document.getElementById('card-avatar');
-              if (cardAvatar) {
-                const img = cardAvatar.querySelector('img');
-                if (img && img.src) {
-                  userAvatar = img.src;
-                }
-              }
-            }
-          }
-          
-          // 如果父窗口获取失败，尝试当前窗口
-          if (!userName) {
-            const displayName = document.getElementById('display-name');
-            if (displayName && displayName.textContent) {
-              userName = displayName.textContent.trim();
-            }
-          }
-          
-          if (!userAvatar) {
-            const cardAvatar = document.getElementById('card-avatar');
-            if (cardAvatar) {
-              const img = cardAvatar.querySelector('img');
-              if (img && img.src) {
-                userAvatar = img.src;
-              }
-            }
-          }
-        } catch (e) {
-          console.log('从侧边栏获取用户信息出错:', e.message);
-        }
-      }
-      
-      // 第三阶段：从AppState补充（如果前两个阶段都失败）
-      const appState = this.getAppState();
-      if (!userName && appState && appState.user) {
-        userName = appState.user.name || '用户';
-      }
-      if (!userAvatar && appState && appState.user) {
-        userAvatar = appState.user.avatar || '';
-      }
-      
-      // 最后的默认值
-      if (!userName) {
-        userName = '用户';
-      }
-      
-      if (!userAvatar && appState && appState.user) {
-        userAvatar = appState.user.avatar || '';
-      } else if (!userAvatar) {
-        userAvatar = '';
-      }
-      
-      // 第三阶段：设置朋友圈UI
-      try {
-        const nameEl = document.getElementById('profileName');
-        if (nameEl) {
-          nameEl.textContent = userName;
-          nameEl.style.cursor = 'pointer';
-          
-          // 名字可点击编辑
-          nameEl.onclick = () => {
-            try {
-              const newName = prompt('修改用户名:', userName);
-              if (newName && newName.trim()) {
-                userName = newName.trim();
-                nameEl.textContent = newName.trim();
-                // 同步到侧边栏（这个函数会处理所有的更新）
-                this.syncNameToSidebar(newName.trim());
-              }
-            } catch (e) {
-              console.log('修改用户名出错:', e.message);
-            }
-          };
-        }
-      } catch (e) {
-        console.log('设置名字出错:', e.message);
-      }
-      
-      try {
-        const avatarEl = document.getElementById('profileAvatar');
-        if (avatarEl) {
-          avatarEl.src = userAvatar;
-          avatarEl.style.cursor = 'pointer';
-          
-          // 头像可点击编辑
-          avatarEl.onclick = () => {
-            try {
-              const newAvatar = prompt('输入新头像URL:', userAvatar || '');
-              if (newAvatar && newAvatar.trim()) {
-                avatarEl.src = newAvatar.trim();
-                // 同步到侧边栏（这个函数会处理所有的更新）
-                this.syncAvatarToSidebar(newAvatar.trim());
-              }
-            } catch (e) {
-              console.log('修改头像出错:', e.message);
-            }
-          };
-          
-          // 同步到AppState
-          if (appState && appState.user) {
-            appState.user.avatar = userAvatar;
-            localStorage.setItem('cachedAppState', JSON.stringify(appState));
-          }
-          // 同步到侧边栏
-          this.syncAvatarToSidebar(userAvatar);
-        }
-      } catch (e) {
-        console.log('设置头像出错:', e.message);
+        avatarEl.style.cursor = 'pointer';
+        avatarEl.title = '点击修改头像';
       }
       
       // 设置访客总量
-      try {
-        const visitorEl = document.getElementById('visitorCount');
-        if (visitorEl) {
-          const visitorCount = (appState && appState.user && appState.user.visitorCount) || 0;
-          visitorEl.textContent = visitorCount;
+      const visitorEl = document.getElementById('visitorCount');
+      if (visitorEl) {
+        visitorEl.textContent = this.profileData.visitorCount;
+        const parentP = visitorEl.parentElement;
+        if (parentP) {
+          parentP.style.cursor = 'pointer';
+          parentP.title = '点击修改访客总量';
           
-          // 访客总量可点击修改
-          const parentP = visitorEl.parentElement;
-          if (parentP) {
-            parentP.onclick = (e) => {
-              try {
-                if (e.target === visitorEl || (e.target.parentElement && e.target.parentElement === parentP)) {
-                  const newCount = prompt('修改访客总量:', visitorCount);
-                  if (newCount !== null && !isNaN(newCount)) {
-                    const countVal = parseInt(newCount);
-                    visitorEl.textContent = countVal;
-                    
-                    // 更新所有存储位置
-                    if (window.AppState && window.AppState.user) {
-                      window.AppState.user.visitorCount = countVal;
-                    }
-                    
-                    try {
-                      let cachedState = JSON.parse(localStorage.getItem('cachedAppState') || '{}');
-                      if (!cachedState.user) cachedState.user = {};
-                      cachedState.user.visitorCount = countVal;
-                      localStorage.setItem('cachedAppState', JSON.stringify(cachedState));
-                      
-                      let shupianjState = JSON.parse(localStorage.getItem('shupianjAppState') || '{}');
-                      if (!shupianjState.user) shupianjState.user = {};
-                      shupianjState.user.visitorCount = countVal;
-                      localStorage.setItem('shupianjAppState', JSON.stringify(shupianjState));
-                    } catch (e) {
-                      console.log('保存访客总量出错:', e.message);
-                    }
-                    
-                    // 调用主应用的saveToStorage确保完整保存
-                    if (typeof window.saveToStorage === 'function') {
-                      window.saveToStorage().catch(e => {
-                        console.log('主应用saveToStorage失败:', e.message);
-                      });
-                    }
-                  }
-                }
-              } catch (e) {
-                console.log('修改访客总量出错:', e.message);
+          // 创建新的元素来替换旧元素，这样可以移除所有事件监听器
+          const newParentP = parentP.cloneNode(true);
+          parentP.parentNode.replaceChild(newParentP, parentP);
+          
+          // 重新获取visitorCount元素（因为父元素已被替换）
+          const newVisitorEl = newParentP.querySelector('#visitorCount');
+          
+          // 添加点击事件
+          newParentP.addEventListener('click', () => {
+            const newCount = prompt('修改朋友圈访客总量:', this.profileData.visitorCount);
+            if (newCount !== null && !isNaN(newCount)) {
+              const countVal = parseInt(newCount);
+              if (countVal >= 0) {
+                this.profileData.visitorCount = countVal;
+                newVisitorEl.textContent = countVal;
+                this.saveToStorage();
+                console.log('朋友圈访客总量已更新:', countVal);
               }
-            };
-            parentP.style.cursor = 'pointer';
-          }
+            }
+          });
         }
-      } catch (e) {
-        console.log('设置访客总量出错:', e.message);
       }
+      
+      console.log('=== 朋友圈个人资料初始化完成 ===');
     } catch (e) {
-      console.log('initProfileData出错:', e.message);
+      console.error('initProfileData出错:', e);
     }
   }
   
-  // 同步昵称到侧边栏
-  syncNameToSidebar(name) {
-    try {
-      if (!name) return;
-      
-      console.log('syncNameToSidebar called with:', name);
-      
-      // 0. 同时保存到AppState和localStorage（持久化） - 最重要！
-      if (!window.AppState) {
-        window.AppState = {};
-      }
-      if (!window.AppState.user) {
-        window.AppState.user = {};
-      }
-      window.AppState.user.name = name;
-      console.log('Updated AppState.user.name');
-      
-      // 保存到localStorage (同时保存到两个位置以备不时之需)
-      try {
-        let cachedState = JSON.parse(localStorage.getItem('cachedAppState') || '{}');
-        if (!cachedState.user) cachedState.user = {};
-        cachedState.user.name = name;
-        localStorage.setItem('cachedAppState', JSON.stringify(cachedState));
-        console.log('Saved cachedAppState');
-        
-        let shupianjState = JSON.parse(localStorage.getItem('shupianjAppState') || '{}');
-        if (!shupianjState.user) shupianjState.user = {};
-        shupianjState.user.name = name;
-        localStorage.setItem('shupianjAppState', JSON.stringify(shupianjState));
-        console.log('Saved shupianjAppState');
-      } catch (e) {
-        console.log('保存到localStorage出错:', e.message);
-      }
-      
-      // 调用主应用的saveToStorage确保完整保存
-      if (typeof window.saveToStorage === 'function') {
-        window.saveToStorage().catch(e => {
-          console.log('主应用saveToStorage失败:', e.message);
-        });
-      }
-      
-      // 1. 更新侧边栏显示名字
-      const displayName = document.getElementById('display-name');
-      if (displayName) {
-        displayName.textContent = name;
-        console.log('Updated #display-name');
-      } else {
-        console.log('#display-name not found');
-      }
-      
-      // 更新顶部用户名显示
-      const userNameEl = document.querySelector('.user-name');
-      if (userNameEl) {
-        userNameEl.textContent = name;
-        console.log('Updated .user-name');
-      } else {
-        console.log('.user-name not found');
-      }
-      
-      // 2. 更新朋友圈页面的名字
-      const profileName = document.getElementById('profileName');
-      if (profileName) {
-        profileName.textContent = name;
-        console.log('Updated #profileName');
-      } else {
-        console.log('#profileName not found');
-      }
-    } catch (e) {
-      console.log('syncNameToSidebar出错:', e.message);
-    }
-  }
-  
-  // 同步头像到侧边栏
-  syncAvatarToSidebar(avatarUrl) {
-    try {
-      if (!avatarUrl) return;
-      
-      console.log('syncAvatarToSidebar called with:', avatarUrl);
-      
-      // 0. 同时保存到AppState和localStorage（持久化） - 最重要！
-      if (!window.AppState) {
-        window.AppState = {};
-      }
-      if (!window.AppState.user) {
-        window.AppState.user = {};
-      }
-      window.AppState.user.avatar = avatarUrl;
-      console.log('Updated AppState.user.avatar');
-      
-      // 保存到localStorage (同时保存到三个位置)
-      try {
-        let cachedState = JSON.parse(localStorage.getItem('cachedAppState') || '{}');
-        if (!cachedState.user) cachedState.user = {};
-        cachedState.user.avatar = avatarUrl;
-        localStorage.setItem('cachedAppState', JSON.stringify(cachedState));
-        console.log('Saved cachedAppState');
-        
-        let shupianjState = JSON.parse(localStorage.getItem('shupianjAppState') || '{}');
-        if (!shupianjState.user) shupianjState.user = {};
-        shupianjState.user.avatar = avatarUrl;
-        localStorage.setItem('shupianjAppState', JSON.stringify(shupianjState));
-        console.log('Saved shupianjAppState');
-      } catch (e) {
-        console.log('保存到localStorage出错:', e.message);
-      }
-      
-      // 调用主应用的saveToStorage确保完整保存
-      if (typeof window.saveToStorage === 'function') {
-        window.saveToStorage().catch(e => {
-          console.log('主应用saveToStorage失败:', e.message);
-        });
-      }
-      
-      // 1. 立即更新朋友圈页面的头像（大头像）
-      const profileAvatar = document.getElementById('profileAvatar');
-      if (profileAvatar) {
-        profileAvatar.src = avatarUrl;
-        console.log('Updated #profileAvatar');
-      } else {
-        console.log('#profileAvatar not found');
-      }
-      
-      // 2. 立即更新侧边栏卡片头像
-      const cardAvatar = document.getElementById('card-avatar');
-      if (cardAvatar) {
-        // 使用innerHTML方式（与updateUserDisplay保持一致）
-        cardAvatar.innerHTML = `<img src="${avatarUrl}" alt="">`;
-        console.log('Updated #card-avatar with innerHTML');
-      } else {
-        console.log('#card-avatar not found');
-      }
-      
-      // 3. 立即更新顶部用户头像
-      const userAvatarDisplay = document.getElementById('user-avatar-display');
-      if (userAvatarDisplay) {
-        // 使用innerHTML方式（与updateUserDisplay保持一致）
-        userAvatarDisplay.innerHTML = `<img src="${avatarUrl}" alt="">`;
-        console.log('Updated #user-avatar-display with innerHTML');
-      } else {
-        console.log('#user-avatar-display not found');
-      }
-    } catch (e) {
-      console.log('syncAvatarToSidebar出错:', e.message);
-    }
-  }
+  // 注意：朋友圈个人资料现在完全独立，不再与侧边栏同步
 
-  // 获取应用状态
+  // 获取应用状态（仅用于获取好友和分组数据）
   getAppState() {
     try {
-      // 首先尝试从当前窗口获取AppState（index.html中moments是内嵌的）
+      // 首先尝试从当前窗口获取AppState
       if (window.AppState) {
         return window.AppState;
       }
@@ -475,225 +235,16 @@ class MomentsManager {
     return null;
   }
 
-  // 获取用户头像
+  // 获取用户头像（仅从朋友圈独立存储获取）
   getUserAvatar() {
-    // 优先从侧边栏获取（主窗口的sidebar card-avatar）- 这是用户实际修改的地方
-    try {
-      let sidebarImg = null;
-      
-      // 尝试从父窗口获取侧边栏头像
-      if (window.parent && window.parent !== window) {
-        const cardAvatar = window.parent.document.getElementById('card-avatar');
-        if (cardAvatar) {
-          sidebarImg = cardAvatar.querySelector('img');
-          if (sidebarImg && sidebarImg.src && sidebarImg.src.trim()) {
-            return sidebarImg.src;
-          }
-        }
-      }
-      
-      // 尝试在当前窗口获取
-      const cardAvatarCurrent = document.getElementById('card-avatar');
-      if (cardAvatarCurrent) {
-        sidebarImg = cardAvatarCurrent.querySelector('img');
-        if (sidebarImg && sidebarImg.src && sidebarImg.src.trim()) {
-          return sidebarImg.src;
-        }
-      }
-    } catch (e) {
-      console.log('无法从侧边栏获取头像:', e.message);
-    }
-    
-    // 次级：从profileAvatar获取（朋友圈页面的头像）
-    try {
-      const profileAvatar = document.getElementById('profileAvatar');
-      if (profileAvatar && profileAvatar.src && profileAvatar.src.trim()) {
-        return profileAvatar.src;
-      }
-    } catch (e) {
-      console.log('无法获取profileAvatar:', e.message);
-    }
-    
-    // 最后从AppState获取（备选方案）
-    try {
-      const appState = this.getAppState();
-      if (appState && appState.user && appState.user.avatar && appState.user.avatar.trim()) {
-        return appState.user.avatar;
-      }
-    } catch (e) {
-      console.log('无法从AppState获取头像:', e.message);
-    }
-    
-    return '';
+    // 直接从朋友圈独立存储的profileData获取
+    return this.profileData.avatar || '';
   }
 
-  // 获取用户名
+  // 获取用户名（仅从朋友圈独立存储获取）
   getUserName() {
-    // 优先从侧边栏获取（主窗口的display-name或user-name） - 这是用户实际设置的名字
-    try {
-      let displayName = null;
-      
-      // 尝试从父窗口获取侧边栏昵称
-      if (window.parent && window.parent !== window) {
-        // 优先尝试display-name
-        displayName = window.parent.document.getElementById('display-name');
-        if (displayName && displayName.textContent && displayName.textContent.trim()) {
-          return displayName.textContent.trim();
-        }
-        // 尝试user-name
-        const userName = window.parent.document.querySelector('.user-name');
-        if (userName && userName.textContent && userName.textContent.trim()) {
-          return userName.textContent.trim();
-        }
-      }
-      
-      // 尝试在当前窗口获取
-      displayName = document.getElementById('display-name');
-      if (displayName && displayName.textContent && displayName.textContent.trim()) {
-        return displayName.textContent.trim();
-      }
-      
-      const userName = document.querySelector('.user-name');
-      if (userName && userName.textContent && userName.textContent.trim()) {
-        return userName.textContent.trim();
-      }
-    } catch (e) {
-      console.log('无法从侧边栏获取昵称:', e.message);
-    }
-    
-    // 次级：降级到朋友圈的profileName
-    try {
-      const profileName = document.getElementById('profileName');
-      if (profileName && profileName.textContent && profileName.textContent.trim()) {
-        return profileName.textContent.trim();
-      }
-    } catch (e) {
-      console.log('无法获取profileName:', e.message);
-    }
-    
-    // 最后从AppState获取（备选方案）
-    try {
-      const appState = this.getAppState();
-      if (appState && appState.user && appState.user.name && appState.user.name.trim()) {
-        return appState.user.name;
-      }
-    } catch (e) {
-      console.log('无法从AppState获取用户名:', e.message);
-    }
-    
-    return '用户';
-  }
-
-  // 保存用户信息到主页面的AppState（用于moments页面修改后同步回主页面）
-  saveUserInfoToMainPage(name, avatar) {
-    try {
-      console.log('saveUserInfoToMainPage called:', { name, avatar });
-      
-      // 获取主页面的AppState（moments通常是嵌入在index.html中的）
-      const mainAppState = window.AppState || (window.parent && window.parent.AppState);
-      
-      console.log('mainAppState:', mainAppState);
-      
-      if (mainAppState) {
-        if (!mainAppState.user) {
-          mainAppState.user = {};
-        }
-        
-        // 修改AppState
-        if (name) {
-          mainAppState.user.name = name;
-          console.log('Updated AppState.user.name:', name);
-        }
-        if (avatar) {
-          mainAppState.user.avatar = avatar;
-          console.log('Updated AppState.user.avatar:', avatar);
-        }
-        
-        // 立即保存到cachedAppState（供moments读取）
-        try {
-          const cachedState = {
-            user: mainAppState.user ? {
-              name: mainAppState.user.name,
-              avatar: mainAppState.user.avatar,
-              signature: mainAppState.user.signature,
-              bgImage: mainAppState.user.bgImage,
-              visitorCount: mainAppState.user.visitorCount
-            } : {}
-          };
-          localStorage.setItem('cachedAppState', JSON.stringify(cachedState));
-          console.log('Saved cachedAppState:', cachedState);
-        } catch (e) {
-          console.log('保存cachedAppState失败:', e.message);
-        }
-        
-        // 立即保存到shupianjAppState（供主页面读取）
-        try {
-          localStorage.setItem('shupianjAppState', JSON.stringify(mainAppState));
-          console.log('Saved shupianjAppState');
-        } catch (e) {
-          console.log('保存shupianjAppState失败:', e.message);
-        }
-        
-        // 同时更新侧边栏显示（直接更新 DOM）
-        if (name) {
-          try {
-            const displayName = document.getElementById('display-name');
-            if (displayName) displayName.textContent = name;
-            const userNameEl = document.querySelector('.user-name');
-            if (userNameEl) userNameEl.textContent = name;
-            console.log('Updated sidebar name to:', name);
-          } catch (e) {
-            console.log('更新侧边栏名字失败:', e.message);
-          }
-        }
-        if (avatar) {
-          try {
-            const cardAvatar = document.getElementById('card-avatar');
-            if (cardAvatar) {
-              const img = cardAvatar.querySelector('img');
-              if (img) {
-                img.src = avatar;
-              } else {
-                const newImg = document.createElement('img');
-                newImg.src = avatar;
-                newImg.alt = '头像';
-                newImg.style.width = '100%';
-                newImg.style.height = '100%';
-                newImg.style.objectFit = 'cover';
-                cardAvatar.appendChild(newImg);
-              }
-            }
-            const userAvatarDisplay = document.getElementById('user-avatar-display');
-            if (userAvatarDisplay) {
-              const img = userAvatarDisplay.querySelector('img');
-              if (img) {
-                img.src = avatar;
-              } else {
-                const newImg = document.createElement('img');
-                newImg.src = avatar;
-                newImg.alt = '用户头像';
-                newImg.style.width = '100%';
-                newImg.style.height = '100%';
-                newImg.style.objectFit = 'cover';
-                userAvatarDisplay.appendChild(newImg);
-              }
-            }
-            console.log('Updated sidebar avatar to:', avatar);
-          } catch (e) {
-            console.log('更新侧边栏头像失败:', e.message);
-          }
-        }
-        
-        // 调用异步saveToStorage（非阻塞式）
-        if (typeof window.saveToStorage === 'function') {
-          window.saveToStorage().catch(e => {
-            console.log('主页面saveToStorage失败:', e.message);
-          });
-        }
-      }
-    } catch (e) {
-      console.log('保存用户信息到主页面出错:', e.message);
-    }
+    // 直接从朋友圈独立存储的profileData获取
+    return this.profileData.name || '薯片机用户';
   }
 
   // 获取好友分组
@@ -737,7 +288,8 @@ class MomentsManager {
       authorAvatar: data.authorAvatar || this.getUserAvatar(),
       content: data.content || '',
       images: data.images || [],
-      visibility: data.visibility || 'group_all', // 可见范围
+      visibility: data.visibility || 'group_all', // 可见范围（分组ID）
+      visibilityName: data.visibilityName || '所有好友', // 可见范围名称（用于显示）
       isUserPost: data.isUserPost !== false,
       createdAt: new Date().toISOString(),
       likes: 0,
@@ -747,10 +299,20 @@ class MomentsManager {
     this.moments.unshift(moment); // 最新的在前面
     this.comments[moment.id] = [];
     this.saveToStorage();
+    
+    console.log('✓ 朋友圈已添加到存储');
+    console.log('  ID:', moment.id);
+    console.log('  可见范围:', moment.visibilityName, `(${moment.visibility})`);
 
     // 如果启用自动回复，调用API生成评论
-    if (this.autoReplyEnabled && !data.isUserPost) {
-      this.generateCommentsForMoment(moment.id);
+    if (this.autoReplyEnabled && data.isUserPost) {
+      // 用户发送朋友圈时，触发分组互动系统
+      if (typeof MomentsGroupInteraction !== 'undefined') {
+        MomentsGroupInteraction.onMomentPublished(moment.id);
+      } else {
+        // 备选方案：使用旧的评论生成方法
+        this.generateCommentsForMoment(moment.id);
+      }
     }
 
     return moment;
@@ -781,9 +343,19 @@ class MomentsManager {
     this.comments[momentId].push(comment);
     this.saveToStorage();
 
-    // 如果不是用户的评论，可能需要生成回复
+    // 如果是用户的评论，触发角色回复
     if (this.autoReplyEnabled && commentData.isUserComment) {
-      this.generateReplyForComment(momentId, comment.id);
+      // 触发分组互动系统中的用户评论处理
+      if (typeof MomentsGroupInteraction !== 'undefined') {
+        // 获取该朋友圈的发布者（目标角色）
+        const moment = this.moments.find(m => m.id === momentId);
+        if (moment && moment.author) {
+          MomentsGroupInteraction.onUserComment(momentId, commentData.content, moment.author);
+        }
+      } else {
+        // 备选方案：使用旧的回复生成方法
+        this.generateReplyForComment(momentId, comment.id);
+      }
     }
 
     return comment;
@@ -1022,11 +594,14 @@ class MomentsManager {
           header.className = 'feed-header';
           const authorAvatar = moment.authorAvatar || '';
           const avatarHTML = authorAvatar ? `<img src="${authorAvatar}" class="feed-avatar" alt="头像">` : '';
+          const visibilityName = moment.visibilityName || '所有好友';
+          const visibilityBadge = moment.isUserPost ? `<span class="visibility-badge" title="可见范围：${visibilityName}">${visibilityName}</span>` : '';
           header.innerHTML = `
             ${avatarHTML}
             <div class="feed-user-info">
               <span class="feed-username">${moment.author || '未知用户'}</span>
             </div>
+            ${visibilityBadge}
             <button class="feed-delete-btn" onclick="showDeleteConfirm('${moment.id}')" title="删除此朋友圈">×</button>
           `;
 
@@ -1283,20 +858,20 @@ function initializePage() {
   // 初始化好友分组选择
   initGroupSelect();
 
-  // 初始化好友选择
-  initCharacterSelect();
-
   // 初始化个人信息（确保头像和昵称正确显示）
   momentsManager.initProfileData();
 
   // 初始化朋友圈列表
   momentsManager.renderMoments();
 
-  // 同步头像变化监听（如果有外部修改）
-  monitorAvatarChanges();
+  // 注意：已禁用 monitorAvatarChanges，朋友圈个人资料完全独立
+  // monitorAvatarChanges();
   
   // 监听好友和分组数据变化，实时更新选择框
   monitorFriendsAndGroupsChanges();
+  
+  // 恢复保存的背景图
+  restoreMomentsBgImage();
 }
 
 // ====== 好友和分组实时同步监听 ======
@@ -1310,16 +885,10 @@ function monitorFriendsAndGroupsChanges() {
       const currentFriendsJSON = JSON.stringify(momentsManager.getFriends());
       const currentGroupsJSON = JSON.stringify(momentsManager.getFriendGroups());
       
-      // 如果好友数据有变化，重新初始化好友选择框
+      // 如果好友数据有变化，重新渲染朋友圈
       if (currentFriendsJSON !== lastFriendsJSON) {
-        console.log('检测到好友数据变化，更新好友选择框');
+        console.log('检测到好友数据变化，更新朋友圈');
         lastFriendsJSON = currentFriendsJSON;
-        
-        try {
-          initCharacterSelect();
-        } catch (e) {
-          console.log('更新好友选择框出错:', e.message);
-        }
         
         // 如果有已发布的朋友圈，也重新渲染（确保角色列表最新）
         try {
@@ -1461,6 +1030,7 @@ function closeNotificationModal() {
   }
 }
 
+
 function openMoreModal() {
   try {
     const moreModal = document.getElementById('moreModal');
@@ -1472,6 +1042,31 @@ function openMoreModal() {
   }
 }
 
+// 打开角色分组发布朋友圈对话框
+function openRoleGroupMomentsDialog() {
+  try {
+    closeMoreModal();
+    const roleGroupMomentsModal = document.getElementById('roleGroupMomentsModal');
+    if (roleGroupMomentsModal) {
+      roleGroupMomentsModal.classList.add('show');
+      // 初始化分组选择
+      initRoleGroupSelect();
+    }
+  } catch (e) {
+    console.log('openRoleGroupMomentsDialog出错:', e.message);
+  }
+}
+
+function closeRoleGroupMomentsDialog() {
+  try {
+    const roleGroupMomentsModal = document.getElementById('roleGroupMomentsModal');
+    if (roleGroupMomentsModal) {
+      roleGroupMomentsModal.classList.remove('show');
+    }
+  } catch (e) {
+    console.log('closeRoleGroupMomentsDialog出错:', e.message);
+  }
+}
 function closeMoreModal() {
   try {
     const moreModal = document.getElementById('moreModal');
@@ -1480,95 +1075,6 @@ function closeMoreModal() {
     }
   } catch (e) {
     console.log('closeMoreModal出错:', e.message);
-  }
-}
-
-function openCharacterMomentsDialog() {
-  try {
-    // 打开角色朋友圈对话框前，重新加载好友列表
-    initCharacterSelect();
-    const characterMomentsModal = document.getElementById('characterMomentsModal');
-    if (characterMomentsModal) {
-      characterMomentsModal.classList.add('show');
-    }
-  } catch (e) {
-    console.log('openCharacterMomentsDialog出错:', e.message);
-  }
-}
-
-function closeCharacterMomentsDialog() {
-  try {
-    const characterMomentsModal = document.getElementById('characterMomentsModal');
-    if (characterMomentsModal) {
-      characterMomentsModal.classList.remove('show');
-    }
-  } catch (e) {
-    console.log('closeCharacterMomentsDialog出错:', e.message);
-  }
-}
-
-function openAutoMomentsDialog() {
-  try {
-    const autoMomentsModal = document.getElementById('autoMomentsModal');
-    if (autoMomentsModal) {
-      autoMomentsModal.classList.add('show');
-    }
-    
-    // 加载当前设置
-    const autoInterval = document.getElementById('autoInterval');
-    if (autoInterval) {
-      autoInterval.value = momentsManager.autoSettings.interval;
-    }
-    
-    const autoRandomCount = document.getElementById('autoRandomCount');
-    if (autoRandomCount) {
-      autoRandomCount.value = momentsManager.autoSettings.count;
-    }
-    
-    const autoEnabled = document.getElementById('autoEnabled');
-    if (autoEnabled) {
-      autoEnabled.checked = momentsManager.autoSettings.enabled;
-    }
-  } catch (e) {
-    console.log('openAutoMomentsDialog出错:', e.message);
-  }
-}
-
-function closeAutoMomentsDialog() {
-  try {
-    const autoMomentsModal = document.getElementById('autoMomentsModal');
-    if (autoMomentsModal) {
-      autoMomentsModal.classList.remove('show');
-    }
-  } catch (e) {
-    console.log('closeAutoMomentsDialog出错:', e.message);
-  }
-}
-
-function openAutoReplyDialog() {
-  try {
-    const autoReplyModal = document.getElementById('autoReplyModal');
-    if (autoReplyModal) {
-      autoReplyModal.classList.add('show');
-    }
-    
-    const autoReplyEnabled = document.getElementById('autoReplyEnabled');
-    if (autoReplyEnabled) {
-      autoReplyEnabled.checked = momentsManager.autoReplyEnabled;
-    }
-  } catch (e) {
-    console.log('openAutoReplyDialog出错:', e.message);
-  }
-}
-
-function closeAutoReplyDialog() {
-  try {
-    const autoReplyModal = document.getElementById('autoReplyModal');
-    if (autoReplyModal) {
-      autoReplyModal.classList.remove('show');
-    }
-  } catch (e) {
-    console.log('closeAutoReplyDialog出错:', e.message);
   }
 }
 
@@ -1648,37 +1154,41 @@ function publishMoment() {
     
     const groupSelect = document.getElementById('groupSelect');
     const groupId = groupSelect ? groupSelect.value : 'group_all';
+    
+    // 获取选中的分组信息
+    const groups = momentsManager.getFriendGroups();
+    const selectedGroup = groups.find(g => g.id === groupId);
+    const groupName = selectedGroup ? selectedGroup.name : '所有好友';
 
     if (!text && images.length === 0) {
       alert('请输入文字或选择图片');
       return;
     }
 
-    // 获取侧边栏的用户信息 - 直接从getUserName和getUserAvatar读取
+    // 获取朋友圈独立存储的用户信息
     let userName = momentsManager.getUserName() || '用户';
     let userAvatar = momentsManager.getUserAvatar() || '';
 
-    // 发布前：同步用户信息到localStorage（确保持久化）
-    momentsManager.syncNameToSidebar(userName);
-    if (userAvatar) {
-      momentsManager.syncAvatarToSidebar(userAvatar);
-    }
-
-    // 创建朋友圈 - 用户发的朋友圈使用侧边栏的头像和昵称
+    // 创建朋友圈 - 使用朋友圈独立存储的头像和昵称
     momentsManager.addMoment({
       author: userName,
       authorAvatar: userAvatar,
       content: text,
       images: images,
       visibility: groupId,
+      visibilityName: groupName,
       isUserPost: true
     });
+    
+    console.log('✓ 朋友圈已发布');
+    console.log('  可见范围:', groupName, `(${groupId})`);
+    console.log('  内容:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
     
     // 刷新显示
     momentsManager.renderMoments();
     closeMomentDialog();
 
-    alert('发布成功！');
+    alert('发布成功！\n可见范围：' + groupName);
   } catch (e) {
     console.log('publishMoment出错:', e.message);
     alert('发布失败');
@@ -2276,119 +1786,6 @@ function executeForwardMoment(conversation, moment) {
   }
 }
 
-// ====== 角色发布朋友圈 ======
-function publishCharacterMoment() {
-  try {
-    const characterSelect = document.getElementById('characterSelect');
-    if (!characterSelect) {
-      console.log('无法找到角色选择框');
-      return;
-    }
-    
-    const characterId = characterSelect.value;
-    const charMomentType = document.querySelector('input[name="charMomentType"]:checked');
-    if (!charMomentType) {
-      console.log('无法找到朋友圈类型选择');
-      return;
-    }
-    
-    const momentType = charMomentType.value;
-
-    if (!characterId) {
-      alert('请选择角色');
-      return;
-    }
-
-    const friends = momentsManager.getFriends();
-    if (!friends || !Array.isArray(friends)) {
-      alert('无法加载好友列表');
-      return;
-    }
-    
-    const character = friends.find(f => f && f.id === characterId);
-    if (!character) {
-      alert('该角色不存在');
-      return;
-    }
-
-    let content = '';
-    if (momentType === 'manual') {
-      const textEl = document.getElementById('characterMomentText');
-      if (!textEl) {
-        console.log('无法找到朋友圈内容输入框');
-        return;
-      }
-      
-      content = textEl.value.trim();
-      if (!content) {
-        alert('请输入朋友圈内容');
-        return;
-      }
-    } else {
-      // 自动生成
-      const charName = (character && character.name) || '未知角色';
-      content = `这是 ${charName} 的随机朋友圈 #AI生成`;
-    }
-
-    momentsManager.addMoment({
-      author: character.name || '未知角色',
-      authorAvatar: character.avatar || '',
-      content: content,
-      isUserPost: false
-    });
-
-    momentsManager.renderMoments();
-    closeCharacterMomentsDialog();
-    alert('发布成功！');
-  } catch (e) {
-    console.log('publishCharacterMoment出错:', e.message);
-    alert('发布失败');
-  }
-}
-
-// ====== 自动生成朋友圈设置 ======
-function saveAutoMomentSettings() {
-  try {
-    const autoInterval = document.getElementById('autoInterval');
-    if (autoInterval) {
-      momentsManager.autoSettings.interval = parseInt(autoInterval.value) || 30;
-    }
-    
-    const autoRandomCount = document.getElementById('autoRandomCount');
-    if (autoRandomCount) {
-      momentsManager.autoSettings.count = parseInt(autoRandomCount.value) || 1;
-    }
-    
-    const autoEnabled = document.getElementById('autoEnabled');
-    if (autoEnabled) {
-      momentsManager.autoSettings.enabled = autoEnabled.checked;
-    }
-
-    momentsManager.saveToStorage();
-    closeAutoMomentsDialog();
-    alert('设置已保存');
-  } catch (e) {
-    console.log('saveAutoMomentSettings出错:', e.message);
-    alert('设置保存失败');
-  }
-}
-
-// ====== 自动回复设置 ======
-function saveAutoReplySettings() {
-  try {
-    const autoReplyEnabled = document.getElementById('autoReplyEnabled');
-    if (autoReplyEnabled) {
-      momentsManager.autoReplyEnabled = autoReplyEnabled.checked;
-    }
-    
-    momentsManager.saveToStorage();
-    closeAutoReplyDialog();
-    alert('设置已保存');
-  } catch (e) {
-    console.log('saveAutoReplySettings出错:', e.message);
-    alert('设置保存失败');
-  }
-}
 
 // ====== 通知相关 ======
 function showNotifications() {
@@ -2450,43 +1847,18 @@ function changeBackground(input) {
       try {
         if (!e.target || !e.target.result) return;
         
-        const bgUrl = `url('${e.target.result}')`;
+        const bgImageData = e.target.result;
+        const bgUrl = `url('${bgImageData}')`;
         
-        // 设置全局CSS变量
-        if (document.documentElement) {
-          document.documentElement.style.setProperty('--bg-image', bgUrl);
-          document.documentElement.style.setProperty('--bg-color', 'transparent');
+        // 保存背景图到 localStorage
+        if (momentsManager && momentsManager.profileData) {
+          momentsManager.profileData.bgImage = bgImageData;
+          momentsManager.saveToStorage();
+          console.log('朋友圈背景图已保存到 localStorage');
         }
         
-        // 如果在moments-page中，也设置sub-content的背景
-        try {
-          const subContent = document.querySelector('#moments-page .sub-content');
-          if (subContent) {
-            subContent.style.backgroundImage = bgUrl;
-            subContent.style.backgroundRepeat = 'no-repeat';
-            subContent.style.backgroundPosition = 'center center';
-            subContent.style.backgroundSize = 'cover';
-            subContent.style.backgroundColor = 'transparent';
-          }
-        } catch (e) {
-          console.log('设置sub-content背景出错:', e.message);
-        }
-        
-        // 也直接修改moments-page中:root的变量
-        try {
-          const momentsPage = document.getElementById('moments-page');
-          if (momentsPage) {
-            const style = momentsPage.querySelector('style');
-            if (style) {
-              // 修改:root变量
-              const oldContent = style.textContent || '';
-              const newContent = oldContent.replace(/--bg-image:\s*url\([^)]*\)/g, `--bg-image: ${bgUrl}`);
-              style.textContent = newContent;
-            }
-          }
-        } catch (e) {
-          console.log('修改moments-page样式出错:', e.message);
-        }
+        // 应用背景图
+        applyMomentsBgImage(bgUrl);
       } catch (e) {
         console.log('背景加载处理出错:', e.message);
       }
@@ -2499,6 +1871,119 @@ function changeBackground(input) {
     reader.readAsDataURL(file);
   } catch (e) {
     console.log('changeBackground出错:', e.message);
+  }
+}
+
+// 应用朋友圈背景图
+function applyMomentsBgImage(bgUrl) {
+  try {
+    // 设置全局CSS变量
+    if (document.documentElement) {
+      document.documentElement.style.setProperty('--bg-image', bgUrl);
+      document.documentElement.style.setProperty('--bg-color', 'transparent');
+    }
+    
+    // 设置moments-page本身的背景（全屏覆盖）
+    try {
+      const momentsPage = document.getElementById('moments-page');
+      if (momentsPage) {
+        momentsPage.style.backgroundImage = bgUrl;
+        momentsPage.style.backgroundRepeat = 'no-repeat';
+        momentsPage.style.backgroundPosition = 'center top';
+        momentsPage.style.backgroundSize = 'cover';
+        momentsPage.style.backgroundColor = 'transparent';
+      }
+    } catch (e) {
+      console.log('设置moments-page背景出错:', e.message);
+    }
+    
+    // sub-content设置为透明，让背景图显示
+    try {
+      const subContent = document.querySelector('#moments-page .sub-content');
+      if (subContent) {
+        subContent.style.backgroundColor = 'transparent';
+        subContent.style.backgroundImage = 'none';
+      }
+    } catch (e) {
+      console.log('设置sub-content背景出错:', e.message);
+    }
+    
+    // 动态列表区域也设置为透明，完全显示背景图
+    try {
+      const feedList = document.querySelector('#moments-page .feed-list');
+      if (feedList) {
+        feedList.style.backgroundColor = 'transparent';
+        feedList.style.backgroundImage = 'none';
+      }
+    } catch (e) {
+      console.log('设置feed-list背景出错:', e.message);
+    }
+    
+    // 评论区也设置为透明，完全显示背景图
+    try {
+      const commentsSections = document.querySelectorAll('#moments-page .comments-section');
+      commentsSections.forEach(section => {
+        section.style.backgroundColor = 'transparent';
+        section.style.backgroundImage = 'none';
+        section.style.borderTop = 'none';
+      });
+    } catch (e) {
+      console.log('设置comments-section背景出错:', e.message);
+    }
+    
+    // 评论项也设置为透明
+    try {
+      const commentItems = document.querySelectorAll('#moments-page .comment-item');
+      commentItems.forEach(item => {
+        item.style.backgroundColor = 'transparent';
+        item.style.backgroundImage = 'none';
+      });
+    } catch (e) {
+      console.log('设置comment-item背景出错:', e.message);
+    }
+    
+    // 评论对话框也设置为透明
+    try {
+      const commentThreads = document.querySelectorAll('#moments-page .comment-thread');
+      commentThreads.forEach(thread => {
+        thread.style.backgroundColor = 'transparent';
+        thread.style.backgroundImage = 'none';
+      });
+    } catch (e) {
+      console.log('设置comment-thread背景出错:', e.message);
+    }
+    
+    // 也直接修改moments-page中:root的变量
+    try {
+      const momentsPage = document.getElementById('moments-page');
+      if (momentsPage) {
+        const style = momentsPage.querySelector('style');
+        if (style) {
+          // 修改:root变量
+          const oldContent = style.textContent || '';
+          const newContent = oldContent.replace(/--bg-image:\s*url\([^)]*\)/g, `--bg-image: ${bgUrl}`);
+          style.textContent = newContent;
+        }
+      }
+    } catch (e) {
+      console.log('修改moments-page样式出错:', e.message);
+    }
+  } catch (e) {
+    console.log('applyMomentsBgImage出错:', e.message);
+  }
+}
+
+// 恢复保存的背景图
+function restoreMomentsBgImage() {
+  try {
+    if (momentsManager && momentsManager.profileData && momentsManager.profileData.bgImage) {
+      const bgImageData = momentsManager.profileData.bgImage;
+      const bgUrl = `url('${bgImageData}')`;
+      applyMomentsBgImage(bgUrl);
+      console.log('朋友圈背景图已从 localStorage 恢复');
+    }
+  } catch (e) {
+    console.log('restoreMomentsBgImage出错:', e.message);
   }
 }
 
@@ -2519,41 +2004,35 @@ function changeProfileAvatar(input) {
         
         const avatarUrl = e.target.result;
         
-        // 更新朋友圈的头像
-        try {
-          const profileAvatar = document.getElementById('profileAvatar');
-          if (profileAvatar) {
-            profileAvatar.src = avatarUrl;
-          }
-        } catch (e) {
-          console.log('更新profileAvatar出错:', e.message);
+        // 更新朋友圈的头像显示
+        const profileAvatar = document.getElementById('profileAvatar');
+        if (profileAvatar) {
+          profileAvatar.src = avatarUrl;
         }
         
-        // 同步到侧边栏（这个函数会处理所有的更新）
-        try {
-          momentsManager.syncAvatarToSidebar(avatarUrl);
-        } catch (e) {
-          console.log('同步侧边栏出错:', e.message);
+        // 保存到朋友圈独立存储
+        if (momentsManager && momentsManager.profileData) {
+          momentsManager.profileData.avatar = avatarUrl;
+          momentsManager.saveToStorage();
+          console.log('朋友圈头像已保存');
         }
         
         // 重新渲染朋友圈列表以更新评论框头像
-        try {
+        if (momentsManager) {
           momentsManager.renderMoments();
-        } catch (e) {
-          console.log('重新渲染朋友圈出错:', e.message);
         }
       } catch (e) {
-        console.log('头像加载处理出错:', e.message);
+        console.error('头像加载处理出错:', e);
       }
     };
     
     reader.onerror = function (e) {
-      console.log('读取头像文件出错:', e.message);
+      console.error('读取头像文件出错:', e);
     };
     
     reader.readAsDataURL(file);
   } catch (e) {
-    console.log('changeProfileAvatar出错:', e.message);
+    console.error('changeProfileAvatar出错:', e);
   }
 }
 
@@ -2564,29 +2043,41 @@ function initGroupSelect() {
   if (!select) return;
   
   try {
+    // 直接从AppState获取最新的好友分组数据，确保完全同步
     const groups = momentsManager.getFriendGroups();
     
+    console.log('=== 初始化朋友圈分组选择 ===');
+    console.log('从AppState.friendGroups获取到的分组:', groups);
+    
     if (!groups || groups.length === 0) {
-      // 即使没有分组，也显示至少默认分组
+      console.log('⚠️ 未获取到好友分组，显示默认分组');
+      // 如果没有分组，显示一个提示选项
       select.innerHTML = `
-        <option value="group_all">所有好友</option>
-        <option value="group_close">亲密好友</option>
+        <option value="group_all">所有好友(请先在好友页面创建分组)</option>
       `;
       return;
     }
     
-    select.innerHTML = groups.map(group => {
+    // 添加"所有好友"选项作为第一个选项
+    let optionsHTML = '<option value="group_all">所有好友</option>';
+    
+    // 添加所有从好友页面同步的分组
+    optionsHTML += groups.map(group => {
       if (!group || !group.id) {
         return '';
       }
-      return `<option value="${group.id}">${group.name || '未命名'}</option>`;
+      const groupName = group.name || '未命名分组';
+      const memberCount = (group.memberIds && Array.isArray(group.memberIds)) ? group.memberIds.length : 0;
+      return `<option value="${group.id}">${groupName} (${memberCount}人)</option>`;
     }).join('');
+    
+    select.innerHTML = optionsHTML;
+    console.log('✓ 朋友圈分组选择已更新，共', groups.length + 1, '个选项(含"所有好友")');
   } catch (e) {
-    console.log('初始化好友分组出错:', e.message);
+    console.error('初始化好友分组出错:', e.message);
     // 降级处理
     select.innerHTML = `
-      <option value="group_all">所有好友</option>
-      <option value="group_close">亲密好友</option>
+      <option value="group_all">所有好友(加载失败)</option>
     `;
   }
 }
@@ -2616,99 +2107,348 @@ function initCharacterSelect() {
   }
 }
 
-function monitorAvatarChanges() {
-  // 每2秒检查一次AppState变化，确保UI与AppState同步
-  setInterval(function () {
-    try {
-      const appState = momentsManager.getAppState();
-      if (!appState || !appState.user) return;
-      
-      const profileAvatar = document.getElementById('profileAvatar');
-      const profileName = document.getElementById('profileName');
-      const visitorEl = document.getElementById('visitorCount');
-      
-      // 1. 优先从AppState同步到朋友圈UI
-      if (profileAvatar && appState.user.avatar) {
-        try {
-          if (profileAvatar.src !== appState.user.avatar) {
-            profileAvatar.src = appState.user.avatar;
-          }
-        } catch (e) {
-          console.log('更新profileAvatar失败:', e.message);
-        }
-      }
-      
-      if (profileName && appState.user.name) {
-        try {
-          if (profileName.textContent !== appState.user.name) {
-            profileName.textContent = appState.user.name;
-          }
-        } catch (e) {
-          console.log('更新profileName失败:', e.message);
-        }
-      }
-      
-      if (visitorEl && appState.user.visitorCount !== undefined) {
-        try {
-          if (visitorEl.textContent !== String(appState.user.visitorCount)) {
-            visitorEl.textContent = appState.user.visitorCount;
-          }
-        } catch (e) {
-          console.log('更新visitorCount失败:', e.message);
-        }
-      }
-      
-      // 2. 同步侧边栏UI（如果存在）
-      const cardAvatar = document.getElementById('card-avatar');
-      if (cardAvatar && appState.user.avatar) {
-        try {
-          const img = cardAvatar.querySelector('img');
-          if (!img || (img && img.src !== appState.user.avatar)) {
-            cardAvatar.innerHTML = `<img src="${appState.user.avatar}" alt="头像">`;
-          }
-        } catch (e) {
-          console.log('更新cardAvatar失败:', e.message);
-        }
-      }
-      
-      const userAvatarDisplay = document.getElementById('user-avatar-display');
-      if (userAvatarDisplay && appState.user.avatar) {
-        try {
-          const img = userAvatarDisplay.querySelector('img');
-          if (!img || (img && img.src !== appState.user.avatar)) {
-            userAvatarDisplay.innerHTML = `<img src="${appState.user.avatar}" alt="">`;
-          }
-        } catch (e) {
-          console.log('更新userAvatarDisplay失败:', e.message);
-        }
-      }
-      
-      const displayName = document.getElementById('display-name');
-      if (displayName && appState.user.name) {
-        try {
-          if (displayName.textContent !== appState.user.name) {
-            displayName.textContent = appState.user.name;
-          }
-        } catch (e) {
-          console.log('更新displayName失败:', e.message);
-        }
-      }
-      
-      // 3. 反向同步：如果朋友圈的信息被直接修改（如编辑用户名），则更新AppState
-      if (profileName && profileName.textContent !== appState.user.name) {
-        try {
-          appState.user.name = profileName.textContent;
-          localStorage.setItem('cachedAppState', JSON.stringify(appState));
-        } catch (e) {
-          console.log('反向同步AppState失败:', e.message);
-        }
-      }
-      
-    } catch (e) {
-      console.log('监测头像变化时出错:', e.message);
+// ====== 角色分组发布朋友圈相关函数 ======
+
+function initRoleGroupSelect() {
+  const groupSelect = document.getElementById('roleGroupSelect');
+  if (!groupSelect) return;
+  
+  try {
+    const groups = momentsManager.getFriendGroups();
+    
+    console.log('=== 初始化角色分组选择 ===');
+    console.log('获取到的分组:', groups);
+    
+    if (!groups || groups.length === 0) {
+      groupSelect.innerHTML = '<option value="">暂无分组</option>';
+      return;
     }
-  }, 2000);
+    
+    // 添加"所有好友"选项
+    let optionsHTML = '<option value="group_all">所有好友</option>';
+    
+    // 添加所有分组
+    optionsHTML += groups.map(group => {
+      if (!group || !group.id) {
+        return '';
+      }
+      const groupName = group.name || '未命名分组';
+      const memberCount = (group.memberIds && Array.isArray(group.memberIds)) ? group.memberIds.length : 0;
+      return `<option value="${group.id}">${groupName} (${memberCount}人)</option>`;
+    }).join('');
+    
+    groupSelect.innerHTML = optionsHTML;
+    
+    // 监听分组变化，更新角色列表
+    groupSelect.addEventListener('change', updateRoleGroupCharacterList);
+    
+    console.log('✓ 角色分组选择已初始化');
+  } catch (e) {
+    console.error('初始化角色分组出错:', e.message);
+    groupSelect.innerHTML = '<option value="">加载失败</option>';
+  }
 }
+
+function updateRoleGroupCharacterList() {
+  const groupSelect = document.getElementById('roleGroupSelect');
+  const characterListContainer = document.getElementById('roleGroupCharacterList');
+  
+  if (!groupSelect || !characterListContainer) return;
+  
+  try {
+    const groupId = groupSelect.value;
+    if (!groupId) {
+      characterListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">请先选择分组</div>';
+      return;
+    }
+    
+    // 获取该分组的所有角色
+    const characters = MomentsGroupInteraction.getGroupCharacters(groupId);
+    
+    console.log(`获取分组 ${groupId} 的角色:`, characters);
+    
+    if (!characters || characters.length === 0) {
+      characterListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">该分组暂无角色</div>';
+      return;
+    }
+    
+    // 生成角色列表（复选框）
+    let html = '<div style="padding:10px 0;">';
+    
+    // 添加"全选"按钮
+    html += `
+      <div style="margin-bottom:10px;display:flex;gap:8px;">
+        <button id="selectAllRoles" style="flex:1;padding:8px;background:#ff6b9d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">全选</button>
+        <button id="deselectAllRoles" style="flex:1;padding:8px;background:#ddd;color:#333;border:none;border-radius:4px;cursor:pointer;font-size:13px;">取消全选</button>
+      </div>
+    `;
+    
+    // 添加角色复选框
+    html += '<div style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:8px;">';
+    characters.forEach(character => {
+      const charId = character.id || character.name;
+      html += `
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:background 0.2s;">
+          <input type="checkbox" class="roleCharacterCheckbox" value="${charId}" data-name="${character.name}" style="cursor:pointer;">
+          <span>${character.name || '未命名'}</span>
+        </label>
+      `;
+    });
+    html += '</div>';
+    
+    html += '</div>';
+    
+    characterListContainer.innerHTML = html;
+    
+    // 绑定全选/取消全选事件
+    const selectAllBtn = document.getElementById('selectAllRoles');
+    const deselectAllBtn = document.getElementById('deselectAllRoles');
+    
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('.roleCharacterCheckbox').forEach(cb => cb.checked = true);
+      });
+    }
+    
+    if (deselectAllBtn) {
+      deselectAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('.roleCharacterCheckbox').forEach(cb => cb.checked = false);
+      });
+    }
+    
+    console.log('✓ 角色列表已更新');
+  } catch (e) {
+    console.error('更新角色列表出错:', e.message);
+    characterListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">加载失败</div>';
+  }
+}
+
+function publishRoleGroupMoment() {
+  try {
+    const groupSelect = document.getElementById('roleGroupSelect');
+    
+    if (!groupSelect) {
+      alert('对话框元素缺失');
+      return;
+    }
+    
+    const groupId = groupSelect.value;
+    if (!groupId) {
+      alert('请选择分组');
+      return;
+    }
+    
+    // 获取选中的角色
+    const selectedCheckboxes = document.querySelectorAll('.roleCharacterCheckbox:checked');
+    if (selectedCheckboxes.length === 0) {
+      alert('请选择至少一个角色');
+      return;
+    }
+    
+    const selectedCharacterIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+    const selectedCharacterNames = Array.from(selectedCheckboxes).map(cb => cb.dataset.name);
+    
+    console.log('=== 角色分组发布朋友圈 ===');
+    console.log('分组ID:', groupId);
+    console.log('选中的角色:', selectedCharacterNames);
+    
+    // 获取该分组的所有角色（用于后续评论）
+    const allGroupCharacters = MomentsGroupInteraction.getGroupCharacters(groupId);
+    
+    // 获取选中的角色对象
+    const selectedCharacters = allGroupCharacters.filter(c => selectedCharacterIds.includes(c.id || c.name));
+    
+    // 显示加载提示
+    alert('正在生成朋友圈内容，请稍候...');
+    
+    // 调用分组互动系统生成朋友圈内容并发布
+    if (typeof MomentsGroupInteraction !== 'undefined') {
+      MomentsGroupInteraction.publishMomentsBySelectedRoles(selectedCharacters, allGroupCharacters, groupId);
+    }
+    
+    momentsManager.renderMoments();
+    closeRoleGroupMomentsDialog();
+    
+  } catch (e) {
+    console.error('发布角色分组朋友圈出错:', e.message);
+    alert('发布失败: ' + e.message);
+  }
+}
+
+// ====== 自动生成朋友圈相关函数 ======
+
+function openAutoMomentsDialog() {
+  try {
+    const autoMomentsModal = document.getElementById('autoMomentsModal');
+    if (autoMomentsModal) {
+      autoMomentsModal.classList.add('show');
+    }
+    
+    // 初始化分组列表
+    initAutoMomentsGroupList();
+  } catch (e) {
+    console.log('openAutoMomentsDialog出错:', e.message);
+  }
+}
+
+function closeAutoMomentsDialog() {
+  try {
+    const autoMomentsModal = document.getElementById('autoMomentsModal');
+    if (autoMomentsModal) {
+      autoMomentsModal.classList.remove('show');
+    }
+  } catch (e) {
+    console.log('closeAutoMomentsDialog出错:', e.message);
+  }
+}
+
+function initAutoMomentsGroupList() {
+  const groupListContainer = document.getElementById('autoMomentsGroupList');
+  if (!groupListContainer) return;
+  
+  try {
+    const groups = momentsManager.getFriendGroups();
+    
+    if (!groups || groups.length === 0) {
+      groupListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">暂无分组</div>';
+      return;
+    }
+    
+    // 生成分组列表（复选框）
+    let html = '<div style="padding:10px 0;">';
+    
+    groups.forEach(group => {
+      const groupId = group.id;
+      html += `
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:background 0.2s;">
+          <input type="checkbox" class="autoMomentsGroupCheckbox" value="${groupId}" data-name="${group.name}" style="cursor:pointer;">
+          <span>${group.name || '未命名分组'}</span>
+        </label>
+      `;
+    });
+    
+    html += '</div>';
+    groupListContainer.innerHTML = html;
+    
+    // 绑定分组复选框变化事件
+    document.querySelectorAll('.autoMomentsGroupCheckbox').forEach(checkbox => {
+      checkbox.addEventListener('change', updateAutoMomentsCharacterList);
+    });
+    
+    console.log('✓ 自动生成朋友圈分组列表已初始化');
+  } catch (e) {
+    console.error('初始化自动生成朋友圈分组列表出错:', e.message);
+    groupListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">加载失败</div>';
+  }
+}
+
+function updateAutoMomentsCharacterList() {
+  const characterListContainer = document.getElementById('autoMomentsCharacterList');
+  if (!characterListContainer) return;
+  
+  try {
+    // 获取选中的分组
+    const selectedGroupCheckboxes = document.querySelectorAll('.autoMomentsGroupCheckbox:checked');
+    
+    if (selectedGroupCheckboxes.length === 0) {
+      characterListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">请先选择分组</div>';
+      return;
+    }
+    
+    // 收集所有选中分组的角色
+    const allCharacters = [];
+    const characterMap = new Map();
+    
+    selectedGroupCheckboxes.forEach(checkbox => {
+      const groupId = checkbox.value;
+      const characters = MomentsGroupInteraction.getGroupCharacters(groupId);
+      
+      characters.forEach(character => {
+        const charId = character.id || character.name;
+        if (!characterMap.has(charId)) {
+          characterMap.set(charId, character);
+          allCharacters.push(character);
+        }
+      });
+    });
+    
+    if (allCharacters.length === 0) {
+      characterListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">该分组暂无角色</div>';
+      return;
+    }
+    
+    // 生成角色列表（复选框）
+    let html = '<div style="padding:10px 0;">';
+    
+    allCharacters.forEach(character => {
+      const charId = character.id || character.name;
+      html += `
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:background 0.2s;">
+          <input type="checkbox" class="autoMomentsCharacterCheckbox" value="${charId}" data-name="${character.name}" style="cursor:pointer;">
+          <span>${character.name || '未命名'}</span>
+        </label>
+      `;
+    });
+    
+    html += '</div>';
+    characterListContainer.innerHTML = html;
+    
+    console.log('✓ 自动生成朋友圈角色列表已更新');
+  } catch (e) {
+    console.error('更新自动生成朋友圈角色列表出错:', e.message);
+    characterListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">加载失败</div>';
+  }
+}
+
+function saveAutoMomentsSettings() {
+  try {
+    // 获取选中的分组
+    const selectedGroupCheckboxes = document.querySelectorAll('.autoMomentsGroupCheckbox:checked');
+    const selectedGroupIds = Array.from(selectedGroupCheckboxes).map(cb => cb.value);
+    const selectedGroupNames = Array.from(selectedGroupCheckboxes).map(cb => cb.dataset.name);
+    
+    // 获取选中的角色
+    const selectedCharacterCheckboxes = document.querySelectorAll('.autoMomentsCharacterCheckbox:checked');
+    const selectedCharacterIds = Array.from(selectedCharacterCheckboxes).map(cb => cb.value);
+    const selectedCharacterNames = Array.from(selectedCharacterCheckboxes).map(cb => cb.dataset.name);
+    
+    if (selectedGroupIds.length === 0) {
+      alert('请选择至少一个分组');
+      return;
+    }
+    
+    if (selectedCharacterIds.length === 0) {
+      alert('请选择至少一个角色');
+      return;
+    }
+    
+    console.log('=== 保存自动生成朋友圈设置 ===');
+    console.log('选中的分组:', selectedGroupNames);
+    console.log('选中的角色:', selectedCharacterNames);
+    
+    // 保存设置到 momentsManager
+    if (!momentsManager.autoMomentsSettings) {
+      momentsManager.autoMomentsSettings = {};
+    }
+    
+    momentsManager.autoMomentsSettings.groupIds = selectedGroupIds;
+    momentsManager.autoMomentsSettings.characterIds = selectedCharacterIds;
+    momentsManager.autoMomentsSettings.enabled = true;
+    
+    // 保存到本地存储
+    momentsManager.saveToStorage();
+    
+    closeAutoMomentsDialog();
+    alert(`✓ 设置已保存！\n选中的 ${selectedCharacterNames.length} 个角色将在聊天时主动发朋友圈`);
+    
+  } catch (e) {
+    console.error('保存自动生成朋友圈设置出错:', e.message);
+    alert('保存失败: ' + e.message);
+  }
+}
+
+// 已禁用：朋友圈个人资料现在完全独立，不再监听或同步侧边栏数据
+// function monitorAvatarChanges() { ... }
 
 function viewImage(src) {
   try {

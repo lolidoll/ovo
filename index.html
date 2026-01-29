@@ -471,6 +471,8 @@
     <script src="camera.js" defer></script>
     <script src="photo.js" defer></script>
     <script src="wallet.js" defer></script>
+    <script src="moments-group-interaction.js" defer></script>
+    <script src="moments.js" defer></script>
     <script src="app.js" defer></script>
   
 </head>
@@ -1242,7 +1244,7 @@
                     <button class="moments-icon-btn" id="settingBtn">设置</button>
                 </div>
             </div>
-            <div class="sub-content" style="padding: 0; background: transparent; overflow-y: auto;">
+            <div class="sub-content" style="padding: 0; background: #ffffff; overflow-y: auto;">
                 <style>
                     :root {
                         --bg-image: url('');
@@ -2016,45 +2018,50 @@
                         </div>
                         <div class="modal-body">
                             <div class="more-options">
-                                <button class="option-btn" onclick="openCharacterMomentsDialog()">
-                                    角色发布朋友圈
+                                <button class="option-btn" onclick="openRoleGroupMomentsDialog()">
+                                    角色分组发布朋友圈
                                 </button>
                                 <button class="option-btn" onclick="openAutoMomentsDialog()">
                                     自动生成朋友圈
-                                </button>
-                                <button class="option-btn" onclick="openAutoReplyDialog()">
-                                    自动评论设置
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 角色发布朋友圈对话框 -->
-                <div class="modal" id="characterMomentsModal">
+                <!-- 角色分组发布朋友圈对话框 -->
+                <div class="modal" id="roleGroupMomentsModal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3>角色发布朋友圈</h3>
-                            <button class="close-btn" onclick="closeCharacterMomentsDialog()">×</button>
+                            <h3>角色分组发布朋友圈</h3>
+                            <button class="close-btn" onclick="closeRoleGroupMomentsDialog()">×</button>
                         </div>
                         <div class="modal-body">
-                            <div class="character-select">
-                                <label>选择角色：</label>
-                                <select id="characterSelect">
-                                    <!-- 选项将动态生成 -->
+                            <!-- 分组选择 -->
+                            <div class="group-select">
+                                <label>选择分组：</label>
+                                <select id="roleGroupSelect">
+                                    <option value="">请选择分组</option>
                                 </select>
                             </div>
-                            <div class="character-moment-options">
-                                <label>
-                                    <input type="radio" name="charMomentType" value="auto" checked> 自动生成（AI）
-                                </label>
-                                <label>
-                                    <input type="radio" name="charMomentType" value="manual"> 自定义输入
-                                </label>
+                            
+                            <!-- 角色列表 -->
+                            <div style="margin-top:15px;">
+                                <label style="display:block;margin-bottom:8px;font-size:14px;color:#333;">选择角色（支持多选）：</label>
+                                <div id="roleGroupCharacterList" style="min-height:100px;border:1px solid #ddd;border-radius:4px;padding:8px;background:#f9f9f9;">
+                                    <div style="color:#999;padding:20px;text-align:center;">请先选择分组</div>
+                                </div>
                             </div>
-                            <textarea id="characterMomentText" placeholder="输入朋友圈内容..." style="display:none;"></textarea>
-                            <div class="modal-actions">
-                                <button class="submit-btn" onclick="publishCharacterMoment()">发布</button>
+                            
+                            <!-- 提示信息 -->
+                            <div style="margin-top:15px;padding:12px;background:#f0f8ff;border-left:3px solid #0099ff;border-radius:4px;font-size:13px;color:#333;">
+                                <i class="fas fa-info-circle" style="color:#0099ff;margin-right:8px;"></i>
+                                <span>朋友圈内容将由选中的角色自动生成</span>
+                            </div>
+                            
+                            <!-- 按钮区 -->
+                            <div class="modal-actions" style="margin-top:15px;">
+                                <button class="submit-btn" onclick="publishRoleGroupMoment()">发布</button>
                             </div>
                         </div>
                     </div>
@@ -2068,33 +2075,31 @@
                             <button class="close-btn" onclick="closeAutoMomentsDialog()">×</button>
                         </div>
                         <div class="modal-body">
-                            <div class="auto-setting">
-                                <label>每<input type="number" id="autoInterval" min="1" max="120" value="30"> 分钟</label>
-                                <label>随机<input type="number" id="autoRandomCount" min="1" max="5" value="1"> 条</label>
-                                <label>
-                                    <input type="checkbox" id="autoEnabled"> 启用自动生成
-                                </label>
+                            <!-- 分组选择 -->
+                            <div class="group-select">
+                                <label style="display:block;margin-bottom:8px;font-size:14px;color:#333;">选择分组（支持多选）：</label>
+                                <div id="autoMomentsGroupList" style="min-height:100px;border:1px solid #ddd;border-radius:4px;padding:8px;background:#f9f9f9;max-height:200px;overflow-y:auto;">
+                                    <div style="color:#999;padding:20px;text-align:center;">加载中...</div>
+                                </div>
                             </div>
-                            <div class="modal-actions" style="margin-top:15px;">
-                                <button class="submit-btn" onclick="saveAutoMomentSettings()">保存</button>
+                            
+                            <!-- 角色列表 -->
+                            <div style="margin-top:15px;">
+                                <label style="display:block;margin-bottom:8px;font-size:14px;color:#333;">选择角色（支持多选）：</label>
+                                <div id="autoMomentsCharacterList" style="min-height:100px;border:1px solid #ddd;border-radius:4px;padding:8px;background:#f9f9f9;max-height:200px;overflow-y:auto;">
+                                    <div style="color:#999;padding:20px;text-align:center;">请先选择分组</div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 自动回复设置对话框 -->
-                <div class="modal" id="autoReplyModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>自动回复设置</h3>
-                            <button class="close-btn" onclick="closeAutoReplyDialog()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <label>
-                                <input type="checkbox" id="autoReplyEnabled"> 启用自动回复
-                            </label>
+                            
+                            <!-- 提示信息 -->
+                            <div style="margin-top:15px;padding:12px;background:#fff3cd;border-left:3px solid #ffc107;border-radius:4px;font-size:13px;color:#333;">
+                                <i class="fas fa-lightbulb" style="color:#ffc107;margin-right:8px;"></i>
+                                <span>选中的角色在与你聊天时，会根据对话内容主动发朋友圈</span>
+                            </div>
+                            
+                            <!-- 按钮区 -->
                             <div class="modal-actions" style="margin-top:15px;">
-                                <button class="submit-btn" onclick="saveAutoReplySettings()">保存</button>
+                                <button class="submit-btn" onclick="saveAutoMomentsSettings()">保存设置</button>
                             </div>
                         </div>
                     </div>

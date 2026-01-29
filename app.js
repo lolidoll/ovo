@@ -53,7 +53,9 @@
                 signature: '这个人很懒，什么都没写~',
                 bgImage: '',
                 coins: 0, // 虚拟币余额
-                theme: 'light' // 主题: light(黑白灰简约), pink(白粉色系), dark(夜间模式)
+                theme: 'light', // 主题: light(黑白灰简约), pink(白粉色系), dark(夜间模式)
+                visitorCount: 0, // 访客总量
+                personality: '' // 用户人设
             },
             // 备注：对话级别的用户头像存储在conversation对象的userAvatar字段中
             dynamicFuncs: {
@@ -118,6 +120,12 @@
                 // 初始化表情包管理器
                 if (window.EmojiManager) {
                     window.EmojiManager.init();
+                }
+                
+                // 初始化朋友圈分组互动系统
+                if (typeof MomentsGroupInteraction !== 'undefined' && typeof momentsManager !== 'undefined') {
+                    MomentsGroupInteraction.init(momentsManager);
+                    console.log('✅ 朋友圈分组互动系统已初始化');
                 }
                 
                 // 启动数据实时同步监听
@@ -220,6 +228,9 @@
                 if (parsed) {
                     delete parsed.conversationStates;
                     
+                    console.log('=== loadFromStorage 恢复数据 ===');
+                    console.log('parsed.user:', JSON.stringify(parsed.user, null, 2));
+                    
                     // 深度合并用户对象
                     if (parsed.user) {
                         AppState.user = {
@@ -232,7 +243,7 @@
                             personality: parsed.user.hasOwnProperty('personality') ? parsed.user.personality : '',
                             visitorCount: parsed.user.hasOwnProperty('visitorCount') ? parsed.user.visitorCount : AppState.user.visitorCount
                         };
-                        console.log('已恢复用户信息 - 头像:', AppState.user.avatar, '背景图:', AppState.user.bgImage, '访客总量:', AppState.user.visitorCount);
+                        console.log('✓ 已恢复用户信息:', JSON.stringify(AppState.user, null, 2));
                     }
                     
                     // 合并其他属性
@@ -298,6 +309,9 @@
         // 保存到本地存储（使用IndexDB为主，localStorage为备份）
         async function saveToStorage() {
             try {
+                console.log('=== saveToStorage 开始 ===');
+                console.log('当前 AppState.user:', JSON.stringify(AppState.user, null, 2));
+                
                 const stateToDump = Object.assign({}, AppState);
                 delete stateToDump.conversationStates;
                 
@@ -305,13 +319,17 @@
                     stateToDump.user = AppState.user;
                 }
                 
+                console.log('准备保存的 user 数据:', JSON.stringify(stateToDump.user, null, 2));
+                
                 // 优先保存到IndexDB
                 try {
                     await saveToIndexDB(stateToDump);
+                    console.log('✓ IndexDB 保存成功');
                 } catch (e) {
                     console.warn('IndexDB保存失败，使用localStorage备份:', e);
                     const jsonString = JSON.stringify(stateToDump);
                     localStorage.setItem('shupianjAppState', jsonString);
+                    console.log('✓ localStorage (shupianjAppState) 保存成功');
                 }
                 
                 // 同时保存到cachedAppState供朋友圈模块使用
@@ -322,15 +340,17 @@
                             avatar: AppState.user.avatar,
                             signature: AppState.user.signature,
                             bgImage: AppState.user.bgImage,
-                            visitorCount: AppState.user.visitorCount
+                            visitorCount: AppState.user.visitorCount,
+                            personality: AppState.user.personality
                         } : {}
                     };
                     localStorage.setItem('cachedAppState', JSON.stringify(cachedState));
+                    console.log('✓ cachedAppState 保存成功:', JSON.stringify(cachedState.user, null, 2));
                 } catch (e) {
                     console.warn('保存cachedAppState失败:', e);
                 }
                 
-                console.log('数据保存成功');
+                console.log('=== saveToStorage 完成 ===');
             } catch (e) {
                 console.error('保存数据失败:', e);
                 alert('保存失败: ' + e.message);
@@ -2727,7 +2747,7 @@
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
                         <div style="
-                            width: 240px;
+                            width: 160px;
                         ">
                             <div style="
                                 background: #fff;
@@ -4259,13 +4279,7 @@
                 saveToStorage();
                 updateUserDisplay();
                 console.log('头像已应用并保存');
-                
-                // 同步到朋友圈
-                if (typeof momentsManager !== 'undefined') {
-                    momentsManager.syncAvatarToSidebar(imageUrl);
-                    // 重新渲染朋友圈以更新评论框头像
-                    momentsManager.renderMoments();
-                }
+                // 注意：朋友圈个人资料现在完全独立，不再同步
                 
                 // 实时更新角色卡编辑页面的预览
                 if (document.getElementById('card-edit-page').classList.contains('open')) {
@@ -4394,12 +4408,7 @@
                 AppState.user.name = newName.trim();
                 saveToStorage();
                 updateUserDisplay();
-                // 同步到朋友圈
-                if (typeof momentsManager !== 'undefined') {
-                    momentsManager.syncNameToSidebar(newName.trim());
-                    // 重新渲染朋友圈页面以更新所有显示的名字
-                    momentsManager.renderMoments();
-                }
+                // 注意：朋友圈个人资料现在完全独立，不再同步
             }
         }
 
@@ -6081,6 +6090,18 @@
             const conv = AppState.conversations.find(c => c.id === convId);
             if (AppState.currentChat && AppState.currentChat.id === convId && conv) {
                 MindStateManager.updateMindStateButton(conv);
+            }
+            
+            // ========== 第四步：触发自动生成朋友圈 ==========
+            if (typeof MomentsGroupInteraction !== 'undefined' && conv) {
+                // 异步触发，不阻塞主流程
+                setTimeout(() => {
+                    try {
+                        MomentsGroupInteraction.checkAndTriggerAutoMoments(conv.id, conv.name);
+                    } catch (e) {
+                        console.error('触发自动生成朋友圈失败:', e);
+                    }
+                }, 500);
             }
         }
 
