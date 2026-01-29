@@ -14,6 +14,36 @@ function checkMomentsPageReady() {
   return false;
 }
 
+// 删除确认相关变量
+let pendingDeleteMomentId = null;
+
+// 显示删除确认弹窗
+function showDeleteConfirm(momentId) {
+  pendingDeleteMomentId = momentId;
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) {
+    modal.classList.add('show');
+  }
+}
+
+// 关闭删除确认弹窗
+function closeDeleteConfirm() {
+  pendingDeleteMomentId = null;
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+// 确认删除
+function confirmDelete() {
+  if (pendingDeleteMomentId && momentsManager) {
+    momentsManager.deleteMoment(pendingDeleteMomentId);
+    momentsManager.renderMoments();
+    closeDeleteConfirm();
+  }
+}
+
 // 朋友圈数据存储
 class MomentsManager {
   constructor() {
@@ -216,9 +246,31 @@ class MomentsManager {
                   if (newCount !== null && !isNaN(newCount)) {
                     const countVal = parseInt(newCount);
                     visitorEl.textContent = countVal;
-                    if (appState && appState.user) {
-                      appState.user.visitorCount = countVal;
-                      localStorage.setItem('cachedAppState', JSON.stringify(appState));
+                    
+                    // 更新所有存储位置
+                    if (window.AppState && window.AppState.user) {
+                      window.AppState.user.visitorCount = countVal;
+                    }
+                    
+                    try {
+                      let cachedState = JSON.parse(localStorage.getItem('cachedAppState') || '{}');
+                      if (!cachedState.user) cachedState.user = {};
+                      cachedState.user.visitorCount = countVal;
+                      localStorage.setItem('cachedAppState', JSON.stringify(cachedState));
+                      
+                      let shupianjState = JSON.parse(localStorage.getItem('shupianjAppState') || '{}');
+                      if (!shupianjState.user) shupianjState.user = {};
+                      shupianjState.user.visitorCount = countVal;
+                      localStorage.setItem('shupianjAppState', JSON.stringify(shupianjState));
+                    } catch (e) {
+                      console.log('保存访客总量出错:', e.message);
+                    }
+                    
+                    // 调用主应用的saveToStorage确保完整保存
+                    if (typeof window.saveToStorage === 'function') {
+                      window.saveToStorage().catch(e => {
+                        console.log('主应用saveToStorage失败:', e.message);
+                      });
                     }
                   }
                 }
@@ -271,6 +323,13 @@ class MomentsManager {
         console.log('保存到localStorage出错:', e.message);
       }
       
+      // 调用主应用的saveToStorage确保完整保存
+      if (typeof window.saveToStorage === 'function') {
+        window.saveToStorage().catch(e => {
+          console.log('主应用saveToStorage失败:', e.message);
+        });
+      }
+      
       // 1. 更新侧边栏显示名字
       const displayName = document.getElementById('display-name');
       if (displayName) {
@@ -319,7 +378,7 @@ class MomentsManager {
       window.AppState.user.avatar = avatarUrl;
       console.log('Updated AppState.user.avatar');
       
-      // 保存到localStorage (同时保存到两个位置)
+      // 保存到localStorage (同时保存到三个位置)
       try {
         let cachedState = JSON.parse(localStorage.getItem('cachedAppState') || '{}');
         if (!cachedState.user) cachedState.user = {};
@@ -334,6 +393,20 @@ class MomentsManager {
         console.log('Saved shupianjAppState');
       } catch (e) {
         console.log('保存到localStorage出错:', e.message);
+      }
+      
+      // 调用主应用的saveToStorage确保完整保存
+      if (typeof window.saveToStorage === 'function') {
+        window.saveToStorage().catch(e => {
+          console.log('主应用saveToStorage失败:', e.message);
+        });
+      }
+      
+      // 调用主应用的saveToStorage确保完整保存
+      if (typeof window.saveToStorage === 'function') {
+        window.saveToStorage().catch(e => {
+          console.log('主应用saveToStorage失败:', e.message);
+        });
       }
       
       // 1. 立即更新朋友圈页面的头像（大头像）
@@ -862,7 +935,7 @@ class MomentsManager {
     return replies[Math.floor(Math.random() * replies.length)];
   }
 
-  // 删除朋友圈
+  // 删除朋友圈 (内部方法，由确认弹窗调用)
   deleteMoment(momentId) {
     this.moments = this.moments.filter(m => m.id !== momentId);
     delete this.comments[momentId];
@@ -945,7 +1018,7 @@ class MomentsManager {
             <div class="feed-user-info">
               <span class="feed-username">${moment.author || '未知用户'}</span>
             </div>
-            <button class="feed-delete-btn" onclick="momentsManager.deleteMoment('${moment.id}'); momentsManager.renderMoments();" title="删除此朋友圈">×</button>
+            <button class="feed-delete-btn" onclick="showDeleteConfirm('${moment.id}')" title="删除此朋友圈">×</button>
           `;
 
           // 内容
@@ -967,7 +1040,7 @@ class MomentsManager {
           actions.className = 'feed-actions';
           actions.innerHTML = `
             <span class="feed-time">${time}</span>
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 4px; margin-left: auto;">
               <button class="action-btn" onclick="momentsManager.toggleLike('${moment.id}')">
                 ${moment.liked ? '❤️ ' : ''}点赞
               </button>

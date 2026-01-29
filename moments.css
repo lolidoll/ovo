@@ -14,7 +14,7 @@
 }
 
 body {
-  background: var(--bg-image) no-repeat center center / cover, var(--bg-color);
+  background: #ffffff !important;
   min-height: 100vh;
   font-family: var(--pixel-font);
   color: #333333;
@@ -259,9 +259,9 @@ body {
 
 .feed-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  gap: 15px;
+  gap: 0;
 }
 
 .action-btn {
@@ -272,6 +272,7 @@ body {
   font-family: var(--pixel-font);
   color: #666;
   transition: color 0.2s;
+  padding: 4px 8px;
 }
 
 .action-btn:hover {
@@ -495,6 +496,90 @@ body {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+
+/* 删除确认弹窗 */
+.confirm-modal {
+  display: none;
+  position: fixed;
+  z-index: 300;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 107, 157, 0.1);
+  backdrop-filter: blur(4px);
+}
+
+.confirm-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+
+.confirm-content {
+  background: linear-gradient(135deg, #fff 0%, #fff5f7 100%);
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 320px;
+  width: 85%;
+  box-shadow: 0 8px 24px rgba(255, 107, 157, 0.15);
+  border: 2px solid var(--light-pink);
+  animation: slideUp 0.3s;
+}
+
+.confirm-title {
+  font-size: 18px;
+  color: var(--main-pink);
+  margin-bottom: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.confirm-message {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirm-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--pixel-font);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.confirm-btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.confirm-btn-cancel:hover {
+  background: #e8e8e8;
+}
+
+.confirm-btn-delete {
+  background: var(--main-pink);
+  color: white;
+}
+
+.confirm-btn-delete:hover {
+  background: #ff5a8a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 107, 157, 0.3);
 }
 
 /* 发布朋友圈表单 */

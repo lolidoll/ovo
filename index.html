@@ -10,9 +10,452 @@
     <link rel="apple-touch-icon" href="https://image.uglycat.cc/qs8mf5.png">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='90' fill='%23333'>薯</text></svg>">
     <title>薯片机</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="moments.css">
     <link rel="stylesheet" href="auth-modal.css">
+    <style>
+        /* 钱包页面样式 */
+        #wallet-page .wallet-header {
+            height: 52px;
+            background: linear-gradient(90deg, #16bffd 0%, #0fb8e9 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(22, 191, 253, 0.2);
+        }
+        #wallet-page .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        #wallet-page .wallet-back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 6px 14px 6px 10px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+        #wallet-page .wallet-back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateX(-2px);
+        }
+        #wallet-page .wallet-back-btn:active {
+            transform: translateX(0);
+        }
+        #wallet-page .wallet-back-btn i {
+            font-size: 14px;
+        }
+        #wallet-page .setting-btn {
+            cursor: pointer;
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+        #wallet-page .setting-btn:hover {
+            transform: scale(1.1);
+        }
+        #wallet-page .title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        #wallet-page .content-container {
+            position: fixed;
+            top: 52px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+            padding: 15px;
+            background: linear-gradient(180deg, #e8f4fc 0%, #f5f9fc 100%);
+        }
+        #wallet-page .asset-card {
+            background: linear-gradient(135deg, #fff 0%, #fcfdff 100%);
+            border-radius: 16px;
+            padding: 22px 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        #wallet-page .asset-card::before {
+            content: "";
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(22, 191, 253, 0.08);
+            border-radius: 50%;
+        }
+        #wallet-page .asset-amount {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        #wallet-page .amount-text {
+            font-size: 28px;
+            color: #1d2129;
+            font-weight: 600;
+        }
+        #wallet-page .amount-text strong {
+            color: #16bffd;
+            margin-left: 4px;
+        }
+        #wallet-page .eye-btn {
+            cursor: pointer;
+            color: #c9cdd4;
+            font-size: 20px;
+            transition: color 0.2s;
+        }
+        #wallet-page .eye-btn:hover {
+            color: #16bffd;
+        }
+        #wallet-page .asset-desc {
+            font-size: 13px;
+            color: #86909c;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        #wallet-page .asset-btns {
+            display: flex;
+            gap: 12px;
+        }
+        #wallet-page .btn {
+            flex: 1;
+            height: 36px;
+            border-radius: 18px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #wallet-page .recharge-btn {
+            background: linear-gradient(90deg, #16bffd 0%, #0fb8e9 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(22, 191, 253, 0.3);
+        }
+        #wallet-page .recharge-btn:hover {
+            box-shadow: 0 4px 12px rgba(22, 191, 253, 0.4);
+            transform: translateY(-1px);
+        }
+        #wallet-page .trade-record-btn {
+            background-color: #f5f7fa;
+            color: #4e5969;
+            border: 1px solid #e5e6eb;
+        }
+        #wallet-page .trade-record-btn:hover {
+            background-color: #eef2f7;
+        }
+        #wallet-page .function-grid {
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 12px 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        #wallet-page .grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 5px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 85px;
+        }
+        #wallet-page .grid-item:hover {
+            background-color: #f5f9fc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(22, 191, 253, 0.1);
+        }
+        #wallet-page .grid-item .func-name-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        #wallet-page .grid-item i {
+            font-size: 20px;
+            color: #16bffd;
+            width: 20px;
+            text-align: center;
+        }
+        #wallet-page .grid-item .func-name {
+            font-size: 11px;
+            color: #4e5969;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        #wallet-page .grid-item .func-cost {
+            font-size: 9px;
+            color: #86909c;
+            background-color: #f0f7ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        #wallet-page .trade-record-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        #wallet-page .modal-content {
+            background-color: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        #wallet-page .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f2f3f5;
+        }
+        #wallet-page .modal-title {
+            font-size: 18px;
+            color: #1d2129;
+            font-weight: 600;
+        }
+        #wallet-page .close-modal {
+            font-size: 20px;
+            color: #86909c;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #wallet-page .close-modal:hover {
+            color: #16bffd;
+        }
+        #wallet-page .record-list {
+            margin-top: 10px;
+        }
+        #wallet-page .record-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f2f3f5;
+        }
+        #wallet-page .record-item:last-child {
+            border-bottom: none;
+        }
+        #wallet-page .record-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e8f4fc 0%, #e5f0fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        #wallet-page .record-icon i {
+            color: #16bffd;
+            font-size: 16px;
+        }
+        #wallet-page .record-info {
+            flex: 1;
+        }
+        #wallet-page .record-title {
+            font-size: 14px;
+            color: #1d2129;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        #wallet-page .record-time {
+            font-size: 11px;
+            color: #86909c;
+        }
+        #wallet-page .record-amount {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        #wallet-page .amount-in {
+            color: #52c41a;
+        }
+        #wallet-page .amount-out {
+            color: #ff4d4f;
+        }
+        
+        /* 钱包自定义弹窗样式 - 蓝白简约风格 */
+        .wallet-custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .wallet-custom-modal.show {
+            opacity: 1;
+        }
+        
+        .wallet-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .wallet-modal-box {
+            position: relative;
+            background-color: #fff;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(22, 191, 253, 0.2);
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .wallet-custom-modal.show .wallet-modal-box {
+            transform: scale(1);
+        }
+        
+        .wallet-modal-header {
+            background: linear-gradient(90deg, #16bffd 0%, #0fb8e9 100%);
+            padding: 18px 20px;
+            color: #fff;
+        }
+        
+        .wallet-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .wallet-modal-body {
+            padding: 24px 20px;
+        }
+        
+        .wallet-input-group {
+            margin-bottom: 16px;
+        }
+        
+        .wallet-input-label {
+            display: block;
+            font-size: 14px;
+            color: #4e5969;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .wallet-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e6eb;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1d2129;
+            background-color: #f5f7fa;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        
+        .wallet-input:focus {
+            outline: none;
+            border-color: #16bffd;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(22, 191, 253, 0.1);
+        }
+        
+        .wallet-input-hint {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #86909c;
+        }
+        
+        .wallet-confirm-message {
+            font-size: 15px;
+            color: #1d2129;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .wallet-modal-footer {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid #f2f3f5;
+        }
+        
+        .wallet-modal-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .wallet-btn-cancel {
+            background-color: #f5f7fa;
+            color: #4e5969;
+        }
+        
+        .wallet-btn-cancel:hover {
+            background-color: #e5e6eb;
+        }
+        
+        .wallet-btn-confirm {
+            background: linear-gradient(90deg, #16bffd 0%, #0fb8e9 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(22, 191, 253, 0.3);
+        }
+        
+        .wallet-btn-confirm:hover {
+            box-shadow: 0 4px 12px rgba(22, 191, 253, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .wallet-btn-confirm:active {
+            transform: translateY(0);
+        }
+    </style>
     <script src="auth-modal.js" defer></script>
     <script src="login.js" defer></script>
     <script src="voice-message.js" defer></script>
@@ -27,6 +470,7 @@
     <script src="retry.js" defer></script>
     <script src="camera.js" defer></script>
     <script src="photo.js" defer></script>
+    <script src="wallet.js" defer></script>
     <script src="app.js" defer></script>
   
 </head>
@@ -1538,7 +1982,7 @@
                             <!-- 按钮区 -->
                             <div class="modal-actions">
                                 <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
-                                    📷 添加图片
+                                    添加图片
                                 </button>
                                 <input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="handleImageSelect(this)">
                                 <button class="submit-btn" onclick="publishMoment()">发布</button>
@@ -1671,6 +2115,18 @@
                                 <textarea id="commentInputText" placeholder="输入评论..."></textarea>
                                 <button class="submit-btn" onclick="submitComment()">发送</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 删除确认弹窗 -->
+                <div class="confirm-modal" id="deleteConfirmModal">
+                    <div class="confirm-content">
+                        <div class="confirm-title">确认删除</div>
+                        <div class="confirm-message">确定要删除这条朋友圈吗？删除后将无法恢复。</div>
+                        <div class="confirm-buttons">
+                            <button class="confirm-btn confirm-btn-cancel" onclick="closeDeleteConfirm()">取消</button>
+                            <button class="confirm-btn confirm-btn-delete" onclick="confirmDelete()">删除</button>
                         </div>
                     </div>
                 </div>
@@ -2018,6 +2474,125 @@
             <div class="sub-content" style="padding: 16px; background-color: #f5f5f5;overflow-y:auto;">
                 <div id="couples-space-content" style="background: #fff; border-radius: 8px; padding: 40px 20px; text-align: center;">
                     <div style="color:#999;font-size:16px;">功能开发中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 子页面 - 钱包 -->
+        <div class="sub-page" id="wallet-page">
+            <div class="wallet-header">
+                <div class="header-left">
+                    <button class="wallet-back-btn" data-back="wallet-page">
+                        <i class="fa-solid fa-chevron-left"></i>
+                        <span>返回</span>
+                    </button>
+                    <span class="title">薯片币钱包</span>
+                </div>
+                <div class="header-right">
+                    <i class="fa-solid fa-gear setting-btn"></i>
+                </div>
+            </div>
+
+            <div class="content-container">
+                <div class="wallet-page">
+                    <section class="asset-card">
+                        <div class="asset-amount">
+                            <span class="amount-text">薯片币 <strong id="wallet-balance">0</strong></span>
+                            <i class="fa-solid fa-eye-slash eye-btn" id="wallet-eye-btn"></i>
+                        </div>
+                        <div class="asset-desc">余额可用于兑换全站趣味权益</div>
+                        <div class="asset-btns">
+                            <button class="btn recharge-btn" id="wallet-recharge-btn">充值薯片币</button>
+                            <button class="btn trade-record-btn" id="wallet-record-btn">交易记录</button>
+                        </div>
+                    </section>
+
+                    <section class="function-grid">
+                        <div class="grid-item" data-func="lottery">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-gift"></i>
+                                <span class="func-name">幸运大转盘</span>
+                            </div>
+                            <span class="func-cost">消耗 5 薯片币/次</span>
+                        </div>
+                        <div class="grid-item" data-func="daily-fortune">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-star"></i>
+                                <span class="func-name">今日运势</span>
+                            </div>
+                            <span class="func-cost">消耗 3 薯片币/次</span>
+                        </div>
+                        <div class="grid-item" data-func="tarot">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-book"></i>
+                                <span class="func-name">今日塔罗牌</span>
+                            </div>
+                            <span class="func-cost">消耗 8 薯片币/次</span>
+                        </div>
+                        <div class="grid-item" data-func="unlock-character">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-mask"></i>
+                                <span class="func-name">解锁人设</span>
+                            </div>
+                            <span class="func-cost">消耗 50 薯片币/个</span>
+                        </div>
+                        <div class="grid-item" data-func="dream-analyze">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-cloud"></i>
+                                <span class="func-name">梦境解析</span>
+                            </div>
+                            <span class="func-cost">消耗 10 薯片币/次</span>
+                        </div>
+                        <div class="grid-item" data-func="cold-knowledge">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span class="func-name">冷知识推送</span>
+                            </div>
+                            <span class="func-cost">消耗 2 薯片币/次</span>
+                        </div>
+                        <div class="grid-item" data-func="sign-in">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-calendar-check"></i>
+                                <span class="func-name">每日签到</span>
+                            </div>
+                            <span class="func-cost">免费领取 2 薯片币</span>
+                        </div>
+                        <div class="grid-item" data-func="watch-ad">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-video"></i>
+                                <span class="func-name">看广告赚币</span>
+                            </div>
+                            <span class="func-cost">免费赚 3 薯片币/次</span>
+                        </div>
+                        <div class="grid-item" data-func="donate">
+                            <div class="func-name-wrap">
+                                <i class="fa-solid fa-hand-holding-heart"></i>
+                                <span class="func-name">薯片币捐赠</span>
+                            </div>
+                            <span class="func-cost">捐赠任意数量</span>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="trade-record-modal" id="wallet-trade-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">交易记录</div>
+                        <i class="fa-solid fa-times close-modal" id="wallet-close-modal"></i>
+                    </div>
+                    <div class="record-list" id="wallet-record-list">
+                        <div class="record-item">
+                            <div class="record-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <div class="record-info">
+                                <div class="record-title">每日签到奖励</div>
+                                <div class="record-time">2026-01-20 08:30</div>
+                            </div>
+                            <div class="record-amount amount-in">+2</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
