@@ -204,9 +204,23 @@
                     </div>
 
                     <!-- 操作按钮 -->
-                    <div style="display:flex;gap:8px;margin-bottom:100px;">
+                    <div style="display:flex;gap:8px;margin-bottom:12px;">
                         <button id="save-char-settings-btn" style="flex:1;padding:12px;border:none;border-radius:8px;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">保存设置</button>
                         <button id="delete-char-btn" style="flex:1;padding:12px;border:1px solid #f44;border-radius:8px;background:#fff;color:#f44;cursor:pointer;font-size:14px;font-weight:500;">删除角色</button>
+                    </div>
+                    
+                    <!-- 删除所有聊天记录按钮 -->
+                    <div style="margin-bottom:100px;">
+                        <button id="delete-all-messages-btn" style="width:100%;padding:12px;border:1px solid #ff6b6b;border-radius:8px;background:#fff;color:#ff6b6b;cursor:pointer;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px;">
+                            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            <span>删除所有聊天记录</span>
+                        </button>
+                        <div style="font-size:11px;color:#999;text-align:center;margin-top:6px;">此操作将清空该角色的所有对话记录和心声，无法恢复</div>
                     </div>
                 </div>
             `;
@@ -352,6 +366,14 @@
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', () => {
                     this.deleteCharacter(chat.id);
+                });
+            }
+
+            // 删除所有聊天记录按钮
+            const deleteAllMessagesBtn = document.getElementById('delete-all-messages-btn');
+            if (deleteAllMessagesBtn) {
+                deleteAllMessagesBtn.addEventListener('click', () => {
+                    this.deleteAllMessages(chat.id);
                 });
             }
         },
@@ -668,6 +690,52 @@
 
             document.getElementById('character-settings-page').classList.remove('open');
             showToast('角色已删除');
+        },
+
+        /**
+         * 删除所有聊天记录
+         */
+        deleteAllMessages: function(chatId) {
+            if (!confirm('确定要删除该角色的所有聊天记录吗？\n\n此操作将清空所有对话消息和心声，无法恢复！')) {
+                return;
+            }
+            
+            // 二次确认
+            if (!confirm('这是最后的确认！\n\n删除后将回到初始状态，所有聊天记录将永久消失，确定继续吗？')) {
+                return;
+            }
+            
+            const conv = window.AppState.conversations.find(c => c.id === chatId);
+            if (!conv) {
+                showToast('未找到该对话');
+                return;
+            }
+            
+            // 清空消息记录
+            window.AppState.messages[chatId] = [];
+            
+            // 清空总结记录
+            if (conv.summaries) {
+                conv.summaries = [];
+            }
+            
+            // 保存到存储
+            saveToStorage();
+            
+            // 关闭设置页面
+            const settingsPage = document.getElementById('character-settings-page');
+            if (settingsPage) {
+                settingsPage.classList.remove('open');
+            }
+            
+            // 如果当前正在查看这个对话，刷新聊天页面
+            if (window.AppState.currentChat && window.AppState.currentChat.id === chatId) {
+                if (typeof window.openChat === 'function') {
+                    window.openChat(conv);
+                }
+            }
+            
+            showToast('所有聊天记录已删除');
         },
 
         /**

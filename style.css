@@ -744,6 +744,12 @@
             display: flex;
             flex-direction: column;
         }
+        
+        /* 用户设定管理页面需要显示在角色设置页面之上 */
+        #persona-manager-page,
+        #persona-editor-page {
+            z-index: 250;
+        }
         .sub-page.open {
             transform: translateX(0);
         }

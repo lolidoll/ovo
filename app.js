@@ -2464,18 +2464,65 @@
                     return;
                 }
                 
-                // 撤回消息：显示为中心提示，不是气泡
+                // 撤回消息：显示为中心提示，包含原始内容
                 if (msg.isRetracted) {
+                    const retractWrapper = document.createElement('div');
+                    retractWrapper.className = 'retracted-message-wrapper';
+                    retractWrapper.dataset.messageId = msg.id;
+                    retractWrapper.style.cssText = `
+                        text-align: center;
+                        margin: 8px 0;
+                        padding: 8px 0;
+                    `;
+                    
+                    // 撤回提示文字
                     const retractNotice = document.createElement('div');
                     retractNotice.style.cssText = `
-                        text-align: center;
                         color: #999;
                         font-size: 12px;
-                        margin: 8px 0;
-                        padding: 4px 0;
+                        margin-bottom: 4px;
                     `;
                     retractNotice.textContent = msg.content;
-                    container.appendChild(retractNotice);
+                    
+                    // 被撤回的原始内容
+                    const retractedContent = document.createElement('div');
+                    retractedContent.style.cssText = `
+                        color: #bbb;
+                        font-size: 13px;
+                        padding: 8px 12px;
+                        background: #f5f5f5;
+                        border-radius: 4px;
+                        display: inline-block;
+                        max-width: 70%;
+                        word-break: break-word;
+                        margin-top: 4px;
+                    `;
+                    retractedContent.textContent = msg.retractedContent || '内容已删除';
+                    
+                    retractWrapper.appendChild(retractNotice);
+                    retractWrapper.appendChild(retractedContent);
+                    
+                    // 添加长按事件监听
+                    let pressTimer;
+                    retractWrapper.addEventListener('touchstart', function(e) {
+                        pressTimer = setTimeout(() => {
+                            showMessageContextMenu(msg, e.touches[0].clientX, e.touches[0].clientY);
+                        }, 500);
+                    });
+                    retractWrapper.addEventListener('touchend', function() {
+                        clearTimeout(pressTimer);
+                    });
+                    retractWrapper.addEventListener('touchmove', function() {
+                        clearTimeout(pressTimer);
+                    });
+                    
+                    // PC端右键菜单
+                    retractWrapper.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        showMessageContextMenu(msg, e.clientX, e.clientY);
+                    });
+                    
+                    container.appendChild(retractWrapper);
                     return;
                 }
                 
