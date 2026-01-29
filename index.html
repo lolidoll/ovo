@@ -18,6 +18,15 @@
     <script src="voice-message.js" defer></script>
     <script src="location-message.js" defer></script>
     <script src="emoji-manager.js" defer></script>
+    <script src="worldbook.js" defer></script>
+    <script src="user-persona-manager.js" defer></script>
+    <script src="character-settings-manager.js" defer></script>
+    <script src="mind-state-manager.js" defer></script>
+    <script src="secondary-api-manager.js" defer></script>
+    <script src="main-api-manager.js" defer></script>
+    <script src="retry.js" defer></script>
+    <script src="camera.js" defer></script>
+    <script src="photo.js" defer></script>
     <script src="app.js" defer></script>
   
 </head>
@@ -291,6 +300,18 @@
                 </div>
                 
                 <div class="menu-divider"></div>
+                
+                <div class="menu-item" data-func="user-persona">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            <path d="M8 3.13a4 4 0 0 0 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">人设</div>
+                </div>
                 
                 <div class="menu-item" data-func="preset">
                     <div class="menu-icon">
@@ -2014,7 +2035,7 @@
                 <div style="display:flex;gap:8px;margin-bottom:16px;">
                     <button id="worldbook-add-btn" style="flex:1;padding:10px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;">新增世界书</button>
                     <button id="worldbook-import-btn" style="flex:1;padding:10px;border:1px solid #ddd;background:#fff;color:#000;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;">导入世界书</button>
-                    <input type="file" id="worldbook-import-input" accept=".json" multiple style="display:none;">
+                    <input type="file" id="worldbook-import-input" accept=".json,.txt,.doc,.docx" multiple style="display:none;">
                 </div>
                 
                 <!-- 全局世界书 -->

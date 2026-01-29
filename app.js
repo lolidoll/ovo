@@ -81,61 +81,6 @@
         };
 
         
-        // ========== 更新心声按钮显示 ==========
-        function updateMindStateButton(conv) {
-            const heartSvg = document.getElementById('chat-mind-heart');
-            const fillRect = document.getElementById('heart-fill-rect');
-            const affinityText = document.getElementById('heart-affinity-text');
-            
-            if (!heartSvg || !fillRect || !affinityText) return;
-            
-            // 获取最新的好感度数据
-            let affinity = 0;
-            if (conv && conv.mindStates && conv.mindStates.length > 0) {
-                // 从最后一条心声记录中获取好感度
-                const lastMindState = conv.mindStates[conv.mindStates.length - 1];
-                if (lastMindState && typeof lastMindState.affinity === 'number') {
-                    affinity = Math.max(0, Math.min(100, lastMindState.affinity)); // 限制在0-100之间
-                }
-            }
-            
-            // 更新填充高度（从底部向上填充）
-            const fillHeight = (affinity / 100) * 24; // 24是SVG的高度
-            fillRect.setAttribute('y', String(24 - fillHeight));
-            fillRect.setAttribute('height', String(fillHeight));
-            
-            // 更新好感度数值显示
-            affinityText.textContent = String(affinity);
-            
-            // 根据好感度设置颜色
-            let fillColor = '#d0d0d0'; // 默认浅灰色
-            let textColor = '#666';
-            
-            if (affinity >= 80) {
-                fillColor = '#ff6b9d'; // 高好感度：粉红色
-                textColor = '#fff';
-            } else if (affinity >= 60) {
-                fillColor = '#ffb3d1'; // 中高好感度：浅粉色
-                textColor = '#fff';
-            } else if (affinity >= 40) {
-                fillColor = '#d4d4d4'; // 中等好感度：中灰色
-                textColor = '#666';
-            } else if (affinity >= 20) {
-                fillColor = '#e0e0e0'; // 中低好感度：浅灰色
-                textColor = '#999';
-            }
-            
-            // 更新填充路径的颜色
-            const fillPath = heartSvg.querySelector('path[clip-path]');
-            if (fillPath) {
-                fillPath.setAttribute('fill', fillColor);
-            }
-            
-            // 更新文字颜色
-            affinityText.setAttribute('fill', textColor);
-            
-            console.log(`💖 心声按钮已更新 - 好感度: ${affinity}, 填充高度: ${fillHeight}px, 颜色: ${fillColor}`);
-        }
         
         // 获取conversation的运行时状态
         function getConversationState(convId) {
@@ -158,6 +103,14 @@
                 initApiSettingsUI();
                 initPromptUI();
                 initWorldbookUI();
+                
+                // 初始化副API管理器
+                SecondaryAPIManager.init(AppState, showToast, saveToStorage, showLoadingOverlay, hideLoadingOverlay);
+                SecondaryAPIManager.initEventListeners();
+                
+                // 初始化心声管理器
+                MindStateManager.init(AppState, saveToStorage, showToast, escapeHtml);
+                
                 renderUI();
                 updateDynamicFuncList();
                 setupEmojiLibraryObserver();
@@ -860,9 +813,6 @@
             };
 
             // 聊天工具栏按钮
-            const btnRetry = document.getElementById('btn-retry');
-            if (btnRetry) btnRetry.addEventListener('click', function() { retryDeleteLastAiReply(); });
-
             const btnEmoji = document.getElementById('btn-emoji');
             if (btnEmoji) btnEmoji.addEventListener('click', function() {
                 toggleEmojiLibrary();
@@ -871,28 +821,6 @@
             // 注意：btn-voice-msg 和 btn-location 的事件处理器由各自的模块负责
             // 不需要在这里重复绑定事件
 
-            const btnCamera = document.getElementById('btn-camera');
-            const btnPhoto = document.getElementById('btn-photo');
-            const toolbarFile = document.getElementById('toolbar-file-input');
-            // 相机按钮 - 有描述对话框
-            if (btnCamera && toolbarFile) {
-                btnCamera.addEventListener('click', function() {
-                    toolbarFile.dataset.mode = 'with-description';
-                    toolbarFile.click();
-                });
-            }
-            // 照片按钮 - 无描述对话框，直接发送
-            if (btnPhoto && toolbarFile) {
-                btnPhoto.addEventListener('click', function() {
-                    toolbarFile.dataset.mode = 'no-description';
-                    toolbarFile.click();
-                });
-            }
-            if (toolbarFile) {
-                toolbarFile.addEventListener('change', function(e) {
-                    handleToolbarFileSelect(e.target.files, this.dataset.mode || 'with-description');
-                });
-            }
 
             const btnVoice = document.getElementById('btn-voicecall');
             if (btnVoice) btnVoice.addEventListener('click', function() { showToast('语音通话功能尚未实现'); });
@@ -945,7 +873,7 @@
             if (mindBtn) {
                 mindBtn.addEventListener('click', function() {
                     if (AppState.currentChat) {
-                        openCharacterMindState(AppState.currentChat);
+                        MindStateManager.openCharacterMindState(AppState.currentChat);
                     }
                 });
             }
@@ -1008,17 +936,7 @@
                 });
             }
 
-            // 副API模型选择器 change 事件监听
-            const secondaryModelsSelect = document.getElementById('secondary-models-select');
-            if (secondaryModelsSelect) {
-                secondaryModelsSelect.addEventListener('change', function() {
-                    AppState.apiSettings.secondarySelectedModel = this.value;
-                    const displayEl = document.getElementById('secondary-selected-model-display');
-                    if (displayEl) displayEl.textContent = this.value;
-                    // 自动保存模型选择
-                    saveToStorage();
-                });
-            }
+            // 副API事件监听已迁移到 secondary-api-manager.js
         }
 
         // 更新用户显示信息
@@ -1123,12 +1041,15 @@
             const msgList = document.getElementById('msg-list');
             const emptyState = document.getElementById('msg-empty');
             
-            // 根据搜索词过滤对话
+            // 根据搜索词过滤对话（支持搜索备注和名称）
             let filteredConversations = AppState.conversations;
             if (AppState.searchQuery) {
-                filteredConversations = AppState.conversations.filter(conv => 
-                    conv.name.toLowerCase().includes(AppState.searchQuery.toLowerCase())
-                );
+                filteredConversations = AppState.conversations.filter(conv => {
+                    const searchLower = AppState.searchQuery.toLowerCase();
+                    const nameMatch = conv.name.toLowerCase().includes(searchLower);
+                    const remarkMatch = conv.remark && conv.remark.toLowerCase().includes(searchLower);
+                    return nameMatch || remarkMatch;
+                });
             }
             
             if (filteredConversations.length === 0) {
@@ -1161,9 +1082,12 @@
                 item.style.overflow = 'hidden';
                 item.style.cursor = 'pointer';
                 
-                const avatarContent = conv.avatar 
-                    ? `<img src="${conv.avatar}" alt="">` 
+                const avatarContent = conv.avatar
+                    ? `<img src="${conv.avatar}" alt="">`
                     : conv.name.charAt(0);
+                
+                // 优先显示备注，如果没有备注则显示角色名称
+                const displayName = conv.remark || conv.name;
                 
                 item.innerHTML = `
                     <div class="msg-item-content" style="display:flex;align-items:center;gap:12px;padding:12px 15px;background:#fff;position:relative;z-index:2;cursor:pointer;">
@@ -1173,7 +1097,7 @@
                         </div>
                         <div class="msg-content">
                             <div class="msg-header">
-                                <div class="msg-title">${conv.name}</div>
+                                <div class="msg-title">${displayName}</div>
                                 <div class="msg-time">${conv.time || ''}</div>
                             </div>
                             <div class="msg-desc">${conv.lastMsg || ''}</div>
@@ -1277,15 +1201,18 @@
                     item.style.overflow = 'hidden';
                     item.style.cursor = 'pointer';
                     
-                    const avatarContent = friend.avatar 
-                        ? `<img src="${friend.avatar}" alt="">` 
+                    const avatarContent = friend.avatar
+                        ? `<img src="${friend.avatar}" alt="">`
                         : friend.name.charAt(0);
+                    
+                    // 优先显示备注，如果没有备注则显示角色名称
+                    const displayName = friend.remark || friend.name;
                     
                     item.innerHTML = `
                         <div class="friend-item-content" style="display:flex;align-items:center;gap:12px;padding:10px 15px;background:#fff;position:relative;z-index:2;">
                             <div class="friend-avatar">${avatarContent}</div>
                             <div class="friend-info" style="flex:1;">
-                                <div class="friend-name">${friend.name}</div>
+                                <div class="friend-name">${displayName}</div>
                                 <div class="friend-status">${friend.status || ''}</div>
                             </div>
                         </div>
@@ -1681,6 +1608,13 @@
                     case 'emoji':
                         openEmojiManager();
                         break;
+                    case 'user-persona':
+                        if (window.UserPersonaManager) {
+                            window.UserPersonaManager.openPersonaManager();
+                        } else {
+                            showToast('用户设定管理模块未加载');
+                        }
+                        break;
                     case 'decoration':
                         openDecorationPage();
                         break;
@@ -1943,6 +1877,7 @@
             const friend = {
                 id: 'friend_' + Date.now(),
                 name: name,
+                remark: '',  // 初始化备注为空
                 avatar: avatar,
                 description: desc,
                 greeting: greeting,
@@ -1957,6 +1892,7 @@
                 id: friend.id,
                 type: 'friend',
                 name: friend.name,
+                remark: '',  // 初始化备注为空
                 avatar: friend.avatar,
                 description: friend.description,
                 userAvatar: '',  // 该对话的用户头像
@@ -2359,7 +2295,9 @@
                 chatPage.classList.add('open');
             }
             
-            document.getElementById('chat-title').textContent = conv.name;
+            // 优先显示备注，如果没有备注则显示角色名称
+            const displayName = conv.remark || conv.name;
+            document.getElementById('chat-title').textContent = displayName;
             
             // 清除未读
             conv.unread = 0;
@@ -2412,7 +2350,7 @@
             }
             
             // 更新心声按钮显示
-            updateMindStateButton(conv);
+            MindStateManager.updateMindStateButton(conv);
             
             // 异步渲染消息和保存数据（避免阻塞UI）
             requestAnimationFrame(() => {
@@ -2431,6 +2369,7 @@
                     id: friend.id,
                     type: 'friend',
                     name: friend.name,
+                    remark: friend.remark || '',  // 保存备注
                     avatar: friend.avatar,
                     description: friend.description || '',
                     userAvatar: '',  // 该对话的用户头像
@@ -2676,15 +2615,17 @@
                     `;
                     bubble.classList.add('location-message');
                     
-                    // 添加地理位置气泡的点击事件
-                    const locationBubble = bubble.querySelector('.location-bubble');
-                    if (locationBubble) {
-                        locationBubble.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (typeof LocationMessageModule !== 'undefined') {
-                                LocationMessageModule.showLocationDetails(msg.locationName, msg.locationAddress, locationBubble);
-                            }
-                        });
+                    // 添加地理位置气泡的点击事件（仅在非多选模式下）
+                    if (!AppState.isSelectMode) {
+                        const locationBubble = bubble.querySelector('.location-bubble');
+                        if (locationBubble) {
+                            locationBubble.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                if (typeof LocationMessageModule !== 'undefined') {
+                                    LocationMessageModule.showLocationDetails(msg.locationName, msg.locationAddress, locationBubble);
+                                }
+                            });
+                        }
                     }
                 } else if (msg.isForward && msg.forwardedMoment) {
                     // 转发朋友圈消息 - 简洁优雅的卡片（黑白灰风格）
@@ -3411,9 +3352,23 @@
                 AppState.isSelectMode = false;
                 const toolbar = document.getElementById('msg-multi-select-toolbar');
                 if (toolbar) toolbar.remove();
+                // 只有退出多选模式时才需要重新渲染
+                renderChatMessages();
+                return;
             }
             
-            renderChatMessages();
+            // 优化:只更新当前气泡的选中状态,而不是重新渲染所有消息
+            const bubble = document.querySelector(`.chat-bubble[data-msg-id="${msgId}"]`);
+            if (bubble) {
+                if (index > -1) {
+                    // 取消选中
+                    bubble.classList.remove('selected');
+                } else {
+                    // 选中
+                    bubble.classList.add('selected');
+                }
+            }
+            
             updateMultiSelectToolbar();
         }
 
@@ -3865,203 +3820,17 @@
             showToast('转换完成');
         }
 
-        // ===== 副API调用函数 =====
-        // 统一的副API调用方法
-        function callSecondaryAPI(messages, systemPrompt, onSuccess, onError, timeout = 30000) {
-            console.log('🔗 副API调用开始:', {
-                messageCount: messages.length,
-                hasSystemPrompt: !!systemPrompt,
-                timeout: timeout
-            });
-            
-            const api = AppState.apiSettings || {};
-            
-            if (!api.secondaryEndpoint || !api.secondaryApiKey || !api.secondarySelectedModel) {
-                const errorMsg = '副API未配置';
-                console.error('❌ ' + errorMsg);
-                showToast('请先在API设置中配置副API端点、密钥和模型');
-                if (onError) onError(errorMsg);
-                return;
-            }
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-            const normalized = api.secondaryEndpoint.replace(/\/$/, '');
-            const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            const endpoint = baseEndpoint + '/chat/completions';
-            
-            console.log('📤 副API请求信息:', {
-                endpoint: endpoint,
-                model: api.secondarySelectedModel,
-                messageCount: messages.length
-            });
-
-            fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${api.secondaryApiKey}`
-                },
-                body: JSON.stringify({
-                    model: api.secondarySelectedModel,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        ...messages
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 10000
-                }),
-                signal: controller.signal
-            })
-            .then(res => {
-                clearTimeout(timeoutId);
-                console.log('📥 副API响应状态:', res.status, res.statusText);
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-                return res.json();
-            })
-            .then(data => {
-                console.log('✅ 副API返回JSON:', {
-                    hasChoices: !!data.choices,
-                    choicesCount: data.choices ? data.choices.length : 0,
-                    firstChoicePreview: data.choices && data.choices[0] ? String(data.choices[0]).substring(0, 100) : null
-                });
-                
-                if (data.choices && data.choices[0]) {
-                    const result = data.choices[0].message.content;
-                    console.log('✨ 副API成功返回内容，长度:', result.length);
-                    if (onSuccess) onSuccess(result);
-                } else {
-                    throw new Error('响应格式错误：无法找到choices');
-                }
-            })
-            .catch(err => {
-                clearTimeout(timeoutId);
-                console.error('❌ 副API调用失败:', err.name, err.message);
-                if (err.name === 'AbortError') {
-                    const errorMsg = '副API请求超时';
-                    showToast(errorMsg);
-                    if (onError) onError(errorMsg);
-                } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                    const errorMsg = '副API错误: CORS或网络问题';
-                    showToast(errorMsg);
-                    if (onError) onError(errorMsg);
-                } else {
-                    showToast(`副API错误: ${err.message}`);
-                    if (onError) onError(err.message);
-                }
-                console.error('副API调用错误:', err);
-            });
-        }
-
-        // ========== 【新副API架构】：动态提示词辅助函数 ==========
+        // ===== 副API调用函数已迁移到 secondary-api-manager.js =====
+        // 使用 SecondaryAPIManager.callSecondaryAPI() 替代
+        // 使用 SecondaryAPIManager.callWithDynamicPrompt() 替代
         
-        /**
-         * 通用副API调用辅助函数 - 支持动态提示词和功能选择
-         * @param {string} content - 要处理的内容
-         * @param {string} promptType - 提示词类型：'translate', 'summarize', 'translateChinese', 'translateEnglish' 等
-         * @param {function} onSuccess - 成功回调
-         * @param {function} onError - 失败回调
-         */
+        // 兼容性包装函数
+        function callSecondaryAPI(messages, systemPrompt, onSuccess, onError, timeout = 30000) {
+            return SecondaryAPIManager.callSecondaryAPI(messages, systemPrompt, onSuccess, onError, timeout);
+        }
+        
         function callSecondaryAPIWithDynamicPrompt(content, promptType = 'translate', onSuccess, onError) {
-            console.log('🔗 副API动态提示词调用开始:', {
-                promptType: promptType,
-                contentLength: content.length
-            });
-            
-            const api = AppState.apiSettings || {};
-            
-            if (!api.secondaryEndpoint || !api.secondaryApiKey || !api.secondarySelectedModel) {
-                const errorMsg = '副API未配置';
-                console.error('❌ ' + errorMsg);
-                showToast('副API未配置，请在设置中填写');
-                if (onError) onError(errorMsg);
-                return;
-            }
-
-            // 获取提示词（优先从动态设置中获取，再从预设中获取）
-            let systemPrompt = '';
-            
-            if (AppState.apiSettings.secondaryPrompts && AppState.apiSettings.secondaryPrompts[promptType]) {
-                systemPrompt = AppState.apiSettings.secondaryPrompts[promptType];
-                console.log('✅ 使用自定义动态提示词:', promptType);
-            } else {
-                // 预设提示词映射
-                const defaultPrompts = {
-                    'translate': '你是一个翻译助手。将用户提供的文本翻译成合适的语言。只返回翻译结果，不要有其他内容。',
-                    'translateEnglish': '你是一个翻译助手。将用户提供的中文文本翻译成英文。只返回翻译结果，不要有其他内容。',
-                    'translateChinese': '你是一个翻译助手。将用户提供的非中文文本翻译成简体中文。只返回翻译结果，不要有其他内容。',
-                    'summarize': '你是一个专业的对话总结员。请为下面的内容生成一份简洁准确的总结。总结应该：1. 抓住核心内容和主题；2. 保留重要信息；3. 简洁明了，长度适中（200-300字）；4. 用简体中文撰写。'
-                };
-                systemPrompt = defaultPrompts[promptType] || defaultPrompts['translate'];
-                console.log('⚙️ 使用预设提示词:', promptType);
-            }
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-            const normalized = api.secondaryEndpoint.replace(/\/$/, '');
-            const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            const endpoint = baseEndpoint + '/chat/completions';
-            
-            console.log('📤 副API请求信息:', {
-                endpoint: endpoint,
-                model: api.secondarySelectedModel,
-                promptType: promptType
-            });
-
-            fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${api.secondaryApiKey}`
-                },
-                body: JSON.stringify({
-                    model: api.secondarySelectedModel,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: content }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 10000
-                }),
-                signal: controller.signal
-            })
-            .then(res => {
-                clearTimeout(timeoutId);
-                console.log('📥 副API响应状态:', res.status, res.statusText);
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-                return res.json();
-            })
-            .then(data => {
-                console.log('✅ 副API返回数据 [' + promptType + ']');
-                
-                if (data.choices && data.choices[0]) {
-                    const result = data.choices[0].message.content;
-                    console.log('✨ 副API成功返回内容，长度:', result.length);
-                    if (onSuccess) onSuccess(result);
-                } else {
-                    throw new Error('响应格式错误：无法找到choices');
-                }
-            })
-            .catch(err => {
-                clearTimeout(timeoutId);
-                console.error('❌ 副API调用失败 [' + promptType + ']:', err.name, err.message);
-                if (err.name === 'AbortError') {
-                    const errorMsg = '副API请求超时';
-                    if (onError) onError(errorMsg);
-                } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                    const errorMsg = '副API错误: CORS或网络问题';
-                    if (onError) onError(errorMsg);
-                } else {
-                    if (onError) onError(err.message);
-                }
-                console.error('副API错误详情:', err);
-            });
+            return SecondaryAPIManager.callWithDynamicPrompt(content, promptType, onSuccess, onError);
         }
 
         // ========== 副API功能函数：翻译 ==========
@@ -4323,119 +4092,6 @@
         }
 
         
-        function handleToolbarFileSelect(files, mode = 'with-description') {
-            if (!files || files.length === 0) return;
-            if (!AppState.currentChat) {
-                showToast('请先打开会话再发送图片');
-                return;
-            }
-            
-            // 读取第一个文件
-            const file = files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageData = e.target.result;
-                
-                if (mode === 'no-description') {
-                    // 直接发送，不显示描述对话框
-                    sendPhotoWithDescription(imageData, '');
-                } else {
-                    // 显示拍照描述弹窗
-                    showPhotoDescriptionDialog(imageData);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        function showPhotoDescriptionDialog(imageData) {
-            let modal = document.getElementById('photo-description-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'photo-description-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            modal.style.cssText = 'background:rgba(0,0,0,0.7);';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            // 保存imageData到全局变量以便在发送时使用
-            window.currentPhotoData = imageData;
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:300px;background:#fff;border-radius:12px;overflow:hidden;">
-                    <div style="padding:16px;text-align:center;border-bottom:1px solid #e8e8e8;">
-                        <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">描述图片内容</h3>
-                    </div>
-                    <div style="padding:16px;">
-                        <textarea id="photo-desc-input" placeholder="请描述这张图片的内容..." style="width:100%;height:100px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;resize:vertical;"></textarea>
-                    </div>
-                    <div style="padding:12px;border-top:1px solid #e8e8e8;display:flex;gap:8px;justify-content:flex-end;">
-                        <button onclick="document.getElementById('photo-description-modal').remove();" style="padding:8px 16px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
-                        <button onclick="sendPhotoWithDescription(window.currentPhotoData);" style="padding:8px 16px;border:none;border-radius:4px;background:#000;color:#fff;cursor:pointer;font-size:13px;">发送</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            document.getElementById('photo-desc-input').focus();
-        }
-        
-        function sendPhotoWithDescription(imageData, descFromParam) {
-            let desc = '';
-            
-            // 如果参数中有描述，使用参数中的描述（直接发送模式）
-            if (typeof descFromParam !== 'undefined') {
-                desc = descFromParam;
-            } else {
-                // 否则从输入框获取描述（有对话框模式）
-                const descInput = document.getElementById('photo-desc-input');
-                desc = descInput ? descInput.value.trim() : '';
-            }
-            
-            if (!AppState.currentChat) {
-                showToast('会话已关闭');
-                return;
-            }
-            
-            if (!AppState.messages[AppState.currentChat.id]) {
-                AppState.messages[AppState.currentChat.id] = [];
-            }
-            
-            // 发送消息：包含图片和描述
-            // 如果有描述，使用描述；如果没有，显示[图片]
-            const messageContent = desc || '[图片]';
-            
-            const msg = {
-                id: 'msg_' + Date.now(),
-                type: 'sent',
-                content: messageContent,
-                imageData: imageData,  // 保存图片数据
-                isImage: true,
-                photoDescription: desc,  // 保存图片描述（AI后台读取）
-                time: new Date().toISOString()
-            };
-            
-            AppState.messages[AppState.currentChat.id].push(msg);
-            
-            const conv = AppState.conversations.find(c => c.id === AppState.currentChat.id);
-            if (conv) {
-                conv.lastMsg = '[图片]';
-                conv.time = formatTime(new Date());
-                conv.lastMessageTime = msg.time;  // 保存完整时间戳用于排序
-            }
-            
-            saveToStorage();
-            renderChatMessages();
-            renderConversations();
-            
-            // 关闭弹窗
-            const modal = document.getElementById('photo-description-modal');
-            if (modal) modal.remove();
-        }
 
         // 个性名片编辑
         function openCardEditPage() {
@@ -5020,64 +4676,9 @@
             }
         }
 
-        // 为预设拉取副API模型
+        // 为预设拉取副API模型 - 已迁移到 secondary-api-manager.js
         async function fetchSecondaryModelsForPreset(preset) {
-            if (!preset.secondaryEndpoint || !preset.secondaryApiKey) return;
-            
-            // 规范化端点：移除末尾斜杠，并确保包含 /v1
-            const normalized = preset.secondaryEndpoint.replace(/\/$/, '');
-            const normalizedEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            
-            const tryUrl = normalizedEndpoint + '/models';
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
-                
-                const res = await fetch(tryUrl, {
-                    headers: Object.assign(
-                        { 'Content-Type': 'application/json' },
-                        preset.secondaryApiKey ? { 'Authorization': 'Bearer ' + preset.secondaryApiKey } : {}
-                    ),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                
-                if (!res.ok) {
-                    console.warn('fetch secondary models failed:', tryUrl, res.status);
-                    return;
-                }
-                
-                const data = await res.json();
-                let models = [];
-                
-                if (Array.isArray(data.data)) {
-                    models = data.data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                } else if (Array.isArray(data.models)) {
-                    models = data.models.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                } else if (Array.isArray(data)) {
-                    models = data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name || m) }));
-                }
-                
-                if (models.length > 0) {
-                    AppState.apiSettings.secondaryModels = models;
-                    
-                    // 如果预设有指定副模型，使用该模型；否则使用第一个
-                    if (preset.secondarySelectedModel && models.some(m => m.id === preset.secondarySelectedModel)) {
-                        AppState.apiSettings.secondarySelectedModel = preset.secondarySelectedModel;
-                    } else {
-                        AppState.apiSettings.secondarySelectedModel = models[0].id;
-                        // 更新预设中的secondarySelectedModel
-                        const presets = AppState.apiSettings.presets || [];
-                        const presetIndex = presets.findIndex(p => p.id === preset.id);
-                        if (presetIndex !== -1) {
-                            presets[presetIndex].secondarySelectedModel = models[0].id;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('fetch secondary models for preset failed:', e);
-            }
+            return SecondaryAPIManager.fetchModelsForPreset(preset);
         }
         
         // 删除API预设
@@ -5271,38 +4872,8 @@
 
                 if (displayEl) displayEl.textContent = s.selectedModel || '未选择';
 
-                // 加载副API设置到UI
-                const secondaryEndpointEl = document.getElementById('secondary-api-endpoint');
-                const secondaryKeyEl = document.getElementById('secondary-api-key');
-                const secondarySelEl = document.getElementById('secondary-models-select');
-                const secondaryDisplayEl = document.getElementById('secondary-selected-model-display');
-                const secondaryKeyToggle = document.getElementById('secondary-api-key-toggle');
-
-                if (secondaryEndpointEl) secondaryEndpointEl.value = s.secondaryEndpoint || '';
-                
-                if (secondaryKeyEl) {
-                    secondaryKeyEl.value = s.secondaryApiKey || '';
-                    secondaryKeyEl.type = 'password';  // 默认隐藏
-                }
-                
-                if (secondaryKeyToggle) {
-                    secondaryKeyToggle.textContent = '显示';  // 默认状态为隐藏
-                }
-
-                if (secondarySelEl) {
-                    secondarySelEl.innerHTML = '';
-                    if (s.secondaryModels && s.secondaryModels.length) {
-                        s.secondaryModels.forEach(m => {
-                            const opt = document.createElement('option');
-                            opt.value = m.id || m;
-                            opt.textContent = m.id || m;
-                            secondarySelEl.appendChild(opt);
-                        });
-                        secondarySelEl.value = s.secondarySelectedModel || (s.secondaryModels[0] && (s.secondaryModels[0].id || s.secondaryModels[0]));
-                    }
-                }
-
-                if (secondaryDisplayEl) secondaryDisplayEl.textContent = s.secondarySelectedModel || '未选择';
+                // 副API设置加载已迁移到 secondary-api-manager.js
+                SecondaryAPIManager.loadSettingsToUI();
             } catch (e) { console.error(e); }
         }
 
@@ -5494,32 +5065,9 @@
 
         // ===== 世界书UI初始化 =====
         function initWorldbookUI() {
-            try {
-                const addBtn = document.getElementById('worldbook-add-btn');
-                if (addBtn) {
-                    addBtn.addEventListener('click', openAddWorldbookDialog);
-                }
-                
-                const importBtn = document.getElementById('worldbook-import-btn');
-                if (importBtn) {
-                    importBtn.addEventListener('click', function() {
-                        document.getElementById('worldbook-import-input').click();
-                    });
-                }
-                
-                const importInput = document.getElementById('worldbook-import-input');
-                if (importInput) {
-                    importInput.addEventListener('change', function(e) {
-                        handleWorldbookImport(e.target.files);
-                        this.value = '';  // 重置文件输入
-                    });
-                }
-                
-                // 初始化渲染世界书列表
-                renderWorldbooks();
-            } catch (e) {
-                console.error('初始化世界书UI失败:', e);
-            }
+            // 世界书功能已迁移到worldbook.js
+            // WorldbookManager会自动初始化
+            console.log('世界书UI由WorldbookManager管理');
         }
 
         function saveApiSettingsFromUI() {
@@ -5534,11 +5082,6 @@
             const presencePenalty = parseFloat((document.getElementById('presence-penalty-input') || {}).value || 0.1);
             const topP = parseFloat((document.getElementById('top-p-input') || {}).value || 1.0);
 
-            // 副API设置
-            const secondaryEndpoint = (document.getElementById('secondary-api-endpoint') || {}).value || '';
-            const secondaryApiKey = (document.getElementById('secondary-api-key') || {}).value || '';
-            const secondarySelected = (document.getElementById('secondary-models-select') || {}).value || '';
-
             AppState.apiSettings = AppState.apiSettings || {};
             AppState.apiSettings.endpoint = endpoint.trim();
             AppState.apiSettings.apiKey = apiKey.trim();
@@ -5551,10 +5094,8 @@
             AppState.apiSettings.presencePenalty = isNaN(presencePenalty) ? 0.1 : Math.max(-2, Math.min(2, presencePenalty));
             AppState.apiSettings.topP = isNaN(topP) ? 1.0 : Math.max(0, Math.min(1, topP));
 
-            // 保存副API设置
-            AppState.apiSettings.secondaryEndpoint = secondaryEndpoint.trim();
-            AppState.apiSettings.secondaryApiKey = secondaryApiKey.trim();
-            AppState.apiSettings.secondarySelectedModel = secondarySelected;
+            // 保存副API设置 - 已迁移到 secondary-api-manager.js
+            SecondaryAPIManager.saveSettingsFromUI();
 
             // persist
             saveToStorage();
@@ -5562,203 +5103,19 @@
             showToast('设置已保存');
         }
 
+        // ========== 线上模式 - 主API拉取模型（调用MainAPIManager） ==========
         async function fetchModels() {
-            const endpoint = (document.getElementById('api-endpoint') || {}).value || AppState.apiSettings.endpoint || '';
-            const apiKey = (document.getElementById('api-key') || {}).value || AppState.apiSettings.apiKey || '';
-
-            if (!endpoint) { showToast('请先填写 API 端点'); return; }
-            
-            // 显示加载提示框
-            showLoadingOverlay('正在拉取主API模型...');
-
-            // 规范化端点：移除末尾斜杠，并确保包含 /v1
-            const normalized = endpoint.replace(/\/$/, '');
-            const normalizedEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            
-            const tryUrls = [
-                normalizedEndpoint + '/models'
-            ];
-
-            let models = [];
-            let lastError = null;
-
-            for (const url of tryUrls) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-                    
-                    const res = await fetch(url, {
-                        headers: Object.assign(
-                            { 'Content-Type': 'application/json' },
-                            apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}
-                        ),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (!res.ok) {
-                        lastError = `HTTP ${res.status}: ${res.statusText}`;
-                        console.warn('fetch models failed:', url, lastError);
-                        continue;
-                    }
-                    
-                    const data = await res.json();
-                    if (Array.isArray(data.data)) {
-                        models = data.data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                    } else if (Array.isArray(data.models)) {
-                        models = data.models.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                    } else if (Array.isArray(data)) {
-                        models = data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name || m) }));
-                    }
-                    if (models.length > 0) break;
-                } catch (e) {
-                    if (e.name === 'AbortError') {
-                        lastError = '请求超时（30秒）';
-                        console.error('fetch models timeout:', url);
-                    } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
-                        lastError = 'CORS 错误或网络问题。请检查 API 端点是否正确';
-                        console.error('fetch models CORS/network error:', url, e);
-                    } else {
-                        lastError = e.message;
-                        console.warn('fetch models failed:', url, e);
-                    }
-                }
+            if (window.MainAPIManager && window.MainAPIManager.fetchModels) {
+                return await MainAPIManager.fetchModels();
+            } else {
+                showToast('主API管理器未加载，请刷新页面');
+                console.error('MainAPIManager未初始化');
             }
-            if (models.length === 0) {
-                // 隐藏加载提示框
-                hideLoadingOverlay();
-                const msg = lastError ? `未能拉取到模型：${lastError}` : '未能拉取到模型，请检查端点与密钥（或查看控制台）';
-                showToast(msg);
-                console.error('获取模型列表失败。请查看以下信息：');
-                console.error('- API 端点是否正确');
-                console.error('- API 密钥是否正确');
-                console.error('- API 服务器是否已启动');
-                console.error('- 浏览器控制台中的网络错误信息');
-                return;
-            }
-
-            AppState.apiSettings = AppState.apiSettings || {};
-            AppState.apiSettings.models = models;
-            AppState.apiSettings.selectedModel = models[0].id;
-            saveToStorage();
-
-            const sel = document.getElementById('models-select');
-            const display = document.getElementById('selected-model-display');
-            if (sel) {
-                sel.innerHTML = '';
-                models.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.id;
-                    opt.textContent = m.id;
-                    sel.appendChild(opt);
-                });
-                sel.value = AppState.apiSettings.selectedModel;
-            }
-            if (display) display.textContent = AppState.apiSettings.selectedModel || '未选择';
-            
-            // 隐藏加载提示框
-            hideLoadingOverlay();
-            showToast('已拉取到 ' + models.length + ' 个模型');
         }
 
-        // 拉取副API的模型列表
+        // 拉取副API的模型列表 - 已迁移到 secondary-api-manager.js
         async function fetchSecondaryModels() {
-            const endpoint = (document.getElementById('secondary-api-endpoint') || {}).value || AppState.apiSettings.secondaryEndpoint || '';
-            const apiKey = (document.getElementById('secondary-api-key') || {}).value || AppState.apiSettings.secondaryApiKey || '';
-
-            if (!endpoint) { showToast('请先填写副 API 端点'); return; }
-            
-            // 显示加载提示框
-            showLoadingOverlay('正在拉取副API模型...');
-
-            // 规范化端点：移除末尾斜杠，并确保包含 /v1
-            const normalized = endpoint.replace(/\/$/, '');
-            const normalizedEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            
-            const tryUrls = [
-                normalizedEndpoint + '/models'
-            ];
-
-            let models = [];
-            let lastError = null;
-
-            for (const url of tryUrls) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-                    
-                    const res = await fetch(url, {
-                        headers: Object.assign(
-                            { 'Content-Type': 'application/json' },
-                            apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}
-                        ),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (!res.ok) {
-                        lastError = `HTTP ${res.status}: ${res.statusText}`;
-                        console.warn('fetch secondary models failed:', url, lastError);
-                        continue;
-                    }
-                    
-                    const data = await res.json();
-                    if (Array.isArray(data.data)) {
-                        models = data.data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                    } else if (Array.isArray(data.models)) {
-                        models = data.models.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                    } else if (Array.isArray(data)) {
-                        models = data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name || m) }));
-                    }
-                    if (models.length > 0) break;
-                } catch (e) {
-                    if (e.name === 'AbortError') {
-                        lastError = '请求超时（30秒）';
-                        console.error('fetch secondary models timeout:', url);
-                    } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
-                        lastError = 'CORS 错误或网络问题。请检查副API端点是否正确';
-                        console.error('fetch secondary models CORS/network error:', url, e);
-                    } else {
-                        lastError = e.message;
-                        console.warn('fetch secondary models failed:', url, e);
-                    }
-                }
-            }
-            if (models.length === 0) {
-                // 隐藏加载提示框
-                hideLoadingOverlay();
-                const msg = lastError ? `未能拉取到模型：${lastError}` : '未能拉取到模型，请检查副API端点与密钥（或查看控制台）';
-                showToast(msg);
-                console.error('获取副API模型列表失败。请查看以下信息：');
-                console.error('- 副API 端点是否正确');
-                console.error('- 副API 密钥是否正确');
-                console.error('- 副API 服务器是否已启动');
-                console.error('- 浏览器控制台中的网络错误信息');
-                return;
-            }
-
-            AppState.apiSettings = AppState.apiSettings || {};
-            AppState.apiSettings.secondaryModels = models;
-            AppState.apiSettings.secondarySelectedModel = models[0].id;
-            saveToStorage();
-
-            const sel = document.getElementById('secondary-models-select');
-            const display = document.getElementById('secondary-selected-model-display');
-            if (sel) {
-                sel.innerHTML = '';
-                models.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.id;
-                    opt.textContent = m.id;
-                    sel.appendChild(opt);
-                });
-                sel.value = AppState.apiSettings.secondarySelectedModel;
-            }
-            if (display) display.textContent = AppState.apiSettings.secondarySelectedModel || '未选择';
-            
-            // 隐藏加载提示框
-            hideLoadingOverlay();
-            showToast('已拉取副API的 ' + models.length + ' 个模型');
+            return SecondaryAPIManager.fetchModels();
         }
 
         async function callApiWithConversation() {
@@ -6021,71 +5378,6 @@
             setLoadingStatus(false);
         }
 
-        function retryDeleteLastAiReply() {
-            if (!AppState.currentChat) {
-                showToast('请先打开一个聊天会话');
-                return;
-            }
-
-            const msgs = AppState.messages[AppState.currentChat.id] || [];
-            const conv = AppState.conversations.find(c => c.id === AppState.currentChat.id);
-            
-            if (msgs.length === 0) return;
-
-            // 找到最后一条 AI 消息（received 类型）
-            let lastAiIndex = -1;
-            let lastAiRound = null;
-            for (let i = msgs.length - 1; i >= 0; i--) {
-                if (msgs[i].type === 'received') {
-                    lastAiIndex = i;
-                    lastAiRound = msgs[i].apiCallRound;
-                    break;
-                }
-            }
-
-            if (lastAiIndex === -1) {
-                showToast('没有找到 AI 回复消息');
-                return;
-            }
-
-            // 删除整个API调用回合的所有消息
-            let deletedCount = 0;
-            if (lastAiRound) {
-                // 删除所有属于同一个API调用回合的received类型消息
-                for (let i = msgs.length - 1; i >= 0; i--) {
-                    if (msgs[i].type === 'received' && msgs[i].apiCallRound === lastAiRound) {
-                        msgs.splice(i, 1);
-                        deletedCount++;
-                    }
-                }
-            } else {
-                // 如果没有apiCallRound标记（旧数据），只删除最后一条
-                msgs.splice(lastAiIndex, 1);
-                deletedCount = 1;
-            }
-            
-            // 同时清除该角色的心声数据（因为心声是在删除的消息中生成的）
-            if (conv && conv.mindStates && Array.isArray(conv.mindStates)) {
-                conv.mindStates.pop();  // 删除最后一条心声记录
-            }
-
-            // 更新会话
-            if (conv) {
-                const lastMsg = msgs[msgs.length - 1];
-                conv.lastMsg = lastMsg ? lastMsg.content : '';
-                conv.time = formatTime(new Date());
-            }
-
-            saveToStorage();
-            renderChatMessages();
-            renderConversations();
-            
-            // 立即触发AI重新回复
-            showToast(`已删除上一轮回复（${deletedCount}条消息），正在重新生成...`);
-            setTimeout(() => {
-                callApiWithConversation();
-            }, 500);
-        }
 
         // 获取表情包使用说明
         function getEmojiInstructions(conv) {
@@ -6249,21 +5541,7 @@
             
             // 添加心声相关的提示
             // 注意：这个提示告诉AI生成心声数据，但这些数据会在客户端被完全清理，用户无法看到
-            systemPrompts.push(`【重要】必须每次在回复最后添加以下格式的心声信息，不能省略、不能变更格式、不能使用多消息格式：
-
-【心声】穿搭：{描述角色的服装、配饰、整体风格与细节。要求：符合角色设定，场景合理，细节具体。举例参考：'上身穿着一件淡蓝色的棉麻衬衫，袖口微微卷起；下装是深灰色的休闲九分裤，脚踩一双白色帆布鞋。左手腕系着一条编织红绳，胸前挂着一枚小小的银杏叶胸针。整体风格干净简约，带着几分慵懒随性。'} 心情：{描述角色当前的情绪状态。要求：细腻真实，可包含矛盾情绪，用比喻或意象增强画面感。举例参考：'平静中带着一丝雀跃，像是阴天里透过云层洒下的微弱阳光。上午的事情顺利完成，下午还有期待已久的独处时间。内心有些小满足，但表面上依然维持着淡漠从容的样子。'} 动作：{描述角色正在进行或习惯性的小动作。要求：自然流畅，体现角色性格，符合当前场景。举例参考：'靠在窗边的懒人沙发上，手指无意识地轻轻敲击着扶手。偶尔抬头望向窗外，似乎在思考什么，又像只是单纯地发呆。翻开一半的书放在手边，茶杯里的水已经凉透了。'} 心声：{角色内心未说出口的想法。要求：真实、细腻，可包含矛盾、犹豫、期待等复杂情绪举例参考：'今天的阳光真好，要是能一直这样就好了。那件事要不要找个机会说出口呢？其实……有点在意他今天说的那句话。'} 坏心思：{角色偷偷打的算盘、恶作剧念头、或不愿让他人知道的小计划。要求：符合人设，带点狡黠或俏皮。举例参考：'计划偷偷把冰箱里的蛋糕吃掉，然后嫁祸给那只经常来窗台的流浪猫。打算在朋友面前装作若无其事，其实早就猜到了他要说的惊喜是什么。如果明天有人问起，就说自己一整天都在看书，什么都没做。'} 好感度：{0-100的整数} 好感度变化：{变化数值，增减的数值都不可超过3，如+3或-2或0} 好感度原因：{简短说明，20字以内,举例参考：'对当前话题感到无趣且烦躁'}
-
-IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
-1. 心声MUST be placed at the very end of your response on a separate line
-2. Do NOT split this into multiple [MSG] blocks - 心声 must be in the SAME response as your main dialogue
-3. Format must be EXACTLY: 【心声】[all fields on one line separated by spaces]
-4. All fields MUST have content, NO empty fields
-5. Use Chinese colons 【：】not English colons【:】
-6. Example format: 【心声】穿搭：details here... 心情：details here... 动作：details here... 心声：details here... 坏心思：details here... 好感度：75 好感度变化：+5 好感度原因：互相理解
-7. CRITICAL: DO NOT use [MSG1][/MSG1] or [WAIT] format for the 心声 section
-8. Your main dialogue CAN be split into multiple messages, but 心声 must always be at the very end as ONE complete line
-
-严格按照这个格式输出，系统会自动提取和清理这一行，用户看不到这个内容。`);
+            systemPrompts.push(MindStateManager.getMindStateSystemPrompt());
             
             // 添加用户消息类型识别说明
             systemPrompts.push(`【用户内容识别规则】用户可能发送以下类型的内容，你需要正确识别并做出相应回应：
@@ -6630,119 +5908,6 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             } : null;
         }
 
-        // ========== 心声提取函数（新架构：从主API响应中提取） ==========
-        function extractMindStateFromText(text) {
-            if (!text || typeof text !== 'string') {
-                return null;
-            }
-            
-            // 查找【心声】标记
-            const mindMarkerIndex = text.indexOf('【心声】');
-            
-            if (mindMarkerIndex === -1) {
-                console.log('🔎 未在主API响应中找到【心声】标记');
-                return null;
-            }
-            
-            // 提取【心声】之后的所有内容
-            const mindContent = text.substring(mindMarkerIndex + 5).trim();
-            
-            if (!mindContent) {
-                console.log('🔎 【心声】标记后没有内容');
-                return null;
-            }
-            
-            console.log('📋 从主API响应中提取到心声内容，长度:', mindContent.length);
-            console.log('📋 心声原始内容:', mindContent.substring(0, 200));
-            
-            let mindState = {};
-            
-            // 字段定义 - 按照AI可能输出的顺序
-            const fieldDefinitions = [
-                { key: 'outfit', labels: ['穿搭', 'Outfit'] },
-                { key: 'mood', labels: ['心情', 'Mood'] },
-                { key: 'action', labels: ['动作', 'Action'] },
-                { key: 'thought', labels: ['心声', 'Thought'] },
-                { key: 'badThought', labels: ['坏心思', 'Bad Thought'] },
-                { key: 'affinity', labels: ['好感度', 'Affinity'] },
-                { key: 'affinityChange', labels: ['好感度变化', 'Affinity Change'] },
-                { key: 'affinityReason', labels: ['好感度原因', 'Reason'] }
-            ];
-            
-            // 处理所有字段 - 使用更灵活的提取方法
-            for (const fieldDef of fieldDefinitions) {
-                let value = null;
-                
-                // 尝试所有可能的标签
-                for (const label of fieldDef.labels) {
-                    // 创建更灵活的匹配模式 - 修复了正则表达式的双反斜杠问题
-                    const patterns = [
-                        // 模式1：标签：内容（到下一个已知标签或结尾）- 不跨行
-                        new RegExp(`${label}[：:]+\\s*([^\\n【]*?)\\s*(?=\\n|(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]|$)`, 'i'),
-                        // 模式2：标签：内容（单行，包括空格）
-                        new RegExp(`${label}[：:]+\\s*([^\\n]+?)\\s*$`, 'gmi'),
-                        // 模式3：标签：内容（更宽松，匹配到任何非【】字符）
-                        new RegExp(`${label}[：:]\\s*([^【]*?)(?=\\s*(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]|\\s*$)`, 'i')
-                    ];
-                    
-                    for (const pattern of patterns) {
-                        const match = mindContent.match(pattern);
-                        if (match && match[1]) {
-                            value = match[1].trim();
-                            // 移除多余的标点和标记
-                            value = value.replace(/^[：:]/, '').trim();
-                            // 如果找到了有效值，就停止寻找
-                            if (value && value.length > 0) {
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // 如果找到了值，就停止尝试其他标签
-                    if (value && value.length > 0) {
-                        break;
-                    }
-                }
-                
-                if (value && value.length > 0) {
-                    // 清理值：移除可能的多余标记和换行，但保留有意义的内容
-                    value = value.replace(/【.*?】/g, '').replace(/\s+/g, ' ').trim();
-                    
-                    // 防止字段值过长被其他字段内容污染
-                    if (value.length > 500) {
-                        value = value.substring(0, 500);
-                    }
-                    
-                    // 特殊处理数值字段
-                    if (fieldDef.key === 'affinity' || fieldDef.key === 'affinityChange') {
-                        // 尝试提取数字
-                        const numberMatch = value.match(/(-?\d+)/);
-                        if (numberMatch) {
-                            mindState[fieldDef.key] = parseInt(numberMatch[1]);
-                        } else {
-                            mindState[fieldDef.key] = null;
-                        }
-                    } else {
-                        // 确保文本字段不为空
-                        if (value.length > 0) {
-                            mindState[fieldDef.key] = value;
-                        }
-                    }
-                    
-                    console.log(`  ✓ ${fieldDef.key}: "${value.substring(0, 50)}${value.length > 50 ? '...' : ''}"`);
-                }
-            }
-            
-            // 检查是否有有效的心声数据
-            if (Object.keys(mindState).length === 0 || Object.values(mindState).every(v => !v)) {
-                console.log('⚠️ 心声数据解析失败，内容可能格式不正确');
-                console.log('解析的内容:', mindContent);
-                return null;
-            }
-            
-            console.log('✅ 成功从主API响应中提取心声数据:', mindState);
-            return mindState;
-        }
 
         function cleanAIResponse(text) {
             // 这是一个专门的清理函数，确保AI回复中的所有内部思维链和系统信息都被移除
@@ -6806,50 +5971,10 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         let currentApiCallRound = null;
 
         function appendAssistantMessage(convId, text) {
-            // ========== 第一步：提前提取心声数据（无论单消息还是多消息） ==========
-            const mindStateData = extractMindStateFromText(text);
+            // ========== 第一步：提前提取并保存心声数据（无论单消息还是多消息） ==========
+            MindStateManager.handleMindStateSave(convId, text);
             
-            // 如果心声提取失败，输出诊断信息
-            if (!mindStateData) {
-                console.warn('⚠️ 心声提取失败 - 可能的原因：');
-                console.warn('  1. AI没有在回复末尾添加【心声】标记');
-                console.warn('  2. 【心声】后面的格式不符合预期');
-                console.warn('  3. 心声被分割到多条[MSG]消息中');
-                console.warn('  API响应文本（前500字）:', text.substring(0, 500));
-            }
-            
-            // ========== 第二步：保存心声数据到会话（提前保存） ==========
-            const conv = AppState.conversations.find(c => c.id === convId);
-            const hasValidMindData = mindStateData && Object.values(mindStateData).some(v => v !== null && v !== undefined && v !== '');
-            
-            if (conv && hasValidMindData) {
-                if (!conv.mindStates) {
-                    conv.mindStates = [];
-                }
-                // 添加时间戳（消息ID稍后添加）
-                mindStateData.timestamp = new Date().toISOString();
-                mindStateData.messageId = 'pending';  // 临时标记，稍后更新
-                mindStateData.failed = false;
-                conv.mindStates.push(mindStateData);
-                console.log('💾 心声数据已提前保存到会话:', convId, mindStateData);
-            } else if (!mindStateData || !hasValidMindData) {
-                // 心声提取失败或为空 - 创建一个失败记录
-                if (conv) {
-                    if (!conv.mindStates) {
-                        conv.mindStates = [];
-                    }
-                    conv.mindStates.push({
-                        timestamp: new Date().toISOString(),
-                        messageId: 'pending',
-                        failed: true,
-                        reason: !mindStateData ? '【心声】标记未找到，请检查API回复' : '心声数据为空，请确保AI返回了完整的心声信息',
-                        failedReason: !mindStateData ? 'NO_MINDSTATE_MARKER' : 'EMPTY_MINDSTATE_DATA'
-                    });
-                    console.log('⚠️ 已记录心声提取失败:', !mindStateData ? '【心声】标记未找到' : '心声数据为空');
-                }
-            }
-            
-            // ========== 第三步：检查是否包含思考过程格式 ==========
+            // ========== 第二步：检查是否包含思考过程格式 ==========
             const thinkingData = parseThinkingProcess(text);
             
             if (thinkingData) {
@@ -6860,9 +5985,10 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 appendSingleAssistantMessage(convId, text, true); // 传递skipMindStateExtraction=true，避免重复提取
             }
             
-            // ========== 第四步：更新心声按钮 ==========
+            // ========== 第三步：更新心声按钮 ==========
+            const conv = AppState.conversations.find(c => c.id === convId);
             if (AppState.currentChat && AppState.currentChat.id === convId && conv) {
-                updateMindStateButton(conv);
+                MindStateManager.updateMindStateButton(conv);
             }
         }
 
@@ -7052,13 +6178,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             const aiMsg = AppState.messages[convId][AppState.messages[convId].length - 1];
             
             // 更新最后一条心声记录的消息ID（如果心声已经被提前保存）
-            if (conv && conv.mindStates && conv.mindStates.length > 0) {
-                const lastMindState = conv.mindStates[conv.mindStates.length - 1];
-                if (lastMindState.messageId === 'pending') {
-                    lastMindState.messageId = aiMsg.id;
-                    console.log('✅ 已更新心声记录的消息ID:', aiMsg.id);
-                }
-            }
+            MindStateManager.updateMindStateMessageId(convId, aiMsg.id);
             
             // 更新会话信息
             if (conv) {
@@ -7218,13 +6338,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                     
                     // 更新最后一条心声记录的消息ID（只在最后一条消息时）
                     if (index === messages.length - 1) {
-                        if (conv && conv.mindStates && conv.mindStates.length > 0) {
-                            const lastMindState = conv.mindStates[conv.mindStates.length - 1];
-                            if (lastMindState.messageId === 'pending') {
-                                lastMindState.messageId = aiMsg.id;
-                                console.log('✅ 已更新心声记录的消息ID（多消息）:', aiMsg.id);
-                            }
-                        }
+                        MindStateManager.updateMindStateMessageId(convId, aiMsg.id);
                     }
                     
                     saveToStorage();
@@ -7369,7 +6483,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                         // 更新心声按钮（如果当前正在查看这个会话）
                         const conv = AppState.conversations.find(c => c.id === convId);
                         if (AppState.currentChat && AppState.currentChat.id === convId && conv) {
-                            updateMindStateButton(conv);
+                            MindStateManager.updateMindStateButton(conv);
                         }
                         triggerNotificationIfLeftChat(convId);
                     }
@@ -8197,347 +7311,30 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         }
 
         // ========== 角色设置相关 ==========
+        // 直接打开角色设置，不再显示菜单
         function openChatMoreMenu(chat) {
-            let menu = document.getElementById('chat-more-menu');
-            if (menu) menu.remove();
-            
-            menu = document.createElement('div');
-            menu.id = 'chat-more-menu';
-            menu.style.cssText = `
-                position: fixed;
-                top: 50px;
-                right: 12px;
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10000;
-                min-width: 150px;
-                overflow: hidden;
-                animation: slideDown 0.2s ease-out;
-            `;
-            
-            const closeMenu = () => {
-                const m = document.getElementById('chat-more-menu');
-                if (m) m.remove();
-            };
-            
-            menu.innerHTML = `
-                <div class="chat-menu-item" onclick="closeMenuAndAction(() => openCharacterSettings(AppState.currentChat));" style="padding:12px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;font-size:13px;transition:background 0.15s;">角色设置</div>
-                <div class="chat-menu-item" onclick="closeMenuAndAction(() => manualSummarizeConversation());" style="padding:12px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;font-size:13px;transition:background 0.15s;">手动总结</div>
-                <div class="chat-menu-item" onclick="closeMenuAndAction(() => openContextSummarySettings());" style="padding:12px 16px;cursor:pointer;font-size:13px;transition:background 0.15s;">总结设置</div>
-            `;
-            
-            document.body.appendChild(menu);
-            
-            // 添加样式
-            if (!document.querySelector('style[data-chat-menu]')) {
-                const style = document.createElement('style');
-                style.setAttribute('data-chat-menu', 'true');
-                style.textContent = `
-                    @keyframes slideDown {
-                        from {
-                            opacity: 0;
-                            transform: translateY(-10px);
-                        }
-                        to {
-                            opacity: 1;
-                            transform: translateY(0);
-                        }
-                    }
-                    
-                    .chat-menu-item:hover {
-                        background: #f5f5f5;
-                    }
-                    
-                    .chat-menu-item:active {
-                        background: #efefef;
-                    }
-                `;
-                document.head.appendChild(style);
+            if (chat) {
+                CharacterSettingsManager.openCharacterSettings(chat);
             }
-            
-            // 点击外部关闭菜单
-            const closeMenuHandler = (e) => {
-                const targetMenu = document.getElementById('chat-more-menu');
-                if (targetMenu && !e.target.closest('#chat-more-menu') && !e.target.closest('.chat-more')) {
-                    targetMenu.remove();
-                    document.removeEventListener('click', closeMenuHandler);
-                }
-            };
-            
-            document.addEventListener('click', closeMenuHandler);
         }
+
+        // 角色设置和总结功能已迁移到 CharacterSettingsManager 模块
+        // 保留全局函数引用以兼容旧代码
+        window.editSummary = function(convId, index) {
+            CharacterSettingsManager.editSummary(convId, index);
+        };
         
-        // 辅助函数：关闭菜单并执行操作
-        function closeMenuAndAction(action) {
-            const menu = document.getElementById('chat-more-menu');
-            if (menu) {
-                menu.remove();
-            }
-            setTimeout(() => {
-                action();
-            }, 100);
-        }
+        window.deleteSummary = function(convId, index) {
+            CharacterSettingsManager.deleteSummary(convId, index);
+        };
 
-        function openContextSummarySettings() {
-            let modal = document.getElementById('summary-settings-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'summary-settings-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-
-            const conv = AppState.conversations.find(c => c.id === AppState.currentChat);
-            const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
-            
-            const summaryListHTML = hasSummaries ? `
-                <div style="margin-bottom:20px;border-top:1px solid #e8e8e8;padding-top:16px;">
-                    <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:12px;">📋 所有总结</div>
-                    <div style="max-height:300px;overflow-y:auto;">
-                        ${conv.summaries.map((sum, idx) => `
-                            <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:8px;border-left:3px solid #0066cc;">
-                                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                                    <div style="font-size:12px;color:#666;flex:1;">
-                                        基于最后 <strong>${sum.messageCount || '?'}</strong> 条消息 • 
-                                        <strong>${new Date(sum.timestamp).toLocaleString('zh-CN')}</strong>
-                                    </div>
-                                    <div style="display:flex;gap:4px;white-space:nowrap;margin-left:8px;">
-                                        <button onclick="editSummary('${AppState.currentChat}', ${idx})" style="padding:4px 8px;font-size:11px;border:1px solid #0066cc;background:#fff;color:#0066cc;border-radius:4px;cursor:pointer;">编辑</button>
-                                        <button onclick="deleteSummary('${AppState.currentChat}', ${idx})" style="padding:4px 8px;font-size:11px;border:1px solid #f44;background:#fff;color:#f44;border-radius:4px;cursor:pointer;">删除</button>
-                                    </div>
-                                </div>
-                                <div style="padding:8px;background:#fff;border-radius:4px;font-size:12px;color:#333;max-height:100px;overflow-y:auto;line-height:1.5;white-space:pre-wrap;word-break:break-all;">
-                                    ${escapeHtml(sum.content)}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : '';
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:500px;max-height:90vh;overflow-y:auto;">
-                    <div style="padding:16px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
-                        <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">总结设置</h3>
-                        <button onclick="document.getElementById('summary-settings-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
-                    </div>
-                    
-                    <div style="padding:16px;">
-                        <!-- 自动总结启用 -->
-                        <div style="margin-bottom:16px;">
-                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                                <input type="checkbox" id="auto-summary-enabled" ${AppState.apiSettings.summaryEnabled ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;">
-                                <span style="font-size:14px;color:#333;font-weight:500;">启用自动总结</span>
-                            </label>
-                            <div style="font-size:11px;color:#999;margin-top:4px;">当消息达到设定数量后自动进行总结</div>
-                        </div>
-                        
-                        <!-- 自动总结间隔 -->
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">每多少条消息后自动总结</label>
-                            <input type="number" id="summary-interval" value="${AppState.apiSettings.summaryInterval}" min="5" max="200" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-                        </div>
-                        
-                        <!-- 保留最新消息数 -->
-                        <div style="margin-bottom:20px;">
-                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">总结后保留最新消息数</label>
-                            <input type="number" id="summary-keep-latest" value="${AppState.apiSettings.summaryKeepLatest}" min="5" max="50" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-                        </div>
-
-                        <!-- 总结列表 -->
-                        ${summaryListHTML}
-                        
-                        <!-- 操作按钮 -->
-                        <div style="display:flex;gap:8px;justify-content:center;">
-                            <button onclick="document.getElementById('summary-settings-modal').remove();" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
-                            <button onclick="saveSummarySettings();" style="flex:1;padding:10px;border:none;border-radius:4px;background:#000;color:#fff;cursor:pointer;font-size:13px;">保存</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // 保存设置按钮事件
-            window.saveSummarySettings = function() {
-                AppState.apiSettings.summaryEnabled = document.getElementById('auto-summary-enabled').checked;
-                AppState.apiSettings.summaryInterval = parseInt(document.getElementById('summary-interval').value) || 50;
-                AppState.apiSettings.summaryKeepLatest = parseInt(document.getElementById('summary-keep-latest').value) || 10;
-                
-                saveToStorage();
-                document.getElementById('summary-settings-modal').remove();
-                showToast('总结设置已保存');
-            };
-        }
-
-        function manualSummarizeConversation() {
-            if (!AppState.currentChat) return;
-            
-            const messages = AppState.messages[AppState.currentChat.id] || [];
-            if (messages.length < 3) {
-                showToast('消息过少，无需总结');
-                return;
-            }
-            
-            // 关闭菜单
-            const menu = document.getElementById('chat-more-menu');
-            if (menu) menu.remove();
-            
-            showToast('正在生成总结...');
-            
-            // 调用API生成总结（优先使用副API）
-            summarizeContextWithAPI(AppState.currentChat.id, true); // true 表示手动总结
-        }
-
-        function summarizeContextWithAPI(convId, isManual = false) {
-            // ========== 【新架构】使用副API动态提示词总结对话 ==========
-            const conv = AppState.conversations.find(c => c.id === convId);
-            if (!conv) {
-                showToast('对话未找到');
-                return;
-            }
-
-            const hasSecondaryApi = AppState.apiSettings.secondaryEndpoint && AppState.apiSettings.secondaryApiKey && AppState.apiSettings.secondarySelectedModel;
-            
-            if (!hasSecondaryApi) {
-                showToast('请先配置副API设置');
-                return;
-            }
-            
-            // 收集对话内容
-            const messages = AppState.messages[convId] || [];
-            if (messages.length === 0) {
-                showToast('没有消息可以总结');
-                return;
-            }
-
-            let conversationText = '';
-            messages.forEach(m => {
-                if (m.type === 'sent' && !m.isRetracted) {
-                    conversationText += `用户: ${m.content}\n`;
-                } else if (m.type === 'received' && !m.isRetracted) {
-                    conversationText += `${conv.name}: ${m.content}\n`;
-                }
-            });
-
-            // 使用新的动态提示词系统总结
-            summarizeTextViaSecondaryAPI(
-                conversationText,
-                (result) => {
-                    if (!conv.summaries) {
-                        conv.summaries = [];
-                    }
-                    
-                    conv.summaries.push({
-                        content: result,
-                        isAutomatic: !isManual,
-                        timestamp: new Date().toISOString(),
-                        messageCount: messages.length
-                    });
-                    
-                    saveToStorage();
-                    showToast('总结已生成');
-                    
-                    // 触发重新渲染UI
-                    if (AppState.currentChat && AppState.currentChat.id === convId) {
-                        renderChatMessages();
-                    }
-                    renderConversations();
-                },
-                (error) => {
-                    console.error('总结生成出错:', error);
-                    showToast('总结生成失败: ' + error);
-                }
-            );
-        }
-
-        function showSummaryList(convId) {
-            const conv = AppState.conversations.find(c => c.id === convId);
-            if (!conv || !conv.summaries || conv.summaries.length === 0) return;
-            
-            let modal = document.getElementById('summary-list-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'summary-list-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            let summaryHTML = '';
-            conv.summaries.forEach((summary, index) => {
-                summaryHTML += `
-                    <div style="margin-bottom:12px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid #333;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                            <div style="font-size:12px;color:#999;">
-                                ${summary.isAutomatic ? '自动' : '手动'}总结 #${index + 1}
-                                <span style="margin-left:8px;">${new Date(summary.timestamp).toLocaleString()}</span>
-                            </div>
-                            <div style="display:flex;gap:4px;">
-                                <button onclick="editSummary('${convId}', ${index})" style="padding:2px 6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:11px;border-radius:2px;">编辑</button>
-                                <button onclick="deleteSummary('${convId}', ${index})" style="padding:2px 6px;border:1px solid #f44;background:#fff;color:#f44;cursor:pointer;font-size:11px;border-radius:2px;">删除</button>
-                            </div>
-                        </div>
-                        <div style="font-size:12px;color:#333;line-height:1.6;word-break:break-all;">${escapeHtml(summary.content)}</div>
-                    </div>
-                `;
-            });
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:500px;">
-                    <div style="padding:16px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
-                        <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">对话总结</h3>
-                        <button onclick="document.getElementById('summary-list-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
-                    </div>
-                    
-                    <div style="padding:16px;max-height:60vh;overflow-y:auto;">
-                        ${summaryHTML || '<div style="text-align:center;color:#999;padding:20px;">暂无总结记录</div>'}
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // 全局函数
-            window.editSummary = function(convId, index) {
-                const conv = AppState.conversations.find(c => c.id === convId);
-                if (!conv || !conv.summaries) return;
-                
-                const summary = conv.summaries[index];
-                const newContent = prompt('编辑总结内容：', summary.content);
-                if (newContent && newContent.trim()) {
-                    summary.content = newContent;
-                    saveToStorage();
-                    showSummaryList(convId);
-                    showToast('总结已更新');
-                }
-            };
-            
-            window.deleteSummary = function(convId, index) {
-                if (!confirm('确定要删除这条总结吗？')) return;
-                
-                const conv = AppState.conversations.find(c => c.id === convId);
-                if (!conv || !conv.summaries) return;
-                
-                conv.summaries.splice(index, 1);
-                saveToStorage();
-                showSummaryList(convId);
-                showToast('总结已删除');
-            };
-        }
-
+        // openCharacterSettings 已迁移到 CharacterSettingsManager 模块
         function openCharacterSettings(chat) {
+            CharacterSettingsManager.openCharacterSettings(chat);
+        }
+
+        // 以下是旧版本实现，已废弃
+        function openCharacterSettingsOld(chat) {
             let modal = document.getElementById('character-settings-modal');
             if (modal) modal.remove();
             
@@ -8554,8 +7351,18 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             // 获取局部世界书列表
             const localWbs = AppState.worldbooks.filter(w => !w.isGlobal);
             
-            // 获取角色对应的用户名称
-            const userNameForChar = chat.userNameForChar || AppState.user.name;
+            // 获取角色应该使用的用户人设
+            let currentPersona = null;
+            let userNameForChar = chat.userNameForChar || AppState.user.name;
+            let userPersonality = AppState.user && AppState.user.personality ? AppState.user.personality : '';
+            
+            if (window.UserPersonaManager) {
+                currentPersona = window.UserPersonaManager.getPersonaForConversation(chat.id);
+                if (currentPersona) {
+                    userNameForChar = currentPersona.userName;
+                    userPersonality = currentPersona.personality || '';
+                }
+            }
             
             modal.innerHTML = `
                 <div class="emoji-mgmt-content" style="max-width:500px;max-height:90vh;overflow-y:auto;">
@@ -8594,6 +7401,13 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                             <input type="text" id="char-name-input" value="${chat.name || ''}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
                         </div>
                         
+                        <!-- 备注 -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">备注</label>
+                            <input type="text" id="char-remark-input" value="${chat.remark || ''}" placeholder="设置备注后将优先显示备注" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                            <div style="font-size:11px;color:#999;margin-top:4px;">设置备注后，好友列表和聊天页面会优先显示备注而非角色名称</div>
+                        </div>
+                        
                         <!-- 角色人设 -->
                         <div style="margin-bottom:16px;">
                             <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">角色人物设定</label>
@@ -8607,10 +7421,28 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                             <div style="font-size:11px;color:#999;margin-top:4px;">在与该角色对话时，AI会读取此名称（不影响个人资料昵称）</div>
                         </div>
                         
+                        <!-- 用户人设选择 -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">选择用户人设</label>
+                            <select id="user-persona-select" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;margin-bottom:8px;">
+                                <option value="">使用默认人设</option>
+                                ${window.AppState.userPersonas && window.AppState.userPersonas.map(p => `
+                                    <option value="${p.id}" ${chat.boundPersonaId === p.id ? 'selected' : ''}>
+                                        ${p.name}${p.id === window.AppState.defaultPersonaId ? ' (默认)' : ''}
+                                    </option>
+                                `).join('')}
+                            </select>
+                            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                                <button id="manage-personas-btn" style="flex:1;padding:6px 12px;border:1px solid #4CAF50;border-radius:4px;background:#fff;color:#4CAF50;cursor:pointer;font-size:12px;">管理人设</button>
+                                <button id="apply-persona-btn" style="flex:1;padding:6px 12px;border:none;border-radius:4px;background:#4CAF50;color:#fff;cursor:pointer;font-size:12px;">应用人设</button>
+                            </div>
+                        </div>
+                        
                         <!-- 用户人设 -->
                         <div style="margin-bottom:16px;">
                             <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">用户人物设定</label>
-                            <textarea id="user-desc-input" style="width:100%;min-height:80px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:monospace;resize:vertical;">${AppState.user && AppState.user.personality ? AppState.user.personality : ''}</textarea>
+                            <textarea id="user-desc-input" style="width:100%;min-height:80px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:monospace;resize:vertical;">${userPersonality}</textarea>
+                            <div style="font-size:11px;color:#999;margin-top:4px;">当前显示的是实际使用的人设内容</div>
                         </div>
                         
                         <!-- 绑定表情包分组 (支持多个) - 水平滑动框 -->
@@ -8715,6 +7547,56 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                     }
                 });
             }
+            
+            // 管理人设按钮
+            const managePersonasBtn = document.getElementById('manage-personas-btn');
+            if (managePersonasBtn) {
+                managePersonasBtn.addEventListener('click', function() {
+                    if (window.UserPersonaManager) {
+                        window.UserPersonaManager.openPersonaManager();
+                    }
+                });
+            }
+            
+            // 应用人设按钮
+            const applyPersonaBtn = document.getElementById('apply-persona-btn');
+            if (applyPersonaBtn) {
+                applyPersonaBtn.addEventListener('click', function() {
+                    const selectedPersonaId = document.getElementById('user-persona-select').value;
+                    const conv = AppState.conversations.find(c => c.id === chat.id);
+                    
+                    if (!conv) return;
+                    
+                    // 如果选择了特定人设
+                    if (selectedPersonaId) {
+                        const persona = AppState.userPersonas.find(p => p.id === selectedPersonaId);
+                        if (persona) {
+                            // 更新用户名称和人设内容
+                            document.getElementById('user-name-for-char').value = persona.userName;
+                            document.getElementById('user-desc-input').value = persona.personality || '';
+                            
+                            // 保存绑定关系
+                            conv.boundPersonaId = selectedPersonaId;
+                            
+                            showToast('已应用人设: ' + persona.name);
+                        }
+                    } else {
+                        // 使用默认人设
+                        const defaultPersona = AppState.userPersonas.find(p => p.id === AppState.defaultPersonaId);
+                        if (defaultPersona) {
+                            document.getElementById('user-name-for-char').value = defaultPersona.userName;
+                            document.getElementById('user-desc-input').value = defaultPersona.personality || '';
+                        }
+                        
+                        // 移除绑定关系
+                        delete conv.boundPersonaId;
+                        
+                        showToast('已应用默认人设');
+                    }
+                    
+                    saveToStorage();
+                });
+            }
         }
         
         // 打开聊天背景图片选择器
@@ -8743,13 +7625,26 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             input.click();
         }
 
+        // saveCharacterSettings 已迁移到 CharacterSettingsManager 模块
         function saveCharacterSettings(charId) {
+            CharacterSettingsManager.saveCharacterSettings(charId);
+        }
+
+        // 以下是旧版本实现，已废弃
+        function saveCharacterSettingsOld(charId) {
             const conv = AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
             
             conv.name = document.getElementById('char-name-input').value || conv.name;
+            conv.remark = document.getElementById('char-remark-input').value.trim();
             conv.description = document.getElementById('char-desc-input').value;
             conv.userNameForChar = document.getElementById('user-name-for-char').value || AppState.user.name;
+            
+            // 同步更新好友列表中的备注
+            const friend = AppState.friends.find(f => f.id === charId);
+            if (friend) {
+                friend.remark = conv.remark;
+            }
             
             // 保存绑定的表情包分组（支持多个）
             const egCheckboxes = document.querySelectorAll('.eg-checkbox:checked');
@@ -8758,6 +7653,14 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             // 保存绑定的世界书（支持多个）
             const wbCheckboxes = document.querySelectorAll('.wb-checkbox:checked');
             conv.boundWorldbooks = Array.from(wbCheckboxes).map(cb => cb.value);
+            
+            // 保存绑定的用户人设
+            const selectedPersonaId = document.getElementById('user-persona-select').value;
+            if (selectedPersonaId) {
+                conv.boundPersonaId = selectedPersonaId;
+            } else {
+                delete conv.boundPersonaId;
+            }
             
             // 注意：用户头像已经通过applyImage()保存到conv.userAvatar中了
             
@@ -8786,720 +7689,43 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 }
                 
                 renderChatMessages(charId);
-                // 更新聊天标题
-                document.getElementById('chat-title').textContent = conv.name;
+                // 更新聊天标题（优先显示备注）
+                const displayName = conv.remark || conv.name;
+                document.getElementById('chat-title').textContent = displayName;
             }
             
             document.getElementById('character-settings-modal').remove();
             showToast('设置已保存');
         }
 
+        // deleteCharacter 已迁移到 CharacterSettingsManager 模块
         function deleteCharacter(charId) {
-            const conv = AppState.conversations.find(c => c.id === charId);
-            if (!conv) return;
-            
-            if (!confirm(`确定要删除 ${conv.name} 及其所有聊天记录吗？`)) return;
-            
-            // 删除会话
-            AppState.conversations = AppState.conversations.filter(c => c.id !== charId);
-            
-            // 同时从好友列表中删除
-            AppState.friends = AppState.friends.filter(f => f.id !== charId);
-            
-            // 删除对应的消息记录
-            delete AppState.messages[charId];
-            
-            // 如果当前正在聊天，关闭聊天页面
-            if (AppState.currentChat && AppState.currentChat.id === charId) {
-                AppState.currentChat = null;
-                document.getElementById('chat-page').classList.remove('open');
-            }
-            
-            // 保存和重新渲染
-            saveToStorage();
-            renderConversations();
-            renderFriends();
-            
-            // 关闭设置对话框
-            const settingsModal = document.getElementById('character-settings-modal');
-            if (settingsModal) settingsModal.remove();
-            
-            showToast('角色已删除');
+            CharacterSettingsManager.deleteCharacter(charId);
         }
 
-        // ===== 角色心声系统 =====
-        function openCharacterMindState(chat) {
-            let modal = document.getElementById('mind-state-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'mind-state-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            modal.style.cssText = 'background:rgba(0,0,0,0.6);';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            // 获取或初始化心声数据
-            if (!chat.mindStates) {
-                chat.mindStates = [];
-            }
-            
-            const mindItems = [
-                { key: 'affinity', label: '好感度', format: 'affinity' },
-                { key: 'outfit', label: '穿搭' },
-                { key: 'mood', label: '心情' },
-                { key: 'action', label: '动作' },
-                { key: 'thought', label: '心声' },
-                { key: 'badThought', label: '坏心思' }
-            ];
-            
-            // 获取当前状态
-            const currentState = chat.mindStates[chat.mindStates.length - 1] || {};
-            const isFailedState = currentState.failed;
-            
-            let content = `
-                <div class="emoji-mgmt-content" style="max-width:400px;background:#f5f5f5;display:flex;flex-direction:column;max-height:80vh;">
-                    <div style="padding:16px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;background:#fff;flex-shrink:0;">
-                        <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">${chat.name}的心声</h3>
-                        <button onclick="document.getElementById('mind-state-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
-                    </div>
-                    ${isFailedState ? `<div style="padding:12px;background:#fff3cd;border-bottom:1px solid #ffc107;color:#856404;font-size:12px;">⚠️ 心声提取失败：请确保API已配置正确，且AI在回复末尾添加了完整的【心声】标记。</div>` : ''}
-                    
-                    <div style="padding:16px;background:#fff;margin-bottom:0;flex:1;overflow-y:auto;overflow-x:hidden;">
-            `;
-            
-            mindItems.forEach(item => {
-                // 不使用默认值"暂无"，直接显示空或已生成的值
-                let value = currentState[item.key] !== undefined ? currentState[item.key] : null;
-                let displayValue = value;
-                
-                // 检查是否有失败标记
-                if (currentState.failed) {
-                    // 显示失败原因，但不影响其他字段的显示
-                    if (item.key === 'outfit') {
-                        // 在第一个字段（穿搭）处显示失败提示
-                        content += `
-                            <div style="margin-bottom:12px;padding:12px;background:#fff3cd;border-radius:4px;border-left:3px solid #ff9800;">
-                                <div style="font-size:13px;color:#ff9800;word-break:break-all;">⚠️ ${currentState.reason || '心声数据提取失败'}</div>
-                            </div>
-                        `;
-                        return;
-                    }
-                }
-                
-                // 好感度特殊处理（移到最前面，并显示变化和原因）
-                if (item.key === 'affinity' && typeof value === 'number') {
-                    const affinityColor = value >= 70 ? '#4CAF50' : (value >= 40 ? '#FFC107' : '#F44336');
-                    const change = currentState.affinityChange || 0;
-                    const changeDisplay = change > 0 ? `+${change}` : change;
-                    const reason = currentState.affinityReason || '';
-                    
-                    const affinityBar = `
-                        <div style="width:100%;height:8px;background:#e0e0e0;border-radius:4px;margin-top:4px;overflow:hidden;">
-                            <div style="width:${value}%;height:100%;background:${affinityColor};transition:width 0.3s;"></div>
-                        </div>
-                        <div style="font-size:12px;color:${affinityColor};margin-top:4px;font-weight:bold;">${value}/100</div>
-                    `;
-                    
-                    let changeReasonHtml = '';
-                    if (change !== 0 || reason) {
-                        changeReasonHtml = `<div style="font-size:12px;color:#999;margin-top:8px;padding-top:8px;border-top:1px solid #eee;">`;
-                        if (change !== 0) {
-                            const changeColor = change > 0 ? '#4CAF50' : (change < 0 ? '#F44336' : '#999');
-                            changeReasonHtml += `<div style="color:${changeColor};font-weight:bold;">变化：${changeDisplay}</div>`;
-                        }
-                        if (reason) {
-                            changeReasonHtml += `<div style="color:#666;margin-top:4px;">原因：${escapeHtml(String(reason))}</div>`;
-                        }
-                        changeReasonHtml += `</div>`;
-                    }
-                    
-                    content += `
-                        <div style="margin-bottom:12px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid ${affinityColor};">
-                            <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:4px;">${item.label}</div>
-                            ${affinityBar}
-                            ${changeReasonHtml}
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // 只显示非空的字段
-                if (value === null || value === undefined || value === '') {
-                    return; // 跳过空字段，不显示
-                }
-                
-                // 检查字段值是否被污染（包含其他标签的内容）
-                const hasOtherLabels = /穿搭|心情|动作|心声|坏心思|好感度/.test(String(value));
-                const itemColor = hasOtherLabels ? '#ff9800' : '#333';
-                
-                content += `
-                    <div style="margin-bottom:12px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid ${itemColor};">
-                        <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:4px;">${item.label}</div>
-                        <div style="font-size:13px;color:${hasOtherLabels ? '#ff9800' : '#666'};word-break:break-all;">${escapeHtml(String(displayValue))}</div>
-                    </div>
-                `;
-            });
-            
-            content += `
-                    </div>
-                    
-                    <div style="padding:12px;background:#fff;border-top:1px solid #ddd;display:flex;gap:8px;flex-shrink:0;">
-                        <button onclick="showCharacterMindHistory('${chat.id}');" style="flex:1;padding:10px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-size:13px;">历史心声</button>
-                        <button onclick="document.getElementById('mind-state-modal').remove();" style="flex:1;padding:10px;border:none;background:#333;color:#fff;border-radius:4px;cursor:pointer;font-size:13px;">关闭</button>
-                    </div>
-                </div>
-            `;
-            
-            modal.innerHTML = content;
-            document.body.appendChild(modal);
-        }
-
-        function clearCharacterMindState(charId) {
-            const chat = AppState.conversations.find(c => c.id === charId);
-            if (!chat) return;
-            
-            if (!chat.mindStates) {
-                chat.mindStates = [];
-            }
-            
-            // 清空最后一条的所有心声
-            if (chat.mindStates.length > 0) {
-                chat.mindStates[chat.mindStates.length - 1] = {};
-            }
-            
-            saveToStorage();
-            showToast('心声已清空');
-            openCharacterMindState(chat);
-        }
-
-        function showCharacterMindHistory(charId) {
-            const chat = AppState.conversations.find(c => c.id === charId);
-            if (!chat) return;
-            
-            let modal = document.getElementById('mind-history-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'mind-history-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            modal.style.cssText = 'background:rgba(0,0,0,0.6);';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-
-            // 生成历史心声内容
-            let historyContent = '';
-            if (chat.mindStates && chat.mindStates.length > 0) {
-                // 反向遍历（最新的在上面）
-                for (let i = chat.mindStates.length - 1; i >= 0; i--) {
-                    const state = chat.mindStates[i];
-                    const recordIndex = chat.mindStates.length - i;
-                    
-                    // 处理好感度显示（包含变化和原因）
-                    let affinityDisplay = '';
-                    if (state.affinity !== undefined && typeof state.affinity === 'number') {
-                        const affinityColor = state.affinity >= 70 ? '#4CAF50' : (state.affinity >= 40 ? '#FFC107' : '#F44336');
-                        const change = state.affinityChange || 0;
-                        const changeDisplay = change > 0 ? `+${change}` : change;
-                        const reason = state.affinityReason || '';
-                        
-                        affinityDisplay = `<div style="margin-bottom:6px;">
-                            <span style="color:${affinityColor};font-size:12px;font-weight:bold;">好感度：</span>
-                            <span style="color:${affinityColor};font-size:13px;font-weight:bold;">${state.affinity}/100</span>`;
-                        
-                        if (change !== 0 || reason) {
-                            const changeColor = change > 0 ? '#4CAF50' : (change < 0 ? '#F44336' : '#999');
-                            if (change !== 0) {
-                                affinityDisplay += `<span style="color:${changeColor};font-size:12px;margin-left:8px;">(${changeDisplay})</span>`;
-                            }
-                            if (reason) {
-                                affinityDisplay += `<div style="font-size:11px;color:#999;margin-top:2px;">原因：${escapeHtml(reason)}</div>`;
-                            }
-                        }
-                        affinityDisplay += `</div>`;
-                    }
-                    
-                    historyContent += `
-                        <div style="margin-bottom:16px;padding:12px;background:#f9f9f9;border-radius:4px;border-left:3px solid #333;position:relative;">
-                            <button onclick="deleteSingleMindState('${chat.id}', ${i})" style="position:absolute;top:12px;right:12px;padding:4px 8px;border:1px solid #FF3B30;background:#fff;color:#FF3B30;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap;">删除</button>
-                            <div style="font-size:12px;color:#999;margin-bottom:8px;">记录 #${recordIndex}</div>
-                            ${affinityDisplay}
-                            ${Object.entries(state).filter(([key]) => !['affinity', 'affinityChange', 'affinityReason'].includes(key)).map(([key, value]) => {
-                                const labels = {
-                                    'outfit': '穿搭',
-                                    'mood': '心情',
-                                    'action': '动作',
-                                    'thought': '心声',
-                                    'badThought': '坏心思'
-                                };
-                                return `<div style="margin-bottom:6px;"><span style="color:#666;font-size:12px;">${labels[key] || key}：</span><span style="color:#333;font-size:13px;">${escapeHtml(String(value))}</span></div>`;
-                            }).join('')}
-                        </div>
-                    `;
-                }
-            } else {
-                historyContent = '<div style="text-align:center;color:#999;padding:40px 20px;font-size:13px;">暂无历史心声记录</div>';
-            }
-            
-            let content = `
-                <div class="emoji-mgmt-content" style="max-width:400px;background:#f5f5f5;display:flex;flex-direction:column;max-height:80vh;">
-                    <div style="padding:16px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;background:#fff;flex-shrink:0;">
-                        <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">${chat.name}的历史心声</h3>
-                        <button onclick="document.getElementById('mind-history-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
-                    </div>
-                    
-                    <div style="padding:16px;background:#fff;flex:1;overflow-y:auto;overflow-x:hidden;">
-                        ${historyContent}
-                    </div>
-                    
-                    <div style="padding:12px;background:#fff;border-top:1px solid #ddd;display:flex;gap:8px;flex-shrink:0;">
-                        ${(chat.mindStates && chat.mindStates.length > 0) ? `<button onclick="openDeleteConfirmDialog('${chat.id}');" style="flex:1;padding:10px;border:1px solid #FF3B30;background:#fff;color:#FF3B30;border-radius:4px;cursor:pointer;font-size:13px;">清空全部</button>` : ''}
-                        <button onclick="document.getElementById('mind-history-modal').remove();" style="flex:1;padding:10px;border:none;background:#333;color:#fff;border-radius:4px;cursor:pointer;font-size:13px;">关闭</button>
-                    </div>
-                </div>
-            `;
-            
-            modal.innerHTML = content;
-            document.body.appendChild(modal);
-        }
-
-        // 打开删除二次确认弹窗
-        function openDeleteConfirmDialog(charId) {
-            const chat = AppState.conversations.find(c => c.id === charId);
-            if (!chat) return;
-            
-            let confirmModal = document.getElementById('delete-confirm-modal');
-            if (confirmModal) confirmModal.remove();
-            
-            confirmModal = document.createElement('div');
-            confirmModal.id = 'delete-confirm-modal';
-            confirmModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:50001;';
-            
-            confirmModal.addEventListener('click', function(e) {
-                if (e.target === confirmModal) {
-                    confirmModal.remove();
-                }
-            });
-            
-            const content = `
-                <div style="background:#fff;border-radius:12px;padding:24px;max-width:320px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
-                    <div style="font-size:16px;color:#333;font-weight:600;margin-bottom:12px;">确定要清空全部心声吗？</div>
-                    <div style="font-size:13px;color:#999;margin-bottom:24px;">此操作无法撤销，${chat.name}的所有历史心声记录将被永久删除。</div>
-                    <div style="display:flex;gap:12px;">
-                        <button onclick="document.getElementById('delete-confirm-modal').remove();" style="flex:1;padding:10px;border:1px solid #ddd;background:#f9f9f9;border-radius:8px;cursor:pointer;font-size:13px;color:#333;">取消</button>
-                        <button onclick="deleteCharacterMindStates('${charId}');document.getElementById('delete-confirm-modal').remove();" style="flex:1;padding:10px;border:none;background:#FF3B30;border-radius:8px;cursor:pointer;font-size:13px;color:#fff;">确定删除</button>
-                    </div>
-                </div>
-            `;
-            
-            confirmModal.innerHTML = content;
-            document.body.appendChild(confirmModal);
-        }
-
-        function deleteSingleMindState(charId, index) {
-            const chat = AppState.conversations.find(c => c.id === charId);
-            if (!chat || !chat.mindStates) return;
-            
-            if (!confirm('确定要删除这条心声记录吗？')) return;
-            
-            chat.mindStates.splice(index, 1);
-            saveToStorage();
-            showToast('心声已删除');
-            showCharacterMindHistory(charId);
-        }
-
-        function deleteCharacterMindStates(charId) {
-            const chat = AppState.conversations.find(c => c.id === charId);
-            if (!chat) return;
-            
-            if (!confirm('确定要删除该角色的所有心声记录吗？')) return;
-            
-            chat.mindStates = [];
-            saveToStorage();
-            showToast('所有心声已删除');
-            openCharacterMindState(chat);
-        }
-
-        function updateCharacterMindState(charId, mindData) {
-            const chat = AppState.conversations.find(c => c.id === charId);
-            if (!chat) return;
-            
-            if (!chat.mindStates) {
-                chat.mindStates = [];
-            }
-            
-            // 添加新的心声记录
-            chat.mindStates.push(mindData);
-            saveToStorage();
-        }
-
-        // ===== 世界书系统 =====
-        function openAddWorldbookDialog() {
-            const modal = document.createElement('div');
-            modal.id = 'add-worldbook-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
-            
-            modal.innerHTML = `
-                <div style="background:#fff;border-radius:8px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <h3 style="margin:0;font-size:16px;font-weight:600;">新建世界书</h3>
-                        <button onclick="document.getElementById('add-worldbook-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;">✕</button>
-                    </div>
-                    
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">世界书名称</label>
-                        <input id="wb-name-input" type="text" placeholder="如：《异星殖民地世界观》" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;font-size:13px;">
-                    </div>
-                    
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">世界书内容</label>
-                        <textarea id="wb-content-input" placeholder="描述此世界的设定、背景、规则等..." style="width:100%;height:200px;padding:8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;font-size:13px;resize:vertical;"></textarea>
-                        <div style="font-size:11px;color:#999;margin-top:4px;">AI会在回复前读取这些内容，以保持话题背景</div>
-                    </div>
-                    
-                    <div style="margin-bottom:20px;">
-                        <label style="display:flex;align-items:center;font-size:13px;cursor:pointer;">
-                            <input id="wb-global-checkbox" type="checkbox" style="margin-right:8px;cursor:pointer;">
-                            <span>设为全局世界书（所有角色都会使用）</span>
-                        </label>
-                    </div>
-                    
-                    <div style="display:flex;gap:8px;justify-content:flex-end;">
-                        <button onclick="document.getElementById('add-worldbook-modal').remove();" style="padding:8px 16px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
-                        <button onclick="saveNewWorldbook();" style="padding:8px 16px;border:none;border-radius:4px;background:#000;color:#fff;cursor:pointer;font-size:13px;">创建</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            document.getElementById('wb-name-input').focus();
-            
-            // 点击背景关闭
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-        }
-
-        function handleWorldbookImport(files) {
-            if (!files || files.length === 0) return;
-            
-            Array.from(files).forEach(function(file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        let worldbooks = [];
-                        
-                        // 处理不同格式的世界书JSON
-                        if (Array.isArray(data)) {
-                            // 数组格式：[{name, content, isGlobal?}, ...]
-                            worldbooks = data.map(wb => ({
-                                name: wb.name || wb.title || '未命名世界书',
-                                content: wb.content || wb.data || '',
-                                isGlobal: wb.isGlobal || wb.global || false
-                            }));
-                        } else if (typeof data === 'object' && data.name && data.content) {
-                            // 单个世界书对象
-                            worldbooks = [{
-                                name: data.name || data.title || '未命名世界书',
-                                content: data.content || data.data || '',
-                                isGlobal: data.isGlobal || data.global || false
-                            }];
-                        } else if (typeof data === 'object') {
-                            // 其他格式尝试解析
-                            if (data.spec === 'world_book_v1' || data.spec === 'chara_world') {
-                                // SillyTavern世界书格式
-                                worldbooks = [{
-                                    name: data.name || '世界书',
-                                    content: data.entries ? JSON.stringify(data.entries) : data.content || '',
-                                    isGlobal: false
-                                }];
-                            }
-                        }
-                        
-                        if (worldbooks.length === 0) {
-                            showToast('文件 ' + file.name + ' 格式不支持');
-                            return;
-                        }
-                        
-                        // 显示导入选项对话框
-                        showWorldbookImportDialog(worldbooks, file.name);
-                    } catch (err) {
-                        console.error('解析世界书失败:', file.name, err);
-                        showToast('文件 ' + file.name + ' 解析失败');
-                    }
-                };
-                reader.readAsText(file);
-            });
-        }
-
-        function showWorldbookImportDialog(worldbooks, fileName) {
-            let modal = document.getElementById('wb-import-dialog-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'wb-import-dialog-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            let wbList = '';
-            worldbooks.forEach((wb, idx) => {
-                wbList += `
-                    <div style="padding:12px;background:#f9f9f9;border-radius:4px;margin-bottom:8px;">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <input type="radio" name="wb-import-type" id="wb-type-${idx}" value="${idx}" ${idx === 0 ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;">
-                            <label for="wb-type-${idx}" style="flex:1;cursor:pointer;font-size:13px;font-weight:500;color:#333;margin:0;">
-                                ${escapeHtml(wb.name)}
-                            </label>
-                        </div>
-                        <div style="margin-left:24px;">
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#666;">
-                                <input type="radio" name="wb-import-scope-${idx}" value="global" style="width:14px;height:14px;cursor:pointer;">
-                                全局世界书（所有角色可用）
-                            </label>
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#666;margin-top:4px;">
-                                <input type="radio" name="wb-import-scope-${idx}" value="local" checked style="width:14px;height:14px;cursor:pointer;">
-                                局部世界书（需绑定到角色）
-                            </label>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            // 使用全局变量存储待导入的世界书数据，避免JSON序列化的HTML属性转义问题
-            window.pendingWorldbookImport = worldbooks;
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:400px;">
-                    <div class="emoji-mgmt-header">
-                        <h3 style="margin:0;font-size:14px;color:#000;">选择导入的世界书</h3>
-                        <button class="emoji-mgmt-close" onclick="document.getElementById('wb-import-dialog-modal').remove();">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                    <div style="padding:16px;flex:1;overflow-y:auto;background:#ffffff;">
-                        <div style="margin-bottom:8px;font-size:12px;color:#666;">文件：${escapeHtml(fileName)}</div>
-                        ${wbList}
-                        <div style="display:flex;gap:8px;margin-top:16px;">
-                            <button onclick="document.getElementById('wb-import-dialog-modal').remove();" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
-                            <button onclick="confirmWorldbookImport();" style="flex:1;padding:8px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;">导入</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        function confirmWorldbookImport() {
-            if (!window.pendingWorldbookImport || window.pendingWorldbookImport.length === 0) {
-                showToast('没有待导入的世界书');
-                return;
-            }
-            
-            const selectedIdx = parseInt(document.querySelector('input[name="wb-import-type"]:checked').value);
-            const selectedWb = window.pendingWorldbookImport[selectedIdx];
-            const isGlobal = document.querySelector(`input[name="wb-import-scope-${selectedIdx}"]:checked`).value === 'global';
-            
-            if (!selectedWb || !selectedWb.content || !selectedWb.content.trim()) {
-                showToast('世界书内容为空');
-                return;
-            }
-            
-            const newWb = {
-                id: 'wb_' + Date.now(),
-                name: selectedWb.name || '导入的世界书',
-                content: selectedWb.content,
-                isGlobal: isGlobal,
-                createdAt: new Date().toISOString()
-            };
-            
-            AppState.worldbooks.push(newWb);
-            saveToStorage();
-            document.getElementById('wb-import-dialog-modal').remove();
-            showToast(`世界书"${newWb.name}"导入成功`);
-            loadWorldbookUI();
-            window.pendingWorldbookImport = null;
-        }
-
-        function saveNewWorldbook() {
-            const name = document.getElementById('wb-name-input').value.trim();
-            const content = document.getElementById('wb-content-input').value.trim();
-            const isGlobal = document.getElementById('wb-global-checkbox').checked;
-            
-            if (!name) {
-                alert('请输入世界书名称');
-                return;
-            }
-            
-            if (!content) {
-                alert('请输入世界书内容');
-                return;
-            }
-            
-            const worldbook = {
-                id: 'wb_' + Date.now(),
-                name: name,
-                content: content,
-                isGlobal: isGlobal,
-                createdAt: new Date().toISOString()
-            };
-            
-            AppState.worldbooks.push(worldbook);
-            saveToStorage();
-            renderWorldbooks();
-            updateCharacterWorldbookSelects();
-            document.getElementById('add-worldbook-modal').remove();
-            alert('世界书创建成功');
-        }
-
-        function deleteWorldbook(wbId) {
-            const wb = AppState.worldbooks.find(w => w.id === wbId);
-            if (!wb) return;
-            
-            if (!confirm(`确定要删除「${wb.name}」吗？`)) return;
-            
-            AppState.worldbooks = AppState.worldbooks.filter(w => w.id !== wbId);
-            
-            // 清除所有已绑定该世界书的角色
-            AppState.conversations.forEach(conv => {
-                if (conv.boundWorldbooks && Array.isArray(conv.boundWorldbooks)) {
-                    conv.boundWorldbooks = conv.boundWorldbooks.filter(id => id !== wbId);
-                }
-            });
-            
-            saveToStorage();
-            renderWorldbooks();
-            updateCharacterWorldbookSelects();
-            alert('世界书已删除');
-        }
-
+        // ===== 角色心声系统 (已迁移到mind-state-manager.js) =====
+        // 所有心声功能由MindStateManager管理
+        
+        // ===== 世界书系统 (已迁移到worldbook.js) =====
+        // 所有世界书功能由WorldbookManager管理
+        
+        // 保留这些函数供其他模块调用
         function renderWorldbooks() {
-            const globalContainer = document.getElementById('global-worldbooks-list');
-            const localContainer = document.getElementById('local-worldbooks-list');
-            
-            if (!globalContainer || !localContainer) return;
-            
-            const globalWbs = AppState.worldbooks.filter(w => w.isGlobal);
-            const localWbs = AppState.worldbooks.filter(w => !w.isGlobal);
-            
-            globalContainer.innerHTML = globalWbs.map(wb => `
-                <div style="background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:10px;border-left:3px solid #000;">
-                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
-                        <h4 style="margin:0;font-size:13px;font-weight:600;flex:1;">${wb.name}</h4>
-                        <div style="display:flex;gap:4px;">
-                            <button onclick="editWorldbook('${wb.id}');" style="border:none;background:none;color:#333;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">编辑</button>
-                            <button onclick="deleteWorldbook('${wb.id}');" style="border:none;background:none;color:#f44;cursor:pointer;font-size:14px;padding:0;">✕</button>
-                        </div>
-                    </div>
-                    <p style="margin:0;font-size:12px;color:#666;line-height:1.4;max-height:60px;overflow:hidden;text-overflow:ellipsis;">${wb.content}</p>
-                    <div style="font-size:10px;color:#999;margin-top:6px;">创建于 ${new Date(wb.createdAt).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-            
-            localContainer.innerHTML = localWbs.map(wb => `
-                <div style="background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:10px;border-left:3px solid #666;">
-                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
-                        <h4 style="margin:0;font-size:13px;font-weight:600;flex:1;">${wb.name}</h4>
-                        <div style="display:flex;gap:4px;">
-                            <button onclick="editWorldbook('${wb.id}');" style="border:none;background:none;color:#333;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">编辑</button>
-                            <button onclick="deleteWorldbook('${wb.id}');" style="border:none;background:none;color:#f44;cursor:pointer;font-size:14px;padding:0;">✕</button>
-                        </div>
-                    </div>
-                    <p style="margin:0;font-size:12px;color:#666;line-height:1.4;max-height:60px;overflow:hidden;text-overflow:ellipsis;">${wb.content}</p>
-                    <div style="font-size:10px;color:#999;margin-top:6px;">创建于 ${new Date(wb.createdAt).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-            
-            if (globalWbs.length === 0) {
-                globalContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;font-size:13px;">暂无全局世界书</div>';
-            }
-            
-            if (localWbs.length === 0) {
-                localContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;font-size:13px;">暂无局部世界书</div>';
+            if (window.WorldbookManager) {
+                window.WorldbookManager.render();
             }
         }
         
-        // 编辑世界书
         function editWorldbook(wbId) {
-            const wb = AppState.worldbooks.find(w => w.id === wbId);
-            if (!wb) return;
-            
-            let modal = document.getElementById('edit-worldbook-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'edit-worldbook-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
-            
-            modal.innerHTML = `
-                <div style="background:#fff;border-radius:8px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <h3 style="margin:0;font-size:16px;font-weight:600;">编辑世界书</h3>
-                        <button onclick="document.getElementById('edit-worldbook-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;">✕</button>
-                    </div>
-                    
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">世界书名称</label>
-                        <input id="edit-wb-name-input" type="text" value="${wb.name}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;font-size:13px;">
-                    </div>
-                    
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;font-weight:600;">世界书内容</label>
-                        <textarea id="edit-wb-content-input" style="width:100%;height:200px;padding:8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;font-size:13px;resize:vertical;">${wb.content}</textarea>
-                    </div>
-                    
-                    <div style="display:flex;gap:8px;justify-content:flex-end;">
-                        <button onclick="document.getElementById('edit-worldbook-modal').remove();" style="padding:8px 16px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
-                        <button onclick="saveEditedWorldbook('${wbId}');" style="padding:8px 16px;border:none;border-radius:4px;background:#000;color:#fff;cursor:pointer;font-size:13px;">保存</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // 点击背景关闭
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
+            if (window.WorldbookManager) {
+                window.WorldbookManager.edit(wbId);
+            }
         }
         
-        // 保存编辑的世界书
-        function saveEditedWorldbook(wbId) {
-            const wb = AppState.worldbooks.find(w => w.id === wbId);
-            if (!wb) return;
-            
-            const name = document.getElementById('edit-wb-name-input').value.trim();
-            const content = document.getElementById('edit-wb-content-input').value.trim();
-            
-            if (!name || !content) {
-                showToast('名称和内容不能为空');
-                return;
+        function deleteWorldbook(wbId) {
+            if (window.WorldbookManager) {
+                window.WorldbookManager.delete(wbId);
             }
-            
-            wb.name = name;
-            wb.content = content;
-            
-            saveToStorage();
-            renderWorldbooks();
-            document.getElementById('edit-worldbook-modal').remove();
-            showToast('世界书已更新');
         }
 
         function updateCharacterWorldbookSelects() {
@@ -10710,12 +8936,29 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 console.log(`自动总结触发：未总结消息数 ${unsummarizedCount} >= ${summaryInterval}`);
                 // 延迟执行，避免阻塞UI
                 setTimeout(() => {
-                    summarizeContextWithAPI(convId, false); // false 表示自动总结
+                    CharacterSettingsManager.summarizeConversation(convId, true); // true 表示自动总结
                 }, 500);
             }
         }
 
+        // ========== 初始化主API管理器(线上模式) ==========
+        if (window.MainAPIManager) {
+            MainAPIManager.init(
+                AppState,
+                showToast,
+                saveToStorage,
+                showLoadingOverlay,
+                hideLoadingOverlay
+            );
+        }
+        
         // 暴露关键函数到 window 对象，以便其他页面/脚本访问
         window.saveToIndexDB = saveToIndexDB;
         window.getAppState = () => AppState;
         window.AppState = AppState;
+        window.getConversationState = getConversationState;
+        window.appendAssistantMessage = appendAssistantMessage;
+        window.setLoadingStatus = setLoadingStatus;
+        window.replaceNamePlaceholders = replaceNamePlaceholders;
+        window.extractGenderInfo = extractGenderInfo;
+        window.getEmojiInstructions = getEmojiInstructions;
