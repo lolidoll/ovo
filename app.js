@@ -536,10 +536,18 @@
             document.addEventListener('click', function(e) {
                 // 检查是否点击了chat-more-dots
                 const chatMoreDots = e.target.closest('.chat-more-dots') || e.target.closest('.chat-more');
-                if (chatMoreDots && AppState.currentChat) {
-                    openChatMoreMenu(AppState.currentChat);
+                if (chatMoreDots) {
+                    console.log('Chat more button clicked, currentChat:', AppState.currentChat);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (AppState.currentChat) {
+                        openChatMoreMenu(AppState.currentChat);
+                    } else {
+                        console.warn('AppState.currentChat is not set');
+                        showToast('未找到当前对话');
+                    }
                 }
-            }, true);
+            }, false);
 
             document.getElementById('chat-send-btn').addEventListener('click', function() {
                 sendMessage();
@@ -689,6 +697,35 @@
             const saveBtn = document.getElementById('save-settings-btn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', function() { saveApiSettingsFromUI(); });
+            }
+
+            // API参数锁定按钮
+            const lockBtn = document.getElementById('api-params-lock-btn');
+            const paramsContainer = document.getElementById('api-params-container');
+            if (lockBtn && paramsContainer) {
+                // 初始化锁定状态（从localStorage读取）
+                const isLocked = localStorage.getItem('apiParamsLocked') === 'true';
+                updateLockButtonState(isLocked);
+                
+                lockBtn.addEventListener('click', function() {
+                    const currentLocked = paramsContainer.classList.contains('locked');
+                    const newLocked = !currentLocked;
+                    
+                    if (newLocked) {
+                        paramsContainer.classList.add('locked');
+                        lockBtn.classList.add('locked');
+                        lockBtn.innerHTML = '<i class="fa-solid fa-lock"></i><span>已锁定</span>';
+                        showToast('主API参数已锁定，防止误触');
+                    } else {
+                        paramsContainer.classList.remove('locked');
+                        lockBtn.classList.remove('locked');
+                        lockBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i><span>解锁</span>';
+                        showToast('主API参数已解锁');
+                    }
+                    
+                    // 保存锁定状态
+                    localStorage.setItem('apiParamsLocked', newLocked);
+                });
             }
 
             const modelsSelect = document.getElementById('models-select');
@@ -5171,6 +5208,24 @@
             console.log('世界书UI由WorldbookManager管理');
         }
 
+        // API参数锁定状态更新函数
+        function updateLockButtonState(isLocked) {
+            const lockBtn = document.getElementById('api-params-lock-btn');
+            const paramsContainer = document.getElementById('api-params-container');
+            
+            if (lockBtn && paramsContainer) {
+                if (isLocked) {
+                    paramsContainer.classList.add('locked');
+                    lockBtn.classList.add('locked');
+                    lockBtn.innerHTML = '<i class="fa-solid fa-lock"></i><span>已锁定</span>';
+                } else {
+                    paramsContainer.classList.remove('locked');
+                    lockBtn.classList.remove('locked');
+                    lockBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i><span>解锁</span>';
+                }
+            }
+        }
+
         function saveApiSettingsFromUI() {
             const endpoint = (document.getElementById('api-endpoint') || {}).value || '';
             const apiKey = (document.getElementById('api-key') || {}).value || '';
@@ -7426,8 +7481,17 @@
         // ========== 角色设置相关 ==========
         // 直接打开角色设置，不再显示菜单
         function openChatMoreMenu(chat) {
+            console.log('openChatMoreMenu called with chat:', chat);
             if (chat) {
-                CharacterSettingsManager.openCharacterSettings(chat);
+                if (window.CharacterSettingsManager && window.CharacterSettingsManager.openCharacterSettings) {
+                    window.CharacterSettingsManager.openCharacterSettings(chat);
+                } else {
+                    console.error('CharacterSettingsManager not available');
+                    showToast('角色设置管理器未加载');
+                }
+            } else {
+                console.warn('No chat provided to openChatMoreMenu');
+                showToast('未找到角色信息');
             }
         }
 

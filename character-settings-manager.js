@@ -12,17 +12,28 @@
          * 打开角色设置页面（全屏子页面）
          */
         openCharacterSettings: function(chat) {
+            console.log('openCharacterSettings called with chat:', chat);
             if (!chat) {
+                console.error('No chat provided to openCharacterSettings');
                 showToast('未找到角色信息');
                 return;
             }
 
             let page = document.getElementById('character-settings-page');
             if (!page) {
+                console.log('Creating new character-settings-page');
                 page = document.createElement('div');
                 page.id = 'character-settings-page';
                 page.className = 'sub-page';
-                document.getElementById('app-container').appendChild(page);
+                const appContainer = document.getElementById('app-container');
+                if (!appContainer) {
+                    console.error('app-container not found');
+                    showToast('应用容器未找到');
+                    return;
+                }
+                appContainer.appendChild(page);
+            } else {
+                console.log('Reusing existing character-settings-page');
             }
 
             // 获取局部世界书列表
@@ -205,7 +216,16 @@
 
                     <!-- 消息气泡颜色设置 -->
                     <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;">消息气泡颜色</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <div style="font-size:15px;font-weight:600;color:#333;">消息气泡颜色</div>
+                            <button id="bubble-color-lock-btn" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;color:#666;transition:all 0.3s;" title="锁定防止误触">
+                                <svg id="bubble-lock-icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                <span id="bubble-lock-text">解锁</span>
+                            </button>
+                        </div>
                         
                         <!-- 角色消息气泡（左侧） -->
                         <div style="margin-bottom:20px;padding:12px;background:#f9f9f9;border-radius:8px;">
@@ -213,29 +233,32 @@
                             
                             <!-- RGB颜色控制 -->
                             <div style="margin-bottom:12px;">
-                                <div style="display:flex;gap:8px;margin-bottom:8px;">
-                                    <div style="flex:1;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+                                    <div>
                                         <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">红 (R)</label>
-                                        <input type="range" id="char-bubble-r" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" style="width:100%;">
-                                        <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-r-value">${chat.bubbleColor?.char?.r ?? 240}</div>
+                                        <input type="range" id="char-bubble-r" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
+                                        <input type="number" id="char-bubble-r-input" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
                                     </div>
-                                    <div style="flex:1;">
+                                    <div>
                                         <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">绿 (G)</label>
-                                        <input type="range" id="char-bubble-g" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" style="width:100%;">
-                                        <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-g-value">${chat.bubbleColor?.char?.g ?? 240}</div>
+                                        <input type="range" id="char-bubble-g" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
+                                        <input type="number" id="char-bubble-g-input" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
                                     </div>
-                                    <div style="flex:1;">
+                                    <div>
                                         <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">蓝 (B)</label>
-                                        <input type="range" id="char-bubble-b" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" style="width:100%;">
-                                        <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-b-value">${chat.bubbleColor?.char?.b ?? 240}</div>
+                                        <input type="range" id="char-bubble-b" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
+                                        <input type="number" id="char-bubble-b-input" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
                                     </div>
                                 </div>
                                 
                                 <!-- 透明度控制 -->
                                 <div style="margin-bottom:8px;">
                                     <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">透明度</label>
-                                    <input type="range" id="char-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.char?.alpha ?? 0.85) * 100}" style="width:100%;">
-                                    <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-alpha-value">${Math.round((chat.bubbleColor?.char?.alpha ?? 0.85) * 100)}%</div>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <input type="range" id="char-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.char?.alpha ?? 0.85) * 100}" style="flex:1;" class="bubble-slider">
+                                        <input type="number" id="char-bubble-alpha-input" min="0" max="100" value="${Math.round((chat.bubbleColor?.char?.alpha ?? 0.85) * 100)}" style="width:50px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
+                                        <span style="font-size:11px;color:#666;width:20px;">%</span>
+                                    </div>
                                 </div>
                                 
                                 <!-- 预览 -->
@@ -251,33 +274,36 @@
                             
                             <!-- RGB颜色控制 -->
                             <div style="margin-bottom:12px;">
-                                <div style="display:flex;gap:8px;margin-bottom:8px;">
-                                    <div style="flex:1;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+                                    <div>
                                         <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">红 (R)</label>
-                                        <input type="range" id="user-bubble-r" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" style="width:100%;">
-                                        <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-r-value">${chat.bubbleColor?.user?.r ?? 255}</div>
+                                        <input type="range" id="user-bubble-r" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
+                                        <input type="number" id="user-bubble-r-input" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
                                     </div>
-                                    <div style="flex:1;">
+                                    <div>
                                         <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">绿 (G)</label>
-                                        <input type="range" id="user-bubble-g" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" style="width:100%;">
-                                        <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-g-value">${chat.bubbleColor?.user?.g ?? 255}</div>
+                                        <input type="range" id="user-bubble-g" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
+                                        <input type="number" id="user-bubble-g-input" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
                                     </div>
-                                    <div style="flex:1;">
+                                    <div>
                                         <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">蓝 (B)</label>
-                                        <input type="range" id="user-bubble-b" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" style="width:100%;">
-                                        <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-b-value">${chat.bubbleColor?.user?.b ?? 255}</div>
+                                        <input type="range" id="user-bubble-b" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" style="width:100%;margin-bottom:4px;" class="bubble-slider">
+                                        <input type="number" id="user-bubble-b-input" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" style="width:100%;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
                                     </div>
                                 </div>
                                 
                                 <!-- 透明度控制 -->
                                 <div style="margin-bottom:8px;">
                                     <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">透明度</label>
-                                    <input type="range" id="user-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.user?.alpha ?? 0.85) * 100}" style="width:100%;">
-                                    <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-alpha-value">${Math.round((chat.bubbleColor?.user?.alpha ?? 0.85) * 100)}%</div>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <input type="range" id="user-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.user?.alpha ?? 0.85) * 100}" style="flex:1;" class="bubble-slider">
+                                        <input type="number" id="user-bubble-alpha-input" min="0" max="100" value="${Math.round((chat.bubbleColor?.user?.alpha ?? 0.85) * 100)}" style="width:50px;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:11px;text-align:center;" class="bubble-input">
+                                        <span style="font-size:11px;color:#666;width:20px;">%</span>
+                                    </div>
                                 </div>
                                 
                                 <!-- 预览 -->
-                                <div style="padding:10px;border-radius:8px;background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 255}, ${chat.bubbleColor?.user?.b ?? 255}, ${chat.bubbleColor?.user?.alpha ?? 0.85});color:#333;font-size:13px;text-align:center;" id="user-bubble-preview">
+                                <div style="padding:10px;border-radius:8px;background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 200}, ${chat.bubbleColor?.user?.b ?? 230}, ${chat.bubbleColor?.user?.alpha ?? 0.85});color:#333;font-size:13px;text-align:center;" id="user-bubble-preview">
                                     预览效果
                                 </div>
                             </div>
@@ -322,8 +348,9 @@
                     if (checkbox) checkbox.checked = true;
                 });
             }
-
+            
             this.bindCharacterSettingsEvents(chat);
+            console.log('Character settings page opened successfully');
         },
 
         /**
@@ -366,10 +393,28 @@
          * 绑定角色设置页面事件
          */
         bindCharacterSettingsEvents: function(chat) {
+            console.log('bindCharacterSettingsEvents called');
             // 返回按钮
-            document.getElementById('char-settings-back-btn').addEventListener('click', () => {
-                document.getElementById('character-settings-page').classList.remove('open');
-            });
+            const backBtn = document.getElementById('char-settings-back-btn');
+            if (backBtn) {
+                console.log('Found char-settings-back-btn, binding click event');
+                // 移除旧的事件监听器，防止重复绑定
+                const newBackBtn = backBtn.cloneNode(true);
+                backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+                
+                newBackBtn.addEventListener('click', (e) => {
+                    console.log('char-settings-back-btn clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const page = document.getElementById('character-settings-page');
+                    if (page) {
+                        console.log('Removing open class from character-settings-page');
+                        page.classList.remove('open');
+                    }
+                });
+            } else {
+                console.warn('char-settings-back-btn not found');
+            }
 
             // 角色头像修改
             const charAvatarBtn = document.getElementById('char-avatar-btn');
@@ -466,11 +511,41 @@
          * 绑定消息气泡颜色控制事件
          */
         bindBubbleColorEvents: function(chatId) {
+            // 锁定状态管理
+            let isLocked = false;
+            const lockBtn = document.getElementById('bubble-color-lock-btn');
+            const lockIcon = document.getElementById('bubble-lock-icon');
+            const lockText = document.getElementById('bubble-lock-text');
+            
+            // 锁定按钮事件
+            if (lockBtn) {
+                lockBtn.addEventListener('click', () => {
+                    isLocked = !isLocked;
+                    if (isLocked) {
+                        lockBtn.style.background = '#fff3cd';
+                        lockBtn.style.borderColor = '#ffc107';
+                        lockBtn.style.color = '#ff6b00';
+                        lockText.textContent = '已锁定';
+                        lockIcon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6m0 0l-3-3m3 3l3-3"></path>';
+                    } else {
+                        lockBtn.style.background = '#fff';
+                        lockBtn.style.borderColor = '#ddd';
+                        lockBtn.style.color = '#666';
+                        lockText.textContent = '解锁';
+                        lockIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>';
+                    }
+                });
+            }
+            
             // 角色气泡颜色控制
             const charR = document.getElementById('char-bubble-r');
             const charG = document.getElementById('char-bubble-g');
             const charB = document.getElementById('char-bubble-b');
             const charAlpha = document.getElementById('char-bubble-alpha');
+            const charRInput = document.getElementById('char-bubble-r-input');
+            const charGInput = document.getElementById('char-bubble-g-input');
+            const charBInput = document.getElementById('char-bubble-b-input');
+            const charAlphaInput = document.getElementById('char-bubble-alpha-input');
             const charPreview = document.getElementById('char-bubble-preview');
             
             // 用户气泡颜色控制
@@ -478,39 +553,87 @@
             const userG = document.getElementById('user-bubble-g');
             const userB = document.getElementById('user-bubble-b');
             const userAlpha = document.getElementById('user-bubble-alpha');
+            const userRInput = document.getElementById('user-bubble-r-input');
+            const userGInput = document.getElementById('user-bubble-g-input');
+            const userBInput = document.getElementById('user-bubble-b-input');
+            const userAlphaInput = document.getElementById('user-bubble-alpha-input');
             const userPreview = document.getElementById('user-bubble-preview');
             
             // 更新角色气泡预览
             const updateCharPreview = () => {
+                if (isLocked) return;
                 const r = charR.value;
                 const g = charG.value;
                 const b = charB.value;
                 const alpha = charAlpha.value / 100;
                 
-                document.getElementById('char-bubble-r-value').textContent = r;
-                document.getElementById('char-bubble-g-value').textContent = g;
-                document.getElementById('char-bubble-b-value').textContent = b;
-                document.getElementById('char-bubble-alpha-value').textContent = Math.round(alpha * 100) + '%';
+                charRInput.value = r;
+                charGInput.value = g;
+                charBInput.value = b;
+                charAlphaInput.value = Math.round(alpha * 100);
                 
                 charPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
             };
             
             // 更新用户气泡预览
             const updateUserPreview = () => {
+                if (isLocked) return;
                 const r = userR.value;
                 const g = userG.value;
                 const b = userB.value;
                 const alpha = userAlpha.value / 100;
                 
-                document.getElementById('user-bubble-r-value').textContent = r;
-                document.getElementById('user-bubble-g-value').textContent = g;
-                document.getElementById('user-bubble-b-value').textContent = b;
-                document.getElementById('user-bubble-alpha-value').textContent = Math.round(alpha * 100) + '%';
+                userRInput.value = r;
+                userGInput.value = g;
+                userBInput.value = b;
+                userAlphaInput.value = Math.round(alpha * 100);
                 
                 userPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
             };
             
-            // 绑定事件监听器
+            // 从输入框更新滑块（角色）
+            const updateCharFromInput = () => {
+                if (isLocked) return;
+                const r = Math.max(0, Math.min(255, parseInt(charRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(charGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(charBInput.value) || 0));
+                const alpha = Math.max(0, Math.min(100, parseInt(charAlphaInput.value) || 0));
+                
+                charR.value = r;
+                charG.value = g;
+                charB.value = b;
+                charAlpha.value = alpha;
+                
+                charRInput.value = r;
+                charGInput.value = g;
+                charBInput.value = b;
+                charAlphaInput.value = alpha;
+                
+                charPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+            };
+            
+            // 从输入框更新滑块（用户）
+            const updateUserFromInput = () => {
+                if (isLocked) return;
+                const r = Math.max(0, Math.min(255, parseInt(userRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(userGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(userBInput.value) || 0));
+                const alpha = Math.max(0, Math.min(100, parseInt(userAlphaInput.value) || 0));
+                
+                userR.value = r;
+                userG.value = g;
+                userB.value = b;
+                userAlpha.value = alpha;
+                
+                userRInput.value = r;
+                userGInput.value = g;
+                userBInput.value = b;
+                userAlphaInput.value = alpha;
+                
+                userPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+            };
+            
+            // 绑定滑块事件监听器
             if (charR) charR.addEventListener('input', updateCharPreview);
             if (charG) charG.addEventListener('input', updateCharPreview);
             if (charB) charB.addEventListener('input', updateCharPreview);
@@ -520,6 +643,35 @@
             if (userG) userG.addEventListener('input', updateUserPreview);
             if (userB) userB.addEventListener('input', updateUserPreview);
             if (userAlpha) userAlpha.addEventListener('input', updateUserPreview);
+            
+            // 绑定输入框事件监听器
+            if (charRInput) charRInput.addEventListener('change', updateCharFromInput);
+            if (charGInput) charGInput.addEventListener('change', updateCharFromInput);
+            if (charBInput) charBInput.addEventListener('change', updateCharFromInput);
+            if (charAlphaInput) charAlphaInput.addEventListener('change', updateCharFromInput);
+            
+            if (userRInput) userRInput.addEventListener('change', updateUserFromInput);
+            if (userGInput) userGInput.addEventListener('change', updateUserFromInput);
+            if (userBInput) userBInput.addEventListener('change', updateUserFromInput);
+            if (userAlphaInput) userAlphaInput.addEventListener('change', updateUserFromInput);
+            
+            // 防止在锁定状态下通过滑块修改
+            const preventLockedChange = (e) => {
+                if (isLocked) {
+                    e.preventDefault();
+                    e.target.style.opacity = '0.5';
+                    setTimeout(() => {
+                        e.target.style.opacity = '1';
+                    }, 200);
+                }
+            };
+            
+            [charR, charG, charB, charAlpha, userR, userG, userB, userAlpha].forEach(el => {
+                if (el) {
+                    el.addEventListener('mousedown', preventLockedChange);
+                    el.addEventListener('touchstart', preventLockedChange);
+                }
+            });
         },
 
         /**
