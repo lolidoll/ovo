@@ -203,6 +203,87 @@
                         ${chat.chatBgImage ? `<button id="chat-bg-clear-btn" style="padding:8px 12px;border:1px solid #f44;border-radius:4px;background:#fff;color:#f44;cursor:pointer;font-size:12px;width:100%;">清除背景</button>` : ''}
                     </div>
 
+                    <!-- 消息气泡颜色设置 -->
+                    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;">
+                        <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;">消息气泡颜色</div>
+                        
+                        <!-- 角色消息气泡（左侧） -->
+                        <div style="margin-bottom:20px;padding:12px;background:#f9f9f9;border-radius:8px;">
+                            <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;">角色消息气泡（左侧）</label>
+                            
+                            <!-- RGB颜色控制 -->
+                            <div style="margin-bottom:12px;">
+                                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">红 (R)</label>
+                                        <input type="range" id="char-bubble-r" min="0" max="255" value="${chat.bubbleColor?.char?.r ?? 240}" style="width:100%;">
+                                        <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-r-value">${chat.bubbleColor?.char?.r ?? 240}</div>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">绿 (G)</label>
+                                        <input type="range" id="char-bubble-g" min="0" max="255" value="${chat.bubbleColor?.char?.g ?? 240}" style="width:100%;">
+                                        <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-g-value">${chat.bubbleColor?.char?.g ?? 240}</div>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">蓝 (B)</label>
+                                        <input type="range" id="char-bubble-b" min="0" max="255" value="${chat.bubbleColor?.char?.b ?? 240}" style="width:100%;">
+                                        <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-b-value">${chat.bubbleColor?.char?.b ?? 240}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 透明度控制 -->
+                                <div style="margin-bottom:8px;">
+                                    <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">透明度</label>
+                                    <input type="range" id="char-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.char?.alpha ?? 0.85) * 100}" style="width:100%;">
+                                    <div style="text-align:center;font-size:11px;color:#666;" id="char-bubble-alpha-value">${Math.round((chat.bubbleColor?.char?.alpha ?? 0.85) * 100)}%</div>
+                                </div>
+                                
+                                <!-- 预览 -->
+                                <div style="padding:10px;border-radius:8px;background-color:rgba(${chat.bubbleColor?.char?.r ?? 240}, ${chat.bubbleColor?.char?.g ?? 240}, ${chat.bubbleColor?.char?.b ?? 240}, ${chat.bubbleColor?.char?.alpha ?? 0.85});color:#333;font-size:13px;text-align:center;" id="char-bubble-preview">
+                                    预览效果
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户消息气泡（右侧） -->
+                        <div style="padding:12px;background:#f9f9f9;border-radius:8px;">
+                            <label style="display:block;font-size:13px;color:#666;margin-bottom:10px;font-weight:600;">用户消息气泡（右侧）</label>
+                            
+                            <!-- RGB颜色控制 -->
+                            <div style="margin-bottom:12px;">
+                                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">红 (R)</label>
+                                        <input type="range" id="user-bubble-r" min="0" max="255" value="${chat.bubbleColor?.user?.r ?? 255}" style="width:100%;">
+                                        <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-r-value">${chat.bubbleColor?.user?.r ?? 255}</div>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">绿 (G)</label>
+                                        <input type="range" id="user-bubble-g" min="0" max="255" value="${chat.bubbleColor?.user?.g ?? 255}" style="width:100%;">
+                                        <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-g-value">${chat.bubbleColor?.user?.g ?? 255}</div>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">蓝 (B)</label>
+                                        <input type="range" id="user-bubble-b" min="0" max="255" value="${chat.bubbleColor?.user?.b ?? 255}" style="width:100%;">
+                                        <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-b-value">${chat.bubbleColor?.user?.b ?? 255}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 透明度控制 -->
+                                <div style="margin-bottom:8px;">
+                                    <label style="display:block;font-size:11px;color:#999;margin-bottom:4px;">透明度</label>
+                                    <input type="range" id="user-bubble-alpha" min="0" max="100" value="${(chat.bubbleColor?.user?.alpha ?? 0.85) * 100}" style="width:100%;">
+                                    <div style="text-align:center;font-size:11px;color:#666;" id="user-bubble-alpha-value">${Math.round((chat.bubbleColor?.user?.alpha ?? 0.85) * 100)}%</div>
+                                </div>
+                                
+                                <!-- 预览 -->
+                                <div style="padding:10px;border-radius:8px;background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 255}, ${chat.bubbleColor?.user?.b ?? 255}, ${chat.bubbleColor?.user?.alpha ?? 0.85});color:#333;font-size:13px;text-align:center;" id="user-bubble-preview">
+                                    预览效果
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 操作按钮 -->
                     <div style="display:flex;gap:8px;margin-bottom:12px;">
                         <button id="save-char-settings-btn" style="flex:1;padding:12px;border:none;border-radius:8px;background:#000;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">保存设置</button>
@@ -376,6 +457,69 @@
                     this.deleteAllMessages(chat.id);
                 });
             }
+
+            // 绑定消息气泡颜色控制事件
+            this.bindBubbleColorEvents(chat.id);
+        },
+
+        /**
+         * 绑定消息气泡颜色控制事件
+         */
+        bindBubbleColorEvents: function(chatId) {
+            // 角色气泡颜色控制
+            const charR = document.getElementById('char-bubble-r');
+            const charG = document.getElementById('char-bubble-g');
+            const charB = document.getElementById('char-bubble-b');
+            const charAlpha = document.getElementById('char-bubble-alpha');
+            const charPreview = document.getElementById('char-bubble-preview');
+            
+            // 用户气泡颜色控制
+            const userR = document.getElementById('user-bubble-r');
+            const userG = document.getElementById('user-bubble-g');
+            const userB = document.getElementById('user-bubble-b');
+            const userAlpha = document.getElementById('user-bubble-alpha');
+            const userPreview = document.getElementById('user-bubble-preview');
+            
+            // 更新角色气泡预览
+            const updateCharPreview = () => {
+                const r = charR.value;
+                const g = charG.value;
+                const b = charB.value;
+                const alpha = charAlpha.value / 100;
+                
+                document.getElementById('char-bubble-r-value').textContent = r;
+                document.getElementById('char-bubble-g-value').textContent = g;
+                document.getElementById('char-bubble-b-value').textContent = b;
+                document.getElementById('char-bubble-alpha-value').textContent = Math.round(alpha * 100) + '%';
+                
+                charPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            };
+            
+            // 更新用户气泡预览
+            const updateUserPreview = () => {
+                const r = userR.value;
+                const g = userG.value;
+                const b = userB.value;
+                const alpha = userAlpha.value / 100;
+                
+                document.getElementById('user-bubble-r-value').textContent = r;
+                document.getElementById('user-bubble-g-value').textContent = g;
+                document.getElementById('user-bubble-b-value').textContent = b;
+                document.getElementById('user-bubble-alpha-value').textContent = Math.round(alpha * 100) + '%';
+                
+                userPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            };
+            
+            // 绑定事件监听器
+            if (charR) charR.addEventListener('input', updateCharPreview);
+            if (charG) charG.addEventListener('input', updateCharPreview);
+            if (charB) charB.addEventListener('input', updateCharPreview);
+            if (charAlpha) charAlpha.addEventListener('input', updateCharPreview);
+            
+            if (userR) userR.addEventListener('input', updateUserPreview);
+            if (userG) userG.addEventListener('input', updateUserPreview);
+            if (userB) userB.addEventListener('input', updateUserPreview);
+            if (userAlpha) userAlpha.addEventListener('input', updateUserPreview);
         },
 
         /**
@@ -638,6 +782,37 @@
             window.AppState.apiSettings.summaryInterval = parseInt(document.getElementById('summary-interval').value) || 50;
             window.AppState.apiSettings.summaryKeepLatest = parseInt(document.getElementById('summary-keep-latest').value) || 10;
 
+            // 保存消息气泡颜色设置
+            const charR = document.getElementById('char-bubble-r');
+            const charG = document.getElementById('char-bubble-g');
+            const charB = document.getElementById('char-bubble-b');
+            const charAlpha = document.getElementById('char-bubble-alpha');
+            
+            const userR = document.getElementById('user-bubble-r');
+            const userG = document.getElementById('user-bubble-g');
+            const userB = document.getElementById('user-bubble-b');
+            const userAlpha = document.getElementById('user-bubble-alpha');
+            
+            if (charR && charG && charB && charAlpha) {
+                conv.bubbleColor = conv.bubbleColor || {};
+                conv.bubbleColor.char = {
+                    r: parseInt(charR.value),
+                    g: parseInt(charG.value),
+                    b: parseInt(charB.value),
+                    alpha: parseFloat(charAlpha.value) / 100
+                };
+            }
+            
+            if (userR && userG && userB && userAlpha) {
+                conv.bubbleColor = conv.bubbleColor || {};
+                conv.bubbleColor.user = {
+                    r: parseInt(userR.value),
+                    g: parseInt(userG.value),
+                    b: parseInt(userB.value),
+                    alpha: parseFloat(userAlpha.value) / 100
+                };
+            }
+
             saveToStorage();
             renderConversations();
 
@@ -657,6 +832,9 @@
                     }
                 }
                 
+                // 应用消息气泡颜色
+                this.applyBubbleColors(conv);
+                
                 renderChatMessages(charId);
                 const displayName = conv.remark || conv.name;
                 document.getElementById('chat-title').textContent = displayName;
@@ -664,6 +842,48 @@
 
             document.getElementById('character-settings-page').classList.remove('open');
             showToast('设置已保存');
+        },
+
+        /**
+         * 应用消息气泡颜色到聊天页面
+         */
+        applyBubbleColors: function(conv) {
+            if (!conv || !conv.bubbleColor) return;
+            
+            // 移除旧的样式标签（如果存在）
+            const oldStyle = document.getElementById('bubble-color-style');
+            if (oldStyle) {
+                oldStyle.remove();
+            }
+            
+            // 创建新的样式标签
+            const style = document.createElement('style');
+            style.id = 'bubble-color-style';
+            
+            let css = '';
+            
+            // 角色消息气泡（左侧/接收）
+            if (conv.bubbleColor.char) {
+                const { r, g, b, alpha } = conv.bubbleColor.char;
+                css += `
+                    .chat-bubble.received .chat-text {
+                        background-color: rgba(${r}, ${g}, ${b}, ${alpha}) !important;
+                    }
+                `;
+            }
+            
+            // 用户消息气泡（右侧/发送）
+            if (conv.bubbleColor.user) {
+                const { r, g, b, alpha } = conv.bubbleColor.user;
+                css += `
+                    .chat-bubble.sent .chat-text {
+                        background-color: rgba(${r}, ${g}, ${b}, ${alpha}) !important;
+                    }
+                `;
+            }
+            
+            style.textContent = css;
+            document.head.appendChild(style);
         },
 
         /**

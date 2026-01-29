@@ -2328,6 +2328,11 @@
                 }
             }
             
+            // 应用消息气泡颜色
+            if (window.CharacterSettingsManager && conv) {
+                window.CharacterSettingsManager.applyBubbleColors(conv);
+            }
+            
             // 隐藏多选工具栏
             const toolbar = document.getElementById('msg-multi-select-toolbar');
             if (toolbar) toolbar.remove();
@@ -2505,36 +2510,51 @@
                     retractWrapper.appendChild(retractNotice);
                     retractWrapper.appendChild(retractedContent);
                     
-                    // 添加长按事件监听（移动端）
-                    let pressTimer;
-                    let isTouching = false;
+                    // 添加长按事件监听（使用与普通消息相同的模式）
+                    let longPressTimer;
+                    let touchStarted = false;
+                    let touchStartX = 0;
+                    let touchStartY = 0;
                     
-                    retractWrapper.addEventListener('touchstart', function(e) {
-                        isTouching = true;
-                        const touch = e.touches[0];
-                        pressTimer = setTimeout(() => {
-                            if (isTouching) {
-                                // 防止默认行为和事件冒泡
-                                e.preventDefault();
-                                e.stopPropagation();
-                                showMessageContextMenu(msg, touch.clientX, touch.clientY);
+                    retractWrapper.addEventListener('touchstart', (e) => {
+                        touchStarted = true;
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                        longPressTimer = setTimeout(() => {
+                            if (touchStarted) {
+                                // 防止系统自动选择文本
+                                if (window.getSelection) {
+                                    window.getSelection().removeAllRanges();
+                                }
+                                showMessageContextMenu(msg, null, retractWrapper);
                             }
-                        }, 500);
-                    }, { passive: false });
+                        }, 300);
+                    }, { passive: true });
                     
-                    retractWrapper.addEventListener('touchend', function(e) {
-                        isTouching = false;
-                        clearTimeout(pressTimer);
-                    });
+                    retractWrapper.addEventListener('touchmove', (e) => {
+                        // 计算移动距离
+                        const moveX = Math.abs(e.touches[0].clientX - touchStartX);
+                        const moveY = Math.abs(e.touches[0].clientY - touchStartY);
+                        
+                        // 如果移动超过10px，认为是滚动，不是长按
+                        if (moveX > 10 || moveY > 10) {
+                            clearTimeout(longPressTimer);
+                            touchStarted = false;
+                        }
+                    }, { passive: true });
                     
-                    retractWrapper.addEventListener('touchmove', function(e) {
-                        isTouching = false;
-                        clearTimeout(pressTimer);
-                    });
+                    retractWrapper.addEventListener('touchend', (e) => {
+                        touchStarted = false;
+                        clearTimeout(longPressTimer);
+                        // 清除选择
+                        if (window.getSelection) {
+                            window.getSelection().removeAllRanges();
+                        }
+                    }, { passive: true });
                     
-                    retractWrapper.addEventListener('touchcancel', function(e) {
-                        isTouching = false;
-                        clearTimeout(pressTimer);
+                    retractWrapper.addEventListener('touchcancel', () => {
+                        touchStarted = false;
+                        clearTimeout(longPressTimer);
                     });
                     
                     // PC端右键菜单
