@@ -272,7 +272,7 @@ body {
   font-family: var(--pixel-font);
   color: #666;
   transition: color 0.2s;
-  padding: 4px 8px;
+  padding: 4px 6px;
 }
 
 .action-btn:hover {

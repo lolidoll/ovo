@@ -217,6 +217,22 @@ class MomentsManager {
         const avatarEl = document.getElementById('profileAvatar');
         if (avatarEl) {
           avatarEl.src = userAvatar;
+          avatarEl.style.cursor = 'pointer';
+          
+          // 头像可点击编辑
+          avatarEl.onclick = () => {
+            try {
+              const newAvatar = prompt('输入新头像URL:', userAvatar || '');
+              if (newAvatar && newAvatar.trim()) {
+                avatarEl.src = newAvatar.trim();
+                // 同步到侧边栏（这个函数会处理所有的更新）
+                this.syncAvatarToSidebar(newAvatar.trim());
+              }
+            } catch (e) {
+              console.log('修改头像出错:', e.message);
+            }
+          };
+          
           // 同步到AppState
           if (appState && appState.user) {
             appState.user.avatar = userAvatar;
@@ -393,13 +409,6 @@ class MomentsManager {
         console.log('Saved shupianjAppState');
       } catch (e) {
         console.log('保存到localStorage出错:', e.message);
-      }
-      
-      // 调用主应用的saveToStorage确保完整保存
-      if (typeof window.saveToStorage === 'function') {
-        window.saveToStorage().catch(e => {
-          console.log('主应用saveToStorage失败:', e.message);
-        });
       }
       
       // 调用主应用的saveToStorage确保完整保存
@@ -1040,7 +1049,7 @@ class MomentsManager {
           actions.className = 'feed-actions';
           actions.innerHTML = `
             <span class="feed-time">${time}</span>
-            <div style="display: flex; gap: 4px; margin-left: auto;">
+            <div style="display: flex; gap: 2px; margin-left: auto;">
               <button class="action-btn" onclick="momentsManager.toggleLike('${moment.id}')">
                 ${moment.liked ? '❤️ ' : ''}点赞
               </button>

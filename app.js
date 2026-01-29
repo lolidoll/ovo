@@ -229,9 +229,10 @@
                             bgImage: parsed.user.hasOwnProperty('bgImage') ? parsed.user.bgImage : AppState.user.bgImage,
                             coins: parsed.user.hasOwnProperty('coins') ? parsed.user.coins : AppState.user.coins,
                             theme: parsed.user.hasOwnProperty('theme') ? parsed.user.theme : AppState.user.theme,
-                            personality: parsed.user.hasOwnProperty('personality') ? parsed.user.personality : ''
+                            personality: parsed.user.hasOwnProperty('personality') ? parsed.user.personality : '',
+                            visitorCount: parsed.user.hasOwnProperty('visitorCount') ? parsed.user.visitorCount : AppState.user.visitorCount
                         };
-                        console.log('已恢复用户信息 - 头像:', AppState.user.avatar, '背景图:', AppState.user.bgImage);
+                        console.log('已恢复用户信息 - 头像:', AppState.user.avatar, '背景图:', AppState.user.bgImage, '访客总量:', AppState.user.visitorCount);
                     }
                     
                     // 合并其他属性
