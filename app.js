@@ -2473,6 +2473,9 @@
                         text-align: center;
                         margin: 8px 0;
                         padding: 8px 0;
+                        user-select: none;
+                        -webkit-user-select: none;
+                        -webkit-touch-callout: none;
                     `;
                     
                     // 撤回提示文字
@@ -2480,7 +2483,7 @@
                     retractNotice.style.cssText = `
                         color: #999;
                         font-size: 12px;
-                        margin-bottom: 4px;
+                        margin-bottom: 2px;
                     `;
                     retractNotice.textContent = msg.content;
                     
@@ -2488,31 +2491,49 @@
                     const retractedContent = document.createElement('div');
                     retractedContent.style.cssText = `
                         color: #bbb;
-                        font-size: 13px;
-                        padding: 8px 12px;
+                        font-size: 11px;
+                        padding: 6px 10px;
                         background: #f5f5f5;
                         border-radius: 4px;
                         display: inline-block;
                         max-width: 70%;
                         word-break: break-word;
-                        margin-top: 4px;
+                        margin-top: 2px;
                     `;
                     retractedContent.textContent = msg.retractedContent || '内容已删除';
                     
                     retractWrapper.appendChild(retractNotice);
                     retractWrapper.appendChild(retractedContent);
                     
-                    // 添加长按事件监听
+                    // 添加长按事件监听（移动端）
                     let pressTimer;
+                    let isTouching = false;
+                    
                     retractWrapper.addEventListener('touchstart', function(e) {
+                        isTouching = true;
+                        const touch = e.touches[0];
                         pressTimer = setTimeout(() => {
-                            showMessageContextMenu(msg, e.touches[0].clientX, e.touches[0].clientY);
+                            if (isTouching) {
+                                // 防止默认行为和事件冒泡
+                                e.preventDefault();
+                                e.stopPropagation();
+                                showMessageContextMenu(msg, touch.clientX, touch.clientY);
+                            }
                         }, 500);
-                    });
-                    retractWrapper.addEventListener('touchend', function() {
+                    }, { passive: false });
+                    
+                    retractWrapper.addEventListener('touchend', function(e) {
+                        isTouching = false;
                         clearTimeout(pressTimer);
                     });
-                    retractWrapper.addEventListener('touchmove', function() {
+                    
+                    retractWrapper.addEventListener('touchmove', function(e) {
+                        isTouching = false;
+                        clearTimeout(pressTimer);
+                    });
+                    
+                    retractWrapper.addEventListener('touchcancel', function(e) {
+                        isTouching = false;
                         clearTimeout(pressTimer);
                     });
                     
