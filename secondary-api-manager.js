@@ -37,7 +37,7 @@ const SecondaryAPIManager = (function() {
      * @param {string} systemPrompt - 系统提示词
      * @param {function} onSuccess - 成功回调
      * @param {function} onError - 失败回调
-     * @param {number} timeout - 超时时间(毫秒)，默认4分钟
+     * @param {number} timeout - 超时时间(毫秒)
      */
     function callSecondaryAPI(messages, systemPrompt, onSuccess, onError, timeout = 240000) {
         console.log('🔗 副API调用开始:', {
@@ -97,45 +97,7 @@ const SecondaryAPIManager = (function() {
             console.log('📥 副API响应状态:', res.status, res.statusText);
             if (!res.ok) {
                 return res.text().then(text => {
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('❌ 副API 请求失败');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('📍 请求端点:', endpoint);
-                    console.error('🔢 HTTP状态码:', res.status);
-                    console.error('📝 状态文本:', res.statusText);
-                    console.error('🎯 使用模型:', api.secondarySelectedModel);
-                    console.error('📊 消息数量:', messages.length + 1); // +1 包括system消息
-                    console.error('🔑 API密钥:', api.secondaryApiKey ? '已设置 (' + api.secondaryApiKey.substring(0, 8) + '...)' : '未设置');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('📄 完整错误响应体:');
-                    console.error(text);
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    
-                    // 尝试解析JSON格式的错误信息
-                    try {
-                        const errorJson = JSON.parse(text);
-                        console.error('🔍 解析后的错误信息:');
-                        console.error(JSON.stringify(errorJson, null, 2));
-                        
-                        // 提取常见的错误字段
-                        if (errorJson.error) {
-                            if (typeof errorJson.error === 'string') {
-                                console.error('💬 错误消息:', errorJson.error);
-                            } else if (errorJson.error.message) {
-                                console.error('💬 错误消息:', errorJson.error.message);
-                                if (errorJson.error.type) {
-                                    console.error('🏷️ 错误类型:', errorJson.error.type);
-                                }
-                                if (errorJson.error.code) {
-                                    console.error('🔖 错误代码:', errorJson.error.code);
-                                }
-                            }
-                        }
-                    } catch (jsonErr) {
-                        console.error('⚠️ 错误响应不是JSON格式');
-                    }
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    
+                    console.error('❌ 副API错误响应:', text);
                     throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 });
             }
@@ -219,7 +181,6 @@ const SecondaryAPIManager = (function() {
         }
 
         const controller = new AbortController();
-        // 超时时间改为4分钟（240秒）
         const timeoutId = setTimeout(() => controller.abort(), 240000);
 
         const normalized = api.secondaryEndpoint.replace(/\/$/, '');
@@ -260,45 +221,7 @@ const SecondaryAPIManager = (function() {
             console.log('📥 副API响应状态:', res.status, res.statusText);
             if (!res.ok) {
                 return res.text().then(text => {
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('❌ 副API 请求失败 [' + promptType + ']');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('📍 请求端点:', endpoint);
-                    console.error('🔢 HTTP状态码:', res.status);
-                    console.error('📝 状态文本:', res.statusText);
-                    console.error('🎯 使用模型:', api.secondarySelectedModel);
-                    console.error('🏷️ 提示词类型:', promptType);
-                    console.error('🔑 API密钥:', api.secondaryApiKey ? '已设置 (' + api.secondaryApiKey.substring(0, 8) + '...)' : '未设置');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('📄 完整错误响应体:');
-                    console.error(text);
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    
-                    // 尝试解析JSON格式的错误信息
-                    try {
-                        const errorJson = JSON.parse(text);
-                        console.error('🔍 解析后的错误信息:');
-                        console.error(JSON.stringify(errorJson, null, 2));
-                        
-                        // 提取常见的错误字段
-                        if (errorJson.error) {
-                            if (typeof errorJson.error === 'string') {
-                                console.error('💬 错误消息:', errorJson.error);
-                            } else if (errorJson.error.message) {
-                                console.error('💬 错误消息:', errorJson.error.message);
-                                if (errorJson.error.type) {
-                                    console.error('🏷️ 错误类型:', errorJson.error.type);
-                                }
-                                if (errorJson.error.code) {
-                                    console.error('🔖 错误代码:', errorJson.error.code);
-                                }
-                            }
-                        }
-                    } catch (jsonErr) {
-                        console.error('⚠️ 错误响应不是JSON格式');
-                    }
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    
+                    console.error('❌ 副API错误响应:', text);
                     throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 });
             }
@@ -318,41 +241,20 @@ const SecondaryAPIManager = (function() {
         })
         .catch(err => {
             clearTimeout(timeoutId);
-            
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.error('❌ 副API 请求异常 [' + promptType + ']');
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.error('📍 请求端点:', endpoint);
-            console.error('🎯 使用模型:', api.secondarySelectedModel);
-            console.error('🏷️ 提示词类型:', promptType);
-            console.error('⚠️ 异常类型:', err.name);
-            console.error('💬 异常信息:', err.message);
-            
+            console.error('❌ 副API调用失败 [' + promptType + ']:', err.name, err.message);
             if (err.name === 'AbortError') {
-                const errorMsg = '副API请求超时（240秒/4分钟）';
-                console.error('⏱️ 超时详情: 请求在4分钟后仍未完成');
-                console.error('💡 建议: 1) 检查模型是否响应缓慢 2) 检查网络连接 3) 考虑使用更快的模型');
+                const errorMsg = '副API请求超时（240秒）';
                 showToast(errorMsg);
                 if (onError) onError(errorMsg);
             } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
                 const errorMsg = '副API错误: CORS或网络问题，请检查端点配置';
-                console.error('🌐 网络错误详情:', err.message);
-                console.error('💡 可能原因:');
-                console.error('   1. API端点不支持CORS跨域请求');
-                console.error('   2. 网络连接中断');
-                console.error('   3. API服务器无法访问');
-                console.error('   4. 防火墙/代理阻止了请求');
                 showToast(errorMsg);
                 if (onError) onError(errorMsg);
             } else {
-                console.error('📋 完整错误对象:', err);
-                if (err.stack) {
-                    console.error('🔍 错误堆栈:', err.stack);
-                }
                 showToast(`副API错误: ${err.message}`);
                 if (onError) onError(err.message);
             }
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.error('副API错误详情:', err);
         });
     }
 
@@ -392,7 +294,7 @@ const SecondaryAPIManager = (function() {
             try {
                 console.log('🌐 正在尝试:', url);
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 240000);
                 
                 const headers = {
                     'Content-Type': 'application/json'
@@ -448,7 +350,7 @@ const SecondaryAPIManager = (function() {
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    lastError = '请求超时（30秒）';
+                    lastError = '请求超时（240秒）';
                     console.error('⏱️ 超时:', url);
                 } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
                     lastError = 'CORS 错误或网络问题。请检查副API端点是否支持跨域访问';

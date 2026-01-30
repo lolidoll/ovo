@@ -12,10 +12,6 @@
     <meta name="x5-page-mode" content="app">
     <meta name="full-screen" content="yes">
     <meta name="browsermode" content="application">
-    <meta name="screen-orientation" content="portrait">
-    <meta name="x-fullscreen" content="true">
-    <meta name="full-screen" content="yes">
-    <meta http-equiv="x-ua-compatible" content="IE=edge,chrome=1">
     <link rel="apple-touch-icon" href="https://image.uglycat.cc/qs8mf5.png">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='90' fill='%23333'>薯</text></svg>">
     <title>薯片机</title>
@@ -33,27 +29,10 @@
     <script>
         // 移动端全屏适配 - 动态计算视口高度
         (function() {
-            // 检测浏览器类型
-            const isOpera = /OPR|Opera/i.test(navigator.userAgent);
-            const isOperaMini = /Opera Mini/i.test(navigator.userAgent);
-            
             function setViewportHeight() {
                 // 获取真实的视口高度
-                let vh = window.innerHeight * 0.01;
-                let appHeight = window.innerHeight;
-                
-                // Opera浏览器特殊处理
-                if (isOpera || isOperaMini) {
-                    // 尝试使用screen.availHeight获取更准确的高度
-                    if (window.screen && window.screen.availHeight) {
-                        appHeight = Math.max(window.innerHeight, window.screen.availHeight);
-                        vh = appHeight * 0.01;
-                    }
-                    
-                    // 强制隐藏地址栏
-                    window.scrollTo(0, 1);
-                    setTimeout(() => window.scrollTo(0, 0), 0);
-                }
+                const vh = window.innerHeight * 0.01;
+                const appHeight = window.innerHeight;
                 
                 // 设置CSS自定义属性
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -62,11 +41,6 @@
                 // 针对iOS Safari的额外处理
                 if (CSS.supports && CSS.supports('-webkit-fill-available', '100vh')) {
                     document.documentElement.style.height = '-webkit-fill-available';
-                }
-                
-                // Opera浏览器额外的body高度设置
-                if (isOpera || isOperaMini) {
-                    document.body.style.minHeight = `${appHeight}px`;
                 }
             }
             
@@ -99,22 +73,9 @@
                 scrollTimer = setTimeout(setViewportHeight, 100);
             }, { passive: true });
             
-            // 触摸事件监听（Opera需要）
-            if (isOpera || isOperaMini) {
-                let touchTimer;
-                window.addEventListener('touchstart', function() {
-                    clearTimeout(touchTimer);
-                    touchTimer = setTimeout(setViewportHeight, 300);
-                }, { passive: true });
-            }
-            
             // 页面加载完成后再次确认
             window.addEventListener('load', function() {
                 setTimeout(setViewportHeight, 300);
-                // Opera需要额外的延迟确认
-                if (isOpera || isOperaMini) {
-                    setTimeout(setViewportHeight, 800);
-                }
             });
         })();
     </script>

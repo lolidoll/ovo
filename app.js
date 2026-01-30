@@ -1,4 +1,3 @@
-h
         // 应用状态
         const AppState = {
             currentTab: 'msg-page',
