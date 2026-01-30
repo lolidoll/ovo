@@ -533,41 +533,42 @@
             });
 
             // 聊天页面 - 角色设置按钮
-            // 使用更稳健的方案兼容所有浏览器（包括Opera）
-            let chatMoreClickTimeout = null;
+            // 优化：立即响应，只防止50ms内的重复触发
             let chatMoreLastClick = 0;
+            let chatMoreHandling = false;
             
             function handleChatMoreClick(e) {
-                // 防抖：防止同一次点击触发多次
-                const now = Date.now();
-                if (now - chatMoreLastClick < 300) {
-                    return;
-                }
-                
                 // 检查是否点击了chat-more相关元素
                 const chatMoreDots = e.target.closest('.chat-more-dots') || e.target.closest('.chat-more');
                 if (chatMoreDots) {
+                    // 防止极短时间内重复触发（仅50ms）
+                    const now = Date.now();
+                    if (chatMoreHandling || (now - chatMoreLastClick < 50)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                    
                     chatMoreLastClick = now;
+                    chatMoreHandling = true;
                     console.log('Chat more button clicked, currentChat:', AppState.currentChat);
+                    
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
                     
-                    // 清除之前的延迟执行
-                    if (chatMoreClickTimeout) {
-                        clearTimeout(chatMoreClickTimeout);
+                    // 立即执行
+                    if (AppState.currentChat) {
+                        openChatMoreMenu(AppState.currentChat);
+                    } else {
+                        console.warn('AppState.currentChat is not set');
+                        showToast('未找到当前对话');
                     }
                     
-                    // 延迟执行以确保事件完全处理
-                    chatMoreClickTimeout = setTimeout(() => {
-                        if (AppState.currentChat) {
-                            openChatMoreMenu(AppState.currentChat);
-                        } else {
-                            console.warn('AppState.currentChat is not set');
-                            showToast('未找到当前对话');
-                        }
-                        chatMoreClickTimeout = null;
-                    }, 10);
+                    // 重置处理标志
+                    setTimeout(() => {
+                        chatMoreHandling = false;
+                    }, 50);
                     
                     return false;
                 }
@@ -1512,139 +1513,9 @@
         // 打开情侣空间
         function openCouplespaceArea() {
             openSubPage('couples-space-page');
-            
-            // 异步加载内容
-            setTimeout(function() {
-                renderCouplespaceContent();
-            }, 100);
+            // couples-space.js 会自动初始化和渲染内容
         }
 
-        function renderCouplespaceContent() {
-            const contentDiv = document.getElementById('couples-space-content');
-            
-            // 显示所有对话的统计和情感进度
-            let html = '<div style="display:flex;flex-direction:column;gap:16px;">';
-            
-            if (AppState.conversations.length === 0) {
-                html = '<div style="text-align:center;color:#999;padding:40px 20px;">还没有开始任何对话哦~</div>';
-            } else {
-                // 添加标题
-                html += `
-                    <div style="border-bottom:2px solid #ff69b4;padding-bottom:12px;margin-bottom:8px;">
-                        <div style="font-size:18px;font-weight:bold;color:#333;">💝 我的情侣空间</div>
-                        <div style="font-size:12px;color:#999;margin-top:4px;">记录与TA的每一刻美好</div>
-                    </div>
-                `;
-                
-                // 列出所有对话
-                AppState.conversations.forEach(conv => {
-                    const messages = AppState.messages[conv.id] || [];
-                    const messageCount = messages.length;
-                    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-                    const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleString() : '暂无对话';
-                    
-                    html += `
-                        <div style="padding:12px;background:#fff;border-radius:8px;border-left:4px solid #ff69b4;">
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-                                <div style="width:50px;height:50px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                                    ${conv.avatar ? `<img src="${conv.avatar}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:20px;">${conv.name.charAt(0)}</span>`}
-                                </div>
-                                <div style="flex:1;min-width:0;">
-                                    <div style="font-weight:bold;font-size:14px;color:#333;">${conv.name}</div>
-                                    <div style="font-size:12px;color:#999;margin-top:2px;">消息数：${messageCount} | 最后在 ${lastMessageTime}</div>
-                                </div>
-                            </div>
-                            <button onclick="viewCouplespaceDetail('${conv.id}')" style="width:100%;padding:8px;border:1px solid #ff69b4;background:#fff;color:#ff69b4;border-radius:4px;cursor:pointer;font-size:12px;">查看详情</button>
-                        </div>
-                    `;
-                });
-            }
-            
-            html += '</div>';
-            contentDiv.innerHTML = html;
-        }
-
-        function viewCouplespaceDetail(convId) {
-            const conv = AppState.conversations.find(c => c.id === convId);
-            if (!conv) return;
-            
-            const messages = AppState.messages[convId] || [];
-            
-            let modal = document.getElementById('couples-detail-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'couples-detail-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            // 统计数据
-            const totalMessages = messages.length;
-            const userMessages = messages.filter(m => m.type === 'sent').length;
-            const charMessages = messages.filter(m => m.type === 'received').length;
-            const firstMessageTime = messages.length > 0 ? new Date(messages[0].timestamp).toLocaleDateString() : '无';
-            const lastMessageTime = messages.length > 0 ? new Date(messages[messages.length - 1].timestamp).toLocaleDateString() : '无';
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:500px;">
-                    <div style="padding:16px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
-                        <h3 style="margin:0;font-size:16px;color:#ff69b4;font-weight:600;">💞 ${conv.name} 的故事</h3>
-                        <button onclick="document.getElementById('couples-detail-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
-                    </div>
-                    
-                    <div style="padding:16px;max-height:60vh;overflow-y:auto;">
-                        <!-- 统计卡片 -->
-                        <div style="background:#ffe4f0;border-radius:8px;padding:16px;margin-bottom:16px;">
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                <div style="text-align:center;padding:12px;background:#fff;border-radius:6px;">
-                                    <div style="font-size:24px;font-weight:bold;color:#ff69b4;">${totalMessages}</div>
-                                    <div style="font-size:12px;color:#666;margin-top:4px;">总对话数</div>
-                                </div>
-                                <div style="text-align:center;padding:12px;background:#fff;border-radius:6px;">
-                                    <div style="font-size:24px;font-weight:bold;color:#ff69b4;">${userMessages}</div>
-                                    <div style="font-size:12px;color:#666;margin-top:4px;">我的消息</div>
-                                </div>
-                                <div style="text-align:center;padding:12px;background:#fff;border-radius:6px;">
-                                    <div style="font-size:24px;font-weight:bold;color:#ff69b4;">${charMessages}</div>
-                                    <div style="font-size:12px;color:#666;margin-top:4px;">TA的消息</div>
-                                </div>
-                                <div style="text-align:center;padding:12px;background:#fff;border-radius:6px;">
-                                    <div style="font-size:16px;font-weight:bold;color:#ff69b4;">${Math.ceil(charMessages > 0 ? (userMessages / charMessages) : 0).toFixed(1)}</div>
-                                    <div style="font-size:12px;color:#666;margin-top:4px;">话题比例</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 时间轴 -->
-                        <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:16px;">
-                            <div style="font-weight:bold;margin-bottom:8px;color:#333;">📅 对话时间</div>
-                            <div style="font-size:12px;color:#666;">开始于: ${firstMessageTime}</div>
-                            <div style="font-size:12px;color:#666;margin-top:4px;">最后在: ${lastMessageTime}</div>
-                        </div>
-                        
-                        <!-- 最近对话 -->
-                        <div style="padding:12px;background:#f9f9f9;border-radius:8px;">
-                            <div style="font-weight:bold;margin-bottom:8px;color:#333;">💬 最近的对话</div>
-                            <div style="display:flex;flex-direction:column;gap:8px;">
-                                ${messages.slice(-5).reverse().map((msg, idx) => `
-                                    <div style="padding:8px;background:#fff;border-radius:4px;border-left:3px solid #ff69b4;">
-                                        <div style="font-size:11px;color:#999;">${msg.type === 'sent' ? '你' : conv.name} • ${new Date(msg.timestamp).toLocaleTimeString()}</div>
-                                        <div style="font-size:12px;color:#333;margin-top:4px;word-break:break-all;max-height:40px;overflow:hidden;">${msg.content.substring(0, 100)}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
 
         // 处理侧边栏菜单点击
         function handleMenuClick(func) {
