@@ -5685,12 +5685,7 @@
                             success = true;
                             
                             // 🔧 修复：强制立即刷新聊天界面，确保AI回复立即显示
-                            if (AppState.currentChat && AppState.currentChat.id === convId) {
-                                // 使用 setTimeout 0 确保在下一个事件循环中渲染，避免被阻塞
-                                setTimeout(() => {
-                                    renderChatMessages();
-                                }, 0);
-                            }
+                            // appendAssistantMessage内部已经处理了渲染，这里不需要再次调用
                         } else {
                             lastError = '未在返回中找到文本回复';
                             console.error('❌ 无法从API响应中提取文本。完整响应数据:');
@@ -6611,7 +6606,15 @@
             
             if (shouldRender) {
                 console.log('🎨 立即调用 renderChatMessages()');
+                // 立即渲染，不使用延迟
                 renderChatMessages();
+                // 确保滚动到底部
+                setTimeout(() => {
+                    const container = document.getElementById('chat-messages');
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                }, 50);
             }
             
             renderConversations();
@@ -6766,6 +6769,13 @@
                     if (shouldRender) {
                         console.log('🎨 立即调用 renderChatMessages()');
                         renderChatMessages();
+                        // 确保滚动到底部
+                        setTimeout(() => {
+                            const container = document.getElementById('chat-messages');
+                            if (container) {
+                                container.scrollTop = container.scrollHeight;
+                            }
+                        }, 50);
                     }
                     
                     renderConversations();
