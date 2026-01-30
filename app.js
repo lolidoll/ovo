@@ -531,75 +531,66 @@
                 closeChatPage();
             });
 
-            // 聊天页面 - 角色设置按钮（移动端优化）
-            const chatMoreBtn = document.getElementById('chat-more-btn');
-            if (chatMoreBtn) {
-                console.log('✅ chat-more-btn found, attaching events');
+            // 聊天页面 - 角色设置按钮（使用事件委托，确保动态加载也能工作）
+            let touchHandled = false;
+            let lastTouchTime = 0;
+            
+            const handleMoreClick = function(e) {
+                console.log('🔘 Chat more button clicked:', {
+                    type: e.type,
+                    currentChat: AppState.currentChat ? AppState.currentChat.id : 'null',
+                    timestamp: Date.now()
+                });
                 
-                // 使用一个简单的防抖标志
-                let touchHandled = false;
-                let lastTouchTime = 0;
-                
-                const handleMoreClick = function(e) {
-                    console.log('🔘 Chat more button event triggered:', {
-                        type: e.type,
-                        currentChat: AppState.currentChat ? AppState.currentChat.id : 'null',
-                        timestamp: Date.now()
-                    });
-                    
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    if (AppState.currentChat) {
-                        console.log('📱 Opening chat more menu for:', AppState.currentChat.name);
-                        openChatMoreMenu(AppState.currentChat);
-                    } else {
-                        console.warn('⚠️ AppState.currentChat is not set');
-                        showToast('未找到当前对话');
-                    }
-                };
-                
-                // 移动端触摸事件 - touchstart
-                chatMoreBtn.addEventListener('touchstart', function(e) {
-                    console.log('👆 touchstart detected');
+                if (AppState.currentChat) {
+                    console.log('📱 Opening chat more menu for:', AppState.currentChat.name);
+                    openChatMoreMenu(AppState.currentChat);
+                } else {
+                    console.warn('⚠️ AppState.currentChat is not set');
+                    showToast('未找到当前对话');
+                }
+            };
+            
+            // 使用事件委托在document上监听
+            document.addEventListener('touchstart', function(e) {
+                const target = e.target.closest('#chat-more-btn');
+                if (target) {
+                    console.log('👆 touchstart on chat-more-btn');
                     lastTouchTime = Date.now();
                     touchHandled = true;
                     e.preventDefault();
-                }, { passive: false });
-                
-                // 移动端触摸事件 - touchend
-                chatMoreBtn.addEventListener('touchend', function(e) {
-                    console.log('👆 touchend detected, touchHandled:', touchHandled);
+                }
+            }, { passive: false, capture: true });
+            
+            document.addEventListener('touchend', function(e) {
+                const target = e.target.closest('#chat-more-btn');
+                if (target) {
+                    console.log('👆 touchend on chat-more-btn');
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // 只有在touchstart后300ms内的touchend才处理
                     const timeDiff = Date.now() - lastTouchTime;
                     if (timeDiff < 500) {
                         handleMoreClick(e);
                     }
                     
-                    // 300ms后重置标志
                     setTimeout(() => {
                         touchHandled = false;
-                        console.log('🔄 touchHandled reset');
                     }, 300);
-                }, { passive: false });
-                
-                // 桌面端点击事件
-                chatMoreBtn.addEventListener('click', function(e) {
-                    console.log('🖱️ click event detected, touchHandled:', touchHandled);
-                    if (!touchHandled) {
-                        handleMoreClick(e);
-                    } else {
-                        console.log('⏭️ click event skipped (touch handled)');
-                    }
-                });
-                
-                console.log('✅ All event listeners attached to chat-more-btn');
-            } else {
-                console.error('❌ chat-more-btn NOT FOUND in DOM');
-            }
+                }
+            }, { passive: false, capture: true });
+            
+            document.addEventListener('click', function(e) {
+                const target = e.target.closest('#chat-more-btn');
+                if (target && !touchHandled) {
+                    console.log('🖱️ click on chat-more-btn');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleMoreClick(e);
+                }
+            }, true);
+            
+            console.log('✅ Event delegation set up for chat-more-btn');
             
             // 保留全局函数以兼容可能的其他调用
             window.handleChatMoreButtonClick = function(e) {
@@ -7820,7 +7811,7 @@
         }
 
         // ========== 角色设置相关 ==========
-        // 直接打开角色设置，不再显示菜单
+        // 直接打开角色设置，不再显示菜单（全局可访问）
         function openChatMoreMenu(chat) {
             console.log('openChatMoreMenu called with chat:', chat);
             if (chat) {
@@ -7835,6 +7826,9 @@
                 showToast('未找到角色信息');
             }
         }
+        
+        // 确保全局可访问
+        window.openChatMoreMenu = openChatMoreMenu;
 
         // 角色设置和总结功能已迁移到 CharacterSettingsManager 模块
         // 保留全局函数引用以兼容旧代码
