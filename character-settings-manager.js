@@ -638,7 +638,7 @@
             const chatBgClearBtn = document.getElementById('chat-bg-clear-btn');
             if (chatBgClearBtn) {
                 chatBgClearBtn.addEventListener('click', () => {
-                    const conv = window.AppState.conversations.find(c => c.id === chat.id);
+                    const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === chat.id);
                     if (conv) {
                         conv.chatBgImage = null;
                         saveToStorage();
@@ -1030,12 +1030,12 @@
          */
         applyPersona: function(chatId) {
             const selectedPersonaId = document.getElementById('user-persona-select').value;
-            const conv = window.AppState.conversations.find(c => c.id === chatId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === chatId);
             
             if (!conv) return;
             
             if (selectedPersonaId) {
-                const persona = window.AppState.userPersonas.find(p => p.id === selectedPersonaId);
+                const persona = window.AppState.userPersonas && window.AppState.userPersonas.find(p => p.id === selectedPersonaId);
                 if (persona) {
                     document.getElementById('user-name-for-char').value = persona.userName;
                     document.getElementById('user-desc-input').value = persona.personality || '';
@@ -1043,7 +1043,7 @@
                     showToast('已应用人设: ' + persona.name);
                 }
             } else {
-                const defaultPersona = window.AppState.userPersonas.find(p => p.id === window.AppState.defaultPersonaId);
+                const defaultPersona = window.AppState.userPersonas && window.AppState.userPersonas.find(p => p.id === window.AppState.defaultPersonaId);
                 if (defaultPersona) {
                     document.getElementById('user-name-for-char').value = defaultPersona.userName;
                     document.getElementById('user-desc-input').value = defaultPersona.personality || '';
@@ -1094,7 +1094,7 @@
                 
                 const reader = new FileReader();
                 reader.onload = (readEvent) => {
-                    const conv = window.AppState.conversations.find(c => c.id === charId);
+                    const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
                     if (conv) {
                         conv.chatBgImage = readEvent.target.result;
                         saveToStorage();
@@ -1138,7 +1138,7 @@
          * 总结对话（使用副API）
          */
         summarizeConversation: function(convId, isAutomatic = false) {
-            const conv = window.AppState.conversations.find(c => c.id === convId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === convId);
             if (!conv) {
                 showToast('对话未找到');
                 return;
@@ -1202,7 +1202,7 @@
          * 编辑总结
          */
         editSummary: function(convId, summaryIndex) {
-            const conv = window.AppState.conversations.find(c => c.id === convId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === convId);
             if (!conv || !conv.summaries || !conv.summaries[summaryIndex]) return;
 
             const summary = conv.summaries[summaryIndex];
@@ -1227,7 +1227,7 @@
         deleteSummary: function(convId, summaryIndex) {
             if (!confirm('确定要删除这条总结吗？')) return;
 
-            const conv = window.AppState.conversations.find(c => c.id === convId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === convId);
             if (!conv || !conv.summaries) return;
 
             conv.summaries.splice(summaryIndex, 1);
@@ -1245,7 +1245,7 @@
          * 保存角色设置
          */
         saveCharacterSettings: function(charId) {
-            const conv = window.AppState.conversations.find(c => c.id === charId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
 
             // 保存基本信息
@@ -1255,7 +1255,7 @@
             conv.userNameForChar = document.getElementById('user-name-for-char').value || window.AppState.user.name;
 
             // 同步更新好友列表中的备注
-            const friend = window.AppState.friends.find(f => f.id === charId);
+            const friend = window.AppState.friends && window.AppState.friends.find(f => f.id === charId);
             if (friend) {
                 friend.remark = conv.remark;
             }
@@ -1440,7 +1440,7 @@
          * 删除角色
          */
         deleteCharacter: function(charId) {
-            const conv = window.AppState.conversations.find(c => c.id === charId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
 
             if (!confirm(`确定要删除 ${conv.name} 及其所有聊天记录吗？`)) return;
@@ -1475,7 +1475,7 @@
                 return;
             }
             
-            const conv = window.AppState.conversations.find(c => c.id === chatId);
+            const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === chatId);
             if (!conv) {
                 showToast('未找到该对话');
                 return;
