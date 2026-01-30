@@ -186,40 +186,6 @@ const LocationMessageModule = (function() {
         // 注意：不自动触发AI回复，用户需要手动双击头像来让AI回复
     }
 
-    // 显示地理位置详情
-    function showLocationDetails(locationName, locationAddress, locationBubbleEl) {
-        // locationBubbleEl 就是 .location-bubble 元素
-        if (!locationBubbleEl) {
-            return;
-        }
-
-        // 检查是否已经显示过详情
-        let nextEl = locationBubbleEl.nextElementSibling;
-        if (nextEl && nextEl.classList.contains('location-details')) {
-            // 第二次点击，隐藏详情
-            nextEl.remove();
-            return;
-        }
-
-        // 创建详情显示元素 - 插入到location-bubble的后面
-        const detailsDiv = document.createElement('div');
-        detailsDiv.className = 'location-details';
-        detailsDiv.innerHTML = `
-            <div class="location-detail-item">
-                <span class="location-detail-label">位置：</span>
-                <span class="location-detail-value">${escapeHtml(locationName)}</span>
-            </div>
-            ${locationAddress ? `
-                <div class="location-detail-item">
-                    <span class="location-detail-label">地址：</span>
-                    <span class="location-detail-value">${escapeHtml(locationAddress)}</span>
-                </div>
-            ` : ''}
-        `;
-
-        // 插入到location-bubble的后面
-        locationBubbleEl.parentNode.insertBefore(detailsDiv, locationBubbleEl.nextSibling);
-    }
 
     // AI回复地理位置消息
     function sendAILocationMessage(conversationId, locationName, locationAddress = '', locationDistance = 5) {
@@ -287,7 +253,6 @@ const LocationMessageModule = (function() {
         init: init,
         sendLocationMessage: sendLocationMessage,
         sendAILocationMessage: sendAILocationMessage,
-        showLocationDetails: showLocationDetails,
         getLocationMessage: getLocationMessage,
         closeLocationModal: closeLocationModal
     };

@@ -2998,19 +2998,6 @@
                         </div>
                     `;
                     bubble.classList.add('location-message');
-                    
-                    // 添加地理位置气泡的点击事件（仅在非多选模式下）
-                    if (!AppState.isSelectMode) {
-                        const locationBubble = bubble.querySelector('.location-bubble');
-                        if (locationBubble) {
-                            locationBubble.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                if (typeof LocationMessageModule !== 'undefined') {
-                                    LocationMessageModule.showLocationDetails(msg.locationName, msg.locationAddress, locationBubble);
-                                }
-                            });
-                        }
-                    }
                 } else if (msg.isForward && msg.forwardedMoment) {
                     // 转发朋友圈消息 - 简洁优雅的卡片（黑白灰风格）
                     console.log('🎯 检测到转发朋友圈消息:', msg);
