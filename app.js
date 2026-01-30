@@ -26,6 +26,11 @@
                 isLoadingMore: false, // 是否正在加载更多
                 scrollThreshold: 200 // 触发加载的滚动阈值（像素）
             },
+            // 渲染防抖
+            renderDebounce: {
+                timer: null,
+                delay: 16 // 约60fps
+            },
             apiSettings: {
                 endpoint: '',
                 apiKey: '',
@@ -2585,7 +2590,7 @@
             
             // 异步渲染消息和保存数据（避免阻塞UI）
             requestAnimationFrame(() => {
-                renderChatMessages();
+                renderChatMessagesDebounced();
                 saveToStorage();
                 renderConversations();
             });
@@ -2681,7 +2686,7 @@
             isMultiSelectMode: false
         };
 
-        // 虚拟滚动：渲染指定范围的消息
+        // 虚拟滚动：渲染指定范围的消息（使用DocumentFragment优化）
         function renderMessageRange(startIndex, endIndex, append = false) {
             const container = document.getElementById('chat-messages');
             const messages = AppState.messages[AppState.currentChat.id] || [];
@@ -2690,16 +2695,26 @@
             startIndex = Math.max(0, startIndex);
             endIndex = Math.min(messages.length, endIndex);
             
-            // 如果不是追加模式，清空容器
+            // 使用DocumentFragment批量插入，减少重排
+            const fragment = document.createDocumentFragment();
+            const tempContainer = document.createElement('div');
+            
+            // 渲染指定范围的消息到临时容器
+            for (let index = startIndex; index < endIndex; index++) {
+                const msg = messages[index];
+                renderSingleMessage(msg, index, tempContainer);
+            }
+            
+            // 将临时容器的内容移到fragment
+            while (tempContainer.firstChild) {
+                fragment.appendChild(tempContainer.firstChild);
+            }
+            
+            // 一次性插入DOM
             if (!append) {
                 container.innerHTML = '';
             }
-            
-            // 渲染指定范围的消息
-            for (let index = startIndex; index < endIndex; index++) {
-                const msg = messages[index];
-                renderSingleMessage(msg, index, container);
-            }
+            container.appendChild(fragment);
         }
         
         // 渲染单条消息（从原renderChatMessages中提取）
@@ -3095,150 +3110,14 @@
                     `;
                 }
                 
-                // 翻译关闭按钮事件
-                const closeTransBtn = bubble.querySelector('.close-trans-btn');
-                if (closeTransBtn) {
-                    closeTransBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        msg.translation = null;
-                        saveToStorage();
-                        renderChatMessages();
-                    });
-                }
-                
-                // 多选模式下的checkbox点击事件
-                // 处理多选/非多选模式的事件
-                if (AppState.isSelectMode) {
-                    // 多选模式：点击整个气泡即可选择
-                    bubble.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        // 不要触发其他点击事件
-                        toggleMessageSelection(msg.id);
-                    });
-                } else {
-                    // 语音条消息的点击事件 - 显示语音转文字
-                    if (msg.type === 'voice') {
-                        // 为voice-bubble绑定点击事件，而不是整个bubble
-                        const voiceBubbleEl = bubble.querySelector('.voice-bubble');
-                        if (voiceBubbleEl) {
-                            voiceBubbleEl.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                if (typeof VoiceMessageModule !== 'undefined' && VoiceMessageModule.showVoiceTranscript) {
-                                    VoiceMessageModule.showVoiceTranscript(msg.content, voiceBubbleEl);
-                                }
-                            });
-                            voiceBubbleEl.style.cursor = 'pointer';
-                        }
-                    }
-                    
-                    // 非多选模式：长按事件
-                    bubble.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        showMessageContextMenu(msg, e, bubble);
-                    });
-                    
-                    // 处理引用区域点击
-                    const replyArea = bubble.querySelector('[data-scroll-to]');
-                    if (replyArea) {
-                        replyArea.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const targetId = replyArea.dataset.scrollTo;
-                            scrollToMessage(targetId);
-                        });
-                    }
-                    
-                    // 长按支持（移动端）- 防止触发浏览器默认行为
-                    let longPressTimer;
-                    let touchStarted = false;
-                    let touchStartX = 0;
-                    let touchStartY = 0;
-                    let longPressTriggered = false;
-                    
-                    bubble.addEventListener('touchstart', (e) => {
-                        touchStarted = true;
-                        longPressTriggered = false;
-                        touchStartX = e.touches[0].clientX;
-                        touchStartY = e.touches[0].clientY;
-                        longPressTimer = setTimeout(() => {
-                            if (touchStarted) {
-                                longPressTriggered = true;
-                                // 防止系统自动选择文本
-                                if (window.getSelection) {
-                                    window.getSelection().removeAllRanges();
-                                }
-                                showMessageContextMenu(msg, null, bubble);
-                            }
-                        }, 500);
-                    }, { passive: true });
-                    
-                    bubble.addEventListener('touchmove', (e) => {
-                        // 计算移动距离
-                        const moveX = Math.abs(e.touches[0].clientX - touchStartX);
-                        const moveY = Math.abs(e.touches[0].clientY - touchStartY);
-                        
-                        // 如果移动超过10px，认为是滚动，不是长按
-                        if (moveX > 10 || moveY > 10) {
-                            clearTimeout(longPressTimer);
-                            touchStarted = false;
-                        }
-                    }, { passive: true });
-                    
-                    bubble.addEventListener('touchend', (e) => {
-                        touchStarted = false;
-                        clearTimeout(longPressTimer);
-                        
-                        // 如果长按已触发，阻止点击事件
-                        if (longPressTriggered) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                        
-                        // 清除选择
-                        if (window.getSelection) {
-                            window.getSelection().removeAllRanges();
-                        }
-                    }, { passive: false });
-                    
-                    bubble.addEventListener('touchcancel', () => {
-                        touchStarted = false;
-                        clearTimeout(longPressTimer);
-                    });
-                    
-                    // 鼠标长按支持
-                    let mouseDownTimer;
-                    bubble.addEventListener('mousedown', () => {
-                        mouseDownTimer = setTimeout(() => {
-                            // 防止系统自动选择文本
-                            if (window.getSelection) {
-                                window.getSelection().removeAllRanges();
-                            }
-                            const rect = bubble.getBoundingClientRect();
-                            const event = new MouseEvent('contextmenu', {
-                                bubbles: true,
-                                cancelable: true,
-                                clientX: rect.left + rect.width / 2,
-                                clientY: rect.top + rect.height / 2
-                            });
-                            bubble.dispatchEvent(event);
-                        }, 500);
-                    });
-                    
-                    bubble.addEventListener('mouseup', () => {
-                        clearTimeout(mouseDownTimer);
-                    });
-                    
-                    bubble.addEventListener('mouseleave', () => {
-                        clearTimeout(mouseDownTimer);
-                    });
-                }
-                
-                // 注意：头像双击事件已通过事件委托在容器级别处理，不在此处绑定
+                // 注意：所有事件监听器已移至容器级别的事件委托，不在此处绑定
+                // 这样可以避免为每条消息重复绑定事件，大幅提升性能
                 
                 container.appendChild(bubble);
             }
         }
         
-        // 主渲染函数：使用虚拟滚动
+        // 主渲染函数：使用虚拟滚动和事件委托优化
         function renderChatMessages(forceScrollToBottom = false) {
             const container = document.getElementById('chat-messages');
             
@@ -3258,6 +3137,27 @@
             }
             if (container._scrollHandler) {
                 container.removeEventListener('scroll', container._scrollHandler);
+            }
+            if (container._delegatedClickHandler) {
+                container.removeEventListener('click', container._delegatedClickHandler);
+            }
+            if (container._delegatedContextMenuHandler) {
+                container.removeEventListener('contextmenu', container._delegatedContextMenuHandler);
+            }
+            if (container._delegatedTouchStartHandler) {
+                container.removeEventListener('touchstart', container._delegatedTouchStartHandler);
+            }
+            if (container._delegatedTouchMoveHandler) {
+                container.removeEventListener('touchmove', container._delegatedTouchMoveHandler);
+            }
+            if (container._delegatedTouchEndHandler) {
+                container.removeEventListener('touchend', container._delegatedTouchEndHandler);
+            }
+            if (container._delegatedMouseDownHandler) {
+                container.removeEventListener('mousedown', container._delegatedMouseDownHandler);
+            }
+            if (container._delegatedMouseUpHandler) {
+                container.removeEventListener('mouseup', container._delegatedMouseUpHandler);
             }
             
             // 如果消息数量较少或禁用虚拟滚动，使用传统渲染
@@ -3282,15 +3182,6 @@
                 if (startIndex > 0) {
                     const loadMoreHint = document.createElement('div');
                     loadMoreHint.className = 'load-more-hint';
-                    loadMoreHint.style.cssText = `
-                        text-align: center;
-                        padding: 12px;
-                        color: #999;
-                        font-size: 13px;
-                        cursor: pointer;
-                        user-select: none;
-                        background: linear-gradient(to bottom, #f5f5f5, transparent);
-                    `;
                     loadMoreHint.textContent = `向上滑动加载更早的消息 (还有${startIndex}条)`;
                     loadMoreHint.onclick = () => loadMoreMessages();
                     container.insertBefore(loadMoreHint, container.firstChild);
@@ -3312,8 +3203,9 @@
                 container.addEventListener('scroll', scrollHandler, { passive: true });
             }
             
-            // 使用事件委托处理头像双击事件（避免重复绑定）
-            // 桌面端 dblclick
+            // ========== 事件委托：统一处理所有消息事件 ==========
+            
+            // 1. 头像双击事件（桌面端）
             const avatarDblClickHandler = (e) => {
                 const av = e.target.closest('.chat-avatar');
                 if (av && !AppState.isSelectMode) {
@@ -3326,7 +3218,7 @@
             container._avatarDblClickHandler = avatarDblClickHandler;
             container.addEventListener('dblclick', avatarDblClickHandler);
             
-            // 手机端双击检测（双 tap 计数器）
+            // 2. 头像双击事件（移动端）
             let avatarTapCount = 0;
             let avatarTapTimer = null;
             const avatarTouchHandler = (e) => {
@@ -3350,12 +3242,204 @@
             container._avatarTouchHandler = avatarTouchHandler;
             container.addEventListener('touchend', avatarTouchHandler, { passive: false });
             
+            // 3. 点击事件委托（多选模式、语音消息、引用跳转、翻译关闭）
+            const delegatedClickHandler = (e) => {
+                // 翻译关闭按钮
+                const closeTransBtn = e.target.closest('.close-trans-btn');
+                if (closeTransBtn) {
+                    e.stopPropagation();
+                    const msgId = closeTransBtn.dataset.msgId;
+                    const msg = messages.find(m => m.id === msgId);
+                    if (msg) {
+                        msg.translation = null;
+                        saveToStorage();
+                        renderChatMessagesDebounced();
+                    }
+                    return;
+                }
+                
+                // 引用区域点击
+                const replyArea = e.target.closest('[data-scroll-to]');
+                if (replyArea) {
+                    e.stopPropagation();
+                    const targetId = replyArea.dataset.scrollTo;
+                    scrollToMessage(targetId);
+                    return;
+                }
+                
+                // 语音消息点击
+                const voiceBubble = e.target.closest('.voice-bubble');
+                if (voiceBubble && !AppState.isSelectMode) {
+                    e.stopPropagation();
+                    const bubble = voiceBubble.closest('.chat-bubble');
+                    if (bubble) {
+                        const msgId = bubble.dataset.msgId;
+                        const msg = messages.find(m => m.id === msgId);
+                        if (msg && typeof VoiceMessageModule !== 'undefined' && VoiceMessageModule.showVoiceTranscript) {
+                            VoiceMessageModule.showVoiceTranscript(msg.content, voiceBubble);
+                        }
+                    }
+                    return;
+                }
+                
+                // 多选模式下的消息点击
+                if (AppState.isSelectMode) {
+                    const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
+                    if (bubble) {
+                        e.stopPropagation();
+                        const msgId = bubble.dataset.msgId;
+                        if (msgId) {
+                            toggleMessageSelection(msgId);
+                        }
+                    }
+                }
+            };
+            container._delegatedClickHandler = delegatedClickHandler;
+            container.addEventListener('click', delegatedClickHandler);
+            
+            // 4. 右键菜单事件委托
+            const delegatedContextMenuHandler = (e) => {
+                if (AppState.isSelectMode) return;
+                
+                const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
+                if (bubble) {
+                    e.preventDefault();
+                    const msgId = bubble.dataset.msgId;
+                    const msg = messages.find(m => m.id === msgId);
+                    if (msg) {
+                        showMessageContextMenu(msg, e, bubble);
+                    }
+                }
+            };
+            container._delegatedContextMenuHandler = delegatedContextMenuHandler;
+            container.addEventListener('contextmenu', delegatedContextMenuHandler);
+            
+            // 5. 长按事件委托（移动端）
+            let longPressTimer = null;
+            let touchStarted = false;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let longPressTriggered = false;
+            let touchedBubble = null;
+            
+            const delegatedTouchStartHandler = (e) => {
+                if (AppState.isSelectMode) return;
+                
+                const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
+                if (bubble) {
+                    touchedBubble = bubble;
+                    touchStarted = true;
+                    longPressTriggered = false;
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    
+                    longPressTimer = setTimeout(() => {
+                        if (touchStarted && touchedBubble) {
+                            longPressTriggered = true;
+                            if (window.getSelection) {
+                                window.getSelection().removeAllRanges();
+                            }
+                            const msgId = touchedBubble.dataset.msgId;
+                            const msg = messages.find(m => m.id === msgId);
+                            if (msg) {
+                                showMessageContextMenu(msg, null, touchedBubble);
+                            }
+                        }
+                    }, 500);
+                }
+            };
+            container._delegatedTouchStartHandler = delegatedTouchStartHandler;
+            container.addEventListener('touchstart', delegatedTouchStartHandler, { passive: true });
+            
+            const delegatedTouchMoveHandler = (e) => {
+                if (touchStarted) {
+                    const moveX = Math.abs(e.touches[0].clientX - touchStartX);
+                    const moveY = Math.abs(e.touches[0].clientY - touchStartY);
+                    
+                    if (moveX > 10 || moveY > 10) {
+                        clearTimeout(longPressTimer);
+                        touchStarted = false;
+                        touchedBubble = null;
+                    }
+                }
+            };
+            container._delegatedTouchMoveHandler = delegatedTouchMoveHandler;
+            container.addEventListener('touchmove', delegatedTouchMoveHandler, { passive: true });
+            
+            const delegatedTouchEndHandler = (e) => {
+                touchStarted = false;
+                clearTimeout(longPressTimer);
+                
+                if (longPressTriggered) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                if (window.getSelection) {
+                    window.getSelection().removeAllRanges();
+                }
+                
+                touchedBubble = null;
+            };
+            container._delegatedTouchEndHandler = delegatedTouchEndHandler;
+            container.addEventListener('touchend', delegatedTouchEndHandler, { passive: false });
+            
+            // 6. 鼠标长按事件委托
+            let mouseDownTimer = null;
+            let mouseDownBubble = null;
+            
+            const delegatedMouseDownHandler = (e) => {
+                if (AppState.isSelectMode) return;
+                
+                const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
+                if (bubble) {
+                    mouseDownBubble = bubble;
+                    mouseDownTimer = setTimeout(() => {
+                        if (mouseDownBubble) {
+                            if (window.getSelection) {
+                                window.getSelection().removeAllRanges();
+                            }
+                            const rect = mouseDownBubble.getBoundingClientRect();
+                            const event = new MouseEvent('contextmenu', {
+                                bubbles: true,
+                                cancelable: true,
+                                clientX: rect.left + rect.width / 2,
+                                clientY: rect.top + rect.height / 2
+                            });
+                            mouseDownBubble.dispatchEvent(event);
+                        }
+                    }, 500);
+                }
+            };
+            container._delegatedMouseDownHandler = delegatedMouseDownHandler;
+            container.addEventListener('mousedown', delegatedMouseDownHandler);
+            
+            const delegatedMouseUpHandler = () => {
+                clearTimeout(mouseDownTimer);
+                mouseDownBubble = null;
+            };
+            container._delegatedMouseUpHandler = delegatedMouseUpHandler;
+            container.addEventListener('mouseup', delegatedMouseUpHandler);
+            container.addEventListener('mouseleave', delegatedMouseUpHandler);
+            
             // 滚动到底部（多选模式下不滚动）
             if (!AppState.isSelectMode || forceScrollToBottom) {
                 requestAnimationFrame(() => {
                     container.scrollTop = container.scrollHeight;
                 });
             }
+        }
+        
+        // 防抖渲染函数
+        function renderChatMessagesDebounced(forceScrollToBottom = false) {
+            if (AppState.renderDebounce.timer) {
+                clearTimeout(AppState.renderDebounce.timer);
+            }
+            
+            AppState.renderDebounce.timer = setTimeout(() => {
+                renderChatMessages(forceScrollToBottom);
+                AppState.renderDebounce.timer = null;
+            }, AppState.renderDebounce.delay);
         }
         
         // 加载更多历史消息
@@ -3880,7 +3964,7 @@
                 if (index > -1) {
                     messages.splice(index, 1);
                     saveToStorage();
-                    renderChatMessages();
+                    renderChatMessagesDebounced();
                     showToast('消息已删除');
                 }
                 
@@ -3928,7 +4012,7 @@
                     }
                     
                     saveToStorage();
-                    renderChatMessages();
+                    renderChatMessagesDebounced();
                     showToast('消息已撤回');
                 }
                 
@@ -3996,7 +4080,7 @@
             msg.isEdited = true;
             
             saveToStorage();
-            renderChatMessages();
+            renderChatMessagesDebounced();
             showToast('消息已修改');
             
             // 关闭编辑对话框
@@ -4008,7 +4092,7 @@
             AppState.isSelectMode = true;
             AppState.selectedMessages = [msgId];
             
-            renderChatMessages();
+            renderChatMessagesDebounced();
             showMultiSelectToolbar();
             
             // 关闭菜单
@@ -4029,7 +4113,7 @@
                 const toolbar = document.getElementById('msg-multi-select-toolbar');
                 if (toolbar) toolbar.remove();
                 // 只有退出多选模式时才需要重新渲染
-                renderChatMessages();
+                renderChatMessagesDebounced();
                 return;
             }
             
@@ -4093,8 +4177,8 @@
                 AppState.isSelectMode = false;
                 
                 saveToStorage();
-                renderChatMessages();
-                
+                renderChatMessagesDebounced();
+
                 const toolbar = document.getElementById('msg-multi-select-toolbar');
                 if (toolbar) toolbar.remove();
                 
@@ -4243,7 +4327,7 @@
             const toolbar = document.getElementById('msg-multi-select-toolbar');
             if (toolbar) toolbar.remove();
             
-            renderChatMessages();
+            renderChatMessagesDebounced();
         }
 
         function selectAllMessages() {
@@ -4252,7 +4336,7 @@
             const messages = AppState.messages[AppState.currentChat.id] || [];
             AppState.selectedMessages = messages.map(m => m.id);
             
-            renderChatMessages();
+            renderChatMessagesDebounced();
             updateMultiSelectToolbar();
         }
 
@@ -4296,7 +4380,7 @@
             const toolbar = document.getElementById('msg-multi-select-toolbar');
             if (toolbar) toolbar.remove();
             
-            renderChatMessages();
+            renderChatMessagesDebounced();
         }
 
         function translateMessage(msgId) {
@@ -4502,7 +4586,7 @@
             };
             
             saveToStorage();
-            renderChatMessages();
+            renderChatMessagesDebounced();
             showToast('转换完成');
         }
 
@@ -4601,7 +4685,7 @@
                         result: result
                     };
                     saveToStorage();
-                    renderChatMessages();
+                    renderChatMessagesDebounced();
                     showToast('翻译完成');
                 },
                 (error) => {
@@ -4656,7 +4740,7 @@
                     
                     // 触发重新渲染UI
                     if (AppState.currentChat && AppState.currentChat.id === convId) {
-                        renderChatMessages();
+                        renderChatMessagesDebounced();
                     }
                     renderConversations();
                 },
@@ -4694,7 +4778,7 @@
                         result: result
                     };
                     saveToStorage();
-                    renderChatMessages();
+                    renderChatMessagesDebounced();
                     showToast('翻译完成');
                 },
                 (error) => {
@@ -4718,7 +4802,7 @@
                         result: result
                     };
                     saveToStorage();
-                    renderChatMessages();
+                    renderChatMessagesDebounced();
                     showToast('翻译完成');
                 },
                 (error) => {
@@ -4761,7 +4845,7 @@
             }
             
             saveToStorage();
-            renderChatMessages();
+            renderChatMessagesDebounced();
             renderConversations();
             
             // 清空输入
@@ -4889,7 +4973,7 @@
                 }
                 
                 // 重新渲染聊天消息以更新用户头像
-                renderChatMessages();
+                renderChatMessagesDebounced();
             } else if (currentPickerType === 'bg') {
                 console.log('正在应用新背景图:', imageUrl);
                 AppState.user.bgImage = imageUrl;
@@ -6821,7 +6905,7 @@
                     messages[msgIndex] = retractMsg;
                     
                     saveToStorage();
-                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
+                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessagesDebounced();
                     renderConversations();
                 }
                 
@@ -6997,7 +7081,7 @@
                 console.log('🎨 立即调用 renderChatMessages()');
                 // 使用 requestAnimationFrame 确保 DOM 更新在下一帧执行
                 requestAnimationFrame(() => {
-                    renderChatMessages();
+                    renderChatMessagesDebounced();
                     // 确保滚动到底部
                     requestAnimationFrame(() => {
                         const container = document.getElementById('chat-messages');
@@ -7161,7 +7245,7 @@
                         console.log('🎨 立即调用 renderChatMessages()');
                         // 使用 requestAnimationFrame 确保 DOM 更新在下一帧执行
                         requestAnimationFrame(() => {
-                            renderChatMessages();
+                            renderChatMessagesDebounced();
                             // 确保滚动到底部
                             requestAnimationFrame(() => {
                                 const container = document.getElementById('chat-messages');
@@ -7304,7 +7388,7 @@
                     }
                     
                     saveToStorage();
-                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
+                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessagesDebounced();
                     renderConversations();
                     
                     // 只在最后一条消息后触发通知和更新心声按钮
@@ -7575,7 +7659,7 @@
             }
             
             saveToStorage();
-            renderChatMessages();
+            renderChatMessagesDebounced();
             renderConversations();
             toggleEmojiLibrary();
         }

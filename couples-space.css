@@ -53,14 +53,15 @@
 }
 
 .cp-heart {
-    font-size: 28px;
+    font-size: 24px;
     color: #FFB6C9;
     animation: heartbeat 1.5s ease-in-out infinite;
+    flex-shrink: 0;
 }
 
 @keyframes heartbeat {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.08); }
 }
 
 .cp-name {
@@ -79,38 +80,39 @@
 
 /* ========== 功能网格 ========== */
 .cp-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     padding: 20px;
 }
 
 .cp-card {
     background: linear-gradient(145deg, #FFFFFF 0%, #FFFAFD 100%);
     border: 1px solid #FFE8F0;
-    border-radius: 20px;
-    padding: 24px;
-    text-align: center;
+    border-radius: 16px;
+    padding: 18px 24px;
+    text-align: left;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 12px rgba(255, 182, 193, 0.12);
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.08);
 }
 
 .cp-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.25);
+    transform: translateX(4px);
+    box-shadow: 0 4px 16px rgba(255, 182, 193, 0.2);
     border-color: #FFB6C9;
+    background: linear-gradient(145deg, #FFF9FB 0%, #FFFFFF 100%);
 }
 
-.cp-icon {
-    font-size: 40px;
-    margin-bottom: 12px;
+.cp-card:active {
+    transform: translateX(2px);
 }
 
 .cp-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: #D4A5B3;
+    letter-spacing: 0.5px;
 }
 
 /* ========== 空状态 ========== */
@@ -430,55 +432,6 @@
     white-space: pre-wrap;
 }
 
-/* ========== 心情网格 ========== */
-.cp-moods {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.cp-mood {
-    padding: 16px 8px;
-    background: white;
-    border: 2px solid #FFE8F0;
-    border-radius: 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.cp-mood:hover {
-    border-color: #FFB6C9;
-    transform: translateY(-2px);
-}
-
-.cp-mood-e {
-    font-size: 32px;
-    margin-bottom: 8px;
-}
-
-/* ========== 心愿列表 ========== */
-.cp-wishes {
-    margin-top: 20px;
-}
-
-.cp-wish-item {
-    background: white;
-    border: 1px solid #FFE8F0;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.cp-wish-text {
-    flex: 1;
-    font-size: 14px;
-    color: #333;
-}
 
 /* ========== 加载和错误状态 ========== */
 .cp-loading {

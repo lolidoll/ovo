@@ -17,23 +17,37 @@
             { id: 'funny', name: '幽默搞笑', desc: '轻松诙谐' }
         ],
         paperTheme: '',
-        paperColors: { bg: '#FFF0F5', border: '#FFC0D4', text: '#333' },
-        wishes: [],
-        moodRecords: []
+        paperColors: { bg: '#FFF0F5', border: '#FFC0D4', text: '#333' }
     };
     
     // ========== 工具函数 ==========
     function load() {
         try {
             const data = JSON.parse(localStorage.getItem('couplesSpaceData') || '{}');
-            Object.assign(State, data);
-        } catch(e) {}
+            if (data.partners) State.partners = data.partners;
+            if (data.currentPartnerId) State.currentPartnerId = data.currentPartnerId;
+            if (data.letterStyles) State.letterStyles = data.letterStyles;
+            if (data.paperTheme) State.paperTheme = data.paperTheme;
+            if (data.paperColors) State.paperColors = data.paperColors;
+        } catch(e) {
+            console.error('加载情侣空间数据失败:', e);
+        }
     }
     
     function save() {
         try {
-            localStorage.setItem('couplesSpaceData', JSON.stringify(State));
-        } catch(e) {}
+            const dataToSave = {
+                partners: State.partners,
+                currentPartnerId: State.currentPartnerId,
+                letterStyles: State.letterStyles,
+                paperTheme: State.paperTheme,
+                paperColors: State.paperColors
+            };
+            localStorage.setItem('couplesSpaceData', JSON.stringify(dataToSave));
+            console.log('情侣空间数据已保存:', dataToSave);
+        } catch(e) {
+            console.error('保存情侣空间数据失败:', e);
+        }
     }
     
     function toast(msg) {
@@ -120,24 +134,19 @@
                 ${p ? `
                     <div class="cp-grid">
                         <div class="cp-card" onclick="CS.dailyQ()">
-                            <div class="cp-icon">💭</div>
                             <div class="cp-title">每日一问</div>
                         </div>
                         <div class="cp-card" onclick="CS.letter()">
-                            <div class="cp-icon">💌</div>
                             <div class="cp-title">AI情书</div>
                         </div>
-                        <div class="cp-card" onclick="CS.mood()">
-                            <div class="cp-icon">💗</div>
-                            <div class="cp-title">心情日记</div>
+                        <div class="cp-card" onclick="CS.miniTheater()">
+                            <div class="cp-title">小剧场</div>
                         </div>
-                        <div class="cp-card" onclick="CS.wish()">
-                            <div class="cp-icon">⭐</div>
+                        <div class="cp-card" onclick="CS.adventureCard()">
+                            <div class="cp-title">日常奇遇卡</div>
+                        </div>
+                        <div class="cp-card" onclick="CS.wishList()">
                             <div class="cp-title">心愿清单</div>
-                        </div>
-                        <div class="cp-card" onclick="CS.styleManager()">
-                            <div class="cp-icon">🎨</div>
-                            <div class="cp-title">风格管理</div>
                         </div>
                     </div>
                 ` : `
@@ -241,38 +250,172 @@
                 <h3>每日一问</h3>
                 <button class="cp-close" onclick="CS.close('dq')">×</button>
                 <div class="cp-modal-body">
-                    <div id="dq-q" class="cp-loading">正在生成问题...</div>
-                    <div id="dq-a" style="display:none">
-                        <div class="cp-label">TA的回答:</div>
-                        <div id="dq-a-content"></div>
+                    <div class="cp-section">
+                        <div class="cp-subtitle">选择提问方式</div>
+                        <div style="display:flex;gap:12px;margin-bottom:20px;">
+                            <button class="cp-btn" onclick="CS.showCustomQuestion()" style="flex:1">自定义问题</button>
+                            <button class="cp-btn" onclick="CS.generateQuestion()" style="flex:1">AI生成问题</button>
+                        </div>
+                    </div>
+                    
+                    <div id="dq-custom" style="display:none">
+                        <div class="cp-label">输入你的问题</div>
+                        <textarea id="dq-custom-input" class="cp-textarea" placeholder="想问TA什么呢..." style="min-height:100px"></textarea>
+                        <button class="cp-btn" onclick="CS.askCustomQuestion()">提问</button>
+                    </div>
+                    
+                    <div id="dq-result" style="display:none">
+                        <div class="cp-label">问题</div>
+                        <div id="dq-question" class="cp-question"></div>
+                        <div class="cp-label" style="margin-top:16px">TA的回答</div>
+                        <div id="dq-answer"></div>
                     </div>
                 </div>
             `);
+        },
+        
+        showCustomQuestion() {
+            document.getElementById('dq-custom').style.display = 'block';
+            document.getElementById('dq-result').style.display = 'none';
+        },
+        
+        askCustomQuestion() {
+            const question = document.getElementById('dq-custom-input').value.trim();
+            if (!question) return toast('请输入问题');
             
-            const msgs = getMessages(p.id).slice(-10).map(m => m.content).join('\n');
-            callAI(`基于对话历史生成一个有趣的情侣问题（20字内）:\n${msgs || '无历史'}`, p.id)
-                .then(q => {
-                    document.getElementById('dq-q').innerHTML = `
-                        <div class="cp-question">${q}</div>
-                        <button class="cp-btn" onclick="CS.getAnswer('${q.replace(/'/g, "\\'")}')">获取回答</button>
-                    `;
+            document.getElementById('dq-custom').style.display = 'none';
+            document.getElementById('dq-result').style.display = 'block';
+            document.getElementById('dq-question').textContent = question;
+            document.getElementById('dq-answer').innerHTML = '<div class="cp-loading">生成回答中...</div>';
+            
+            CS.getAnswerForQuestion(question);
+        },
+        
+        generateQuestion() {
+            document.getElementById('dq-result').style.display = 'block';
+            document.getElementById('dq-question').innerHTML = '<div class="cp-loading">AI生成问题与回答中...</div>';
+            document.getElementById('dq-answer').innerHTML = '';
+            
+            const p = getPartner();
+            const userName = (typeof AppState !== 'undefined' && AppState.user.name) || '我';
+            
+            // 获取用户人设
+            let userPersonality = '';
+            if (typeof AppState !== 'undefined') {
+                const conv = AppState.conversations.find(c => c.id === p.id);
+                if (conv && conv.boundPersonaId) {
+                    const persona = AppState.userPersonas.find(p => p.id === conv.boundPersonaId);
+                    if (persona) userPersonality = persona.personality || '';
+                } else if (AppState.user && AppState.user.personality) {
+                    userPersonality = AppState.user.personality;
+                }
+            }
+            
+            // 获取角色人设
+            let charPersonality = '';
+            if (typeof AppState !== 'undefined') {
+                const conv = AppState.conversations.find(c => c.id === p.id);
+                if (conv) {
+                    charPersonality = conv.personality || conv.description || '';
+                }
+            }
+            
+            // 获取对话历史
+            const msgs = getMessages(p.id).slice(-10).map(m => `${m.isUser ? userName : p.name}: ${m.content}`).join('\n');
+            
+            const prompt = `你正在情侣空间中为${userName}和${p.name}生成一个有趣的情侣问题和回答。
+
+【用户信息】
+名字：${userName}
+${userPersonality ? `人设：${userPersonality}` : ''}
+
+【角色信息】
+名字：${p.name}
+${charPersonality ? `人设：${charPersonality}` : ''}
+
+【对话历史】
+${msgs || '暂无对话历史'}
+
+请生成：
+1. 一个适合情侣之间的有趣问题（15-30字）
+2. ${p.name}对这个问题的回答（50-100字，要符合TA的性格，用亲密温暖的语气）
+
+返回JSON格式：{"question":"问题内容","answer":"回答内容"}
+不要任何额外说明，只返回JSON。`;
+            
+            callAI(prompt, p.id)
+                .then(resp => {
+                    try {
+                        const match = resp.match(/\{[^}]+\}/);
+                        if (!match) throw new Error('格式错误');
+                        const result = JSON.parse(match[0]);
+                        
+                        document.getElementById('dq-question').textContent = result.question;
+                        document.getElementById('dq-answer').innerHTML = `<p>${result.answer}</p>`;
+                    } catch(e) {
+                        document.getElementById('dq-question').innerHTML = '<div class="cp-error">生成失败，请重试</div>';
+                        document.getElementById('dq-answer').innerHTML = '';
+                        console.error(e);
+                    }
                 })
                 .catch(() => {
-                    document.getElementById('dq-q').innerHTML = '<div class="cp-error">生成失败</div>';
+                    document.getElementById('dq-question').innerHTML = '<div class="cp-error">生成失败</div>';
+                    document.getElementById('dq-answer').innerHTML = '';
                 });
         },
         
-        getAnswer(q) {
+        getAnswerForQuestion(question) {
             const p = getPartner();
-            const el = document.getElementById('dq-a');
-            const content = document.getElementById('dq-a-content');
-            el.style.display = 'block';
-            content.innerHTML = '<div class="cp-loading">生成中...</div>';
+            const userName = (typeof AppState !== 'undefined' && AppState.user.name) || '我';
             
-            const msgs = getMessages(p.id).slice(-10).map(m => m.content).join('\n');
-            callAI(`你是${p.name}。你的伴侣问："${q}"。用亲密温暖的语气回答(50-100字):\n对话历史:${msgs}`, p.id)
-                .then(a => { content.innerHTML = `<p>${a}</p>`; })
-                .catch(() => { content.innerHTML = '<div class="cp-error">生成失败</div>'; });
+            // 获取用户人设
+            let userPersonality = '';
+            if (typeof AppState !== 'undefined') {
+                const conv = AppState.conversations.find(c => c.id === p.id);
+                if (conv && conv.boundPersonaId) {
+                    const persona = AppState.userPersonas.find(p => p.id === conv.boundPersonaId);
+                    if (persona) userPersonality = persona.personality || '';
+                } else if (AppState.user && AppState.user.personality) {
+                    userPersonality = AppState.user.personality;
+                }
+            }
+            
+            // 获取角色人设
+            let charPersonality = '';
+            if (typeof AppState !== 'undefined') {
+                const conv = AppState.conversations.find(c => c.id === p.id);
+                if (conv) {
+                    charPersonality = conv.personality || conv.description || '';
+                }
+            }
+            
+            // 获取对话历史
+            const msgs = getMessages(p.id).slice(-10).map(m => `${m.isUser ? userName : p.name}: ${m.content}`).join('\n');
+            
+            const prompt = `你是${p.name}，现在在你和${userName}的情侣空间中。
+
+【你的信息】
+名字：${p.name}
+${charPersonality ? `人设：${charPersonality}` : ''}
+
+【对方信息】
+名字：${userName}
+${userPersonality ? `人设：${userPersonality}` : ''}
+
+【对话历史】
+${msgs || '暂无对话历史'}
+
+${userName}在情侣空间向你提问："${question}"
+
+请用亲密温暖的语气回答这个问题（50-100字），要符合你的性格特点。直接输出回答内容，不要任何额外说明。`;
+            
+            callAI(prompt, p.id)
+                .then(answer => {
+                    document.getElementById('dq-answer').innerHTML = `<p>${answer}</p>`;
+                })
+                .catch(() => {
+                    document.getElementById('dq-answer').innerHTML = '<div class="cp-error">生成失败</div>';
+                });
         },
         
         letter() {
@@ -285,8 +428,9 @@
                 <div class="cp-modal-body">
                     <div class="cp-label">情书风格</div>
                     <select id="let-style" class="cp-select">
-                        ${State.letterStyles.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                        ${State.letterStyles.map(s => `<option value="${s.id}">${s.name} - ${s.desc}</option>`).join('')}
                     </select>
+                    <button class="cp-btn-sec" onclick="CS.manageStyles()" style="margin-top:8px;width:100%">管理风格</button>
                     
                     <div class="cp-label" style="margin-top:16px">信纸主题关键词</div>
                     <input type="text" id="let-theme" class="cp-input"
@@ -416,132 +560,9 @@
             navigator.clipboard.writeText(text).then(() => toast('已复制')).catch(() => toast('复制失败'));
         },
         
-        mood() {
-            const p = getPartner();
-            if (!p) return toast('请先选择情侣');
-            
-            const moods = [
-                { id: 'happy', n: '开心', e: '😊' },
-                { id: 'love', n: '甜蜜', e: '🥰' },
-                { id: 'sad', n: '难过', e: '😢' },
-                { id: 'tired', n: '疲惫', e: '😴' }
-            ];
-            
-            modal('mood', `
-                <h3>心情日记</h3>
-                <button class="cp-close" onclick="CS.close('mood')">×</button>
-                <div class="cp-modal-body">
-                    <div class="cp-moods">
-                        ${moods.map(m => `
-                            <div class="cp-mood" onclick="CS.selMood('${m.id}','${m.n}')">
-                                <div class="cp-mood-e">${m.e}</div>
-                                <div>${m.n}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div id="mood-form" style="display:none">
-                        <textarea id="mood-note" class="cp-textarea" placeholder="想说的话..."></textarea>
-                        <button class="cp-btn" onclick="CS.submitMood()">提交</button>
-                        <div id="mood-resp" style="display:none">
-                            <div class="cp-label">TA的回应:</div>
-                            <div id="mood-resp-content"></div>
-                        </div>
-                    </div>
-                </div>
-            `);
-        },
-        
-        selMood(id, name) {
-            const form = document.getElementById('mood-form');
-            form.style.display = 'block';
-            form.dataset.mood = id;
-            form.dataset.moodName = name;
-        },
-        
-        submitMood() {
-            const p = getPartner();
-            const form = document.getElementById('mood-form');
-            const moodName = form.dataset.moodName;
-            const note = document.getElementById('mood-note').value;
-            
-            State.moodRecords.push({ pId: p.id, mood: moodName, note, time: Date.now() });
-            save();
-            
-            const resp = document.getElementById('mood-resp');
-            const respContent = document.getElementById('mood-resp-content');
-            resp.style.display = 'block';
-            respContent.innerHTML = '<div class="cp-loading">生成中...</div>';
-            
-            callAI(`你是${p.name}。伴侣现在心情${moodName}${note?`，说:"${note}"`:''}。温柔回应(50-80字)`, p.id)
-                .then(r => { respContent.innerHTML = `<p>${r}</p>`; })
-                .catch(() => { respContent.innerHTML = '<div class="cp-error">生成失败</div>'; });
-        },
-        
-        wish() {
-            const p = getPartner();
-            if (!p) return toast('请先选择情侣');
-            
-            const wishes = State.wishes.filter(w => w.pId === p.id);
-            
-            modal('wish', `
-                <h3>心愿清单</h3>
-                <button class="cp-close" onclick="CS.close('wish')">×</button>
-                <div class="cp-modal-body">
-                    <button class="cp-btn" onclick="CS.showAddWish()">+ 添加心愿</button>
-                    <div id="wish-form" style="display:none">
-                        <input type="text" id="wish-input" class="cp-input" placeholder="输入心愿..." maxlength="100">
-                        <button class="cp-btn-sec" onclick="CS.hideAddWish()">取消</button>
-                        <button class="cp-btn" onclick="CS.addWish()">确定</button>
-                    </div>
-                    <div class="cp-wishes">
-                        ${wishes.length > 0 ? wishes.map((w, i) => `
-                            <div class="cp-wish-item">
-                                <div class="cp-wish-text">⭐ ${w.text}</div>
-                                <button class="cp-remove" onclick="CS.delWish(${i})">×</button>
-                            </div>
-                        `).join('') : '<div class="cp-empty-text">还没有心愿</div>'}
-                    </div>
-                </div>
-            `);
-        },
-        
-        showAddWish() {
-            document.getElementById('wish-form').style.display = 'block';
-        },
-        
-        hideAddWish() {
-            document.getElementById('wish-form').style.display = 'none';
-            document.getElementById('wish-input').value = '';
-        },
-        
-        addWish() {
-            const p = getPartner();
-            const input = document.getElementById('wish-input');
-            const text = input.value.trim();
-            if (!text) return toast('请输入心愿');
-            
-            State.wishes.push({ pId: p.id, text, time: Date.now() });
-            save();
-            closeModal('wish');
-            CS.wish();
-        },
-        
-        delWish(idx) {
-            const p = getPartner();
-            const wishes = State.wishes.filter(w => w.pId === p.id);
-            const w = wishes[idx];
-            const gIdx = State.wishes.indexOf(w);
-            if (gIdx > -1) {
-                State.wishes.splice(gIdx, 1);
-                save();
-                closeModal('wish');
-                CS.wish();
-            }
-        },
-        
-        styleManager() {
+        manageStyles() {
             modal('style', `
-                <h3>风格管理</h3>
+                <h3>管理情书风格</h3>
                 <button class="cp-close" onclick="CS.close('style')">×</button>
                 <div class="cp-modal-body">
                     <div class="cp-style-section">
@@ -553,8 +574,21 @@
                             </div>
                         `).join('')}
                     </div>
+                    <button class="cp-btn" onclick="CS.close('style');CS.letter()">返回</button>
                 </div>
             `);
+        },
+        
+        miniTheater() {
+            toast('小剧场功能开发中，敬请期待...');
+        },
+        
+        adventureCard() {
+            toast('日常奇遇卡功能开发中，敬请期待...');
+        },
+        
+        wishList() {
+            toast('心愿清单功能开发中，敬请期待...');
         },
         
         addStyle() {
@@ -565,7 +599,7 @@
             State.letterStyles.push({ id: Date.now().toString(), name, desc });
             save();
             closeModal('style');
-            CS.styleManager();
+            CS.manageStyles();
         },
         
         delStyle(idx) {
@@ -573,26 +607,7 @@
             State.letterStyles.splice(idx, 1);
             save();
             closeModal('style');
-            CS.styleManager();
-        },
-        
-        addPaper() {
-            const name = prompt('信纸名称:');
-            if (!name) return;
-            const bg = prompt('背景色(如#FFF0F5):', '#FFF0F5');
-            const border = prompt('边框色(如#FFC0D4):', '#FFC0D4');
-            State.letterPapers.push({ id: Date.now().toString(), name, bg, border });
-            save();
-            closeModal('style');
-            CS.styleManager();
-        },
-        
-        delPaper(idx) {
-            if (State.letterPapers.length <= 1) return toast('至少保留一个');
-            State.letterPapers.splice(idx, 1);
-            save();
-            closeModal('style');
-            CS.styleManager();
+            CS.manageStyles();
         },
         
         close(id) {

@@ -2522,6 +2522,9 @@ input[type="range"]::-ms-fill-upper {
             /* 虚拟滚动优化 */
             will-change: scroll-position;
             contain: layout style paint;
+            /* 硬件加速 */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         /* 加载更多提示样式 */
@@ -2532,10 +2535,12 @@ input[type="range"]::-ms-fill-upper {
             font-size: 13px;
             cursor: pointer;
             user-select: none;
+            -webkit-user-select: none;
             background: linear-gradient(to bottom, #f5f5f5, transparent);
             transition: all 0.2s ease;
             border-radius: 8px;
             margin: -8px 0 8px 0;
+            will-change: transform;
         }
         
         .load-more-hint:hover {
@@ -2545,6 +2550,16 @@ input[type="range"]::-ms-fill-upper {
         
         .load-more-hint:active {
             transform: scale(0.98);
+        }
+        
+        /* 消息气泡性能优化 */
+        .chat-bubble {
+            will-change: auto;
+            contain: layout style;
+        }
+        
+        .chat-bubble.selected {
+            will-change: background-color;
         }
         
         .chat-bubble {
