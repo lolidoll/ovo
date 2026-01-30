@@ -12,59 +12,38 @@
          * 打开角色设置页面（全屏子页面）
          */
         openCharacterSettings: function(chat) {
-            try {
-                console.log('openCharacterSettings called with chat:', chat);
-                if (!chat) {
-                    console.error('No chat provided to openCharacterSettings');
-                    showToast('未找到角色信息');
-                    return;
-                }
+            console.log('openCharacterSettings called with chat:', chat);
+            if (!chat) {
+                console.error('No chat provided to openCharacterSettings');
+                showToast('未找到角色信息');
+                return;
+            }
 
-                // 关键数据完整性检查
-                if (!window.AppState) {
-                    alert('错误：AppState未初始化');
-                    return;
-                }
-                if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
-                    alert('错误：conversations数据未初始化，请刷新页面重试');
-                    return;
-                }
-                if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
-                    window.AppState.worldbooks = [];
-                }
-                if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
-                    window.AppState.friends = [];
-                }
-                if (!window.AppState.user) {
-                    window.AppState.user = { name: '用户', personality: '' };
-                }
+            // 数据安全检查
+            if (!window.AppState) {
+                showToast('系统未初始化');
+                return;
+            }
+            if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
+                window.AppState.conversations = [];
+            }
+            if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
+                window.AppState.worldbooks = [];
+            }
+            if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
+                window.AppState.friends = [];
+            }
+            if (!window.AppState.user) {
+                window.AppState.user = { name: '用户', personality: '' };
+            }
 
-                // 移除已存在的模态框
-                let modal = document.getElementById('character-settings-modal');
-                if (modal) modal.remove();
-            
-            // 检测设备类型：手机端全屏，平板和电脑端居中显示
-            const isMobile = window.innerWidth < 768;
-            console.log('Device detection - isMobile:', isMobile, 'width:', window.innerWidth);
-            
-            // 创建新的模态框（响应式适配）
-            modal = document.createElement('div');
-            modal.id = 'character-settings-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            if (isMobile) {
-                // 手机端：全屏显示，纯白背景
-                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;height:100dvh;background:#fff;z-index:10000;display:flex;align-items:flex-start;justify-content:flex-start;padding:0;overflow:auto;';
-            } else {
-                // 平板和电脑端：居中显示带背景遮罩
-                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
-                
-                // 点击背景关闭（仅在非手机端）
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        modal.remove();
-                    }
-                });
+            // 使用全屏子页面方案
+            let page = document.getElementById('character-settings-page');
+            if (!page) {
+                page = document.createElement('div');
+                page.id = 'character-settings-page';
+                page.className = 'sub-page';
+                document.getElementById('app-container').appendChild(page);
             }
 
             // 获取局部世界书列表（添加安全检查）
@@ -91,22 +70,16 @@
                 : null;
             const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
             
-            // 响应式样式（复用前面的isMobile变量）
-            const contentStyle = isMobile
-                ? 'width:100%;height:100%;background:#fff;border-radius:0;overflow:hidden;display:flex;flex-direction:column;'
-                : 'max-width:min(800px,90vw);width:100%;max-height:90vh;background:#fff;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,0.2);';
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="${contentStyle}">
-                    <div class="sub-nav char-settings-nav" style="position:relative;padding:clamp(18px,5vw,28px) clamp(16px,4vw,24px);background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);border-bottom:1px solid rgba(255,228,235,0.3);">
-                        <div class="back-btn" id="char-settings-back-btn" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;font-size:15px;color:#333;border-radius:8px;font-weight:500;">
-                            <div class="back-arrow" style="width:10px;height:10px;border-left:2.5px solid #333;border-bottom:2.5px solid #333;transform:rotate(45deg);"></div>
-                            <span>返回</span>
-                        </div>
-                        <div class="sub-title" style="text-align:center;font-size:clamp(18px,5vw,22px);font-weight:700;color:#ff85a6;">角色设置</div>
+            page.innerHTML = `
+                <div class="sub-nav char-settings-nav">
+                    <div class="back-btn" id="char-settings-back-btn">
+                        <div class="back-arrow"></div>
+                        <span>返回</span>
                     </div>
-                    
-                    <div class="sub-content char-settings-content" style="flex:1;overflow-y:auto;padding:clamp(16px,4vw,22px) clamp(12px,3vw,20px);-webkit-overflow-scrolling:touch;">
+                    <div class="sub-title">角色设置</div>
+                </div>
+                
+                <div class="sub-content char-settings-content">
                     <!-- 头像区域 - 公主风格 -->
                     <div class="char-avatar-section">
                         <div class="avatar-container">
@@ -511,12 +484,8 @@
                         </button>
                         <div class="danger-hint">此操作将清空该角色的所有对话记录和心声，无法恢复</div>
                     </div>
-                    </div>
                 </div>
             `;
-            
-            // 添加到DOM
-            document.body.appendChild(modal);
 
             // 设置当前绑定的分组
             if (chat.boundEmojiGroups && Array.isArray(chat.boundEmojiGroups)) {
@@ -533,12 +502,11 @@
                 });
             }
             
+            // 显示页面
+            page.classList.add('open');
+            
             this.bindCharacterSettingsEvents(chat);
             console.log('Character settings page opened successfully');
-            } catch (error) {
-                console.error('Error in openCharacterSettings:', error);
-                alert('打开角色设置失败：' + error.message + '\n\n堆栈：' + error.stack);
-            }
         },
 
         /**
@@ -594,10 +562,10 @@
                     console.log('char-settings-back-btn clicked');
                     e.preventDefault();
                     e.stopPropagation();
-                    const modal = document.getElementById('character-settings-modal');
-                    if (modal) {
-                        console.log('Removing character-settings-modal');
-                        modal.remove();
+                    const page = document.getElementById('character-settings-page');
+                    if (page) {
+                        console.log('Removing open class from character-settings-page');
+                        page.classList.remove('open');
                     }
                 });
             } else {
