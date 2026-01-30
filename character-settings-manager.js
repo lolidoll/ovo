@@ -13,62 +13,94 @@
          */
         openCharacterSettings: function(chat) {
             console.log('openCharacterSettings called with chat:', chat);
-            if (!chat) {
-                console.error('No chat provided to openCharacterSettings');
-                showToast('未找到角色信息');
-                return;
-            }
-
-            // 数据安全检查
-            if (!window.AppState) {
-                showToast('系统未初始化');
-                return;
-            }
-            if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
-                window.AppState.conversations = [];
-            }
-            if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
-                window.AppState.worldbooks = [];
-            }
-            if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
-                window.AppState.friends = [];
-            }
-            if (!window.AppState.user) {
-                window.AppState.user = { name: '用户', personality: '' };
-            }
-
-            // 使用全屏子页面方案
-            let page = document.getElementById('character-settings-page');
-            if (!page) {
-                page = document.createElement('div');
-                page.id = 'character-settings-page';
-                page.className = 'sub-page';
-                document.getElementById('app-container').appendChild(page);
-            }
-
-            // 获取局部世界书列表（添加安全检查）
-            const localWbs = (window.AppState.worldbooks && Array.isArray(window.AppState.worldbooks))
-                ? window.AppState.worldbooks.filter(w => !w.isGlobal)
-                : [];
             
-            // 获取角色应该使用的用户人设
-            let currentPersona = null;
-            let userNameForChar = chat.userNameForChar || (window.AppState.user ? window.AppState.user.name : '用户');
-            let userPersonality = window.AppState.user && window.AppState.user.personality ? window.AppState.user.personality : '';
-            
-            if (window.UserPersonaManager) {
-                currentPersona = window.UserPersonaManager.getPersonaForConversation(chat.id);
-                if (currentPersona) {
-                    userNameForChar = currentPersona.userName;
-                    userPersonality = currentPersona.personality || '';
+            try {
+                if (!chat) {
+                    console.error('No chat provided to openCharacterSettings');
+                    showToast('未找到角色信息');
+                    return;
                 }
-            }
 
-            // 获取总结列表（添加安全检查）
-            const conv = (window.AppState.conversations && Array.isArray(window.AppState.conversations))
-                ? window.AppState.conversations.find(c => c.id === chat.id)
-                : null;
-            const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
+                // 数据安全检查和初始化
+                if (!window.AppState) {
+                    console.error('AppState not found');
+                    showToast('系统未初始化');
+                    return;
+                }
+                
+                // 确保所有必要的数组都存在
+                if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
+                    console.warn('Initializing conversations array');
+                    window.AppState.conversations = [];
+                }
+                if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
+                    console.warn('Initializing worldbooks array');
+                    window.AppState.worldbooks = [];
+                }
+                if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
+                    console.warn('Initializing friends array');
+                    window.AppState.friends = [];
+                }
+                if (!window.AppState.emojiGroups || !Array.isArray(window.AppState.emojiGroups)) {
+                    console.warn('Initializing emojiGroups array');
+                    window.AppState.emojiGroups = [];
+                }
+                if (!window.AppState.userPersonas || !Array.isArray(window.AppState.userPersonas)) {
+                    console.warn('Initializing userPersonas array');
+                    window.AppState.userPersonas = [];
+                }
+                if (!window.AppState.user) {
+                    console.warn('Initializing user object');
+                    window.AppState.user = { name: '用户', personality: '' };
+                }
+                
+                console.log('AppState initialized successfully');
+                console.log('conversations:', window.AppState.conversations.length);
+                console.log('worldbooks:', window.AppState.worldbooks.length);
+                console.log('emojiGroups:', window.AppState.emojiGroups.length);
+
+                // 使用全屏子页面方案
+                let page = document.getElementById('character-settings-page');
+                if (!page) {
+                    console.log('Creating character-settings-page element');
+                    page = document.createElement('div');
+                    page.id = 'character-settings-page';
+                    page.className = 'sub-page';
+                    const appContainer = document.getElementById('app-container');
+                    if (!appContainer) {
+                        console.error('app-container not found');
+                        showToast('页面容器未找到');
+                        return;
+                    }
+                    appContainer.appendChild(page);
+                    console.log('character-settings-page created');
+                }
+
+                // 获取局部世界书列表
+                const localWbs = window.AppState.worldbooks.filter(w => !w.isGlobal);
+                console.log('Local worldbooks:', localWbs.length);
+                
+                // 获取角色应该使用的用户人设
+                let currentPersona = null;
+                let userNameForChar = chat.userNameForChar || window.AppState.user.name;
+                let userPersonality = window.AppState.user.personality || '';
+                
+                if (window.UserPersonaManager) {
+                    try {
+                        currentPersona = window.UserPersonaManager.getPersonaForConversation(chat.id);
+                        if (currentPersona) {
+                            userNameForChar = currentPersona.userName;
+                            userPersonality = currentPersona.personality || '';
+                        }
+                    } catch (e) {
+                        console.error('Error getting persona:', e);
+                    }
+                }
+
+                // 获取总结列表
+                const conv = window.AppState.conversations.find(c => c.id === chat.id);
+                const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
+                console.log('Conversation found:', !!conv, 'Has summaries:', hasSummaries);
             
             page.innerHTML = `
                 <div class="sub-nav char-settings-nav">
@@ -538,8 +570,15 @@
                 console.log('Final computed visibility:', window.getComputedStyle(page).visibility);
             }, 10);
             
-            this.bindCharacterSettingsEvents(chat);
-            console.log('Character settings page opened successfully');
+                this.bindCharacterSettingsEvents(chat);
+                console.log('Character settings page opened successfully');
+                
+            } catch (error) {
+                console.error('Error in openCharacterSettings:', error);
+                console.error('Error stack:', error.stack);
+                showToast('打开角色设置失败：' + error.message);
+                alert('详细错误：' + error.message + '\n\n' + error.stack);
+            }
         },
 
         /**
