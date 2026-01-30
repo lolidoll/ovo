@@ -23,17 +23,18 @@
             let modal = document.getElementById('character-settings-modal');
             if (modal) modal.remove();
             
+            // 检测设备类型：手机端全屏，平板和电脑端居中显示
+            const isMobile = window.innerWidth < 768;
+            console.log('Device detection - isMobile:', isMobile, 'width:', window.innerWidth);
+            
             // 创建新的模态框（响应式适配）
             modal = document.createElement('div');
             modal.id = 'character-settings-modal';
             modal.className = 'emoji-mgmt-modal show';
             
-            // 检测设备类型：手机端全屏，平板和电脑端居中显示
-            const isMobile = window.innerWidth < 768;
-            
             if (isMobile) {
-                // 手机端：全屏显示
-                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:#fff;z-index:10000;display:flex;align-items:stretch;justify-content:stretch;padding:0;';
+                // 手机端：全屏显示，纯白背景
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;height:100dvh;background:#fff;z-index:10000;display:flex;align-items:flex-start;justify-content:flex-start;padding:0;overflow:auto;';
             } else {
                 // 平板和电脑端：居中显示带背景遮罩
                 modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -45,8 +46,6 @@
                     }
                 });
             }
-            
-            document.body.appendChild(modal);
 
             // 获取局部世界书列表
             const localWbs = window.AppState.worldbooks.filter(w => !w.isGlobal);
@@ -491,6 +490,9 @@
                     </div>
                 </div>
             `;
+            
+            // 添加到DOM
+            document.body.appendChild(modal);
 
             // 设置当前绑定的分组
             if (chat.boundEmojiGroups && Array.isArray(chat.boundEmojiGroups)) {
