@@ -19,22 +19,24 @@
                 return;
             }
 
-            let page = document.getElementById('character-settings-page');
-            if (!page) {
-                console.log('Creating new character-settings-page');
-                page = document.createElement('div');
-                page.id = 'character-settings-page';
-                page.className = 'sub-page';
-                const appContainer = document.getElementById('app-container');
-                if (!appContainer) {
-                    console.error('app-container not found');
-                    showToast('应用容器未找到');
-                    return;
+            // 移除已存在的模态框
+            let modal = document.getElementById('character-settings-modal');
+            if (modal) modal.remove();
+            
+            // 创建新的模态框（全屏显示）
+            modal = document.createElement('div');
+            modal.id = 'character-settings-modal';
+            modal.className = 'emoji-mgmt-modal show';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:#fff;z-index:10000;display:flex;align-items:stretch;justify-content:stretch;padding:0;';
+            
+            // 点击背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
                 }
-                appContainer.appendChild(page);
-            } else {
-                console.log('Reusing existing character-settings-page');
-            }
+            });
+            
+            document.body.appendChild(modal);
 
             // 获取局部世界书列表
             const localWbs = window.AppState.worldbooks.filter(w => !w.isGlobal);
@@ -56,16 +58,17 @@
             const conv = window.AppState.conversations.find(c => c.id === chat.id);
             const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
             
-            page.innerHTML = `
-                <div class="sub-nav char-settings-nav">
-                    <div class="back-btn" id="char-settings-back-btn">
-                        <div class="back-arrow"></div>
-                        <span>返回</span>
+            modal.innerHTML = `
+                <div class="emoji-mgmt-content" style="width:100%;height:100%;background:#fff;border-radius:0;overflow:hidden;display:flex;flex-direction:column;">
+                    <div class="sub-nav char-settings-nav" style="position:relative;padding:clamp(18px,5vw,28px) clamp(16px,4vw,24px);background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);border-bottom:1px solid rgba(255,228,235,0.3);">
+                        <div class="back-btn" id="char-settings-back-btn" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;font-size:15px;color:#333;border-radius:8px;font-weight:500;">
+                            <div class="back-arrow" style="width:10px;height:10px;border-left:2.5px solid #333;border-bottom:2.5px solid #333;transform:rotate(45deg);"></div>
+                            <span>返回</span>
+                        </div>
+                        <div class="sub-title" style="text-align:center;font-size:clamp(18px,5vw,22px);font-weight:700;color:#ff85a6;">角色设置</div>
                     </div>
-                    <div class="sub-title">角色设置</div>
-                </div>
-                
-                <div class="sub-content char-settings-content">
+                    
+                    <div class="sub-content char-settings-content" style="flex:1;overflow-y:auto;padding:clamp(16px,4vw,22px) clamp(12px,3vw,20px);-webkit-overflow-scrolling:touch;">
                     <!-- 头像区域 - 公主风格 -->
                     <div class="char-avatar-section">
                         <div class="avatar-container">
@@ -470,14 +473,9 @@
                         </button>
                         <div class="danger-hint">此操作将清空该角色的所有对话记录和心声，无法恢复</div>
                     </div>
+                    </div>
                 </div>
             `;
-
-            // 强制显示页面 - 移动端兼容
-            page.classList.add('open');
-            // 添加内联样式确保在移动端也能正常显示
-            page.style.transform = 'translateX(0)';
-            page.style.display = 'flex';
 
             // 设置当前绑定的分组
             if (chat.boundEmojiGroups && Array.isArray(chat.boundEmojiGroups)) {
@@ -551,10 +549,10 @@
                     console.log('char-settings-back-btn clicked');
                     e.preventDefault();
                     e.stopPropagation();
-                    const page = document.getElementById('character-settings-page');
-                    if (page) {
-                        console.log('Removing open class from character-settings-page');
-                        page.classList.remove('open');
+                    const modal = document.getElementById('character-settings-modal');
+                    if (modal) {
+                        console.log('Removing character-settings-modal');
+                        modal.remove();
                     }
                 });
             } else {
