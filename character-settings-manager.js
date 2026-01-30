@@ -503,12 +503,33 @@
             }
             
             // 显示页面 - 强制设置样式确保手机端正常显示
+            console.log('Opening character settings page...');
+            
+            // 确保页面在DOM中
+            if (!document.getElementById('character-settings-page')) {
+                console.error('Character settings page not in DOM');
+                return;
+            }
+            
+            // 移除可能存在的旧样式
+            page.style.transform = '';
+            page.style.visibility = '';
+            
+            // 强制重排
+            page.offsetHeight;
+            
+            // 添加open类
             page.classList.add('open');
-            // 直接设置transform确保在所有浏览器中生效
-            setTimeout(() => {
-                page.style.transform = 'translateX(0)';
-                page.style.visibility = 'visible';
-            }, 10);
+            
+            // 使用requestAnimationFrame确保动画流畅
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    page.style.transform = 'translateX(0)';
+                    page.style.visibility = 'visible';
+                    page.style.display = 'flex';
+                    console.log('Character settings page styles applied');
+                });
+            });
             
             this.bindCharacterSettingsEvents(chat);
             console.log('Character settings page opened successfully');

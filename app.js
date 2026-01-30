@@ -926,11 +926,56 @@
             // 角色设置按钮（三个点）
             const chatMoreBtn = document.getElementById('chat-more-btn');
             if (chatMoreBtn) {
-                chatMoreBtn.addEventListener('click', function() {
-                    if (AppState.currentChat) {
+                chatMoreBtn.addEventListener('click', function(e) {
+                    console.log('chat-more-btn clicked', e);
+                    console.log('AppState.currentChat:', AppState.currentChat);
+                    console.log('CharacterSettingsManager:', window.CharacterSettingsManager);
+                    
+                    if (!AppState.currentChat) {
+                        console.error('No current chat');
+                        showToast('请先选择一个角色');
+                        return;
+                    }
+                    
+                    if (!window.CharacterSettingsManager) {
+                        console.error('CharacterSettingsManager not loaded');
+                        showToast('角色设置模块未加载');
+                        return;
+                    }
+                    
+                    try {
                         CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
+                    } catch (error) {
+                        console.error('Error opening character settings:', error);
+                        showToast('打开角色设置失败：' + error.message);
                     }
                 });
+                
+                // 添加触摸事件作为备用（移动端）
+                chatMoreBtn.addEventListener('touchend', function(e) {
+                    console.log('chat-more-btn touchend', e);
+                    // 防止触发两次
+                    e.preventDefault();
+                    
+                    if (!AppState.currentChat) {
+                        console.error('No current chat');
+                        showToast('请先选择一个角色');
+                        return;
+                    }
+                    
+                    if (!window.CharacterSettingsManager) {
+                        console.error('CharacterSettingsManager not loaded');
+                        showToast('角色设置模块未加载');
+                        return;
+                    }
+                    
+                    try {
+                        CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
+                    } catch (error) {
+                        console.error('Error opening character settings:', error);
+                        showToast('打开角色设置失败：' + error.message);
+                    }
+                }, { passive: false });
             }
 
             // 表情库按钮
