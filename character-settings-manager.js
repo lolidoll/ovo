@@ -502,8 +502,13 @@
                 });
             }
             
-            // 显示页面
+            // 显示页面 - 强制设置样式确保手机端正常显示
             page.classList.add('open');
+            // 直接设置transform确保在所有浏览器中生效
+            setTimeout(() => {
+                page.style.transform = 'translateX(0)';
+                page.style.visibility = 'visible';
+            }, 10);
             
             this.bindCharacterSettingsEvents(chat);
             console.log('Character settings page opened successfully');
