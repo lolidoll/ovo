@@ -531,66 +531,32 @@
                 closeChatPage();
             });
 
-            // 聊天页面 - 角色设置按钮（使用事件委托，确保动态加载也能工作）
-            let touchHandled = false;
-            let lastTouchTime = 0;
-            
-            const handleMoreClick = function(e) {
-                console.log('🔘 Chat more button clicked:', {
-                    type: e.type,
-                    currentChat: AppState.currentChat ? AppState.currentChat.id : 'null',
-                    timestamp: Date.now()
-                });
-                
-                if (AppState.currentChat) {
-                    console.log('📱 Opening chat more menu for:', AppState.currentChat.name);
-                    openChatMoreMenu(AppState.currentChat);
+            // 聊天页面 - 角色设置按钮（简单直接的方法）
+            // 延迟绑定，确保元素已加载
+            setTimeout(function() {
+                const chatMoreBtn = document.getElementById('chat-more-btn');
+                if (chatMoreBtn) {
+                    console.log('✅ Binding events to chat-more-btn');
+                    
+                    chatMoreBtn.addEventListener('click', function(e) {
+                        console.log('🔘 Chat more button clicked');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (AppState.currentChat) {
+                            console.log('📱 Opening menu for:', AppState.currentChat.name);
+                            openChatMoreMenu(AppState.currentChat);
+                        } else {
+                            console.warn('⚠️ No current chat');
+                            showToast('未找到当前对话');
+                        }
+                    });
+                    
+                    console.log('✅ Event bound successfully');
                 } else {
-                    console.warn('⚠️ AppState.currentChat is not set');
-                    showToast('未找到当前对话');
+                    console.error('❌ chat-more-btn not found');
                 }
-            };
-            
-            // 使用事件委托在document上监听
-            document.addEventListener('touchstart', function(e) {
-                const target = e.target.closest('#chat-more-btn');
-                if (target) {
-                    console.log('👆 touchstart on chat-more-btn');
-                    lastTouchTime = Date.now();
-                    touchHandled = true;
-                    e.preventDefault();
-                }
-            }, { passive: false, capture: true });
-            
-            document.addEventListener('touchend', function(e) {
-                const target = e.target.closest('#chat-more-btn');
-                if (target) {
-                    console.log('👆 touchend on chat-more-btn');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const timeDiff = Date.now() - lastTouchTime;
-                    if (timeDiff < 500) {
-                        handleMoreClick(e);
-                    }
-                    
-                    setTimeout(() => {
-                        touchHandled = false;
-                    }, 300);
-                }
-            }, { passive: false, capture: true });
-            
-            document.addEventListener('click', function(e) {
-                const target = e.target.closest('#chat-more-btn');
-                if (target && !touchHandled) {
-                    console.log('🖱️ click on chat-more-btn');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleMoreClick(e);
-                }
-            }, true);
-            
-            console.log('✅ Event delegation set up for chat-more-btn');
+            }, 100);
             
             // 保留全局函数以兼容可能的其他调用
             window.handleChatMoreButtonClick = function(e) {
