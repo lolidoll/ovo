@@ -923,6 +923,16 @@
                 });
             }
 
+            // 角色设置按钮（三个点）
+            const chatMoreBtn = document.getElementById('chat-more-btn');
+            if (chatMoreBtn) {
+                chatMoreBtn.addEventListener('click', function() {
+                    if (AppState.currentChat) {
+                        CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
+                    }
+                });
+            }
+
             // 表情库按钮
             const btnEmojiAdd = document.getElementById('emoji-add-btn');
             if (btnEmojiAdd) btnEmojiAdd.addEventListener('click', function() {
