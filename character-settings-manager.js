@@ -504,32 +504,49 @@
             
             // 显示页面 - 强制设置样式确保手机端正常显示
             console.log('Opening character settings page...');
+            console.log('Page element:', page);
             
             // 确保页面在DOM中
             if (!document.getElementById('character-settings-page')) {
                 console.error('Character settings page not in DOM');
+                showToast('页面元素未找到');
                 return;
             }
             
-            // 移除可能存在的旧样式
-            page.style.transform = '';
-            page.style.visibility = '';
+            // 先设置 display，确保页面可见
+            page.style.display = 'flex';
+            page.style.visibility = 'visible';
+            console.log('Set display and visibility');
             
             // 强制重排
             page.offsetHeight;
             
-            // 添加open类
-            page.classList.add('open');
+            // 移除 transform（如果有）
+            page.style.transform = 'translateX(100%)';
             
-            // 使用requestAnimationFrame确保动画流畅
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    page.style.transform = 'translateX(0)';
-                    page.style.visibility = 'visible';
-                    page.style.display = 'flex';
-                    console.log('Character settings page styles applied');
-                });
-            });
+            // 强制重排
+            page.offsetHeight;
+            
+            // 添加 open 类
+            page.classList.add('open');
+            console.log('Added open class');
+            
+            // 使用 setTimeout 确保动画执行
+            setTimeout(() => {
+                page.style.transform = 'translateX(0)';
+                console.log('Set transform to 0');
+                
+                // 验证最终状态
+                setTimeout(() => {
+                    const computed = window.getComputedStyle(page);
+                    console.log('Final state:', {
+                        display: computed.display,
+                        visibility: computed.visibility,
+                        transform: computed.transform,
+                        zIndex: computed.zIndex
+                    });
+                }, 350);
+            }, 50);
             
             this.bindCharacterSettingsEvents(chat);
             console.log('Character settings page opened successfully');
