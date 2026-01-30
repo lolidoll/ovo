@@ -362,7 +362,7 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 1000000;
     display: none;
     align-items: center;
     justify-content: center;
@@ -522,7 +522,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 10000;
+    z-index: 1000000;
     display: flex;
     align-items: center;
     justify-content: center;

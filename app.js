@@ -17,6 +17,15 @@
             searchQuery: '', // 消息页面搜索词
             selectedMessages: [], // 多选消息ID列表
             isSelectMode: false, // 是否处于多选模式
+            // 虚拟滚动状态
+            virtualScroll: {
+                enabled: true, // 是否启用虚拟滚动
+                renderBatchSize: 30, // 每批渲染的消息数量
+                bufferSize: 10, // 上下缓冲区大小
+                currentStartIndex: 0, // 当前渲染的起始索引
+                isLoadingMore: false, // 是否正在加载更多
+                scrollThreshold: 200 // 触发加载的滚动阈值（像素）
+            },
             apiSettings: {
                 endpoint: '',
                 apiKey: '',
@@ -776,62 +785,8 @@
                 }, { passive: false });
             }
 
-            // 聊天区头像双击（事件委托） - 独立防抖
-            let chatApiCallInProgress = false;
-            const chatMessages = document.getElementById('chat-messages');
-            if (chatMessages) {
-                // 桌面端 dblclick 事件
-                chatMessages.addEventListener('dblclick', function(e) {
-                    const av = e.target.closest('.chat-avatar');
-                    if (av) {
-                        e.preventDefault();
-                        if (!chatApiCallInProgress) {
-                            chatApiCallInProgress = true;
-                            const result = handleDoubleClickAvatar();
-                            if (result && typeof result.finally === 'function') {
-                                result.finally(() => { chatApiCallInProgress = false; });
-                            } else {
-                                setTimeout(() => { chatApiCallInProgress = false; }, 500);
-                            }
-                        }
-                    }
-                });
-                
-                // 手机端双击检测 - 使用事件冒泡到 chatMessages
-                let avatarTapData = new Map();
-                chatMessages.addEventListener('touchend', function(e) {
-                    const av = e.target.closest('.chat-avatar');
-                    if (av) {
-                        const id = av.dataset.id || Math.random().toString(36);
-                        let data = avatarTapData.get(id);
-                        
-                        if (!data) {
-                            data = { count: 0, timer: null };
-                            avatarTapData.set(id, data);
-                        }
-                        
-                        data.count++;
-                        if (data.count === 1) {
-                            data.timer = setTimeout(() => {
-                                data.count = 0;
-                            }, 300);
-                        } else if (data.count === 2) {
-                            clearTimeout(data.timer);
-                            e.preventDefault();
-                            if (!chatApiCallInProgress) {
-                                chatApiCallInProgress = true;
-                                const result = handleDoubleClickAvatar();
-                                if (result && typeof result.finally === 'function') {
-                                    result.finally(() => { chatApiCallInProgress = false; });
-                                } else {
-                                    setTimeout(() => { chatApiCallInProgress = false; }, 500);
-                                }
-                            }
-                            data.count = 0;
-                        }
-                    }
-                }, { passive: false });
-            }
+            // 注意：聊天区头像双击事件已在 renderChatMessages() 函数中通过事件委托处理
+            // 不在此处重复绑定，避免多次触发API调用
 
             // 双击头像处理函数 - 触发AI回复，心声会自动从主API响应中提取
             window.handleDoubleClickAvatar = async function() {
@@ -2726,15 +2681,33 @@
             isMultiSelectMode: false
         };
 
-        function renderChatMessages() {
+        // 虚拟滚动：渲染指定范围的消息
+        function renderMessageRange(startIndex, endIndex, append = false) {
             const container = document.getElementById('chat-messages');
-            container.innerHTML = '';
-            
-            if (!AppState.currentChat) return;
-            
             const messages = AppState.messages[AppState.currentChat.id] || [];
             
-            messages.forEach(function(msg, index) {
+            // 限制索引范围
+            startIndex = Math.max(0, startIndex);
+            endIndex = Math.min(messages.length, endIndex);
+            
+            // 如果不是追加模式，清空容器
+            if (!append) {
+                container.innerHTML = '';
+            }
+            
+            // 渲染指定范围的消息
+            for (let index = startIndex; index < endIndex; index++) {
+                const msg = messages[index];
+                renderSingleMessage(msg, index, container);
+            }
+        }
+        
+        // 渲染单条消息（从原renderChatMessages中提取）
+        function renderSingleMessage(msg, index, container) {
+            const messages = AppState.messages[AppState.currentChat.id] || [];
+            
+            // 处理单条消息的渲染逻辑
+            {
                 // 系统消息不显示给用户
                 if (msg.type === 'system') {
                     return;
@@ -3259,43 +3232,202 @@
                     });
                 }
                 
-                // 头像双击事件（触发AI回复）- 支持桌面端和手机端
-                // 桌面端 dblclick
-                bubble.addEventListener('dblclick', (e) => {
-                    const av = e.target.closest('.chat-avatar');
-                    if (av) {
-                        e.preventDefault();
-                        callApiWithConversation();
-                    }
-                });
-                
-                // 手机端双击检测（双 tap 计数器）
-                let avatarTapCount = 0;
-                let avatarTapTimer = null;
-                bubble.addEventListener('touchend', (e) => {
-                    const av = e.target.closest('.chat-avatar');
-                    if (av) {
-                        avatarTapCount++;
-                        if (avatarTapCount === 1) {
-                            avatarTapTimer = setTimeout(() => {
-                                avatarTapCount = 0;
-                            }, 300);
-                        } else if (avatarTapCount === 2) {
-                            clearTimeout(avatarTapTimer);
-                            e.preventDefault();
-                            callApiWithConversation();
-                            avatarTapCount = 0;
-                        }
-                    }
-                }, { passive: false });
+                // 注意：头像双击事件已通过事件委托在容器级别处理，不在此处绑定
                 
                 container.appendChild(bubble);
-            });
+            }
+        }
+        
+        // 主渲染函数：使用虚拟滚动
+        function renderChatMessages(forceScrollToBottom = false) {
+            const container = document.getElementById('chat-messages');
+            
+            if (!AppState.currentChat) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const messages = AppState.messages[AppState.currentChat.id] || [];
+            
+            // 移除旧的事件监听器（如果存在）
+            if (container._avatarDblClickHandler) {
+                container.removeEventListener('dblclick', container._avatarDblClickHandler);
+            }
+            if (container._avatarTouchHandler) {
+                container.removeEventListener('touchend', container._avatarTouchHandler);
+            }
+            if (container._scrollHandler) {
+                container.removeEventListener('scroll', container._scrollHandler);
+            }
+            
+            // 如果消息数量较少或禁用虚拟滚动，使用传统渲染
+            if (!AppState.virtualScroll.enabled || messages.length <= AppState.virtualScroll.renderBatchSize) {
+                container.innerHTML = '';
+                for (let index = 0; index < messages.length; index++) {
+                    renderSingleMessage(messages[index], index, container);
+                }
+            } else {
+                // 使用虚拟滚动：只渲染最新的消息
+                const totalMessages = messages.length;
+                const batchSize = AppState.virtualScroll.renderBatchSize;
+                
+                // 计算起始索引：从最新消息往前数
+                const startIndex = Math.max(0, totalMessages - batchSize);
+                AppState.virtualScroll.currentStartIndex = startIndex;
+                
+                // 渲染最新的一批消息
+                renderMessageRange(startIndex, totalMessages, false);
+                
+                // 如果还有更早的消息，添加"加载更多"提示
+                if (startIndex > 0) {
+                    const loadMoreHint = document.createElement('div');
+                    loadMoreHint.className = 'load-more-hint';
+                    loadMoreHint.style.cssText = `
+                        text-align: center;
+                        padding: 12px;
+                        color: #999;
+                        font-size: 13px;
+                        cursor: pointer;
+                        user-select: none;
+                        background: linear-gradient(to bottom, #f5f5f5, transparent);
+                    `;
+                    loadMoreHint.textContent = `向上滑动加载更早的消息 (还有${startIndex}条)`;
+                    loadMoreHint.onclick = () => loadMoreMessages();
+                    container.insertBefore(loadMoreHint, container.firstChild);
+                }
+                
+                // 添加滚动监听：向上滚动时加载更多
+                const scrollHandler = () => {
+                    if (AppState.virtualScroll.isLoadingMore) return;
+                    
+                    const scrollTop = container.scrollTop;
+                    const threshold = AppState.virtualScroll.scrollThreshold;
+                    
+                    // 当滚动到顶部附近时，加载更多消息
+                    if (scrollTop < threshold && AppState.virtualScroll.currentStartIndex > 0) {
+                        loadMoreMessages();
+                    }
+                };
+                container._scrollHandler = scrollHandler;
+                container.addEventListener('scroll', scrollHandler, { passive: true });
+            }
+            
+            // 使用事件委托处理头像双击事件（避免重复绑定）
+            // 桌面端 dblclick
+            const avatarDblClickHandler = (e) => {
+                const av = e.target.closest('.chat-avatar');
+                if (av && !AppState.isSelectMode) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🎯 双击头像触发API调用');
+                    callApiWithConversation();
+                }
+            };
+            container._avatarDblClickHandler = avatarDblClickHandler;
+            container.addEventListener('dblclick', avatarDblClickHandler);
+            
+            // 手机端双击检测（双 tap 计数器）
+            let avatarTapCount = 0;
+            let avatarTapTimer = null;
+            const avatarTouchHandler = (e) => {
+                const av = e.target.closest('.chat-avatar');
+                if (av && !AppState.isSelectMode) {
+                    avatarTapCount++;
+                    if (avatarTapCount === 1) {
+                        avatarTapTimer = setTimeout(() => {
+                            avatarTapCount = 0;
+                        }, 300);
+                    } else if (avatarTapCount === 2) {
+                        clearTimeout(avatarTapTimer);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🎯 双击头像触发API调用（移动端）');
+                        callApiWithConversation();
+                        avatarTapCount = 0;
+                    }
+                }
+            };
+            container._avatarTouchHandler = avatarTouchHandler;
+            container.addEventListener('touchend', avatarTouchHandler, { passive: false });
             
             // 滚动到底部（多选模式下不滚动）
-            if (!AppState.isSelectMode) {
-                container.scrollTop = container.scrollHeight;
+            if (!AppState.isSelectMode || forceScrollToBottom) {
+                requestAnimationFrame(() => {
+                    container.scrollTop = container.scrollHeight;
+                });
             }
+        }
+        
+        // 加载更多历史消息
+        function loadMoreMessages() {
+            if (AppState.virtualScroll.isLoadingMore) return;
+            
+            const container = document.getElementById('chat-messages');
+            const messages = AppState.messages[AppState.currentChat.id] || [];
+            const currentStart = AppState.virtualScroll.currentStartIndex;
+            
+            if (currentStart <= 0) return; // 已经加载完所有消息
+            
+            AppState.virtualScroll.isLoadingMore = true;
+            
+            // 保存当前滚动位置
+            const oldScrollHeight = container.scrollHeight;
+            const oldScrollTop = container.scrollTop;
+            
+            // 计算新的起始索引
+            const batchSize = AppState.virtualScroll.renderBatchSize;
+            const newStart = Math.max(0, currentStart - batchSize);
+            
+            // 移除"加载更多"提示
+            const loadMoreHint = container.querySelector('.load-more-hint');
+            if (loadMoreHint) {
+                loadMoreHint.remove();
+            }
+            
+            // 在顶部追加更早的消息
+            const fragment = document.createDocumentFragment();
+            const tempContainer = document.createElement('div');
+            
+            for (let index = newStart; index < currentStart; index++) {
+                renderSingleMessage(messages[index], index, tempContainer);
+            }
+            
+            // 将新消息插入到容器顶部
+            while (tempContainer.firstChild) {
+                fragment.appendChild(tempContainer.firstChild);
+            }
+            
+            // 如果还有更早的消息，添加新的"加载更多"提示
+            if (newStart > 0) {
+                const newLoadMoreHint = document.createElement('div');
+                newLoadMoreHint.className = 'load-more-hint';
+                newLoadMoreHint.style.cssText = `
+                    text-align: center;
+                    padding: 12px;
+                    color: #999;
+                    font-size: 13px;
+                    cursor: pointer;
+                    user-select: none;
+                    background: linear-gradient(to bottom, #f5f5f5, transparent);
+                `;
+                newLoadMoreHint.textContent = `向上滑动加载更早的消息 (还有${newStart}条)`;
+                newLoadMoreHint.onclick = () => loadMoreMessages();
+                fragment.insertBefore(newLoadMoreHint, fragment.firstChild);
+            }
+            
+            container.insertBefore(fragment, container.firstChild);
+            
+            // 更新起始索引
+            AppState.virtualScroll.currentStartIndex = newStart;
+            
+            // 恢复滚动位置（保持用户视图不变）
+            requestAnimationFrame(() => {
+                const newScrollHeight = container.scrollHeight;
+                const scrollDiff = newScrollHeight - oldScrollHeight;
+                container.scrollTop = oldScrollTop + scrollDiff;
+                
+                AppState.virtualScroll.isLoadingMore = false;
+            });
         }
 
         function showMessageContextMenu(msg, mouseEvent, bubbleElement) {

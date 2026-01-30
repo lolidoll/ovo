@@ -39,7 +39,7 @@ const SecondaryAPIManager = (function() {
      * @param {function} onError - 失败回调
      * @param {number} timeout - 超时时间(毫秒)
      */
-    function callSecondaryAPI(messages, systemPrompt, onSuccess, onError, timeout = 240000) {
+    function callSecondaryAPI(messages, systemPrompt, onSuccess, onError, timeout = 300000) {
         console.log('🔗 副API调用开始:', {
             messageCount: messages.length,
             hasSystemPrompt: !!systemPrompt,
@@ -97,8 +97,9 @@ const SecondaryAPIManager = (function() {
             console.log('📥 副API响应状态:', res.status, res.statusText);
             if (!res.ok) {
                 return res.text().then(text => {
-                    console.error('❌ 副API错误响应:', text);
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    console.error('❌ 副API错误响应内容:', text);
+                    const errorMsg = `HTTP ${res.status}: ${res.statusText}\n详情: ${text.substring(0, 200)}`;
+                    throw new Error(errorMsg);
                 });
             }
             return res.json();
@@ -121,20 +122,30 @@ const SecondaryAPIManager = (function() {
         })
         .catch(err => {
             clearTimeout(timeoutId);
-            console.error('❌ 副API调用失败:', err.name, err.message);
+            
+            // 输出详细的错误诊断信息
+            console.error('═══════════════════════════════════════');
+            console.error('❌ 副API调用失败 - 完整诊断信息');
+            console.error('═══════════════════════════════════════');
+            console.error('📍 错误类型:', err.name);
+            console.error('💬 错误信息:', err.message);
+            console.error('🔍 完整错误对象:', err);
+            
+            let userMessage = '';
             if (err.name === 'AbortError') {
-                const errorMsg = '副API请求超时（' + (timeout/1000) + '秒）';
-                showToast(errorMsg);
-                if (onError) onError(errorMsg);
-            } else if (err instanceof TypeError && e.message.includes('Failed to fetch')) {
-                const errorMsg = '副API错误: CORS或网络问题，请检查端点配置';
-                showToast(errorMsg);
-                if (onError) onError(errorMsg);
+                userMessage = `副API请求超时（${timeout/1000}秒 = ${timeout/60000}分钟）- 模型响应时间过长`;
+                console.error('⏱️ 超时详情: 请求已等待', timeout/1000, '秒但未收到响应');
+            } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+                userMessage = '副API错误: CORS或网络问题，请检查端点配置';
+                console.error('🚫 网络错误: 可能是CORS跨域问题或网络连接失败');
             } else {
-                showToast(`副API错误: ${err.message}`);
-                if (onError) onError(err.message);
+                userMessage = `副API错误: ${err.message}`;
             }
-            console.error('副API调用完整错误:', err);
+            
+            console.error('═══════════════════════════════════════');
+            
+            showToast(`❌ ${userMessage}`);
+            if (onError) onError(userMessage);
         });
     }
 
@@ -181,7 +192,7 @@ const SecondaryAPIManager = (function() {
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 240000);
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
 
         const normalized = api.secondaryEndpoint.replace(/\/$/, '');
         const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
@@ -221,8 +232,9 @@ const SecondaryAPIManager = (function() {
             console.log('📥 副API响应状态:', res.status, res.statusText);
             if (!res.ok) {
                 return res.text().then(text => {
-                    console.error('❌ 副API错误响应:', text);
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    console.error('❌ 副API错误响应内容:', text);
+                    const errorMsg = `HTTP ${res.status}: ${res.statusText}\n详情: ${text.substring(0, 200)}`;
+                    throw new Error(errorMsg);
                 });
             }
             return res.json();
@@ -241,20 +253,31 @@ const SecondaryAPIManager = (function() {
         })
         .catch(err => {
             clearTimeout(timeoutId);
-            console.error('❌ 副API调用失败 [' + promptType + ']:', err.name, err.message);
+            
+            // 输出详细的错误诊断信息
+            console.error('═══════════════════════════════════════');
+            console.error('❌ 副API调用失败 [' + promptType + '] - 完整诊断信息');
+            console.error('═══════════════════════════════════════');
+            console.error('📍 错误类型:', err.name);
+            console.error('💬 错误信息:', err.message);
+            console.error('🎯 提示词类型:', promptType);
+            console.error('🔍 完整错误对象:', err);
+            
+            let userMessage = '';
             if (err.name === 'AbortError') {
-                const errorMsg = '副API请求超时（240秒）';
-                showToast(errorMsg);
-                if (onError) onError(errorMsg);
+                userMessage = '副API请求超时（5分钟）- 模型响应时间过长';
+                console.error('⏱️ 超时详情: 请求已等待5分钟但未收到响应');
             } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                const errorMsg = '副API错误: CORS或网络问题，请检查端点配置';
-                showToast(errorMsg);
-                if (onError) onError(errorMsg);
+                userMessage = '副API错误: CORS或网络问题，请检查端点配置';
+                console.error('🚫 网络错误: 可能是CORS跨域问题或网络连接失败');
             } else {
-                showToast(`副API错误: ${err.message}`);
-                if (onError) onError(err.message);
+                userMessage = `副API错误: ${err.message}`;
             }
-            console.error('副API错误详情:', err);
+            
+            console.error('═══════════════════════════════════════');
+            
+            showToast(`❌ ${userMessage}`);
+            if (onError) onError(userMessage);
         });
     }
 
@@ -303,7 +326,7 @@ const SecondaryAPIManager = (function() {
             try {
                 console.log('🌐 正在尝试:', url);
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 240000);
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
                 
                 const headers = {
                     'Content-Type': 'application/json'
@@ -359,7 +382,7 @@ const SecondaryAPIManager = (function() {
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    lastError = '请求超时（240秒）';
+                    lastError = '请求超时（5分钟）';
                     console.error('⏱️ 超时:', url);
                 } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
                     lastError = 'CORS 错误或网络问题。请检查副API端点是否支持跨域访问';
@@ -422,7 +445,7 @@ const SecondaryAPIManager = (function() {
         
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
             
             const res = await fetch(tryUrl, {
                 headers: Object.assign(

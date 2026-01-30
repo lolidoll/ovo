@@ -39,7 +39,7 @@
         openAddDialog: function() {
             const modal = document.createElement('div');
             modal.id = 'add-worldbook-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000000;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             modal.innerHTML = `
                 <div style="background:#fff;border-radius:20px;padding:28px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
@@ -347,7 +347,7 @@
             
             modal = document.createElement('div');
             modal.id = 'wb-import-dialog-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000000;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             const wbList = worldbooks.map((wb, idx) => `
                 <div style="padding:16px;background:#fff;border-radius:14px;margin-bottom:12px;border:2px solid #e8e8e8;transition:all 0.3s;box-shadow:0 2px 8px rgba(0,0,0,0.04);" onmouseover="this.style.borderColor='#2c2c2c';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e8e8e8';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)';this.style.transform='translateY(0)'">
@@ -458,7 +458,7 @@
             
             modal = document.createElement('div');
             modal.id = 'edit-worldbook-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000000;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             modal.innerHTML = `
                 <div style="background:#fff;border-radius:20px;padding:28px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
@@ -537,7 +537,7 @@
             if (!wb) return;
             
             const modal = document.createElement('div');
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000000;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;';
             
             modal.innerHTML = `
                 <div style="background:#fff;border-radius:20px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3), 0 0 1px rgba(0,0,0,0.1);animation:slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">

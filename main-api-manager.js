@@ -94,7 +94,7 @@ const MainAPIManager = {
 
         try {
             const controller = new AbortController();
-            timeoutId = setTimeout(() => controller.abort(), 240000);
+            timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
             
             const fetchOptions = {
                 method: 'POST',
@@ -123,15 +123,19 @@ const MainAPIManager = {
             console.log('📥 [线上模式] 主API响应状态:', res.status, res.statusText);
 
             if (!res.ok) {
-                lastError = `${res.status}: ${res.statusText}`;
-                console.error(`❌ 主API 请求失败 [${res.status}]:`, endpoint);
-                
+                let errorDetails = '';
                 try {
                     const errorData = await res.text();
                     if (errorData) {
-                        console.error('错误详情:', errorData);
+                        errorDetails = errorData;
+                        console.error('❌ API错误响应内容:', errorData);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error('❌ 无法读取错误响应:', e);
+                }
+                
+                lastError = `HTTP ${res.status}: ${res.statusText}${errorDetails ? '\n详情: ' + errorDetails.substring(0, 200) : ''}`;
+                console.error(`❌ 主API 请求失败 [${res.status}]:`, endpoint);
             } else {
                 let data;
                 try {
@@ -166,8 +170,9 @@ const MainAPIManager = {
             if (timeoutId) clearTimeout(timeoutId);
             
             if (err.name === 'AbortError') {
-                lastError = 'API 请求超时（240秒）';
-                console.error('请求超时:', endpoint);
+                lastError = 'API 请求超时（5分钟）- 模型响应时间过长';
+                console.error('❌ 请求超时:', endpoint);
+                console.error('超时详情: 请求已等待5分钟但未收到响应');
             } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
                 lastError = 'CORS 错误或网络连接问题。请检查 API 端点是否正确,或尝试使用支持 CORS 的代理';
                 console.error('网络错误:', err.message);
@@ -179,13 +184,25 @@ const MainAPIManager = {
 
         if (!success) {
             const errorMsg = lastError || '未知错误';
-            this.showToast(`主API 请求失败: ${errorMsg}`);
             
-            console.error('主API 调用失败,请检查以下信息：');
-            console.error('- API 端点:', api.endpoint);
-            console.error('- 模型:', api.selectedModel);
-            console.error('- 错误信息:', errorMsg);
-            console.error('- 更多信息请查看上面的控制台错误');
+            // 显示详细的错误信息给用户
+            this.showToast(`❌ 主API调用失败: ${errorMsg}`);
+            
+            // 在控制台输出完整的诊断信息
+            console.error('═══════════════════════════════════════');
+            console.error('❌ 主API调用失败 - 完整诊断信息');
+            console.error('═══════════════════════════════════════');
+            console.error('📍 API端点:', api.endpoint);
+            console.error('🤖 使用模型:', api.selectedModel);
+            console.error('💬 消息数量:', messages.length);
+            console.error('❗ 错误信息:', errorMsg);
+            console.error('🔍 请检查:');
+            console.error('  1. API端点是否正确且可访问');
+            console.error('  2. API密钥是否有效');
+            console.error('  3. 所选模型是否支持');
+            console.error('  4. 网络连接是否正常');
+            console.error('  5. 是否存在CORS跨域问题');
+            console.error('═══════════════════════════════════════');
         }
 
         // 清除对话的API调用状态
@@ -659,6 +676,22 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 }
             }
             
+            // 如果消息是语音条，提供语音条信息
+            if (m.type === 'voice') {
+                const duration = m.duration || 1;
+                const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                messageContent = `[${senderName}发送了语音条，时长${duration}秒]\n语音内容：${m.content}`;
+            }
+            
+            // 如果消息是地理位置，提供地理位置信息
+            if (m.type === 'location') {
+                const locationName = m.locationName || '位置';
+                const locationAddress = m.locationAddress || '';
+                const locationDistance = m.locationDistance || 5;
+                const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离范围：约${locationDistance}米`;
+            }
+            
             // 如果消息是转发的朋友圈,提供朋友圈信息
             if (m.isForward && m.forwardedMoment) {
                 const forwarded = m.forwardedMoment;
@@ -782,7 +815,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         for (const url of tryUrls) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
                 
                 const res = await fetch(url, {
                     headers: Object.assign(
@@ -810,8 +843,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 if (models.length > 0) break;
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    lastError = '请求超时（30秒）';
-                    console.error('[线上模式] fetch models timeout:', url);
+                    lastError = '请求超时（5分钟）';
+                    console.error('❌ [线上模式] 拉取模型列表超时:', url);
                 } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
                     lastError = 'CORS 错误或网络问题。请检查 API 端点是否正确';
                     console.error('[线上模式] fetch models CORS/network error:', url, e);
