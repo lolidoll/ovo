@@ -534,49 +534,80 @@
             // 聊天页面 - 角色设置按钮（移动端优化）
             const chatMoreBtn = document.getElementById('chat-more-btn');
             if (chatMoreBtn) {
-                // 防止重复绑定
-                let isHandling = false;
+                console.log('✅ chat-more-btn found, attaching events');
+                
+                // 使用一个简单的防抖标志
+                let touchHandled = false;
+                let lastTouchTime = 0;
                 
                 const handleMoreClick = function(e) {
-                    if (isHandling) return;
-                    isHandling = true;
+                    console.log('🔘 Chat more button event triggered:', {
+                        type: e.type,
+                        currentChat: AppState.currentChat ? AppState.currentChat.id : 'null',
+                        timestamp: Date.now()
+                    });
                     
-                    console.log('Chat more button clicked, currentChat:', AppState.currentChat);
                     e.preventDefault();
                     e.stopPropagation();
                     
                     if (AppState.currentChat) {
+                        console.log('📱 Opening chat more menu for:', AppState.currentChat.name);
                         openChatMoreMenu(AppState.currentChat);
                     } else {
-                        console.warn('AppState.currentChat is not set');
+                        console.warn('⚠️ AppState.currentChat is not set');
                         showToast('未找到当前对话');
                     }
-                    
-                    // 重置标志，避免长时间锁定
-                    setTimeout(() => {
-                        isHandling = false;
-                    }, 300);
                 };
                 
-                // 移动端：使用 touchend 事件
-                chatMoreBtn.addEventListener('touchend', function(e) {
-                    handleMoreClick(e);
-                });
+                // 移动端触摸事件 - touchstart
+                chatMoreBtn.addEventListener('touchstart', function(e) {
+                    console.log('👆 touchstart detected');
+                    lastTouchTime = Date.now();
+                    touchHandled = true;
+                    e.preventDefault();
+                }, { passive: false });
                 
-                // 桌面端：使用 click 事件
-                chatMoreBtn.addEventListener('click', function(e) {
-                    // 如果是触摸设备，click 事件会在 touchend 之后触发，此时跳过
-                    if (e.detail === 0 || !('ontouchstart' in window)) {
+                // 移动端触摸事件 - touchend
+                chatMoreBtn.addEventListener('touchend', function(e) {
+                    console.log('👆 touchend detected, touchHandled:', touchHandled);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // 只有在touchstart后300ms内的touchend才处理
+                    const timeDiff = Date.now() - lastTouchTime;
+                    if (timeDiff < 500) {
                         handleMoreClick(e);
                     }
+                    
+                    // 300ms后重置标志
+                    setTimeout(() => {
+                        touchHandled = false;
+                        console.log('🔄 touchHandled reset');
+                    }, 300);
+                }, { passive: false });
+                
+                // 桌面端点击事件
+                chatMoreBtn.addEventListener('click', function(e) {
+                    console.log('🖱️ click event detected, touchHandled:', touchHandled);
+                    if (!touchHandled) {
+                        handleMoreClick(e);
+                    } else {
+                        console.log('⏭️ click event skipped (touch handled)');
+                    }
                 });
+                
+                console.log('✅ All event listeners attached to chat-more-btn');
+            } else {
+                console.error('❌ chat-more-btn NOT FOUND in DOM');
             }
             
             // 保留全局函数以兼容可能的其他调用
             window.handleChatMoreButtonClick = function(e) {
                 console.log('Chat more button clicked (legacy), currentChat:', AppState.currentChat);
-                e.preventDefault();
-                e.stopPropagation();
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
                 
                 if (AppState.currentChat) {
                     openChatMoreMenu(AppState.currentChat);

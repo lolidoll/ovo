@@ -2361,13 +2361,29 @@ input[type="range"]::-ms-fill-upper {
             cursor: pointer;
             border-radius: 50%;
             transition: background-color 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+            -webkit-user-select: none;
+            user-select: none;
             touch-action: manipulation;
             position: relative;
-            z-index: 10;
+            z-index: 100;
+            /* 增加移动端点击区域 */
+            padding: 8px;
+            margin: -8px;
         }
         .chat-more:active {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: rgba(0, 0, 0, 0.1);
+            transform: scale(0.95);
+        }
+        /* 移动端优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .chat-more {
+                min-width: 44px;
+                min-height: 44px;
+            }
+            .chat-more:active {
+                background-color: rgba(0, 0, 0, 0.15);
+            }
         }
         .chat-more-dots {
             display: flex;
