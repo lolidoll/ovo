@@ -1500,6 +1500,59 @@ input[type="range"]::-ms-fill-upper {
     pointer-events: auto;
 }
 
+/* 引用消息栏容器 */
+.quote-message-bar-container {
+    position: relative;
+    z-index: 50;
+    flex-shrink: 0;
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.quote-message-bar {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    max-height: 60px;
+    overflow-y: auto;
+}
+
+.quote-content {
+    flex: 1;
+    font-size: 13px;
+    color: #666;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+.quote-cancel-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 24px;
+    color: #999;
+    flex-shrink: 0;
+    padding: 0;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.quote-cancel-btn:hover {
+    color: #666;
+}
+
+.quote-cancel-btn:active {
+    color: #333;
+}
+
 /* 聊天工具栏 - 简洁无分割设计 */
 .chat-toolbar {
     display:flex;
@@ -1514,6 +1567,8 @@ input[type="range"]::-ms-fill-upper {
     overflow:hidden;
     min-height:52px;
     width:100%;
+    position: relative;
+    z-index: 10;
 }
 
 /* 心声按钮样式 */
@@ -2228,7 +2283,7 @@ input[type="range"]::-ms-fill-upper {
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            z-index: 50001;
+            z-index: 999999;
             display: flex;
             align-items: flex-end;
             justify-content: center;
@@ -2712,7 +2767,7 @@ input[type="range"]::-ms-fill-upper {
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            z-index: 50000;
+            z-index: 999999;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2985,7 +3040,7 @@ input[type="range"]::-ms-fill-upper {
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 50000;
+    z-index: 999999;
 }
 
 .emoji-mgmt-modal.show {
@@ -3404,7 +3459,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 999999;
 }
 
 .voice-modal.show {
@@ -3430,7 +3485,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
-    z-index: 1001;
+    z-index: 1000;
     animation: voiceModalSlideIn 0.3s ease;
 }
 
@@ -3875,7 +3930,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 999999;
 }
 
 .location-modal.show {
@@ -3901,7 +3956,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
-    z-index: 1001;
+    z-index: 1000000;
     animation: locationModalSlideIn 0.3s ease;
 }
 
@@ -5780,7 +5835,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 999999;
     padding: 20px;
     animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

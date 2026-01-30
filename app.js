@@ -2799,7 +2799,7 @@
                                 }
                                 showMessageContextMenu(msg, null, retractWrapper);
                             }
-                        }, 300);
+                        }, 500);
                     }, { passive: true });
                     
                     retractWrapper.addEventListener('touchmove', (e) => {
