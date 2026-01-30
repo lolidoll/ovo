@@ -2358,7 +2358,11 @@
                                   style="pointer-events: none;">0</text>
                         </svg>
                     </button>
-                    <button class="chat-more" id="chat-more-btn" type="button" onclick="console.log('🔘 按钮点击',window.AppState,window.openChatMoreMenu);if(window.AppState&&window.AppState.currentChat&&window.openChatMoreMenu){window.openChatMoreMenu(window.AppState.currentChat)}else{alert('错误：AppState.currentChat='+(window.AppState?window.AppState.currentChat:'未定义')+', openChatMoreMenu='+(window.openChatMoreMenu?'存在':'未定义'))}" style="border:none;background:none;">
+                    <button class="chat-more" id="chat-more-btn" type="button"
+                            ontouchstart="this.setAttribute('data-touched','1');event.stopPropagation();"
+                            ontouchend="if(this.getAttribute('data-touched')==='1'){this.removeAttribute('data-touched');event.preventDefault();event.stopPropagation();console.log('🔘 触摸点击');if(window.AppState&&window.AppState.currentChat&&window.openChatMoreMenu){window.openChatMoreMenu(window.AppState.currentChat)}else{alert('错误：currentChat或openChatMoreMenu未找到')}}"
+                            onclick="if(!this.hasAttribute('data-touched')){console.log('🔘 鼠标点击');if(window.AppState&&window.AppState.currentChat&&window.openChatMoreMenu){window.openChatMoreMenu(window.AppState.currentChat)}else{alert('错误：currentChat或openChatMoreMenu未找到')}}"
+                            style="border:none;background:none;">
                         <div class="chat-more-dots" style="pointer-events:none;">
                             <span style="pointer-events:none;"></span>
                             <span style="pointer-events:none;"></span>
