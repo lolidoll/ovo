@@ -260,13 +260,22 @@ const SecondaryAPIManager = (function() {
 
     // ========== 拉取副API模型列表 ==========
     async function fetchModels() {
-        const endpoint = AppState.apiSettings.secondaryEndpoint || '';
-        const apiKey = AppState.apiSettings.secondaryApiKey || '';
+        // 先从UI读取最新的值（用户可能刚输入但还未保存）
+        const endpointInput = document.getElementById('secondary-api-endpoint');
+        const keyInput = document.getElementById('secondary-api-key');
+        
+        const endpoint = endpointInput ? endpointInput.value.trim() : (AppState.apiSettings.secondaryEndpoint || '');
+        const apiKey = keyInput ? keyInput.value.trim() : (AppState.apiSettings.secondaryApiKey || '');
 
         if (!endpoint) {
             showToast('请先填写副 API 端点');
             return;
         }
+        
+        // 更新到AppState（确保后续使用的是最新值）
+        AppState.apiSettings = AppState.apiSettings || {};
+        AppState.apiSettings.secondaryEndpoint = endpoint;
+        AppState.apiSettings.secondaryApiKey = apiKey;
         
         console.log('🔄 开始拉取副API模型列表...');
         console.log('📍 副API端点:', endpoint);

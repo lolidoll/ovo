@@ -1689,35 +1689,36 @@
             
             document.body.appendChild(modal);
             
-            // 绑定导入事件
-            document.getElementById('import-backup-input').addEventListener('change', function(e) {
-                importAllData(e.target.files[0]);
-                this.value = '';
-            });
+            // 使用setTimeout确保DOM元素已经完全渲染后再绑定事件
+            setTimeout(() => {
+                const importInput = document.getElementById('import-backup-input');
+                if (importInput) {
+                    // 移除可能存在的旧事件监听器
+                    const newInput = importInput.cloneNode(true);
+                    importInput.parentNode.replaceChild(newInput, importInput);
+                    
+                    // 绑定新的导入事件
+                    newInput.addEventListener('change', function(e) {
+                        if (e.target.files && e.target.files[0]) {
+                            importAllData(e.target.files[0]);
+                            this.value = '';
+                        }
+                    });
+                }
+            }, 100);
         }
         
         // 导出所有数据
         function exportAllData() {
             try {
-                // 只导出本应用相关的数据
-                const allData = {
-                    'shupianjAppState': JSON.stringify(AppState),
-                    // 只包含本应用的key
-                    'shupianjFriends': localStorage.getItem('shupianjFriends') || '[]',
-                    'shupianjConversations': localStorage.getItem('shupianjConversations') || '[]',
-                    'shupianjMessages': localStorage.getItem('shupianjMessages') || '{}',
-                    'shupianjEmojis': localStorage.getItem('shupianjEmojis') || '[]',
-                    'shupianjEmojiGroups': localStorage.getItem('shupianjEmojiGroups') || '[]',
-                    'shupianjWorldbooks': localStorage.getItem('shupianjWorldbooks') || '[]'
-                };
-                
-                // 如果AppState中有其他重要数据，直接从AppState中提取
+                // 导出所有AppState数据，确保包含所有字段
                 const exportData = {
                     version: '1.0',
                     exportTime: new Date().toISOString(),
                     appState: {
                         friends: AppState.friends || [],
                         groups: AppState.groups || [],
+                        friendGroups: AppState.friendGroups || [],
                         conversations: AppState.conversations || [],
                         messages: AppState.messages || {},
                         emojis: AppState.emojis || [],
@@ -1726,6 +1727,7 @@
                         user: AppState.user || {},
                         apiSettings: AppState.apiSettings || {},
                         collections: AppState.collections || [],
+                        walletHistory: AppState.walletHistory || [],
                         dynamicFuncs: AppState.dynamicFuncs || {}
                     }
                 };
@@ -1776,14 +1778,17 @@
                     if (data.version && data.appState) {
                         const appState = data.appState;
                         
-                        // 数据验证和修复
+                        // 数据验证和修复 - 导入所有字段
                         AppState.friends = Array.isArray(appState.friends) ? appState.friends : [];
                         AppState.groups = Array.isArray(appState.groups) ? appState.groups : [];
+                        AppState.friendGroups = Array.isArray(appState.friendGroups) ? appState.friendGroups : AppState.friendGroups;
                         AppState.conversations = Array.isArray(appState.conversations) ? appState.conversations : [];
                         AppState.messages = typeof appState.messages === 'object' ? appState.messages : {};
                         AppState.emojis = Array.isArray(appState.emojis) ? appState.emojis : [];
                         AppState.emojiGroups = Array.isArray(appState.emojiGroups) ? appState.emojiGroups : [];
                         AppState.worldbooks = Array.isArray(appState.worldbooks) ? appState.worldbooks : [];
+                        AppState.collections = Array.isArray(appState.collections) ? appState.collections : [];
+                        AppState.walletHistory = Array.isArray(appState.walletHistory) ? appState.walletHistory : [];
                         
                         if (appState.user && typeof appState.user === 'object') {
                             AppState.user = Object.assign(AppState.user, appState.user);
@@ -1793,8 +1798,9 @@
                             AppState.apiSettings = Object.assign(AppState.apiSettings, appState.apiSettings);
                         }
                         
-                        AppState.collections = Array.isArray(appState.collections) ? appState.collections : [];
-                        AppState.dynamicFuncs = typeof appState.dynamicFuncs === 'object' ? appState.dynamicFuncs : AppState.dynamicFuncs;
+                        if (appState.dynamicFuncs && typeof appState.dynamicFuncs === 'object') {
+                            AppState.dynamicFuncs = Object.assign(AppState.dynamicFuncs, appState.dynamicFuncs);
+                        }
                         
                     } else if (data.shupianjAppState) {
                         // 旧格式数据导入
