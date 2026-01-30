@@ -47,12 +47,14 @@
                 });
             }
 
-            // 获取局部世界书列表
-            const localWbs = window.AppState.worldbooks.filter(w => !w.isGlobal);
+            // 获取局部世界书列表（添加安全检查）
+            const localWbs = (window.AppState.worldbooks && Array.isArray(window.AppState.worldbooks))
+                ? window.AppState.worldbooks.filter(w => !w.isGlobal)
+                : [];
             
             // 获取角色应该使用的用户人设
             let currentPersona = null;
-            let userNameForChar = chat.userNameForChar || window.AppState.user.name;
+            let userNameForChar = chat.userNameForChar || (window.AppState.user ? window.AppState.user.name : '用户');
             let userPersonality = window.AppState.user && window.AppState.user.personality ? window.AppState.user.personality : '';
             
             if (window.UserPersonaManager) {
@@ -63,8 +65,10 @@
                 }
             }
 
-            // 获取总结列表
-            const conv = window.AppState.conversations.find(c => c.id === chat.id);
+            // 获取总结列表（添加安全检查）
+            const conv = (window.AppState.conversations && Array.isArray(window.AppState.conversations))
+                ? window.AppState.conversations.find(c => c.id === chat.id)
+                : null;
             const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
             
             // 响应式样式（复用前面的isMobile变量）
