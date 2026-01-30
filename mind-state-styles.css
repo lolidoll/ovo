@@ -85,3 +85,42 @@
 .emoji-mgmt-content > div::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #ffabc0, #ff85a6);
 }
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    /* 移动端时禁用某些hover效果，使用触摸反馈 */
+    .emoji-mgmt-content {
+        touch-action: pan-y;
+    }
+    
+    /* 移动端滚动条更细 */
+    .emoji-mgmt-content > div::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    /* 移动端模态框留更多边距 */
+    .emoji-mgmt-modal {
+        padding: 10px;
+    }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+    /* 心声按钮在小屏幕时稍微小一点 */
+    #chat-mind-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    #chat-mind-heart {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* 横屏优化 */
+@media (max-height: 600px) and (orientation: landscape) {
+    .emoji-mgmt-content {
+        max-height: 95vh !important;
+    }
+}

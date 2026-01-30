@@ -533,27 +533,49 @@
             });
 
             // 聊天页面 - 角色设置按钮
-            // 使用捕获阶段和同时支持touch/click事件以兼容移动端浏览器
+            // 使用更稳健的方案兼容所有浏览器（包括Opera）
+            let chatMoreClickTimeout = null;
+            let chatMoreLastClick = 0;
+            
             function handleChatMoreClick(e) {
-                // 检查是否点击了chat-more-dots
+                // 防抖：防止同一次点击触发多次
+                const now = Date.now();
+                if (now - chatMoreLastClick < 300) {
+                    return;
+                }
+                
+                // 检查是否点击了chat-more相关元素
                 const chatMoreDots = e.target.closest('.chat-more-dots') || e.target.closest('.chat-more');
                 if (chatMoreDots) {
+                    chatMoreLastClick = now;
                     console.log('Chat more button clicked, currentChat:', AppState.currentChat);
                     e.preventDefault();
                     e.stopPropagation();
-                    if (AppState.currentChat) {
-                        openChatMoreMenu(AppState.currentChat);
-                    } else {
-                        console.warn('AppState.currentChat is not set');
-                        showToast('未找到当前对话');
+                    e.stopImmediatePropagation();
+                    
+                    // 清除之前的延迟执行
+                    if (chatMoreClickTimeout) {
+                        clearTimeout(chatMoreClickTimeout);
                     }
+                    
+                    // 延迟执行以确保事件完全处理
+                    chatMoreClickTimeout = setTimeout(() => {
+                        if (AppState.currentChat) {
+                            openChatMoreMenu(AppState.currentChat);
+                        } else {
+                            console.warn('AppState.currentChat is not set');
+                            showToast('未找到当前对话');
+                        }
+                        chatMoreClickTimeout = null;
+                    }, 10);
+                    
                     return false;
                 }
             }
             
-            // 同时监听click和touchend事件以兼容所有移动端浏览器
-            document.addEventListener('click', handleChatMoreClick, true);
-            document.addEventListener('touchend', handleChatMoreClick, true);
+            // 使用冒泡阶段监听（更兼容Opera等浏览器）
+            document.addEventListener('click', handleChatMoreClick, false);
+            document.addEventListener('touchstart', handleChatMoreClick, false);
 
             document.getElementById('chat-send-btn').addEventListener('click', function() {
                 sendMessage();
@@ -2110,13 +2132,162 @@
                     return;
                 }
                 
+                // 尝试从PNG中提取嵌入的角色卡数据
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // 显示图片配置对话框
-                    showImageCardConfigDialog(e.target.result, file.name);
+                    const arrayBuffer = e.target.result;
+                    
+                    // 尝试解析PNG中的角色卡数据
+                    extractCharacterCardFromPNG(arrayBuffer, file.name, function(cardData) {
+                        if (cardData) {
+                            // 成功提取到角色卡数据，直接导入
+                            importExtractedCard(cardData, arrayBuffer);
+                        } else {
+                            // 没有嵌入数据，显示手动配置对话框
+                            const dataUrl = arrayBufferToDataURL(arrayBuffer, file.type);
+                            showImageCardConfigDialog(dataUrl, file.name);
+                        }
+                    });
                 };
-                reader.readAsDataURL(file);
+                reader.readAsArrayBuffer(file);
             });
+        }
+        
+        // 将ArrayBuffer转换为DataURL
+        function arrayBufferToDataURL(arrayBuffer, mimeType) {
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
+            return 'data:' + mimeType + ';base64,' + base64;
+        }
+        
+        // 从PNG图片中提取角色卡数据
+        function extractCharacterCardFromPNG(arrayBuffer, fileName, callback) {
+            try {
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                // 检查PNG文件头
+                if (uint8Array[0] !== 0x89 || uint8Array[1] !== 0x50 ||
+                    uint8Array[2] !== 0x4E || uint8Array[3] !== 0x47) {
+                    callback(null);
+                    return;
+                }
+                
+                // 查找tEXt块
+                let offset = 8; // 跳过PNG签名
+                let characterData = null;
+                
+                while (offset < uint8Array.length) {
+                    // 读取块长度
+                    const length = (uint8Array[offset] << 24) |
+                                 (uint8Array[offset + 1] << 16) |
+                                 (uint8Array[offset + 2] << 8) |
+                                 uint8Array[offset + 3];
+                    
+                    // 读取块类型
+                    const type = String.fromCharCode(
+                        uint8Array[offset + 4],
+                        uint8Array[offset + 5],
+                        uint8Array[offset + 6],
+                        uint8Array[offset + 7]
+                    );
+                    
+                    // 检查是否为tEXt块
+                    if (type === 'tEXt') {
+                        // 读取tEXt块数据
+                        const dataStart = offset + 8;
+                        const dataEnd = dataStart + length;
+                        const textData = uint8Array.slice(dataStart, dataEnd);
+                        
+                        // 查找关键字和值的分隔符（null字节）
+                        let nullIndex = -1;
+                        for (let i = 0; i < textData.length; i++) {
+                            if (textData[i] === 0) {
+                                nullIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (nullIndex !== -1) {
+                            const keyword = String.fromCharCode.apply(null, textData.slice(0, nullIndex));
+                            
+                            // 检查是否为角色卡关键字（SillyTavern使用'chara'）
+                            if (keyword === 'chara' || keyword === 'ccv3' || keyword === 'charactercard') {
+                                const valueBytes = textData.slice(nullIndex + 1);
+                                const valueString = new TextDecoder('utf-8').decode(valueBytes);
+                                
+                                try {
+                                    characterData = JSON.parse(valueString);
+                                    break;
+                                } catch (e) {
+                                    console.warn('解析角色卡JSON失败:', e);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 移动到下一个块 (length + 4(type) + 4(crc) + 4(length))
+                    offset += length + 12;
+                    
+                    // 如果到达IEND块，停止搜索
+                    if (type === 'IEND') break;
+                }
+                
+                callback(characterData);
+            } catch (error) {
+                console.error('提取PNG元数据失败:', error);
+                callback(null);
+            }
+        }
+        
+        // 导入提取到的角色卡数据
+        function importExtractedCard(cardData, imageArrayBuffer) {
+            try {
+                const card = parseCharacterCard(cardData);
+                
+                if (!card) {
+                    showToast('无法解析角色卡数据');
+                    return;
+                }
+                
+                // 将图片数据转换为DataURL作为头像
+                const imageDataUrl = arrayBufferToDataURL(imageArrayBuffer, 'image/png');
+                card.avatar = imageDataUrl;
+                
+                // 添加到导入列表
+                AppState.importedCards.push(card);
+                
+                // 更新预览
+                const preview = document.getElementById('import-preview');
+                if (!preview) return;
+                
+                const item = document.createElement('div');
+                item.className = 'import-preview-item';
+                item.innerHTML = `
+                    <div class="import-preview-avatar">
+                        <img src="${imageDataUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">
+                    </div>
+                    <div class="import-preview-info">
+                        <div class="import-preview-name">${card.name}</div>
+                        <div class="import-preview-desc">${card.description ? card.description.substring(0, 50) + '...' : '无描述'}</div>
+                        ${card.worldbook ? '<div style="font-size:11px;color:#666;margin-top:4px;">✓ 包含世界书</div>' : ''}
+                    </div>
+                `;
+                preview.appendChild(item);
+                
+                // 显示导入按钮
+                if (AppState.importedCards.length > 0) {
+                    document.getElementById('import-all-btn').classList.add('show');
+                }
+                
+                showToast('成功提取角色卡：' + card.name);
+            } catch (error) {
+                console.error('导入角色卡失败:', error);
+                showToast('导入失败：' + error.message);
+            }
         }
 
         function showImageCardConfigDialog(imageData, fileName) {
@@ -2283,6 +2454,7 @@
         function parseCharacterCard(data) {
             let card = null;
             let worldbook = null;
+            let worldbookEntries = [];
             
             // SillyTavern V2 格式
             if (data.spec === 'chara_card_v2' && data.data) {
@@ -2295,17 +2467,55 @@
                     mesExample: data.data.mes_example
                 };
                 
-                // 提取世界书信息 (SillyTavern中的world_scenario或extensions字段)
-                if (data.data.world_scenario) {
+                // 提取世界书信息 - 优先使用character_book（标准格式）
+                if (data.data.character_book && data.data.character_book.entries) {
+                    // SillyTavern标准世界书格式
+                    const entries = data.data.character_book.entries;
+                    if (Array.isArray(entries) && entries.length > 0) {
+                        // 将条目合并为文本内容
+                        worldbookEntries = entries.map(entry => {
+                            let text = '';
+                            if (entry.keys && entry.keys.length > 0) {
+                                text += `关键词: ${entry.keys.join(', ')}\n`;
+                            }
+                            if (entry.content) {
+                                text += entry.content;
+                            }
+                            return text;
+                        }).filter(t => t.trim());
+                        
+                        if (worldbookEntries.length > 0) {
+                            worldbook = {
+                                name: data.data.character_book.name || (data.data.name + '的世界书'),
+                                content: worldbookEntries.join('\n\n---\n\n'),
+                                isGlobal: false
+                            };
+                        }
+                    }
+                }
+                // 备用：检查world_scenario字段
+                else if (data.data.world_scenario) {
                     worldbook = {
                         name: data.data.name + '的世界书',
                         content: data.data.world_scenario,
                         isGlobal: false
                     };
-                } else if (data.data.extensions && data.data.extensions.world) {
+                }
+                // 备用：检查extensions.world字段
+                else if (data.data.extensions && data.data.extensions.world) {
                     worldbook = {
                         name: data.data.name + '的世界书',
-                        content: data.data.extensions.world,
+                        content: typeof data.data.extensions.world === 'string'
+                            ? data.data.extensions.world
+                            : JSON.stringify(data.data.extensions.world, null, 2),
+                        isGlobal: false
+                    };
+                }
+                // 备用：使用scenario字段
+                else if (data.data.scenario && data.data.scenario.trim()) {
+                    worldbook = {
+                        name: data.data.name + '的世界书',
+                        content: data.data.scenario,
                         isGlobal: false
                     };
                 }
@@ -2321,8 +2531,32 @@
                     mesExample: data.mes_example
                 };
                 
-                // V1中检查scenario字段作为世界书
-                if (data.scenario) {
+                // V1格式：检查character_book
+                if (data.character_book && data.character_book.entries) {
+                    const entries = data.character_book.entries;
+                    if (Array.isArray(entries) && entries.length > 0) {
+                        worldbookEntries = entries.map(entry => {
+                            let text = '';
+                            if (entry.keys && entry.keys.length > 0) {
+                                text += `关键词: ${entry.keys.join(', ')}\n`;
+                            }
+                            if (entry.content) {
+                                text += entry.content;
+                            }
+                            return text;
+                        }).filter(t => t.trim());
+                        
+                        if (worldbookEntries.length > 0) {
+                            worldbook = {
+                                name: data.character_book.name || (data.name + '的世界书'),
+                                content: worldbookEntries.join('\n\n---\n\n'),
+                                isGlobal: false
+                            };
+                        }
+                    }
+                }
+                // 备用：V1中检查scenario字段作为世界书
+                else if (data.scenario && data.scenario.trim()) {
                     worldbook = {
                         name: data.name + '的世界书',
                         content: data.scenario,
@@ -2337,7 +2571,7 @@
                 card.createdAt = new Date().toISOString();
                 
                 // 保存世界书信息到card对象中，以便导入时使用
-                if (worldbook) {
+                if (worldbook && worldbook.content && worldbook.content.trim()) {
                     card.worldbook = worldbook;
                 }
                 
@@ -2353,9 +2587,13 @@
                 return;
             }
             
+            let worldbookCount = 0;
+            
             AppState.importedCards.forEach(function(card) {
                 // 导入角色
                 AppState.friends.push(card);
+                
+                let boundWorldbookIds = [];
                 
                 // 导入相关的世界书并自动绑定
                 if (card.worldbook && card.worldbook.content && card.worldbook.content.trim()) {
@@ -2373,26 +2611,37 @@
                         };
                         AppState.worldbooks.push(newWb);
                         existingWb = newWb;
+                        worldbookCount++;
                     }
                     
-                    // 创建对应的会话并绑定世界书
-                    let conv = AppState.conversations.find(c => c.id === card.id);
-                    if (!conv) {
-                        conv = {
-                            id: card.id,
-                            type: 'friend',
-                            name: card.name,
-                            avatar: card.avatar || '',
-                            description: card.description || '',
-                            userAvatar: '',
-                            lastMsg: card.greeting || '',
-                            time: formatTime(new Date()),
-                            lastMessageTime: new Date().toISOString(),
-                            unread: 0,
-                            boundWorldbooks: [existingWb.id]  // 绑定世界书
-                        };
-                        AppState.conversations.unshift(conv);
-                    }
+                    boundWorldbookIds.push(existingWb.id);
+                }
+                
+                // 创建对应的会话（无论是否有世界书）
+                let conv = AppState.conversations.find(c => c.id === card.id);
+                if (!conv) {
+                    conv = {
+                        id: card.id,
+                        type: 'friend',
+                        name: card.name,
+                        avatar: card.avatar || '',
+                        description: card.description || '',
+                        userAvatar: '',
+                        lastMsg: card.greeting || '',
+                        time: formatTime(new Date()),
+                        lastMessageTime: new Date().toISOString(),
+                        unread: 0,
+                        boundWorldbooks: boundWorldbookIds  // 绑定世界书（如果有）
+                    };
+                    AppState.conversations.unshift(conv);
+                } else if (boundWorldbookIds.length > 0) {
+                    // 如果会话已存在，更新其绑定的世界书
+                    conv.boundWorldbooks = conv.boundWorldbooks || [];
+                    boundWorldbookIds.forEach(wbId => {
+                        if (!conv.boundWorldbooks.includes(wbId)) {
+                            conv.boundWorldbooks.push(wbId);
+                        }
+                    });
                 }
             });
             
@@ -2400,7 +2649,10 @@
             renderFriends();
             renderWorldbooks();  // 刷新世界书列表
             
-            showToast('成功导入 ' + AppState.importedCards.length + ' 个角色及其世界书');
+            const message = worldbookCount > 0
+                ? `成功导入 ${AppState.importedCards.length} 个角色及 ${worldbookCount} 个世界书`
+                : `成功导入 ${AppState.importedCards.length} 个角色`;
+            showToast(message);
             closeImportCardPage();
         }
 
@@ -5600,6 +5852,14 @@
                             console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
                             appendAssistantMessage(convId, assistantText);
                             success = true;
+                            
+                            // 🔧 修复：强制立即刷新聊天界面，确保AI回复立即显示
+                            if (AppState.currentChat && AppState.currentChat.id === convId) {
+                                // 使用 setTimeout 0 确保在下一个事件循环中渲染，避免被阻塞
+                                setTimeout(() => {
+                                    renderChatMessages();
+                                }, 0);
+                            }
                         } else {
                             lastError = '未在返回中找到文本回复';
                             console.error('❌ 无法从API响应中提取文本。完整响应数据:');
@@ -6481,7 +6741,16 @@
             }
 
             saveToStorage();
-            if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
+            
+            // 🔧 修复：确保在当前聊天时立即渲染消息
+            const shouldRender = AppState.currentChat && AppState.currentChat.id === convId;
+            console.log('💬 appendSingleAssistantMessage - 是否需要渲染:', shouldRender, 'currentChat:', AppState.currentChat?.id, 'convId:', convId);
+            
+            if (shouldRender) {
+                console.log('🎨 立即调用 renderChatMessages()');
+                renderChatMessages();
+            }
+            
             renderConversations();
 
             // 检查是否需要自动总结
@@ -6626,7 +6895,16 @@
                     }
                     
                     saveToStorage();
-                    if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessages();
+                    
+                    // 🔧 修复：确保在当前聊天时立即渲染每条消息
+                    const shouldRender = AppState.currentChat && AppState.currentChat.id === convId;
+                    console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 是否需要渲染:', shouldRender);
+                    
+                    if (shouldRender) {
+                        console.log('🎨 立即调用 renderChatMessages()');
+                        renderChatMessages();
+                    }
+                    
                     renderConversations();
                     
                     // 只在最后一条消息后触发通知
@@ -8451,7 +8729,8 @@
             console.log('💬 聊天页面打开:', isChatPageOpen);
             console.log('📱 当前聊天:', AppState.currentChat?.id);
             
-            // 只有当聊天页面打开且该对话正在显示时，才不显示通知
+            // 🔧 修复：只有当聊天页面打开且该对话正在显示时，才不显示通知
+            // 这样可以确保用户离开聊天页面后能看到通知
             if (isChatPageOpen && AppState.currentChat && AppState.currentChat.id === convId) {
                 console.log('⏸️ 聊天页面打开且正在该聊天中，不显示通知');
                 return;
@@ -8474,18 +8753,31 @@
             }
 
             const lastMessage = messages[messages.length - 1];
-            if (!lastMessage || !lastMessage.content) {
+            
+            // 🔧 修复：支持多种消息类型的通知显示
+            let messagePreview = '';
+            if (lastMessage.emojiUrl) {
+                messagePreview = '[表情包]';
+            } else if (lastMessage.type === 'voice') {
+                messagePreview = '[语音消息]';
+            } else if (lastMessage.type === 'location') {
+                messagePreview = '[位置]';
+            } else if (lastMessage.isImage) {
+                messagePreview = '[图片]';
+            } else if (lastMessage.content) {
+                messagePreview = lastMessage.content.substring(0, 50);
+            } else {
                 console.log('❌ 最后的消息为空');
                 return;
             }
 
-            console.log('📝 最后的消息:', lastMessage.content.substring(0, 30));
+            console.log('📝 最后的消息预览:', messagePreview);
 
             const notificationData = {
                 convId: convId,
-                name: conv.name || '未命名',
+                name: conv.remark || conv.name || '未命名', // 优先显示备注
                 avatar: conv.avatar || '',
-                message: lastMessage.content.substring(0, 50), // 截断消息
+                message: messagePreview,
                 time: formatTime(new Date(lastMessage.time))
             };
 
