@@ -8286,7 +8286,7 @@
                 padding: 12px 20px;
                 border-radius: 6px;
                 font-size: 14px;
-                z-index: 9998;
+                z-index: 999999;
                 animation: toastSlideUp 0.3s ease-out;
                 max-width: 280px;
                 word-wrap: break-word;
