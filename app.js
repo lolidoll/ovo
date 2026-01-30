@@ -1729,35 +1729,90 @@
             
             modal = document.createElement('div');
             modal.id = 'settings-page-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            modal.style.cssText = 'background:rgba(0,0,0,0.5);';
+            modal.className = 'settings-modal-overlay';
             
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) {
-                    modal.remove();
+                    modal.classList.add('closing');
+                    setTimeout(() => modal.remove(), 300);
                 }
             });
             
             modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:350px;background:#fff;border-radius:12px;overflow:hidden;max-height:80vh;overflow-y:auto;">
-                    <div style="padding:16px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
-                        <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">设置</h3>
-                        <button onclick="document.getElementById('settings-page-modal').remove();" style="border:none;background:none;cursor:pointer;font-size:20px;color:#666;">×</button>
+                <div class="settings-modal-container">
+                    <!-- 顶部标题栏 -->
+                    <div class="settings-header">
+                        <div class="settings-header-content">
+                            <div class="settings-title-group">
+                                <div class="settings-icon-wrapper">
+                                    <svg viewBox="0 0 24 24" class="settings-icon">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="settings-title">设置</h3>
+                                    <p class="settings-subtitle">应用配置与数据管理</p>
+                                </div>
+                            </div>
+                            <button class="settings-close-btn" onclick="document.getElementById('settings-page-modal').classList.add('closing'); setTimeout(() => document.getElementById('settings-page-modal').remove(), 300);">
+                                <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none;">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     
-                    <div style="padding:16px;">
-                        <!-- 数据备份与恢复 -->
-                        <div style="margin-bottom:20px;border:1px solid #e8e8e8;border-radius:8px;padding:16px;">
-                            <h4 style="margin:0 0 12px 0;font-size:14px;color:#333;font-weight:600;">数据备份与恢复</h4>
+                    <!-- 内容区域 -->
+                    <div class="settings-content">
+                        <!-- 数据备份与恢复卡片 -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">
+                                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none;">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="settings-card-title">数据备份与恢复</h4>
+                                    <p class="settings-card-desc">导出或导入应用数据</p>
+                                </div>
+                            </div>
                             
-                            <button onclick="exportAllData();" style="width:100%;padding:10px;border:none;border-radius:4px;background:#000;color:#fff;cursor:pointer;font-size:13px;margin-bottom:8px;font-weight:500;">导出数据</button>
-                            
-                            <button onclick="document.getElementById('import-backup-input').click();" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#333;cursor:pointer;font-size:13px;font-weight:500;">导入数据</button>
-                            
-                            <input type="file" id="import-backup-input" accept=".json" style="display:none;">
-                            
-                            <div style="font-size:11px;color:#999;margin-top:8px;line-height:1.4;">
-                                包含：API预设、聊天记录、用户配置、表情包、角色管理、个性签名、好友、对话框等所有数据
+                            <div class="settings-card-content">
+                                <button onclick="exportAllData();" class="settings-btn settings-btn-primary">
+                                    <svg viewBox="0 0 24 24" class="settings-btn-icon">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <span>导出数据</span>
+                                </button>
+                                
+                                <button onclick="document.getElementById('import-backup-input').click();" class="settings-btn settings-btn-secondary">
+                                    <svg viewBox="0 0 24 24" class="settings-btn-icon">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <span>导入数据</span>
+                                </button>
+                                
+                                <input type="file" id="import-backup-input" accept=".json" style="display:none;">
+                                
+                                <div class="settings-info-box">
+                                    <svg viewBox="0 0 24 24" class="settings-info-icon">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                    </svg>
+                                    <div class="settings-info-text">
+                                        备份包含：API预设、聊天记录、用户配置、表情包、角色管理、个性签名、好友、对话等所有数据
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4666,8 +4721,63 @@
         
         // 创建新API预设
         function createNewApiPreset() {
-            const name = prompt('请输入预设名称：');
-            if (!name) return;
+            // 创建自定义输入模态框
+            let modal = document.getElementById('new-preset-name-modal');
+            if (modal) modal.remove();
+            
+            modal = document.createElement('div');
+            modal.id = 'new-preset-name-modal';
+            modal.className = 'emoji-mgmt-modal show';
+            modal.innerHTML = `
+                <div class="emoji-mgmt-content">
+                    <h3>新增预设</h3>
+                    <button class="emoji-mgmt-close" onclick="document.getElementById('new-preset-name-modal').remove();">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    
+                    <label>预设名称</label>
+                    <input type="text" id="new-preset-name-input" placeholder="请输入预设名称" style="width:100%;padding:12px 16px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:15px;color:#1a1a1a;background:#fafafa;outline:none;margin-bottom:16px;">
+                    
+                    <div style="display:flex;gap:12px;justify-content:flex-end;">
+                        <button class="emoji-mgmt-btn" onclick="document.getElementById('new-preset-name-modal').remove();">取消</button>
+                        <button class="emoji-mgmt-btn" style="background:linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%);color:#fff;border:none;" onclick="confirmNewPresetName();">确定</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 聚焦输入框
+            setTimeout(() => {
+                const input = document.getElementById('new-preset-name-input');
+                if (input) {
+                    input.focus();
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            confirmNewPresetName();
+                        }
+                    });
+                }
+            }, 100);
+            
+            // 防止模态框关闭时冒泡
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+        
+        // 确认新预设名称
+        function confirmNewPresetName() {
+            const nameInput = document.getElementById('new-preset-name-input');
+            const name = nameInput ? nameInput.value.trim() : '';
+            if (!name) {
+                showToast('请输入预设名称');
+                return;
+            }
+            
+            document.getElementById('new-preset-name-modal').remove();
             
             const endpoint = document.getElementById('api-endpoint').value.trim();
             const apiKey = document.getElementById('api-key').value.trim();
@@ -8673,14 +8783,15 @@
                 </div>`;
 
             page.innerHTML = `
-                <div class="sub-nav" style="background:linear-gradient(135deg,#2c2c2c 0%,#1a1a1a 100%);border:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;position:relative;">
-                    <div class="back-btn" id="collection-back-btn" style="color:#fff;background:transparent;border:none;padding:6px 14px;transition:all 0.3s ease;position:absolute;left:0;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                <div class="sub-nav" style="background:linear-gradient(135deg,#2c2c2c 0%,#1a1a1a 100%);border:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:space-between;position:relative;">
+                    <div class="back-btn" id="collection-back-btn" style="color:#fff;background:transparent;border:none;padding:6px 14px;transition:all 0.3s ease;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
                         <div class="back-arrow" style="border-left-color:#fff;border-bottom-color:#fff;"></div>
                         <span>返回</span>
                     </div>
-                    <div class="sub-title" style="color:#fff;font-weight:600;letter-spacing:0.5px;font-size:17px;">
+                    <div class="sub-title" style="color:#fff;font-weight:600;letter-spacing:0.5px;font-size:17px;position:absolute;left:50%;transform:translateX(-50%);">
                         我的收藏
                     </div>
+                    <div style="width:60px;"></div>
                 </div>
                 <div class="sub-content" style="overflow-y:auto;padding:0;background:linear-gradient(180deg,#f8f8f8 0%,#ffffff 100%);">
                     ${collectionsHTML}

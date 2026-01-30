@@ -1,0 +1,472 @@
+/**
+ * 用户设定管理页面样式 - 白浅粉公主风
+ * 优雅、精致、高级感的设计
+ */
+
+/* ==================== 页面基础样式 ==================== */
+#persona-manager-page,
+#persona-editor-page {
+    background: linear-gradient(180deg, #FFF9FB 0%, #FFF5F8 100%);
+}
+
+/* ==================== 导航栏样式 ==================== */
+#persona-manager-page .sub-nav,
+#persona-editor-page .sub-nav {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF9FB 100%);
+    border-bottom: 1px solid #FFE4EC;
+    box-shadow: 0 2px 12px rgba(255, 182, 193, 0.08);
+}
+
+#persona-manager-page .sub-title,
+#persona-editor-page .sub-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #D4A5B3;
+    letter-spacing: 0.5px;
+}
+
+/* 返回按钮 */
+#persona-manager-page .back-btn,
+#persona-editor-page .back-btn {
+    color: #D4A5B3;
+    transition: all 0.3s ease;
+}
+
+#persona-manager-page .back-btn:hover,
+#persona-editor-page .back-btn:hover {
+    color: #C4899A;
+    transform: translateX(-3px);
+}
+
+#persona-manager-page .back-arrow,
+#persona-editor-page .back-arrow {
+    border-color: #D4A5B3;
+    transition: border-color 0.3s ease;
+}
+
+#persona-manager-page .back-btn:hover .back-arrow,
+#persona-editor-page .back-btn:hover .back-arrow {
+    border-color: #C4899A;
+}
+
+/* ==================== 内容区域 ==================== */
+#persona-manager-page .sub-content {
+    background: transparent !important;
+    padding: 20px 16px !important;
+}
+
+/* ==================== 添加按钮 ==================== */
+#add-persona-btn {
+    background: linear-gradient(135deg, #FFB6C9 0%, #FFA4BC 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 16px !important;
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 16px rgba(255, 182, 201, 0.35) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    letter-spacing: 0.5px;
+}
+
+#add-persona-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(255, 182, 201, 0.45) !important;
+}
+
+#add-persona-btn:active {
+    transform: translateY(0) !important;
+}
+
+#add-persona-btn svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* ==================== 人设卡片 ==================== */
+#persona-list-container > div > div {
+    background: linear-gradient(145deg, #FFFFFF 0%, #FFFAFD 100%) !important;
+    border: 1px solid #FFE8F0 !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
+    box-shadow: 0 2px 12px rgba(255, 182, 193, 0.12), 0 1px 4px rgba(255, 182, 193, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+#persona-list-container > div > div::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FFB6C9 0%, #FFD4E0 50%, #FFB6C9 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#persona-list-container > div > div:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.18), 0 2px 8px rgba(255, 182, 193, 0.12) !important;
+    border-color: #FFD4E0 !important;
+}
+
+#persona-list-container > div > div:hover::before {
+    opacity: 1;
+}
+
+/* 默认标签 */
+#persona-list-container > div > div > div:first-child {
+    background: linear-gradient(135deg, #FFB6C9 0%, #FFA4BC 100%) !important;
+    color: #FFFFFF !important;
+    font-size: 11px !important;
+    padding: 5px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 182, 201, 0.3);
+    top: 16px !important;
+    right: 16px !important;
+}
+
+/* 人设名称 */
+#persona-list-container > div > div > div:nth-child(2) > div:first-child {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: #C4A8B0 !important;
+    margin-bottom: 8px !important;
+    letter-spacing: 0.3px;
+    text-align: center !important;
+    position: relative !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 默认人设卡片的特殊样式 */
+#persona-list-container > div > div:has(div[style*="默认"]) > div:nth-child(2) > div:first-child {
+    color: #FFB6C9 !important;
+    text-shadow: 0 1px 2px rgba(255, 182, 201, 0.3);
+}
+
+/* 非默认人设卡片 - 人设名称为白色 */
+#persona-list-container > div > div:not(:has(div[style*="默认"])) > div:first-child > div:first-child {
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 用户名 */
+#persona-list-container > div > div > div:nth-child(2) > div:nth-child(2) {
+    font-size: 14px !important;
+    color: #C4A8B0 !important;
+    margin-bottom: 10px !important;
+    font-weight: 500 !important;
+}
+
+/* 非默认人设卡片 - 用户名为白色 */
+#persona-list-container > div > div:not(:has(div[style*="默认"])) > div:first-child > div:nth-child(2) {
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 人物设定 */
+#persona-list-container > div > div > div:nth-child(2) > div:nth-child(3) {
+    font-size: 13px !important;
+    color: #C4A8B0 !important;
+    line-height: 1.7 !important;
+    background: linear-gradient(135deg, #FFFAFD 0%, #FFF5F8 100%) !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    border: 1px solid #FFE8F0 !important;
+}
+
+/* 绑定角色区域 */
+#persona-list-container > div > div > div:nth-child(3) {
+    background: linear-gradient(135deg, #FFFAFD 0%, #FFF5F8 100%) !important;
+    border: 1px solid #FFE8F0 !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+#persona-list-container > div > div > div:nth-child(3) > div:first-child {
+    font-size: 11px !important;
+    color: #D4A5B3 !important;
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px;
+}
+
+#persona-list-container > div > div > div:nth-child(3) > div:last-child {
+    font-size: 14px !important;
+    color: #B89AA5 !important;
+    line-height: 1.6 !important;
+    font-weight: 500;
+}
+
+/* ==================== 操作按钮 ==================== */
+#persona-list-container > div > div > div:last-child {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)) !important;
+    gap: 10px !important;
+}
+
+#persona-list-container > div > div > div:last-child button {
+    padding: 10px 14px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    letter-spacing: 0.3px;
+    border: 1.5px solid transparent !important;
+}
+
+/* 设为默认按钮 */
+#persona-list-container > div > div > div:last-child > button:first-child {
+    background: linear-gradient(135deg, #FFB6C9 0%, #FFA4BC 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(255, 182, 201, 0.3);
+}
+
+#persona-list-container > div > div > div:last-child > button:first-child:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(255, 182, 201, 0.4) !important;
+}
+
+/* 编辑按钮 */
+#persona-list-container > div > div > div:last-child > button:nth-child(2) {
+    background: #FFFFFF !important;
+    color: #9B8A8F !important;
+    border-color: #FFE4EC !important;
+}
+
+#persona-list-container > div > div > div:last-child > button:nth-child(2):hover {
+    background: linear-gradient(135deg, #FFFAFD 0%, #FFF5F8 100%) !important;
+    border-color: #FFD4E0 !important;
+    color: #C4899A !important;
+}
+
+/* 复制按钮 */
+#persona-list-container > div > div > div:last-child > button:nth-child(3) {
+    background: #FFFFFF !important;
+    color: #9B8A8F !important;
+    border-color: #FFE4EC !important;
+}
+
+#persona-list-container > div > div > div:last-child > button:nth-child(3):hover {
+    background: linear-gradient(135deg, #FFFAFD 0%, #FFF5F8 100%) !important;
+    border-color: #FFD4E0 !important;
+    color: #C4899A !important;
+}
+
+/* 删除按钮 */
+#persona-list-container > div > div > div:last-child > button:last-child {
+    background: #FFFFFF !important;
+    color: #D4A5B3 !important;
+    border-color: #FFE4EC !important;
+}
+
+#persona-list-container > div > div > div:last-child > button:last-child:hover {
+    background: linear-gradient(135deg, #FFE4EC 0%, #FFD4E0 100%) !important;
+    border-color: #FFB6C9 !important;
+    color: #B8758A !important;
+}
+
+/* ==================== 空状态 ==================== */
+#persona-list-container > div {
+    text-align: center !important;
+    padding: 80px 20px !important;
+    color: #D4B8C2 !important;
+    font-size: 14px !important;
+    line-height: 1.8;
+}
+
+/* ==================== 编辑器页面 ==================== */
+#persona-editor-page .sub-content {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF9FB 100%) !important;
+    padding: 24px 20px !important;
+}
+
+/* 表单标签 */
+#persona-editor-page label {
+    color: #D4A5B3 !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    margin-bottom: 10px !important;
+    letter-spacing: 0.3px;
+}
+
+/* 输入框 */
+#persona-editor-page input[type="text"],
+#persona-editor-page textarea {
+    background: linear-gradient(135deg, #FFFAFD 0%, #FFF5F8 100%) !important;
+    border: 1.5px solid #FFE8F0 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    font-size: 15px !important;
+    color: #5D4E52 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 1px 4px rgba(255, 182, 193, 0.08);
+}
+
+#persona-editor-page input[type="text"]:focus,
+#persona-editor-page textarea:focus {
+    outline: none !important;
+    border-color: #FFB6C9 !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 0 0 4px rgba(255, 182, 201, 0.15), 0 2px 8px rgba(255, 182, 193, 0.12) !important;
+}
+
+#persona-editor-page input[type="text"]::placeholder,
+#persona-editor-page textarea::placeholder {
+    color: #D4C8D2;
+}
+
+#persona-editor-page textarea {
+    min-height: 180px !important;
+    line-height: 1.7 !important;
+    resize: vertical;
+}
+
+/* 提示文字 */
+#persona-editor-page .sub-content > div:nth-child(4) > div:last-child {
+    font-size: 13px !important;
+    color: #D4B8C2 !important;
+    margin-top: 10px !important;
+    font-weight: 500;
+}
+
+/* 底部按钮栏 */
+#persona-editor-page .sub-content > div:nth-child(5) {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 249, 251, 0.95) 100%) !important;
+    border-top: 1px solid #FFE8F0 !important;
+    padding: 16px 20px !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 12px rgba(255, 182, 193, 0.1);
+}
+
+#persona-editor-page .sub-content > div:nth-child(5) button {
+    flex: 1 !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    letter-spacing: 0.3px;
+}
+
+/* 取消按钮 */
+#persona-editor-cancel {
+    background: linear-gradient(135deg, #FFFAFD 0%, #FFF5F8 100%) !important;
+    color: #9B8A8F !important;
+    border: 1.5px solid #FFE8F0 !important;
+}
+
+#persona-editor-cancel:hover {
+    background: linear-gradient(135deg, #FFE8F0 0%, #FFD4E0 100%) !important;
+    border-color: #FFB6C9 !important;
+    color: #7B6E72 !important;
+}
+
+/* 保存按钮 */
+#persona-editor-save {
+    background: linear-gradient(135deg, #FFB6C9 0%, #FFA4BC 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(255, 182, 201, 0.35);
+}
+
+#persona-editor-save:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(255, 182, 201, 0.45) !important;
+}
+
+/* 占位空间 */
+#persona-editor-page .sub-content > div:last-child {
+    height: 90px !important;
+}
+
+/* ==================== 滚动条样式 ==================== */
+#persona-manager-page .sub-content::-webkit-scrollbar,
+#persona-editor-page .sub-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+#persona-manager-page .sub-content::-webkit-scrollbar-track,
+#persona-editor-page .sub-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#persona-manager-page .sub-content::-webkit-scrollbar-thumb,
+#persona-editor-page .sub-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #FFB6C9 0%, #FFA4BC 100%);
+    border-radius: 3px;
+}
+
+#persona-manager-page .sub-content::-webkit-scrollbar-thumb:hover,
+#persona-editor-page .sub-content::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #FFA4BC 0%, #FF92A8 100%);
+}
+
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 480px) {
+    #persona-manager-page .sub-title,
+    #persona-editor-page .sub-title {
+        font-size: 16px;
+    }
+    
+    #add-persona-btn {
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+    }
+    
+    #persona-list-container > div > div {
+        padding: 16px !important;
+        border-radius: 16px !important;
+    }
+    
+    #persona-list-container > div > div > div:nth-child(2) > div:first-child {
+        font-size: 16px !important;
+    }
+    
+    #persona-list-container > div > div > div:last-child {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+    
+    #persona-editor-page .sub-content {
+        padding: 20px 16px !important;
+    }
+    
+    #persona-editor-page input[type="text"],
+    #persona-editor-page textarea {
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* ==================== 动画效果 ==================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#persona-list-container > div > div {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+#persona-list-container > div > div:nth-child(1) { animation-delay: 0.05s; }
+#persona-list-container > div > div:nth-child(2) { animation-delay: 0.1s; }
+#persona-list-container > div > div:nth-child(3) { animation-delay: 0.15s; }
+#persona-list-container > div > div:nth-child(4) { animation-delay: 0.2s; }
+#persona-list-container > div > div:nth-child(5) { animation-delay: 0.25s; }

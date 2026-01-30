@@ -4954,9 +4954,17 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     transition: all 0.3s ease;
 }
 
-.avatar-display:hover {
+.avatar-display.clickable-avatar {
+    cursor: pointer;
+}
+
+.avatar-display.clickable-avatar:hover {
     transform: scale(1.05) rotate(5deg);
     box-shadow: 0 12px 32px rgba(255, 182, 193, 0.45);
+}
+
+.avatar-display.clickable-avatar:active {
+    transform: scale(0.98) rotate(3deg);
 }
 
 .avatar-initial {
@@ -4998,6 +5006,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     font-weight: 600;
     color: #ffb6c8;
     letter-spacing: 0.5px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .avatar-heart {
@@ -5315,14 +5327,14 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .btn-save {
     flex: 1;
-    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    background: linear-gradient(135deg, #ffd4e0 0%, #ffb6c8 100%);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
 }
 
 .btn-save:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 20, 147, 0.4);
+    box-shadow: 0 6px 16px rgba(255, 182, 193, 0.4);
 }
 
 .btn-delete {
@@ -5560,5 +5572,471 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     
     .card-body {
         padding: 16px;
+    }
+}
+
+/* ==================== 设置页面样式 ==================== */
+
+/* 模态框遮罩层 */
+.settings-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-modal-overlay.closing {
+    animation: fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* 模态框容器 */
+.settings-modal-container {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.settings-modal-overlay.closing .settings-modal-container {
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+}
+
+/* 设置页面标题栏 */
+.settings-header {
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-header::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    animation: headerFloat 8s ease-in-out infinite;
+}
+
+@keyframes headerFloat {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-20px, -20px) rotate(5deg); }
+}
+
+.settings-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.settings-title-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.settings-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.settings-icon {
+    width: 24px;
+    height: 24px;
+    stroke: #ffffff;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.settings-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+.settings-subtitle {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+.settings-close-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.settings-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.settings-close-btn:active {
+    transform: rotate(90deg) scale(0.9);
+}
+
+/* 内容区域 */
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    background: #f8f9fa;
+}
+
+.settings-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
+}
+
+/* 设置卡片 */
+.settings-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 0;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.settings-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.settings-card:last-child {
+    margin-bottom: 0;
+}
+
+/* 卡片头部 */
+.settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.settings-card-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.settings-card-icon svg {
+    stroke: #ffffff;
+}
+
+.settings-card-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: 0.2px;
+}
+
+.settings-card-desc {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #666666;
+    font-weight: 400;
+}
+
+/* 卡片内容 */
+.settings-card-content {
+    padding: 20px;
+}
+
+/* 设置按钮 */
+.settings-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.settings-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.settings-btn-icon {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.3s ease;
+}
+
+.settings-btn:hover .settings-btn-icon {
+    transform: scale(1.1);
+}
+
+/* 主要按钮 */
+.settings-btn-primary {
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 12px;
+}
+
+.settings-btn-primary:hover {
+    background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
+}
+
+.settings-btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 次要按钮 */
+.settings-btn-secondary {
+    background: #ffffff;
+    color: #2c2c2c;
+    border: 2px solid #e0e0e0;
+    margin-bottom: 16px;
+}
+
+.settings-btn-secondary:hover {
+    background: #f8f9fa;
+    border-color: #2c2c2c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.settings-btn-secondary:active {
+    transform: translateY(0);
+    background: #f0f0f0;
+}
+
+/* 信息提示框 */
+.settings-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #e8e8e8;
+}
+
+.settings-info-icon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    stroke: #666666;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    margin-top: 2px;
+}
+
+.settings-info-text {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #666666;
+    font-weight: 400;
+}
+
+/* 响应式适配 */
+@media (max-width: 500px) {
+    .settings-modal-overlay {
+        padding: 0;
+    }
+    
+    .settings-modal-container {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+    
+    .settings-header-content {
+        padding: 20px;
+    }
+    
+    .settings-icon-wrapper {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .settings-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .settings-title {
+        font-size: 18px;
+    }
+    
+    .settings-subtitle {
+        font-size: 12px;
+    }
+    
+    .settings-content {
+        padding: 16px;
+    }
+    
+    .settings-card {
+        border-radius: 12px;
+    }
+    
+    .settings-card-header {
+        padding: 16px;
+    }
+    
+    .settings-card-content {
+        padding: 16px;
+    }
+    
+    .settings-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .settings-title {
+        font-size: 16px;
+    }
+    
+    .settings-card-title {
+        font-size: 14px;
+    }
+    
+    .settings-btn {
+        padding: 10px 14px;
+        font-size: 12px;
     }
 }

@@ -71,36 +71,24 @@
                         <div class="avatar-container">
                             <div class="avatar-wrapper char-avatar-wrapper">
                                 <div class="avatar-glow"></div>
-                                <div id="settings-char-avatar-display" class="avatar-display">
+                                <div id="settings-char-avatar-display" class="avatar-display clickable-avatar" data-type="char">
                                     ${chat.avatar ? `<img src="${chat.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span class="avatar-initial">' + chat.name.charAt(0) + '</span>'}
                                 </div>
-                                <button id="char-avatar-btn" class="avatar-edit-btn">
-                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                </button>
-                                <div class="avatar-label">角色</div>
+                                <div class="avatar-label">${this.escapeHtml(chat.remark || chat.name)}</div>
                             </div>
                             
                             <div class="avatar-heart">
-                                <svg viewBox="0 0 24 24" style="width:32px;height:32px;fill:#ff69b4;">
+                                <svg viewBox="0 0 24 24" style="width:32px;height:32px;fill:#ffc0d4;">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
                             </div>
                             
                             <div class="avatar-wrapper user-avatar-wrapper">
                                 <div class="avatar-glow"></div>
-                                <div id="settings-user-avatar-display" class="avatar-display">
+                                <div id="settings-user-avatar-display" class="avatar-display clickable-avatar" data-type="user">
                                     ${chat.userAvatar ? `<img src="${chat.userAvatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span class="avatar-initial">' + window.AppState.user.name.charAt(0) + '</span>'}
                                 </div>
-                                <button id="user-avatar-btn" class="avatar-edit-btn">
-                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                </button>
-                                <div class="avatar-label">你</div>
+                                <div class="avatar-label">${this.escapeHtml(userNameForChar)}</div>
                             </div>
                         </div>
                     </div>
@@ -498,18 +486,18 @@
                 console.warn('char-settings-back-btn not found');
             }
 
-            // 角色头像修改
-            const charAvatarBtn = document.getElementById('char-avatar-btn');
-            if (charAvatarBtn) {
-                charAvatarBtn.addEventListener('click', () => {
+            // 角色头像点击修改
+            const charAvatarDisplay = document.getElementById('settings-char-avatar-display');
+            if (charAvatarDisplay) {
+                charAvatarDisplay.addEventListener('click', () => {
                     window.openImagePickerForCharacter('avatar', chat.id);
                 });
             }
 
-            // 用户头像修改
-            const userAvatarBtn = document.getElementById('user-avatar-btn');
-            if (userAvatarBtn) {
-                userAvatarBtn.addEventListener('click', () => {
+            // 用户头像点击修改
+            const userAvatarDisplay = document.getElementById('settings-user-avatar-display');
+            if (userAvatarDisplay) {
+                userAvatarDisplay.addEventListener('click', () => {
                     window.openImagePicker('user-avatar', true);
                 });
             }
