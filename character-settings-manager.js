@@ -12,35 +12,36 @@
          * 打开角色设置页面（全屏子页面）
          */
         openCharacterSettings: function(chat) {
-            console.log('openCharacterSettings called with chat:', chat);
-            if (!chat) {
-                console.error('No chat provided to openCharacterSettings');
-                showToast('未找到角色信息');
-                return;
-            }
+            try {
+                console.log('openCharacterSettings called with chat:', chat);
+                if (!chat) {
+                    console.error('No chat provided to openCharacterSettings');
+                    showToast('未找到角色信息');
+                    return;
+                }
 
-            // 关键数据完整性检查
-            if (!window.AppState) {
-                alert('错误：AppState未初始化');
-                return;
-            }
-            if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
-                alert('错误：conversations数据未初始化，请刷新页面重试');
-                return;
-            }
-            if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
-                window.AppState.worldbooks = [];
-            }
-            if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
-                window.AppState.friends = [];
-            }
-            if (!window.AppState.user) {
-                window.AppState.user = { name: '用户', personality: '' };
-            }
+                // 关键数据完整性检查
+                if (!window.AppState) {
+                    alert('错误：AppState未初始化');
+                    return;
+                }
+                if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
+                    alert('错误：conversations数据未初始化，请刷新页面重试');
+                    return;
+                }
+                if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
+                    window.AppState.worldbooks = [];
+                }
+                if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
+                    window.AppState.friends = [];
+                }
+                if (!window.AppState.user) {
+                    window.AppState.user = { name: '用户', personality: '' };
+                }
 
-            // 移除已存在的模态框
-            let modal = document.getElementById('character-settings-modal');
-            if (modal) modal.remove();
+                // 移除已存在的模态框
+                let modal = document.getElementById('character-settings-modal');
+                if (modal) modal.remove();
             
             // 检测设备类型：手机端全屏，平板和电脑端居中显示
             const isMobile = window.innerWidth < 768;
@@ -534,6 +535,10 @@
             
             this.bindCharacterSettingsEvents(chat);
             console.log('Character settings page opened successfully');
+            } catch (error) {
+                console.error('Error in openCharacterSettings:', error);
+                alert('打开角色设置失败：' + error.message + '\n\n堆栈：' + error.stack);
+            }
         },
 
         /**
