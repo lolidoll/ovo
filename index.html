@@ -2329,8 +2329,8 @@
                     <div class="chat-title" id="chat-title">AI小助手</div>
                     <div class="chat-typing-status" id="chat-typing-status" style="font-size:13px;color:#999;display:none;white-space:nowrap;">正在打字中...</div>
                 </div>
-                <div class="chat-toolbar-buttons" style="display:flex;gap:0;align-items:center;">
-                    <button id="chat-mind-btn" style="width:40px;height:40px;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative;">
+                <div class="chat-toolbar-buttons" style="display:flex;gap:4px;align-items:center;">
+                    <button id="chat-mind-btn" style="width:44px;height:44px;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:50;flex-shrink:0;">
                         <svg id="chat-mind-heart" viewBox="0 0 24 24" style="width:24px;height:24px;position:relative;">
                             <!-- 空心爱心轮廓 -->
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
@@ -2358,7 +2358,7 @@
                                   style="pointer-events: none;">0</text>
                         </svg>
                     </button>
-                    <div class="chat-more" id="chat-more-btn" ontouchend="event.preventDefault();event.stopPropagation();if(window.AppState&&window.AppState.currentChat){window.openChatMoreMenu?window.openChatMoreMenu(window.AppState.currentChat):console.error('openChatMoreMenu not found')}else{alert('未找到当前对话')}" onclick="if(!event.defaultPrevented){event.preventDefault();event.stopPropagation();if(window.AppState&&window.AppState.currentChat){window.openChatMoreMenu?window.openChatMoreMenu(window.AppState.currentChat):console.error('openChatMoreMenu not found')}else{alert('未找到当前对话')}}">
+                    <div class="chat-more" id="chat-more-btn" ontouchend="console.log('🔥 TOUCHEND FIRED');event.preventDefault();event.stopPropagation();if(window.AppState&&window.AppState.currentChat){console.log('Opening menu for:',window.AppState.currentChat.name);window.openChatMoreMenu?window.openChatMoreMenu(window.AppState.currentChat):alert('openChatMoreMenu未找到')}else{alert('未找到当前对话')}" onclick="console.log('🔥 CLICK FIRED');if(!event.defaultPrevented){event.preventDefault();event.stopPropagation();if(window.AppState&&window.AppState.currentChat){console.log('Opening menu for:',window.AppState.currentChat.name);window.openChatMoreMenu?window.openChatMoreMenu(window.AppState.currentChat):alert('openChatMoreMenu未找到')}else{alert('未找到当前对话')}}">
                         <div class="chat-more-dots">
                             <span></span>
                             <span></span>
