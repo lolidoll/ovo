@@ -2358,15 +2358,13 @@
                                   style="pointer-events: none;">0</text>
                         </svg>
                     </button>
-                    <div style="position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:999999;"
-                         ontouchend="(function(e){e.preventDefault();e.stopPropagation();console.log('DIV TOUCH!');if(window.AppState&&window.AppState.currentChat&&window.CharacterSettingsManager){window.CharacterSettingsManager.openCharacterSettings(window.AppState.currentChat)}else{alert('currentChat:'+(window.AppState?window.AppState.currentChat:'无AppState'));}}).call(this,event)"
-                         onclick="(function(e){e.stopPropagation();console.log('DIV CLICK!');if(window.AppState&&window.AppState.currentChat&&window.CharacterSettingsManager){window.CharacterSettingsManager.openCharacterSettings(window.AppState.currentChat)}else{alert('currentChat:'+(window.AppState?window.AppState.currentChat:'无AppState'));}}).call(this,event)">
+                    <div id="chat-more-wrapper" style="position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:999999;">
                         <button class="chat-more" id="chat-more-btn" type="button"
-                                style="border:none;background:none;-webkit-tap-highlight-color:rgba(0,0,0,0.2);pointer-events:none;">
-                            <div class="chat-more-dots" style="pointer-events:none;">
-                                <span style="pointer-events:none;"></span>
-                                <span style="pointer-events:none;"></span>
-                                <span style="pointer-events:none;"></span>
+                                style="border:none;background:none;-webkit-tap-highlight-color:rgba(0,0,0,0.2);cursor:pointer;">
+                            <div class="chat-more-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
                             </div>
                         </button>
                     </div>

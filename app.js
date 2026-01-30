@@ -531,35 +531,36 @@
                 closeChatPage();
             });
 
-            // 聊天页面 - 角色设置按钮（简单直接的方法）
+            // 聊天页面 - 角色设置按钮（三个点）
             // 延迟绑定，确保元素已加载
             setTimeout(function() {
                 const chatMoreBtn = document.getElementById('chat-more-btn');
-                if (chatMoreBtn) {
+                const chatMoreWrapper = document.getElementById('chat-more-wrapper');
+                
+                if (chatMoreBtn && chatMoreWrapper) {
                     console.log('✅ Binding events to chat-more-btn');
                     
-                    // 使用最简单最可靠的方法：同时监听 touchend 和 click
                     let lastTouchEnd = 0;
                     
-                    // 触摸结束事件 - 移动端
-                    chatMoreBtn.addEventListener('touchend', function(e) {
-                        e.preventDefault(); // 防止触发后续的click事件
+                    // 在wrapper上监听触摸事件 - 移动端
+                    chatMoreWrapper.addEventListener('touchend', function(e) {
+                        e.preventDefault();
                         e.stopPropagation();
                         lastTouchEnd = Date.now();
                         
-                        console.log('👆 Touch end on chat-more-btn');
+                        console.log('👆 Touch end on chat-more-btn wrapper');
                         
-                        if (AppState.currentChat) {
-                            console.log('📱 Opening menu for:', AppState.currentChat.name);
-                            openChatMoreMenu(AppState.currentChat);
+                        if (AppState.currentChat && window.CharacterSettingsManager) {
+                            console.log('📱 Opening character settings for:', AppState.currentChat.name);
+                            window.CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
                         } else {
-                            console.warn('⚠️ No current chat');
-                            showToast('未找到当前对话');
+                            console.warn('⚠️ No current chat or CharacterSettingsManager');
+                            showToast('未找到角色信息');
                         }
-                    });
+                    }, { passive: false });
                     
-                    // 点击事件 - 桌面端（如果300ms内没有touchend则触发）
-                    chatMoreBtn.addEventListener('click', function(e) {
+                    // 在wrapper上监听点击事件 - 桌面端
+                    chatMoreWrapper.addEventListener('click', function(e) {
                         // 如果刚刚触发过touchend，则忽略这个click
                         if (Date.now() - lastTouchEnd < 300) {
                             console.log('🚫 Click ignored (recently touched)');
@@ -569,20 +570,20 @@
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        console.log('🖱️ Click on chat-more-btn');
+                        console.log('🖱️ Click on chat-more-btn wrapper');
                         
-                        if (AppState.currentChat) {
-                            console.log('📱 Opening menu for:', AppState.currentChat.name);
-                            openChatMoreMenu(AppState.currentChat);
+                        if (AppState.currentChat && window.CharacterSettingsManager) {
+                            console.log('🖥️ Opening character settings for:', AppState.currentChat.name);
+                            window.CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
                         } else {
-                            console.warn('⚠️ No current chat');
-                            showToast('未找到当前对话');
+                            console.warn('⚠️ No current chat or CharacterSettingsManager');
+                            showToast('未找到角色信息');
                         }
                     });
                     
                     console.log('✅ Event bound successfully');
                 } else {
-                    console.error('❌ chat-more-btn not found');
+                    console.error('❌ chat-more-btn or chat-more-wrapper not found');
                 }
             }, 100);
             
