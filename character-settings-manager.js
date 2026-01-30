@@ -505,6 +505,7 @@
             // 显示页面 - 强制设置样式确保手机端正常显示
             console.log('Opening character settings page...');
             console.log('Page element:', page);
+            console.log('Page classList:', page.classList);
             
             // 确保页面在DOM中
             if (!document.getElementById('character-settings-page')) {
@@ -513,40 +514,29 @@
                 return;
             }
             
-            // 先设置 display，确保页面可见
+            // 先移除open类（如果存在）
+            page.classList.remove('open');
+            
+            // 重置所有样式
+            page.style.cssText = '';
+            
+            // 强制重排
+            void page.offsetHeight;
+            
+            // 立即设置display，然后添加open类触发动画
             page.style.display = 'flex';
             page.style.visibility = 'visible';
-            console.log('Set display and visibility');
             
-            // 强制重排
-            page.offsetHeight;
+            console.log('Display set to flex, adding open class...');
             
-            // 移除 transform（如果有）
-            page.style.transform = 'translateX(100%)';
-            
-            // 强制重排
-            page.offsetHeight;
-            
-            // 添加 open 类
-            page.classList.add('open');
-            console.log('Added open class');
-            
-            // 使用 setTimeout 确保动画执行
+            // 使用setTimeout确保display生效后再添加open类
             setTimeout(() => {
-                page.style.transform = 'translateX(0)';
-                console.log('Set transform to 0');
-                
-                // 验证最终状态
-                setTimeout(() => {
-                    const computed = window.getComputedStyle(page);
-                    console.log('Final state:', {
-                        display: computed.display,
-                        visibility: computed.visibility,
-                        transform: computed.transform,
-                        zIndex: computed.zIndex
-                    });
-                }, 350);
-            }, 50);
+                page.classList.add('open');
+                console.log('Open class added');
+                console.log('Final computed style:', window.getComputedStyle(page).transform);
+                console.log('Final computed display:', window.getComputedStyle(page).display);
+                console.log('Final computed visibility:', window.getComputedStyle(page).visibility);
+            }, 10);
             
             this.bindCharacterSettingsEvents(chat);
             console.log('Character settings page opened successfully');
@@ -607,8 +597,14 @@
                     e.stopPropagation();
                     const page = document.getElementById('character-settings-page');
                     if (page) {
-                        console.log('Removing open class from character-settings-page');
+                        console.log('Closing character-settings-page');
                         page.classList.remove('open');
+                        // 等待动画完成后隐藏
+                        setTimeout(() => {
+                            page.style.display = 'none';
+                            page.style.visibility = 'hidden';
+                            console.log('Page hidden');
+                        }, 300);
                     }
                 });
             } else {
