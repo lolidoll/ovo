@@ -963,32 +963,58 @@
                 }, { capture: true });
                 
                 // 添加触摸事件作为备用（移动端）
+                let touchStartTime = 0;
+                let touchMoved = false;
+                
                 chatMoreBtn.addEventListener('touchstart', function(e) {
                     console.log('===== chat-more-btn TOUCHSTART =====');
-                    alert('触摸开始！');
+                    touchStartTime = Date.now();
+                    touchMoved = false;
+                }, { passive: true, capture: true });
+                
+                chatMoreBtn.addEventListener('touchmove', function(e) {
+                    touchMoved = true;
                 }, { passive: true, capture: true });
                 
                 chatMoreBtn.addEventListener('touchend', function(e) {
                     console.log('===== chat-more-btn TOUCHEND =====');
-                    alert('触摸结束！');
+                    const touchDuration = Date.now() - touchStartTime;
+                    
+                    // 如果触摸移动了或者时间太长，不处理
+                    if (touchMoved || touchDuration > 500) {
+                        console.log('Touch moved or too long, ignoring');
+                        return;
+                    }
+                    
                     e.preventDefault();
+                    e.stopPropagation();
+                    
+                    alert('触摸结束，准备打开页面！');
+                    console.log('AppState.currentChat:', AppState.currentChat);
+                    console.log('CharacterSettingsManager:', window.CharacterSettingsManager);
                     
                     if (!AppState.currentChat) {
                         console.error('No current chat');
+                        alert('错误：没有当前聊天');
                         showToast('请先选择一个角色');
                         return;
                     }
                     
                     if (!window.CharacterSettingsManager) {
                         console.error('CharacterSettingsManager not loaded');
+                        alert('错误：模块未加载');
                         showToast('角色设置模块未加载');
                         return;
                     }
                     
                     try {
+                        console.log('Calling openCharacterSettings from touchend...');
+                        alert('开始调用 openCharacterSettings');
                         CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
+                        alert('openCharacterSettings 调用完成');
                     } catch (error) {
                         console.error('Error opening character settings:', error);
+                        alert('错误：' + error.message);
                         showToast('打开角色设置失败：' + error.message);
                     }
                 }, { passive: false, capture: true });
