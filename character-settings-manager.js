@@ -473,7 +473,11 @@
                 </div>
             `;
 
+            // 强制显示页面 - 移动端兼容
             page.classList.add('open');
+            // 添加内联样式确保在移动端也能正常显示
+            page.style.transform = 'translateX(0)';
+            page.style.display = 'flex';
 
             // 设置当前绑定的分组
             if (chat.boundEmojiGroups && Array.isArray(chat.boundEmojiGroups)) {
