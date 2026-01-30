@@ -538,17 +538,56 @@
                 if (chatMoreBtn) {
                     console.log('✅ Binding events to chat-more-btn');
                     
-                    chatMoreBtn.addEventListener('click', function(e) {
-                        console.log('🔘 Chat more button clicked');
-                        e.preventDefault();
-                        e.stopPropagation();
+                    // 移动端和桌面端兼容的点击处理
+                    let touchStartTime = 0;
+                    let touchMoved = false;
+                    
+                    // 触摸开始
+                    chatMoreBtn.addEventListener('touchstart', function(e) {
+                        touchStartTime = Date.now();
+                        touchMoved = false;
+                        console.log('👆 Touch start on chat-more-btn');
+                    }, { passive: true });
+                    
+                    // 触摸移动
+                    chatMoreBtn.addEventListener('touchmove', function(e) {
+                        touchMoved = true;
+                    }, { passive: true });
+                    
+                    // 触摸结束
+                    chatMoreBtn.addEventListener('touchend', function(e) {
+                        const touchDuration = Date.now() - touchStartTime;
+                        console.log('👆 Touch end on chat-more-btn, moved:', touchMoved, 'duration:', touchDuration);
                         
-                        if (AppState.currentChat) {
-                            console.log('📱 Opening menu for:', AppState.currentChat.name);
-                            openChatMoreMenu(AppState.currentChat);
-                        } else {
-                            console.warn('⚠️ No current chat');
-                            showToast('未找到当前对话');
+                        // 只有在没有滑动且时间合理的情况下才触发
+                        if (!touchMoved && touchDuration < 500) {
+                            e.preventDefault();
+                            
+                            if (AppState.currentChat) {
+                                console.log('📱 Opening menu for:', AppState.currentChat.name);
+                                openChatMoreMenu(AppState.currentChat);
+                            } else {
+                                console.warn('⚠️ No current chat');
+                                showToast('未找到当前对话');
+                            }
+                        }
+                    });
+                    
+                    // 桌面端点击事件（作为后备）
+                    chatMoreBtn.addEventListener('click', function(e) {
+                        // 如果是触摸设备触发的click，忽略它（已经在touchend中处理）
+                        if (e.detail === 0 || touchStartTime === 0 || Date.now() - touchStartTime > 500) {
+                            console.log('🖱️ Mouse click on chat-more-btn');
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (AppState.currentChat) {
+                                console.log('📱 Opening menu for:', AppState.currentChat.name);
+                                openChatMoreMenu(AppState.currentChat);
+                            } else {
+                                console.warn('⚠️ No current chat');
+                                showToast('未找到当前对话');
+                            }
                         }
                     });
                     
