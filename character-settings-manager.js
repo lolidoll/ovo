@@ -19,6 +19,25 @@
                 return;
             }
 
+            // 关键数据完整性检查
+            if (!window.AppState) {
+                alert('错误：AppState未初始化');
+                return;
+            }
+            if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
+                alert('错误：conversations数据未初始化，请刷新页面重试');
+                return;
+            }
+            if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
+                window.AppState.worldbooks = [];
+            }
+            if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
+                window.AppState.friends = [];
+            }
+            if (!window.AppState.user) {
+                window.AppState.user = { name: '用户', personality: '' };
+            }
+
             // 移除已存在的模态框
             let modal = document.getElementById('character-settings-modal');
             if (modal) modal.remove();
