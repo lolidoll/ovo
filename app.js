@@ -531,9 +531,50 @@
                 closeChatPage();
             });
 
-            // 聊天页面 - 角色设置按钮（全局函数，直接绑定到HTML）
+            // 聊天页面 - 角色设置按钮（移动端优化）
+            const chatMoreBtn = document.getElementById('chat-more-btn');
+            if (chatMoreBtn) {
+                // 防止重复绑定
+                let isHandling = false;
+                
+                const handleMoreClick = function(e) {
+                    if (isHandling) return;
+                    isHandling = true;
+                    
+                    console.log('Chat more button clicked, currentChat:', AppState.currentChat);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (AppState.currentChat) {
+                        openChatMoreMenu(AppState.currentChat);
+                    } else {
+                        console.warn('AppState.currentChat is not set');
+                        showToast('未找到当前对话');
+                    }
+                    
+                    // 重置标志，避免长时间锁定
+                    setTimeout(() => {
+                        isHandling = false;
+                    }, 300);
+                };
+                
+                // 移动端：使用 touchend 事件
+                chatMoreBtn.addEventListener('touchend', function(e) {
+                    handleMoreClick(e);
+                });
+                
+                // 桌面端：使用 click 事件
+                chatMoreBtn.addEventListener('click', function(e) {
+                    // 如果是触摸设备，click 事件会在 touchend 之后触发，此时跳过
+                    if (e.detail === 0 || !('ontouchstart' in window)) {
+                        handleMoreClick(e);
+                    }
+                });
+            }
+            
+            // 保留全局函数以兼容可能的其他调用
             window.handleChatMoreButtonClick = function(e) {
-                console.log('Chat more button clicked, currentChat:', AppState.currentChat);
+                console.log('Chat more button clicked (legacy), currentChat:', AppState.currentChat);
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -701,8 +742,9 @@
             const lockBtn = document.getElementById('api-params-lock-btn');
             const paramsContainer = document.getElementById('api-params-container');
             if (lockBtn && paramsContainer) {
-                // 初始化锁定状态（从localStorage读取）
-                const isLocked = localStorage.getItem('apiParamsLocked') === 'true';
+                // 初始化锁定状态（从localStorage读取，默认为锁定）
+                const savedLockState = localStorage.getItem('apiParamsLocked');
+                const isLocked = savedLockState === null ? true : savedLockState === 'true';
                 updateLockButtonState(isLocked);
                 
                 lockBtn.addEventListener('click', function() {
@@ -4676,6 +4718,18 @@
                     AppState.apiSettings.selectedPromptId = this.value;
                     displayCurrentPrompt();
                     saveToStorage();
+                });
+            }
+            
+            // 主API模型选择器 change 事件监听 - 自动保存
+            const modelsSelect = document.getElementById('models-select');
+            if (modelsSelect) {
+                modelsSelect.addEventListener('change', function() {
+                    AppState.apiSettings.selectedModel = this.value;
+                    const display = document.getElementById('selected-model-display');
+                    if (display) display.textContent = this.value;
+                    saveToStorage();
+                    console.log('✅ 主API模型已更新并保存:', this.value);
                 });
             }
             

@@ -280,12 +280,12 @@
                                 <line x1="15" y1="9" x2="15.01" y2="9"></line>
                             </svg>
                             <span>消息气泡颜色</span>
-                            <button id="bubble-color-lock-btn" class="bubble-lock-btn" title="锁定防止误触">
+                            <button id="bubble-color-lock-btn" class="bubble-lock-btn locked" title="锁定防止误触" style="background: #fff3cd; border-color: #ffc107; color: #ff6b00;">
                                 <svg id="bubble-lock-icon" viewBox="0 0 24 24" class="lock-icon">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 6v6m0 0l-3-3m3 3l3-3"></path>
                                 </svg>
-                                <span id="bubble-lock-text">解锁</span>
+                                <span id="bubble-lock-text">已锁定</span>
                             </button>
                         </div>
                         <div class="card-body">
@@ -652,8 +652,8 @@
          * 绑定消息气泡颜色控制事件
          */
         bindBubbleColorEvents: function(chatId) {
-            // 锁定状态管理
-            let isLocked = false;
+            // 锁定状态管理 - 默认为锁定状态
+            let isLocked = true;
             const lockBtn = document.getElementById('bubble-color-lock-btn');
             const lockIcon = document.getElementById('bubble-lock-icon');
             const lockText = document.getElementById('bubble-lock-text');
