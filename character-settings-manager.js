@@ -23,18 +23,28 @@
             let modal = document.getElementById('character-settings-modal');
             if (modal) modal.remove();
             
-            // 创建新的模态框（全屏显示）
+            // 创建新的模态框（响应式适配）
             modal = document.createElement('div');
             modal.id = 'character-settings-modal';
             modal.className = 'emoji-mgmt-modal show';
-            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:#fff;z-index:10000;display:flex;align-items:stretch;justify-content:stretch;padding:0;';
             
-            // 点击背景关闭
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
+            // 检测设备类型：手机端全屏，平板和电脑端居中显示
+            const isMobile = window.innerWidth < 768;
+            
+            if (isMobile) {
+                // 手机端：全屏显示
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:#fff;z-index:10000;display:flex;align-items:stretch;justify-content:stretch;padding:0;';
+            } else {
+                // 平板和电脑端：居中显示带背景遮罩
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+                
+                // 点击背景关闭（仅在非手机端）
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
             
             document.body.appendChild(modal);
 
@@ -58,8 +68,13 @@
             const conv = window.AppState.conversations.find(c => c.id === chat.id);
             const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
             
+            // 响应式样式（复用前面的isMobile变量）
+            const contentStyle = isMobile
+                ? 'width:100%;height:100%;background:#fff;border-radius:0;overflow:hidden;display:flex;flex-direction:column;'
+                : 'max-width:min(800px,90vw);width:100%;max-height:90vh;background:#fff;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,0.2);';
+            
             modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="width:100%;height:100%;background:#fff;border-radius:0;overflow:hidden;display:flex;flex-direction:column;">
+                <div class="emoji-mgmt-content" style="${contentStyle}">
                     <div class="sub-nav char-settings-nav" style="position:relative;padding:clamp(18px,5vw,28px) clamp(16px,4vw,24px);background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);border-bottom:1px solid rgba(255,228,235,0.3);">
                         <div class="back-btn" id="char-settings-back-btn" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;font-size:15px;color:#333;border-radius:8px;font-weight:500;">
                             <div class="back-arrow" style="width:10px;height:10px;border-left:2.5px solid #333;border-bottom:2.5px solid #333;transform:rotate(45deg);"></div>
