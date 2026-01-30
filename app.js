@@ -6995,15 +6995,17 @@
             
             if (shouldRender) {
                 console.log('🎨 立即调用 renderChatMessages()');
-                // 立即渲染，不使用延迟
-                renderChatMessages();
-                // 确保滚动到底部
-                setTimeout(() => {
-                    const container = document.getElementById('chat-messages');
-                    if (container) {
-                        container.scrollTop = container.scrollHeight;
-                    }
-                }, 50);
+                // 使用 requestAnimationFrame 确保 DOM 更新在下一帧执行
+                requestAnimationFrame(() => {
+                    renderChatMessages();
+                    // 确保滚动到底部
+                    requestAnimationFrame(() => {
+                        const container = document.getElementById('chat-messages');
+                        if (container) {
+                            container.scrollTop = container.scrollHeight;
+                        }
+                    });
+                });
             }
             
             renderConversations();
@@ -7157,14 +7159,17 @@
                     
                     if (shouldRender) {
                         console.log('🎨 立即调用 renderChatMessages()');
-                        renderChatMessages();
-                        // 确保滚动到底部
-                        setTimeout(() => {
-                            const container = document.getElementById('chat-messages');
-                            if (container) {
-                                container.scrollTop = container.scrollHeight;
-                            }
-                        }, 50);
+                        // 使用 requestAnimationFrame 确保 DOM 更新在下一帧执行
+                        requestAnimationFrame(() => {
+                            renderChatMessages();
+                            // 确保滚动到底部
+                            requestAnimationFrame(() => {
+                                const container = document.getElementById('chat-messages');
+                                if (container) {
+                                    container.scrollTop = container.scrollHeight;
+                                }
+                            });
+                        });
                     }
                     
                     renderConversations();
