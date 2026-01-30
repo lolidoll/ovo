@@ -532,78 +532,8 @@
             });
 
             // 聊天页面 - 角色设置按钮（三个点）
-            // 延迟绑定，确保元素已加载
-            setTimeout(function() {
-                const chatMoreBtn = document.getElementById('chat-more-btn');
-                const chatMoreWrapper = document.getElementById('chat-more-wrapper');
-                
-                if (chatMoreBtn && chatMoreWrapper) {
-                    console.log('✅ Binding events to chat-more-btn');
-                    
-                    let lastTouchEnd = 0;
-                    
-                    // 在wrapper上监听触摸事件 - 移动端
-                    chatMoreWrapper.addEventListener('touchend', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        lastTouchEnd = Date.now();
-                        
-                        console.log('👆 Touch end on chat-more-btn wrapper');
-                        
-                        if (AppState.currentChat && window.CharacterSettingsManager) {
-                            console.log('📱 Opening character settings for:', AppState.currentChat.name);
-                            window.CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
-                        } else {
-                            console.warn('⚠️ No current chat or CharacterSettingsManager');
-                            showToast('未找到角色信息');
-                        }
-                    }, { passive: false });
-                    
-                    // 在wrapper上监听点击事件 - 桌面端
-                    chatMoreWrapper.addEventListener('click', function(e) {
-                        // 如果刚刚触发过touchend，则忽略这个click
-                        if (Date.now() - lastTouchEnd < 300) {
-                            console.log('🚫 Click ignored (recently touched)');
-                            return;
-                        }
-                        
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        console.log('🖱️ Click on chat-more-btn wrapper');
-                        
-                        if (AppState.currentChat && window.CharacterSettingsManager) {
-                            console.log('🖥️ Opening character settings for:', AppState.currentChat.name);
-                            window.CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
-                        } else {
-                            console.warn('⚠️ No current chat or CharacterSettingsManager');
-                            showToast('未找到角色信息');
-                        }
-                    });
-                    
-                    console.log('✅ Event bound successfully');
-                } else {
-                    console.error('❌ chat-more-btn or chat-more-wrapper not found');
-                }
-            }, 100);
-            
-            // 保留全局函数以兼容可能的其他调用
-            window.handleChatMoreButtonClick = function(e) {
-                console.log('Chat more button clicked (legacy), currentChat:', AppState.currentChat);
-                if (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-                
-                if (AppState.currentChat) {
-                    openChatMoreMenu(AppState.currentChat);
-                } else {
-                    console.warn('AppState.currentChat is not set');
-                    showToast('未找到当前对话');
-                }
-                
-                return false;
-            };
+            // 现在使用HTML内联事件，不需要在这里绑定
+            // 按钮直接调用 CharacterSettingsManager.openCharacterSettings()
 
             document.getElementById('chat-send-btn').addEventListener('click', function() {
                 sendMessage();
