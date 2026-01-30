@@ -367,6 +367,77 @@
                         </div>
                     </div>
 
+                    <!-- 消息字体颜色设置 - 公主风格卡片 -->
+                    <div class="settings-card text-color-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <path d="M4 7V4h16v3"></path>
+                                <path d="M9 20h6"></path>
+                                <path d="M12 4v16"></path>
+                            </svg>
+                            <span>消息字体颜色</span>
+                        </div>
+                        <div class="card-body">
+                            <!-- 角色消息字体颜色 -->
+                            <div class="bubble-section">
+                                <label class="bubble-label">角色消息字体（左侧）</label>
+                                
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="char-text-r" min="0" max="255" value="${chat.textColor?.char?.r ?? 51}" class="bubble-slider">
+                                            <input type="number" id="char-text-r-input" min="0" max="255" value="${chat.textColor?.char?.r ?? 51}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="char-text-g" min="0" max="255" value="${chat.textColor?.char?.g ?? 51}" class="bubble-slider">
+                                            <input type="number" id="char-text-g-input" min="0" max="255" value="${chat.textColor?.char?.g ?? 51}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="char-text-b" min="0" max="255" value="${chat.textColor?.char?.b ?? 51}" class="bubble-slider">
+                                            <input type="number" id="char-text-b-input" min="0" max="255" value="${chat.textColor?.char?.b ?? 51}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-preview" style="color:rgb(${chat.textColor?.char?.r ?? 51}, ${chat.textColor?.char?.g ?? 51}, ${chat.textColor?.char?.b ?? 51}); background-color:rgba(${chat.bubbleColor?.char?.r ?? 240}, ${chat.bubbleColor?.char?.g ?? 240}, ${chat.bubbleColor?.char?.b ?? 240}, ${chat.bubbleColor?.char?.alpha ?? 0.85});" id="char-text-preview">
+                                        这是角色消息文字预览
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 用户消息字体颜色 -->
+                            <div class="bubble-section">
+                                <label class="bubble-label">用户消息字体（右侧）</label>
+                                
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="user-text-r" min="0" max="255" value="${chat.textColor?.user?.r ?? 51}" class="bubble-slider">
+                                            <input type="number" id="user-text-r-input" min="0" max="255" value="${chat.textColor?.user?.r ?? 51}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="user-text-g" min="0" max="255" value="${chat.textColor?.user?.g ?? 51}" class="bubble-slider">
+                                            <input type="number" id="user-text-g-input" min="0" max="255" value="${chat.textColor?.user?.g ?? 51}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="user-text-b" min="0" max="255" value="${chat.textColor?.user?.b ?? 51}" class="bubble-slider">
+                                            <input type="number" id="user-text-b-input" min="0" max="255" value="${chat.textColor?.user?.b ?? 51}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-preview" style="color:rgb(${chat.textColor?.user?.r ?? 51}, ${chat.textColor?.user?.g ?? 51}, ${chat.textColor?.user?.b ?? 51}); background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 200}, ${chat.bubbleColor?.user?.b ?? 230}, ${chat.bubbleColor?.user?.alpha ?? 0.85});" id="user-text-preview">
+                                        这是用户消息文字预览
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 操作按钮 - 公主风格 -->
                     <div class="action-buttons">
                         <button id="save-char-settings-btn" class="btn-save">
@@ -725,6 +796,101 @@
             if (userBInput) userBInput.addEventListener('change', updateUserFromInput);
             if (userAlphaInput) userAlphaInput.addEventListener('change', updateUserFromInput);
             
+            // 字体颜色控制
+            const charTextR = document.getElementById('char-text-r');
+            const charTextG = document.getElementById('char-text-g');
+            const charTextB = document.getElementById('char-text-b');
+            const charTextRInput = document.getElementById('char-text-r-input');
+            const charTextGInput = document.getElementById('char-text-g-input');
+            const charTextBInput = document.getElementById('char-text-b-input');
+            const charTextPreview = document.getElementById('char-text-preview');
+            
+            const userTextR = document.getElementById('user-text-r');
+            const userTextG = document.getElementById('user-text-g');
+            const userTextB = document.getElementById('user-text-b');
+            const userTextRInput = document.getElementById('user-text-r-input');
+            const userTextGInput = document.getElementById('user-text-g-input');
+            const userTextBInput = document.getElementById('user-text-b-input');
+            const userTextPreview = document.getElementById('user-text-preview');
+            
+            // 更新角色字体颜色预览
+            const updateCharTextPreview = () => {
+                const r = charTextR.value;
+                const g = charTextG.value;
+                const b = charTextB.value;
+                
+                charTextRInput.value = r;
+                charTextGInput.value = g;
+                charTextBInput.value = b;
+                
+                charTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            // 更新用户字体颜色预览
+            const updateUserTextPreview = () => {
+                const r = userTextR.value;
+                const g = userTextG.value;
+                const b = userTextB.value;
+                
+                userTextRInput.value = r;
+                userTextGInput.value = g;
+                userTextBInput.value = b;
+                
+                userTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            // 从输入框更新滑块（角色字体）
+            const updateCharTextFromInput = () => {
+                const r = Math.max(0, Math.min(255, parseInt(charTextRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(charTextGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(charTextBInput.value) || 0));
+                
+                charTextR.value = r;
+                charTextG.value = g;
+                charTextB.value = b;
+                
+                charTextRInput.value = r;
+                charTextGInput.value = g;
+                charTextBInput.value = b;
+                
+                charTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            // 从输入框更新滑块（用户字体）
+            const updateUserTextFromInput = () => {
+                const r = Math.max(0, Math.min(255, parseInt(userTextRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(userTextGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(userTextBInput.value) || 0));
+                
+                userTextR.value = r;
+                userTextG.value = g;
+                userTextB.value = b;
+                
+                userTextRInput.value = r;
+                userTextGInput.value = g;
+                userTextBInput.value = b;
+                
+                userTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            // 绑定字体颜色滑块事件监听器
+            if (charTextR) charTextR.addEventListener('input', updateCharTextPreview);
+            if (charTextG) charTextG.addEventListener('input', updateCharTextPreview);
+            if (charTextB) charTextB.addEventListener('input', updateCharTextPreview);
+            
+            if (userTextR) userTextR.addEventListener('input', updateUserTextPreview);
+            if (userTextG) userTextG.addEventListener('input', updateUserTextPreview);
+            if (userTextB) userTextB.addEventListener('input', updateUserTextPreview);
+            
+            // 绑定字体颜色输入框事件监听器
+            if (charTextRInput) charTextRInput.addEventListener('change', updateCharTextFromInput);
+            if (charTextGInput) charTextGInput.addEventListener('change', updateCharTextFromInput);
+            if (charTextBInput) charTextBInput.addEventListener('change', updateCharTextFromInput);
+            
+            if (userTextRInput) userTextRInput.addEventListener('change', updateUserTextFromInput);
+            if (userTextGInput) userTextGInput.addEventListener('change', updateUserTextFromInput);
+            if (userTextBInput) userTextBInput.addEventListener('change', updateUserTextFromInput);
+            
             // 防止在锁定状态下通过滑块修改
             const preventLockedChange = (e) => {
                 if (isLocked) {
@@ -1035,6 +1201,33 @@
                 };
             }
 
+            // 保存消息字体颜色设置
+            const charTextR = document.getElementById('char-text-r');
+            const charTextG = document.getElementById('char-text-g');
+            const charTextB = document.getElementById('char-text-b');
+            
+            const userTextR = document.getElementById('user-text-r');
+            const userTextG = document.getElementById('user-text-g');
+            const userTextB = document.getElementById('user-text-b');
+            
+            if (charTextR && charTextG && charTextB) {
+                conv.textColor = conv.textColor || {};
+                conv.textColor.char = {
+                    r: parseInt(charTextR.value),
+                    g: parseInt(charTextG.value),
+                    b: parseInt(charTextB.value)
+                };
+            }
+            
+            if (userTextR && userTextG && userTextB) {
+                conv.textColor = conv.textColor || {};
+                conv.textColor.user = {
+                    r: parseInt(userTextR.value),
+                    g: parseInt(userTextG.value),
+                    b: parseInt(userTextB.value)
+                };
+            }
+
             saveToStorage();
             renderConversations();
 
@@ -1067,10 +1260,10 @@
         },
 
         /**
-         * 应用消息气泡颜色到聊天页面
+         * 应用消息气泡颜色和字体颜色到聊天页面
          */
         applyBubbleColors: function(conv) {
-            if (!conv || !conv.bubbleColor) return;
+            if (!conv) return;
             
             // 移除旧的样式标签（如果存在）
             const oldStyle = document.getElementById('bubble-color-style');
@@ -1085,7 +1278,7 @@
             let css = '';
             
             // 角色消息气泡（左侧/接收）
-            if (conv.bubbleColor.char) {
+            if (conv.bubbleColor && conv.bubbleColor.char) {
                 const { r, g, b, alpha } = conv.bubbleColor.char;
                 css += `
                     .chat-bubble.received .chat-text {
@@ -1095,11 +1288,31 @@
             }
             
             // 用户消息气泡（右侧/发送）
-            if (conv.bubbleColor.user) {
+            if (conv.bubbleColor && conv.bubbleColor.user) {
                 const { r, g, b, alpha } = conv.bubbleColor.user;
                 css += `
                     .chat-bubble.sent .chat-text {
                         background-color: rgba(${r}, ${g}, ${b}, ${alpha}) !important;
+                    }
+                `;
+            }
+            
+            // 角色消息字体颜色（左侧/接收）
+            if (conv.textColor && conv.textColor.char) {
+                const { r, g, b } = conv.textColor.char;
+                css += `
+                    .chat-bubble.received .chat-text {
+                        color: rgb(${r}, ${g}, ${b}) !important;
+                    }
+                `;
+            }
+            
+            // 用户消息字体颜色（右侧/发送）
+            if (conv.textColor && conv.textColor.user) {
+                const { r, g, b } = conv.textColor.user;
+                css += `
+                    .chat-bubble.sent .chat-text {
+                        color: rgb(${r}, ${g}, ${b}) !important;
                     }
                 `;
             }

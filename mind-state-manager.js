@@ -56,22 +56,22 @@ const MindStateManager = (function() {
         // 更新好感度数值显示
         affinityText.textContent = String(affinity);
         
-        // 根据好感度设置颜色
-        let fillColor = '#d0d0d0'; // 默认浅灰色
-        let textColor = '#666';
+        // 根据好感度设置颜色 - 公主风粉嫩配色
+        let fillColor = '#e8e8e8'; // 默认浅灰色
+        let textColor = '#999';
         
         if (affinity >= 80) {
-            fillColor = '#ff6b9d'; // 高好感度：粉红色
+            fillColor = '#ff6b9d'; // 高好感度：深粉红色
             textColor = '#fff';
         } else if (affinity >= 60) {
-            fillColor = '#ffb3d1'; // 中高好感度：浅粉色
+            fillColor = '#ff85a6'; // 中高好感度：粉红色
             textColor = '#fff';
         } else if (affinity >= 40) {
-            fillColor = '#d4d4d4'; // 中等好感度：中灰色
-            textColor = '#666';
+            fillColor = '#ffabc0'; // 中等好感度：浅粉色
+            textColor = '#fff';
         } else if (affinity >= 20) {
-            fillColor = '#e0e0e0'; // 中低好感度：浅灰色
-            textColor = '#999';
+            fillColor = '#ffd5e0'; // 中低好感度：很淡粉色
+            textColor = '#ff85a6';
         }
         
         // 更新填充路径的颜色
@@ -236,7 +236,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         modal = document.createElement('div');
         modal.id = 'mind-state-modal';
         modal.className = 'emoji-mgmt-modal show';
-        modal.style.cssText = 'background:rgba(0,0,0,0.6);';
+        modal.style.cssText = 'background:rgba(255,240,245,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);';
         
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
@@ -263,14 +263,17 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         const isFailedState = currentState.failed;
         
         let content = `
-            <div class="emoji-mgmt-content" style="max-width:420px;background:linear-gradient(135deg, #fff5f8 0%, #fffafc 100%);display:flex;flex-direction:column;max-height:85vh;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(255,182,193,0.3);">
-                <div style="padding:20px 24px;border-bottom:2px solid rgba(255,182,193,0.2);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg, #ffffff 0%, #fff9fb 100%);flex-shrink:0;min-height:60px;">
-                    <h3 style="margin:0;font-size:18px;color:#d87093;font-weight:700;letter-spacing:0.5px;flex:1;">${chat.name}的心声</h3>
-                    <button onclick="document.getElementById('mind-state-modal').remove();" style="border:none;background:transparent;cursor:pointer;font-size:24px;line-height:1;color:#d87093;transition:all 0.3s;padding:0;margin:0;" onmouseover="this.style.color='#ff69b4'" onmouseout="this.style.color='#d87093'">×</button>
+            <div class="emoji-mgmt-content" style="max-width:420px;background:linear-gradient(180deg,#fffbfd 0%,#fff5f9 100%);display:flex;flex-direction:column;max-height:85vh;border-radius:24px;overflow:hidden;box-shadow:0 24px 48px rgba(255,182,193,0.25),0 0 0 1px rgba(255,240,245,0.5);position:relative;">
+                <div style="position:absolute;top:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at top,rgba(255,228,235,0.4) 0%,transparent 70%);pointer-events:none;"></div>
+                <div style="position:relative;padding:28px 24px 22px;background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,228,235,0.3);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="margin:0;font-size:22px;font-weight:700;color:#ff85a6;letter-spacing:0.5px;text-shadow:0 2px 8px rgba(255,133,166,0.2);">${chat.name}的心声</h3>
+                        <button onclick="document.getElementById('mind-state-modal').remove();" style="border:none;background:linear-gradient(135deg,rgba(255,182,193,0.15),rgba(255,192,203,0.15));width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;color:#ff85a6;transition:all 0.3s;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(255,182,193,0.2);" onmouseover="this.style.background='linear-gradient(135deg,rgba(255,182,193,0.25),rgba(255,192,203,0.25))';this.style.transform='rotate(90deg) scale(1.05)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,182,193,0.15),rgba(255,192,203,0.15))';this.style.transform='rotate(0deg) scale(1)'">×</button>
+                    </div>
                 </div>
-                ${isFailedState ? `<div style="padding:14px 20px;background:linear-gradient(135deg, #fff0f3 0%, #ffe8ed 100%);border-bottom:2px solid rgba(255,182,193,0.3);color:#c9697c;font-size:13px;line-height:1.6;">⚠ 心声提取失败：请确保API已配置正确，且AI在回复末尾添加了完整的【心声】标记。</div>` : ''}
+                ${isFailedState ? `<div style="margin:18px 20px 0;padding:16px 18px;background:linear-gradient(135deg,rgba(255,235,240,0.9),rgba(255,245,248,0.9));border-radius:16px;border:1px solid rgba(255,192,203,0.3);box-shadow:0 4px 12px rgba(255,182,193,0.1);"><div style="color:#ff6b9d;font-size:13px;line-height:1.7;font-weight:500;">心声提取失败：请确保API已配置正确，且AI在回复末尾添加了完整的【心声】标记。</div></div>` : ''}
                 
-                <div style="padding:20px;background:transparent;margin-bottom:0;flex:1;overflow-y:auto;overflow-x:hidden;">
+                <div style="padding:22px 20px 16px;flex:1;overflow-y:auto;overflow-x:hidden;position:relative;">
         `;
         
         mindItems.forEach(item => {
@@ -284,8 +287,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 if (item.key === 'outfit') {
                     // 在第一个字段（穿搭）处显示失败提示
                     content += `
-                        <div style="margin-bottom:16px;padding:16px;background:linear-gradient(135deg, #fff0f3 0%, #ffe8ed 100%);border-radius:12px;border-left:4px solid #ffb6c1;box-shadow:0 2px 8px rgba(255,182,193,0.2);">
-                            <div style="font-size:13px;color:#d87093;word-break:break-all;line-height:1.6;">⚠ ${currentState.reason || '心声数据提取失败'}</div>
+                        <div style="margin-bottom:18px;padding:18px 20px;background:linear-gradient(135deg,rgba(255,235,240,0.8),rgba(255,245,248,0.8));border-radius:18px;border:1px solid rgba(255,192,203,0.25);box-shadow:0 4px 16px rgba(255,182,193,0.08);">
+                            <div style="font-size:13px;color:#ff6b9d;line-height:1.8;font-weight:500;">${currentState.reason || '心声数据提取失败'}</div>
                         </div>
                     `;
                     return;
@@ -294,34 +297,36 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             
             // 好感度特殊处理（移到最前面，并显示变化和原因）
             if (item.key === 'affinity' && typeof value === 'number') {
-                const affinityColor = value >= 70 ? '#ff69b4' : (value >= 40 ? '#ffb6c1' : '#ffc0cb');
+                const affinityColor = value >= 70 ? '#ff6b9d' : (value >= 40 ? '#ff85a6' : '#ffabc0');
                 const change = currentState.affinityChange || 0;
                 const changeDisplay = change > 0 ? `+${change}` : change;
                 const reason = currentState.affinityReason || '';
                 
                 const affinityBar = `
-                    <div style="width:100%;height:10px;background:rgba(255,182,193,0.2);border-radius:20px;margin-top:12px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.05);">
-                        <div style="width:${value}%;height:100%;background:linear-gradient(90deg, ${affinityColor} 0%, #ff69b4 100%);transition:width 0.5s cubic-bezier(0.4, 0, 0.2, 1);border-radius:20px;box-shadow:0 2px 8px rgba(255,105,180,0.3);"></div>
+                    <div style="width:100%;height:6px;background:linear-gradient(90deg,rgba(255,218,228,0.4),rgba(255,228,235,0.4));border-radius:20px;margin-top:16px;overflow:hidden;position:relative;box-shadow:inset 0 1px 3px rgba(255,182,193,0.1);">
+                        <div style="width:${value}%;height:100%;background:linear-gradient(90deg,#ffd5e0 0%,#ffabc0 50%,#ff85a6 100%);transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);border-radius:20px;box-shadow:0 0 12px rgba(255,133,166,0.5);"></div>
                     </div>
-                    <div style="font-size:14px;color:${affinityColor};margin-top:10px;font-weight:700;text-align:center;letter-spacing:1px;">${value}/100</div>
+                    <div style="font-size:26px;font-weight:800;color:${affinityColor};margin-top:14px;text-align:center;letter-spacing:1px;text-shadow:0 2px 12px rgba(255,133,166,0.25);">${value}<span style="font-size:16px;color:#ffabc0;margin-left:2px;">/100</span></div>
                 `;
                 
                 let changeReasonHtml = '';
                 if (change !== 0 || reason) {
-                    changeReasonHtml = `<div style="font-size:12px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,182,193,0.3);">`;
+                    changeReasonHtml = `<div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,218,228,0.4);">`;
                     if (change !== 0) {
-                        const changeColor = change > 0 ? '#ff69b4' : (change < 0 ? '#ff8fa3' : '#ffb6c1');
-                        changeReasonHtml += `<div style="color:${changeColor};font-weight:600;margin-bottom:6px;">变化：${changeDisplay}</div>`;
+                        const changeColor = change > 0 ? '#ff6b9d' : (change < 0 ? '#ff85a6' : '#ffabc0');
+                        const changeBg = change > 0 ? 'rgba(255,218,228,0.4)' : 'rgba(255,228,235,0.4)';
+                        changeReasonHtml += `<div style="display:inline-block;background:${changeBg};padding:6px 14px;border-radius:20px;color:${changeColor};font-weight:700;margin-bottom:10px;font-size:13px;">变化 ${changeDisplay}</div>`;
                     }
                     if (reason) {
-                        changeReasonHtml += `<div style="color:#d87093;line-height:1.5;">原因：${escapeHtml(String(reason))}</div>`;
+                        changeReasonHtml += `<div style="color:#b08ba6;line-height:1.7;font-size:13px;">${escapeHtml(String(reason))}</div>`;
                     }
                     changeReasonHtml += `</div>`;
                 }
                 
                 content += `
-                    <div style="margin-bottom:16px;padding:18px;background:linear-gradient(135deg, #ffffff 0%, #fff9fb 100%);border-radius:16px;border:2px solid ${affinityColor};box-shadow:0 4px 16px rgba(255,182,193,0.25);">
-                        <div style="font-size:15px;color:#d87093;font-weight:700;margin-bottom:8px;letter-spacing:0.5px;">${item.label}</div>
+                    <div style="margin-bottom:18px;padding:24px 22px;background:linear-gradient(135deg,#ffffff 0%,#fffafc 50%,#fff8fb 100%);border-radius:22px;border:1px solid rgba(255,218,228,0.5);box-shadow:0 8px 28px rgba(255,182,193,0.18);position:relative;overflow:hidden;">
+                        <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(255,218,228,0.15),transparent 70%);"></div>
+                        <div style="position:relative;font-size:15px;font-weight:700;color:#ff85a6;margin-bottom:6px;letter-spacing:0.5px;">${item.label}</div>
                         ${affinityBar}
                         ${changeReasonHtml}
                     </div>
@@ -336,12 +341,12 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             
             // 检查字段值是否被污染（包含其他标签的内容）
             const hasOtherLabels = /穿搭|心情|动作|心声|坏心思|好感度/.test(String(value));
-            const itemColor = hasOtherLabels ? '#ffb6c1' : '#ffb6c1';
             
             content += `
-                <div style="margin-bottom:14px;padding:16px;background:linear-gradient(135deg, #ffffff 0%, #fffafc 100%);border-radius:12px;border-left:4px solid ${itemColor};box-shadow:0 2px 12px rgba(255,182,193,0.15);transition:all 0.3s;" onmouseover="this.style.boxShadow='0 4px 20px rgba(255,182,193,0.25)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(255,182,193,0.15)'">
-                    <div style="font-size:14px;color:#d87093;font-weight:700;margin-bottom:8px;letter-spacing:0.3px;">${item.label}</div>
-                    <div style="font-size:13px;color:${hasOtherLabels ? '#ff8fa3' : '#9b6b80'};word-break:break-all;line-height:1.7;">${escapeHtml(String(displayValue))}</div>
+                <div style="margin-bottom:14px;padding:20px;background:linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,250,252,0.95));border-radius:20px;border:1px solid rgba(255,218,228,0.4);box-shadow:0 6px 20px rgba(255,182,193,0.12);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,182,193,0.2)';this.style.transform='translateY(-3px)';this.style.borderColor='rgba(255,192,203,0.5)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,182,193,0.12)';this.style.transform='translateY(0)';this.style.borderColor='rgba(255,218,228,0.4)'">
+                    <div style="position:absolute;top:0;left:0;right:0;height:60%;background:linear-gradient(180deg,rgba(255,240,245,0.3),transparent);pointer-events:none;"></div>
+                    <div style="position:relative;font-size:13px;color:#ff85a6;font-weight:700;margin-bottom:12px;letter-spacing:0.3px;">${item.label}</div>
+                    <div style="position:relative;font-size:14px;color:${hasOtherLabels ? '#ff6b9d' : '#9b7a9f'};word-break:break-all;line-height:1.9;font-weight:400;">${escapeHtml(String(displayValue))}</div>
                 </div>
             `;
         });
@@ -349,9 +354,9 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         content += `
                 </div>
                 
-                <div style="padding:16px 20px;background:linear-gradient(135deg, #ffffff 0%, #fff9fb 100%);border-top:2px solid rgba(255,182,193,0.2);display:flex;gap:12px;flex-shrink:0;">
-                    <button onclick="MindStateManager.showCharacterMindHistory('${chat.id}');" style="flex:1;padding:12px;border:2px solid #ffb6c1;background:#ffffff;border-radius:12px;cursor:pointer;font-size:13px;color:#d87093;font-weight:600;transition:all 0.3s;box-shadow:0 2px 8px rgba(255,182,193,0.2);" onmouseover="this.style.background='#fff5f8';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.35)'" onmouseout="this.style.background='#ffffff';this.style.boxShadow='0 2px 8px rgba(255,182,193,0.2)'">历史心声</button>
-                    <button onclick="document.getElementById('mind-state-modal').remove();" style="flex:1;padding:12px;border:none;background:linear-gradient(135deg, #ffb6c1 0%, #ff8fa3 100%);color:#fff;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.3s;box-shadow:0 2px 8px rgba(255,105,180,0.3);" onmouseover="this.style.boxShadow='0 4px 16px rgba(255,105,180,0.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(255,105,180,0.3)';this.style.transform='translateY(0)'">关闭</button>
+                <div style="padding:20px;background:linear-gradient(135deg,rgba(255,250,252,0.98),rgba(255,245,250,0.98));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,218,228,0.3);display:flex;gap:14px;flex-shrink:0;">
+                    <button onclick="MindStateManager.showCharacterMindHistory('${chat.id}');" style="flex:1;padding:14px;border:1.5px solid rgba(255,192,203,0.4);background:rgba(255,255,255,0.8);border-radius:18px;cursor:pointer;font-size:14px;color:#ff85a6;font-weight:700;transition:all 0.3s;box-shadow:0 4px 16px rgba(255,182,193,0.12);" onmouseover="this.style.background='rgba(255,250,252,0.95)';this.style.boxShadow='0 6px 24px rgba(255,182,193,0.22)';this.style.transform='translateY(-2px)';this.style.borderColor='rgba(255,192,203,0.6)'" onmouseout="this.style.background='rgba(255,255,255,0.8)';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.12)';this.style.transform='translateY(0)';this.style.borderColor='rgba(255,192,203,0.4)'">历史心声</button>
+                    <button onclick="document.getElementById('mind-state-modal').remove();" style="flex:1;padding:14px;border:none;background:linear-gradient(135deg,#ff85a6 0%,#ff6b9d 100%);color:#fff;border-radius:18px;cursor:pointer;font-size:14px;font-weight:700;transition:all 0.3s;box-shadow:0 6px 20px rgba(255,107,157,0.4);" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,107,157,0.55)';this.style.transform='translateY(-2px) scale(1.02)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,107,157,0.4)';this.style.transform='translateY(0) scale(1)'">关闭</button>
                 </div>
             </div>
         `;
@@ -396,7 +401,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         modal = document.createElement('div');
         modal.id = 'mind-history-modal';
         modal.className = 'emoji-mgmt-modal show';
-        modal.style.cssText = 'background:rgba(0,0,0,0.6);';
+        modal.style.cssText = 'background:rgba(255,240,245,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);';
         
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
@@ -415,31 +420,32 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                 // 处理好感度显示（包含变化和原因）
                 let affinityDisplay = '';
                 if (state.affinity !== undefined && typeof state.affinity === 'number') {
-                    const affinityColor = state.affinity >= 70 ? '#4CAF50' : (state.affinity >= 40 ? '#FFC107' : '#F44336');
+                    const affinityColor = state.affinity >= 70 ? '#ff6b9d' : (state.affinity >= 40 ? '#ff85a6' : '#ffabc0');
                     const change = state.affinityChange || 0;
                     const changeDisplay = change > 0 ? `+${change}` : change;
                     const reason = state.affinityReason || '';
                     
-                    affinityDisplay = `<div style="margin-bottom:10px;padding:10px;background:linear-gradient(135deg, #fff9fb 0%, #ffffff 100%);border-radius:8px;border:1px solid rgba(255,182,193,0.3);">
+                    affinityDisplay = `<div style="margin-bottom:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(255,250,252,0.8),rgba(255,255,255,0.8));border-radius:14px;border:1px solid rgba(255,218,228,0.4);">
                         <span style="color:${affinityColor};font-size:13px;font-weight:700;">好感度：</span>
-                        <span style="color:${affinityColor};font-size:14px;font-weight:700;">${state.affinity}/100</span>`;
+                        <span style="color:${affinityColor};font-size:16px;font-weight:800;">${state.affinity}/100</span>`;
                     
                     if (change !== 0 || reason) {
-                        const changeColor = change > 0 ? '#ff69b4' : (change < 0 ? '#ff8fa3' : '#ffb6c1');
+                        const changeColor = change > 0 ? '#ff6b9d' : (change < 0 ? '#ff85a6' : '#ffabc0');
                         if (change !== 0) {
-                            affinityDisplay += `<span style="color:${changeColor};font-size:12px;margin-left:10px;font-weight:600;">(${changeDisplay})</span>`;
+                            affinityDisplay += `<span style="color:${changeColor};font-size:12px;margin-left:8px;font-weight:700;">(${changeDisplay})</span>`;
                         }
                         if (reason) {
-                            affinityDisplay += `<div style="font-size:12px;color:#d87093;margin-top:6px;">原因：${escapeHtml(reason)}</div>`;
+                            affinityDisplay += `<div style="font-size:12px;color:#b08ba6;margin-top:8px;line-height:1.6;">原因：${escapeHtml(reason)}</div>`;
                         }
                     }
                     affinityDisplay += `</div>`;
                 }
                 
                 historyContent += `
-                    <div style="margin-bottom:18px;padding:18px;background:linear-gradient(135deg, #ffffff 0%, #fffafc 100%);border-radius:14px;border-left:4px solid #ffb6c1;position:relative;box-shadow:0 2px 12px rgba(255,182,193,0.2);transition:all 0.3s;" onmouseover="this.style.boxShadow='0 4px 20px rgba(255,182,193,0.3)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(255,182,193,0.2)'">
-                        <button onclick="MindStateManager.deleteSingleMindState('${chat.id}', ${i})" style="position:absolute;top:14px;right:14px;padding:6px 12px;border:2px solid #ff8fa3;background:#ffffff;color:#ff8fa3;border-radius:8px;cursor:pointer;font-size:11px;white-space:nowrap;font-weight:600;transition:all 0.3s;" onmouseover="this.style.background='#fff5f8'" onmouseout="this.style.background='#ffffff'">删除</button>
-                        <div style="font-size:12px;color:#d8a0a8;margin-bottom:10px;font-weight:600;letter-spacing:0.5px;">记录 #${recordIndex}</div>
+                    <div style="margin-bottom:16px;padding:20px;background:linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,250,252,0.95));border-radius:20px;border:1px solid rgba(255,218,228,0.4);position:relative;box-shadow:0 6px 20px rgba(255,182,193,0.12);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,182,193,0.2)';this.style.transform='translateY(-3px)';this.style.borderColor='rgba(255,192,203,0.5)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,182,193,0.12)';this.style.transform='translateY(0)';this.style.borderColor='rgba(255,218,228,0.4)'">
+                        <div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,240,245,0.3),transparent);pointer-events:none;"></div>
+                        <button onclick="MindStateManager.deleteSingleMindState('${chat.id}', ${i})" style="position:relative;float:right;padding:6px 14px;border:1px solid rgba(255,192,203,0.4);background:rgba(255,255,255,0.8);color:#ff85a6;border-radius:14px;cursor:pointer;font-size:11px;white-space:nowrap;font-weight:700;transition:all 0.3s;" onmouseover="this.style.background='rgba(255,250,252,0.95)';this.style.borderColor='rgba(255,192,203,0.6)'" onmouseout="this.style.background='rgba(255,255,255,0.8)';this.style.borderColor='rgba(255,192,203,0.4)'">删除</button>
+                        <div style="position:relative;font-size:11px;color:#d4a5b8;margin-bottom:14px;font-weight:700;letter-spacing:0.3px;">记录 #${recordIndex}</div>
                         ${affinityDisplay}
                         ${Object.entries(state).filter(([key]) => !['affinity', 'affinityChange', 'affinityReason', 'timestamp', 'messageId', 'failed', 'reason', 'failedReason'].includes(key)).map(([key, value]) => {
                             const labels = {
@@ -450,29 +456,32 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                                 'badThought': '坏心思'
                             };
                             if (!labels[key]) return '';
-                            return `<div style="margin-bottom:8px;line-height:1.6;"><span style="color:#d87093;font-size:12px;font-weight:600;">${labels[key]}：</span><span style="color:#9b6b80;font-size:13px;">${escapeHtml(String(value))}</span></div>`;
+                            return `<div style="position:relative;margin-bottom:12px;line-height:1.8;"><span style="color:#ff85a6;font-size:12px;font-weight:700;">${labels[key]}：</span><span style="color:#9b7a9f;font-size:13px;">${escapeHtml(String(value))}</span></div>`;
                         }).join('')}
                     </div>
                 `;
             }
         } else {
-            historyContent = '<div style="text-align:center;color:#d8a0a8;padding:50px 20px;font-size:14px;line-height:1.8;">暂无历史心声记录<br>开始对话即可生成心声</div>';
+            historyContent = '<div style="text-align:center;color:#d4a5b8;padding:50px 20px;font-size:14px;line-height:1.8;">暂无历史心声记录<br>开始对话即可生成心声</div>';
         }
         
         let content = `
-            <div class="emoji-mgmt-content" style="max-width:420px;background:linear-gradient(135deg, #fff5f8 0%, #fffafc 100%);display:flex;flex-direction:column;max-height:85vh;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(255,182,193,0.3);">
-                <div style="padding:20px 24px;border-bottom:2px solid rgba(255,182,193,0.2);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg, #ffffff 0%, #fff9fb 100%);flex-shrink:0;min-height:60px;">
-                    <h3 style="margin:0;font-size:18px;color:#d87093;font-weight:700;letter-spacing:0.5px;flex:1;">${chat.name}的历史心声</h3>
-                    <button onclick="document.getElementById('mind-history-modal').remove();" style="border:none;background:transparent;cursor:pointer;font-size:24px;line-height:1;color:#d87093;transition:all 0.3s;padding:0;margin:0;" onmouseover="this.style.color='#ff69b4'" onmouseout="this.style.color='#d87093'">×</button>
+            <div class="emoji-mgmt-content" style="max-width:420px;background:linear-gradient(180deg,#fffbfd 0%,#fff5f9 100%);display:flex;flex-direction:column;max-height:85vh;border-radius:24px;overflow:hidden;box-shadow:0 24px 48px rgba(255,182,193,0.25);position:relative;">
+                <div style="position:absolute;top:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at top,rgba(255,228,235,0.4) 0%,transparent 70%);pointer-events:none;"></div>
+                <div style="position:relative;padding:28px 24px 22px;background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,218,228,0.3);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="margin:0;font-size:22px;font-weight:700;color:#ff85a6;letter-spacing:0.5px;text-shadow:0 2px 8px rgba(255,133,166,0.2);">${chat.name}的历史心声</h3>
+                        <button onclick="document.getElementById('mind-history-modal').remove();" style="border:none;background:linear-gradient(135deg,rgba(255,182,193,0.15),rgba(255,192,203,0.15));width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;color:#ff85a6;transition:all 0.3s;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(255,182,193,0.2);" onmouseover="this.style.background='linear-gradient(135deg,rgba(255,182,193,0.25),rgba(255,192,203,0.25))';this.style.transform='rotate(90deg) scale(1.05)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,182,193,0.15),rgba(255,192,203,0.15))';this.style.transform='rotate(0deg) scale(1)'">×</button>
+                    </div>
                 </div>
                 
-                <div style="padding:20px;background:transparent;flex:1;overflow-y:auto;overflow-x:hidden;">
+                <div style="padding:22px 20px 16px;flex:1;overflow-y:auto;overflow-x:hidden;position:relative;">
                     ${historyContent}
                 </div>
                 
-                <div style="padding:16px 20px;background:linear-gradient(135deg, #ffffff 0%, #fff9fb 100%);border-top:2px solid rgba(255,182,193,0.2);display:flex;gap:12px;flex-shrink:0;">
-                    ${(chat.mindStates && chat.mindStates.length > 0) ? `<button onclick="MindStateManager.openDeleteConfirmDialog('${chat.id}');" style="flex:1;padding:12px;border:2px solid #ff8fa3;background:#ffffff;color:#ff8fa3;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.3s;box-shadow:0 2px 8px rgba(255,143,163,0.2);" onmouseover="this.style.background='#fff5f8';this.style.boxShadow='0 4px 16px rgba(255,143,163,0.35)'" onmouseout="this.style.background='#ffffff';this.style.boxShadow='0 2px 8px rgba(255,143,163,0.2)'">清空全部</button>` : ''}
-                    <button onclick="document.getElementById('mind-history-modal').remove();" style="flex:1;padding:12px;border:none;background:linear-gradient(135deg, #ffb6c1 0%, #ff8fa3 100%);color:#fff;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.3s;box-shadow:0 2px 8px rgba(255,105,180,0.3);" onmouseover="this.style.boxShadow='0 4px 16px rgba(255,105,180,0.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(255,105,180,0.3)';this.style.transform='translateY(0)'">关闭</button>
+                <div style="padding:20px;background:linear-gradient(135deg,rgba(255,250,252,0.98),rgba(255,245,250,0.98));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,218,228,0.3);display:flex;gap:14px;flex-shrink:0;">
+                    ${(chat.mindStates && chat.mindStates.length > 0) ? `<button onclick="MindStateManager.openDeleteConfirmDialog('${chat.id}');" style="flex:1;padding:14px;border:1.5px solid rgba(255,192,203,0.4);background:rgba(255,255,255,0.8);border-radius:18px;cursor:pointer;font-size:14px;color:#ff85a6;font-weight:700;transition:all 0.3s;box-shadow:0 4px 16px rgba(255,182,193,0.12);" onmouseover="this.style.background='rgba(255,250,252,0.95)';this.style.boxShadow='0 6px 24px rgba(255,182,193,0.22)';this.style.transform='translateY(-2px)';this.style.borderColor='rgba(255,192,203,0.6)'" onmouseout="this.style.background='rgba(255,255,255,0.8)';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.12)';this.style.transform='translateY(0)';this.style.borderColor='rgba(255,192,203,0.4)'">清空全部</button>` : ''}
+                    <button onclick="document.getElementById('mind-history-modal').remove();" style="flex:1;padding:14px;border:none;background:linear-gradient(135deg,#ff85a6 0%,#ff6b9d 100%);color:#fff;border-radius:18px;cursor:pointer;font-size:14px;font-weight:700;transition:all 0.3s;box-shadow:0 6px 20px rgba(255,107,157,0.4);" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,107,157,0.55)';this.style.transform='translateY(-2px) scale(1.02)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,107,157,0.4)';this.style.transform='translateY(0) scale(1)'">关闭</button>
                 </div>
             </div>
         `;
@@ -494,7 +503,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         
         confirmModal = document.createElement('div');
         confirmModal.id = 'delete-confirm-modal';
-        confirmModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:50001;';
+        confirmModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,240,245,0.92);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;justify-content:center;align-items:center;z-index:50001;';
         
         confirmModal.addEventListener('click', function(e) {
             if (e.target === confirmModal) {
@@ -503,12 +512,13 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         });
         
         const content = `
-            <div style="background:linear-gradient(135deg, #ffffff 0%, #fff9fb 100%);border-radius:20px;padding:28px;max-width:340px;text-align:center;box-shadow:0 8px 32px rgba(255,182,193,0.4);border:2px solid rgba(255,182,193,0.3);">
-                <div style="font-size:17px;color:#d87093;font-weight:700;margin-bottom:14px;letter-spacing:0.5px;">确定要清空全部心声吗？</div>
-                <div style="font-size:13px;color:#b88895;margin-bottom:28px;line-height:1.7;">此操作无法撤销，${chat.name}的所有历史心声记录将被永久删除。</div>
-                <div style="display:flex;gap:14px;">
-                    <button onclick="document.getElementById('delete-confirm-modal').remove();" style="flex:1;padding:12px;border:2px solid #ffb6c1;background:#ffffff;border-radius:12px;cursor:pointer;font-size:13px;color:#d87093;font-weight:600;transition:all 0.3s;box-shadow:0 2px 8px rgba(255,182,193,0.2);" onmouseover="this.style.background='#fff5f8';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.35)'" onmouseout="this.style.background='#ffffff';this.style.boxShadow='0 2px 8px rgba(255,182,193,0.2)'">取消</button>
-                    <button onclick="MindStateManager.deleteCharacterMindStates('${charId}');document.getElementById('delete-confirm-modal').remove();" style="flex:1;padding:12px;border:none;background:linear-gradient(135deg, #ff8fa3 0%, #ff6b8a 100%);border-radius:12px;cursor:pointer;font-size:13px;color:#fff;font-weight:600;transition:all 0.3s;box-shadow:0 2px 8px rgba(255,107,138,0.3);" onmouseover="this.style.boxShadow='0 4px 16px rgba(255,107,138,0.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(255,107,138,0.3)';this.style.transform='translateY(0)'">确定删除</button>
+            <div style="background:linear-gradient(180deg,#ffffff 0%,#fffbfd 100%);border-radius:24px;padding:36px 30px;max-width:360px;text-align:center;box-shadow:0 24px 56px rgba(255,182,193,0.35);border:1px solid rgba(255,228,235,0.6);position:relative;overflow:hidden;">
+                <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,218,228,0.2),transparent 70%);"></div>
+                <div style="position:relative;font-size:20px;font-weight:700;color:#ff85a6;margin-bottom:18px;letter-spacing:0.5px;">确定要清空全部心声吗？</div>
+                <div style="position:relative;font-size:14px;color:#b08ba6;margin-bottom:32px;line-height:1.8;">此操作无法撤销，${chat.name}的所有历史心声记录将被永久删除。</div>
+                <div style="position:relative;display:flex;gap:14px;">
+                    <button onclick="document.getElementById('delete-confirm-modal').remove();" style="flex:1;padding:14px;border:1.5px solid rgba(255,192,203,0.4);background:rgba(255,255,255,0.8);border-radius:18px;cursor:pointer;font-size:14px;color:#ff85a6;font-weight:700;transition:all 0.3s;box-shadow:0 4px 16px rgba(255,182,193,0.12);" onmouseover="this.style.background='rgba(255,250,252,0.95)';this.style.boxShadow='0 6px 24px rgba(255,182,193,0.22)';this.style.transform='translateY(-2px)';this.style.borderColor='rgba(255,192,203,0.6)'" onmouseout="this.style.background='rgba(255,255,255,0.8)';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.12)';this.style.transform='translateY(0)';this.style.borderColor='rgba(255,192,203,0.4)'">取消</button>
+                    <button onclick="MindStateManager.deleteCharacterMindStates('${charId}');document.getElementById('delete-confirm-modal').remove();" style="flex:1;padding:14px;border:none;background:linear-gradient(135deg,#ff85a6 0%,#ff6b9d 100%);border-radius:18px;cursor:pointer;font-size:14px;color:#fff;font-weight:700;transition:all 0.3s;box-shadow:0 6px 20px rgba(255,107,157,0.4);" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,107,157,0.55)';this.style.transform='translateY(-2px) scale(1.02)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,107,157,0.4)';this.style.transform='translateY(0) scale(1)'">确定删除</button>
                 </div>
             </div>
         `;

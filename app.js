@@ -533,7 +533,8 @@
             });
 
             // 聊天页面 - 角色设置按钮
-            document.addEventListener('click', function(e) {
+            // 使用捕获阶段和同时支持touch/click事件以兼容移动端浏览器
+            function handleChatMoreClick(e) {
                 // 检查是否点击了chat-more-dots
                 const chatMoreDots = e.target.closest('.chat-more-dots') || e.target.closest('.chat-more');
                 if (chatMoreDots) {
@@ -546,8 +547,13 @@
                         console.warn('AppState.currentChat is not set');
                         showToast('未找到当前对话');
                     }
+                    return false;
                 }
-            }, false);
+            }
+            
+            // 同时监听click和touchend事件以兼容所有移动端浏览器
+            document.addEventListener('click', handleChatMoreClick, true);
+            document.addEventListener('touchend', handleChatMoreClick, true);
 
             document.getElementById('chat-send-btn').addEventListener('click', function() {
                 sendMessage();
