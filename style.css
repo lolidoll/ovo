@@ -2352,6 +2352,7 @@ input[type="range"]::-ms-fill-upper {
             flex-shrink: 0;
             position: relative;
             z-index: 100;
+            overflow: visible;
         }
         
         .chat-toolbar-buttons {
@@ -2359,8 +2360,10 @@ input[type="range"]::-ms-fill-upper {
             gap: 4px;
             align-items: center;
             position: relative;
-            z-index: 150;
-            pointer-events: auto;
+            z-index: 999999 !important;
+            pointer-events: auto !important;
+            flex-shrink: 0 !important;
+            isolation: isolate;
         }
         
         .chat-title {

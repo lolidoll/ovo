@@ -2325,11 +2325,11 @@
                     <div class="back-arrow"></div>
                     <span>返回</span>
                 </div>
-                <div class="chat-title-area" style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;">
+                <div class="chat-title-area" style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;pointer-events:none;max-width:calc(100% - 200px);">
                     <div class="chat-title" id="chat-title">AI小助手</div>
                     <div class="chat-typing-status" id="chat-typing-status" style="font-size:13px;color:#999;display:none;white-space:nowrap;">正在打字中...</div>
                 </div>
-                <div class="chat-toolbar-buttons" style="display:flex;gap:4px;align-items:center;position:relative;z-index:150;">
+                <div class="chat-toolbar-buttons" style="display:flex;gap:4px;align-items:center;position:relative;z-index:999999;pointer-events:auto;flex-shrink:0;">
                     <button id="chat-mind-btn" style="width:44px;height:44px;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:50;flex-shrink:0;">
                         <svg id="chat-mind-heart" viewBox="0 0 24 24" style="width:24px;height:24px;position:relative;">
                             <!-- 空心爱心轮廓 -->
