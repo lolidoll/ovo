@@ -925,103 +925,67 @@
 
             // 角色设置按钮（三个点）
             const chatMoreBtn = document.getElementById('chat-more-btn');
-            console.log('Initializing chat-more-btn:', chatMoreBtn);
             if (chatMoreBtn) {
-                console.log('chat-more-btn found, binding events');
-                console.log('Button element:', chatMoreBtn);
-                console.log('Button computed style:', window.getComputedStyle(chatMoreBtn));
-                
-                // 测试：添加一个简单的alert
                 chatMoreBtn.addEventListener('click', function(e) {
-                    alert('按钮被点击了！');
-                    console.log('===== chat-more-btn CLICKED =====');
-                    console.log('Event:', e);
-                    console.log('Target:', e.target);
-                    console.log('CurrentTarget:', e.currentTarget);
-                    console.log('AppState.currentChat:', AppState.currentChat);
-                    console.log('CharacterSettingsManager:', window.CharacterSettingsManager);
-                    
                     if (!AppState.currentChat) {
-                        console.error('No current chat');
                         showToast('请先选择一个角色');
                         return;
                     }
                     
                     if (!window.CharacterSettingsManager) {
-                        console.error('CharacterSettingsManager not loaded');
                         showToast('角色设置模块未加载');
                         return;
                     }
                     
                     try {
-                        console.log('Calling openCharacterSettings...');
                         CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
                     } catch (error) {
                         console.error('Error opening character settings:', error);
                         showToast('打开角色设置失败：' + error.message);
                     }
-                }, { capture: true });
+                });
                 
-                // 添加触摸事件作为备用（移动端）
+                // 移动端触摸事件支持
                 let touchStartTime = 0;
                 let touchMoved = false;
                 
                 chatMoreBtn.addEventListener('touchstart', function(e) {
-                    console.log('===== chat-more-btn TOUCHSTART =====');
                     touchStartTime = Date.now();
                     touchMoved = false;
-                }, { passive: true, capture: true });
+                }, { passive: true });
                 
                 chatMoreBtn.addEventListener('touchmove', function(e) {
                     touchMoved = true;
-                }, { passive: true, capture: true });
+                }, { passive: true });
                 
                 chatMoreBtn.addEventListener('touchend', function(e) {
-                    console.log('===== chat-more-btn TOUCHEND =====');
                     const touchDuration = Date.now() - touchStartTime;
                     
                     // 如果触摸移动了或者时间太长，不处理
                     if (touchMoved || touchDuration > 500) {
-                        console.log('Touch moved or too long, ignoring');
                         return;
                     }
                     
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    alert('触摸结束，准备打开页面！');
-                    console.log('AppState.currentChat:', AppState.currentChat);
-                    console.log('CharacterSettingsManager:', window.CharacterSettingsManager);
-                    
                     if (!AppState.currentChat) {
-                        console.error('No current chat');
-                        alert('错误：没有当前聊天');
                         showToast('请先选择一个角色');
                         return;
                     }
                     
                     if (!window.CharacterSettingsManager) {
-                        console.error('CharacterSettingsManager not loaded');
-                        alert('错误：模块未加载');
                         showToast('角色设置模块未加载');
                         return;
                     }
                     
                     try {
-                        console.log('Calling openCharacterSettings from touchend...');
-                        alert('开始调用 openCharacterSettings');
                         CharacterSettingsManager.openCharacterSettings(AppState.currentChat);
-                        alert('openCharacterSettings 调用完成');
                     } catch (error) {
                         console.error('Error opening character settings:', error);
-                        alert('错误：' + error.message);
                         showToast('打开角色设置失败：' + error.message);
                     }
-                }, { passive: false, capture: true });
-                
-                console.log('Events bound successfully');
-            } else {
-                console.error('chat-more-btn NOT FOUND!');
+                }, { passive: false });
             }
 
             // 表情库按钮

@@ -12,73 +12,54 @@
          * 打开角色设置页面（全屏子页面）
          */
         openCharacterSettings: function(chat) {
-            console.log('openCharacterSettings called with chat:', chat);
-            
             try {
                 if (!chat) {
-                    console.error('No chat provided to openCharacterSettings');
                     showToast('未找到角色信息');
                     return;
                 }
 
                 // 数据安全检查和初始化
                 if (!window.AppState) {
-                    console.error('AppState not found');
                     showToast('系统未初始化');
                     return;
                 }
                 
                 // 确保所有必要的数组都存在
                 if (!window.AppState.conversations || !Array.isArray(window.AppState.conversations)) {
-                    console.warn('Initializing conversations array');
                     window.AppState.conversations = [];
                 }
                 if (!window.AppState.worldbooks || !Array.isArray(window.AppState.worldbooks)) {
-                    console.warn('Initializing worldbooks array');
                     window.AppState.worldbooks = [];
                 }
                 if (!window.AppState.friends || !Array.isArray(window.AppState.friends)) {
-                    console.warn('Initializing friends array');
                     window.AppState.friends = [];
                 }
                 if (!window.AppState.emojiGroups || !Array.isArray(window.AppState.emojiGroups)) {
-                    console.warn('Initializing emojiGroups array');
                     window.AppState.emojiGroups = [];
                 }
                 if (!window.AppState.userPersonas || !Array.isArray(window.AppState.userPersonas)) {
-                    console.warn('Initializing userPersonas array');
                     window.AppState.userPersonas = [];
                 }
                 if (!window.AppState.user) {
-                    console.warn('Initializing user object');
                     window.AppState.user = { name: '用户', personality: '' };
                 }
-                
-                console.log('AppState initialized successfully');
-                console.log('conversations:', window.AppState.conversations.length);
-                console.log('worldbooks:', window.AppState.worldbooks.length);
-                console.log('emojiGroups:', window.AppState.emojiGroups.length);
 
                 // 使用全屏子页面方案
                 let page = document.getElementById('character-settings-page');
                 if (!page) {
-                    console.log('Creating character-settings-page element');
                     page = document.createElement('div');
                     page.id = 'character-settings-page';
                     page.className = 'sub-page';
                     const appContainer = document.getElementById('app-container');
                     if (!appContainer) {
-                        console.error('app-container not found');
                         showToast('页面容器未找到');
                         return;
                     }
                     appContainer.appendChild(page);
-                    console.log('character-settings-page created');
                 }
 
                 // 获取局部世界书列表
                 const localWbs = window.AppState.worldbooks.filter(w => !w.isGlobal);
-                console.log('Local worldbooks:', localWbs.length);
                 
                 // 获取角色应该使用的用户人设
                 let currentPersona = null;
@@ -100,7 +81,6 @@
                 // 获取总结列表
                 const conv = window.AppState.conversations.find(c => c.id === chat.id);
                 const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
-                console.log('Conversation found:', !!conv, 'Has summaries:', hasSummaries);
             
             page.innerHTML = `
                 <div class="sub-nav char-settings-nav">
