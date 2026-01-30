@@ -1,4 +1,4 @@
-
+h
         // 应用状态
         const AppState = {
             currentTab: 'msg-page',
@@ -4687,29 +4687,13 @@
             // 副API拉取模型按钮
             const pullSecondaryModelsBtn = document.getElementById('pull-secondary-models-btn');
             if (pullSecondaryModelsBtn) {
-                pullSecondaryModelsBtn.addEventListener('click', function() { 
-                    fetchSecondaryModels(); 
+                pullSecondaryModelsBtn.addEventListener('click', function() {
+                    fetchSecondaryModels();
                 }, false);
             }
 
-            // 副API密钥显示/隐藏切换
-            const secondaryApiKeyToggle = document.getElementById('secondary-api-key-toggle');
-            if (secondaryApiKeyToggle) {
-                secondaryApiKeyToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const keyInput = document.getElementById('secondary-api-key');
-                    if (keyInput) {
-                        if (keyInput.type === 'password') {
-                            keyInput.type = 'text';
-                            secondaryApiKeyToggle.textContent = '隐藏';
-                        } else {
-                            keyInput.type = 'password';
-                            secondaryApiKeyToggle.textContent = '显示';
-                        }
-                    }
-                }, false);
-            }
+            // 注意：副API密钥显示/隐藏切换已在SecondaryAPIManager.initEventListeners()中处理
+            // 避免重复绑定事件
             
             // 添加全局按钮处理 - 确保在手机端也能工作
             setupGlobalButtonHandlers();
