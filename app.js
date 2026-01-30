@@ -2834,6 +2834,26 @@
                         showMessageContextMenu(msg, e.clientX, e.clientY);
                     });
                     
+                    // 多选模式下的点击事件
+                    if (AppState.isSelectMode) {
+                        // 添加选中状态类
+                        if (AppState.selectedMessages.includes(msg.id)) {
+                            retractWrapper.classList.add('selected');
+                        }
+                        
+                        retractWrapper.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            toggleMessageSelection(msg.id);
+                            // 手动切换选中样式
+                            if (AppState.selectedMessages.includes(msg.id)) {
+                                retractWrapper.classList.add('selected');
+                            } else {
+                                retractWrapper.classList.remove('selected');
+                            }
+                        });
+                        retractWrapper.style.cursor = 'pointer';
+                    }
+                    
                     container.appendChild(retractWrapper);
                     return;
                 }
@@ -2851,15 +2871,20 @@
                 bubble.dataset.msgIndex = index;
                 
                 let avatarContent;
-                if (msg.type === 'sent') {
+                // 对于语音和地理位置消息，使用sender属性判断；其他消息使用type
+                const isSentMessage = (msg.type === 'voice' || msg.type === 'location')
+                    ? msg.sender === 'sent'
+                    : msg.type === 'sent';
+                
+                if (isSentMessage) {
                     // 使用对话级别的用户头像，如果没有设置则使用侧边栏头像
                     const userAvatar = AppState.currentChat.userAvatar || AppState.user.avatar;
-                    avatarContent = userAvatar 
-                        ? `<img src="${userAvatar}" alt="">` 
+                    avatarContent = userAvatar
+                        ? `<img src="${userAvatar}" alt="">`
                         : AppState.user.name.charAt(0);
                 } else {
-                    avatarContent = AppState.currentChat.avatar 
-                        ? `<img src="${AppState.currentChat.avatar}" alt="">` 
+                    avatarContent = AppState.currentChat.avatar
+                        ? `<img src="${AppState.currentChat.avatar}" alt="">`
                         : AppState.currentChat.name.charAt(0);
                 }
                 
@@ -3167,20 +3192,23 @@
                     let touchStarted = false;
                     let touchStartX = 0;
                     let touchStartY = 0;
+                    let longPressTriggered = false;
                     
                     bubble.addEventListener('touchstart', (e) => {
                         touchStarted = true;
+                        longPressTriggered = false;
                         touchStartX = e.touches[0].clientX;
                         touchStartY = e.touches[0].clientY;
                         longPressTimer = setTimeout(() => {
                             if (touchStarted) {
+                                longPressTriggered = true;
                                 // 防止系统自动选择文本
                                 if (window.getSelection) {
                                     window.getSelection().removeAllRanges();
                                 }
                                 showMessageContextMenu(msg, null, bubble);
                             }
-                        }, 300);
+                        }, 500);
                     }, { passive: true });
                     
                     bubble.addEventListener('touchmove', (e) => {
@@ -3198,11 +3226,18 @@
                     bubble.addEventListener('touchend', (e) => {
                         touchStarted = false;
                         clearTimeout(longPressTimer);
+                        
+                        // 如果长按已触发，阻止点击事件
+                        if (longPressTriggered) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                        
                         // 清除选择
                         if (window.getSelection) {
                             window.getSelection().removeAllRanges();
                         }
-                    }, { passive: true });
+                    }, { passive: false });
                     
                     bubble.addEventListener('touchcancel', () => {
                         touchStarted = false;
@@ -3281,56 +3316,15 @@
             const existingMenu = document.getElementById('message-context-menu');
             if (existingMenu) existingMenu.remove();
             
-            // 添加高亮背景
+            // 添加高亮背景 - 更柔和的效果
             if (bubbleElement) {
-                bubbleElement.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                bubbleElement.style.backgroundColor = 'rgba(0,0,0,0.03)';
+                bubbleElement.style.transition = 'background-color 0.2s ease';
             }
             
             const menu = document.createElement('div');
             menu.id = 'message-context-menu';
             menu.className = 'message-context-menu';
-            
-            // 确定菜单位置 - 在消息下方，避免超出屏幕
-            let x, y;
-            if (mouseEvent) {
-                x = mouseEvent.clientX;
-                y = mouseEvent.clientY;
-            } else if (bubbleElement) {
-                const rect = bubbleElement.getBoundingClientRect();
-                x = rect.left + rect.width / 2;
-                y = rect.bottom + 10;
-            } else {
-                x = window.innerWidth / 2;
-                y = window.innerHeight / 2;
-            }
-            
-            // 菜单宽度约140px，需要调整位置
-            let menuLeft = Math.max(10, x - 70);
-            let menuTop = y;
-            
-            // 检查是否超出屏幕底部
-            const menuHeight = 180; // 估算菜单高度
-            if (menuTop + menuHeight > window.innerHeight) {
-                menuTop = window.innerHeight - menuHeight - 20;
-            }
-            
-            menu.style.cssText = `
-                position: fixed;
-                left: ${menuLeft}px;
-                top: ${menuTop}px;
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-                z-index: 10000;
-                max-width: 90vw;
-                overflow: visible;
-                animation: messageMenuSlideIn 0.2s ease-out;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 4px;
-                padding: 6px;
-            `;
             
             // 菜单项HTML - 支持复制、引用、删除、翻译、多选、撤回
             const isTextMessage = msg.type === 'received' || msg.type === 'sent';
@@ -3384,75 +3378,268 @@
             menu.innerHTML = menuItems;
             document.body.appendChild(menu);
             
+            // 智能定位菜单 - 确保完全可见
+            requestAnimationFrame(() => {
+                const menuRect = menu.getBoundingClientRect();
+                const bubbleRect = bubbleElement ? bubbleElement.getBoundingClientRect() : null;
+                
+                let menuLeft, menuTop;
+                const padding = 12; // 屏幕边缘安全距离
+                const arrowSize = 8; // 小三角大小
+                
+                if (bubbleRect) {
+                    // 默认在消息气泡下方居中
+                    menuLeft = bubbleRect.left + (bubbleRect.width / 2) - (menuRect.width / 2);
+                    menuTop = bubbleRect.bottom + arrowSize + 4;
+                    
+                    // 检查是否超出右边界
+                    if (menuLeft + menuRect.width > window.innerWidth - padding) {
+                        menuLeft = window.innerWidth - menuRect.width - padding;
+                    }
+                    
+                    // 检查是否超出左边界
+                    if (menuLeft < padding) {
+                        menuLeft = padding;
+                    }
+                    
+                    // 检查是否超出底部 - 如果超出则显示在气泡上方
+                    if (menuTop + menuRect.height > window.innerHeight - padding) {
+                        menuTop = bubbleRect.top - menuRect.height - arrowSize - 4;
+                        menu.classList.add('menu-above');
+                    } else {
+                        menu.classList.add('menu-below');
+                    }
+                    
+                    // 如果上方也放不下，则强制在屏幕内显示
+                    if (menuTop < padding) {
+                        menuTop = padding;
+                        menu.classList.remove('menu-above', 'menu-below');
+                    }
+                    
+                    // 计算小三角的位置（相对于菜单）
+                    const arrowLeft = bubbleRect.left + (bubbleRect.width / 2) - menuLeft;
+                    menu.style.setProperty('--arrow-left', `${arrowLeft}px`);
+                } else {
+                    // 如果没有气泡元素，居中显示
+                    menuLeft = (window.innerWidth - menuRect.width) / 2;
+                    menuTop = (window.innerHeight - menuRect.height) / 2;
+                }
+                
+                menu.style.left = `${menuLeft}px`;
+                menu.style.top = `${menuTop}px`;
+            });
+            
             // 添加样式
             if (!document.querySelector('style[data-message-menu]')) {
                 const style = document.createElement('style');
                 style.setAttribute('data-message-menu', 'true');
                 style.textContent = `
-                    @keyframes messageMenuSlideIn {
+                    @keyframes messageMenuFadeIn {
                         from {
                             opacity: 0;
-                            transform: translateY(-10px);
+                            transform: scale(0.92) translateY(-4px);
                         }
                         to {
                             opacity: 1;
-                            transform: translateY(0);
+                            transform: scale(1) translateY(0);
+                        }
+                    }
+                    
+                    @keyframes messageMenuFadeOut {
+                        from {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                        to {
+                            opacity: 0;
+                            transform: scale(0.95);
                         }
                     }
                     
                     .message-context-menu {
-                        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+                        position: fixed;
+                        background: rgba(255, 255, 255, 0.98);
+                        backdrop-filter: blur(20px) saturate(180%);
+                        -webkit-backdrop-filter: blur(20px) saturate(180%);
+                        border-radius: 12px;
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+                                    0 2px 8px rgba(0, 0, 0, 0.08),
+                                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                        z-index: 10000;
+                        max-width: calc(100vw - 24px);
+                        overflow: visible;
+                        animation: messageMenuFadeIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 1px;
+                        padding: 8px;
+                        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+                        border: 0.5px solid rgba(0, 0, 0, 0.08);
+                    }
+                    
+                    .message-context-menu.closing {
+                        animation: messageMenuFadeOut 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+                    }
+                    
+                    /* 小三角指示器 */
+                    .message-context-menu.menu-below::before {
+                        content: '';
+                        position: absolute;
+                        top: -7px;
+                        left: var(--arrow-left, 50%);
+                        transform: translateX(-50%);
+                        width: 0;
+                        height: 0;
+                        border-left: 8px solid transparent;
+                        border-right: 8px solid transparent;
+                        border-bottom: 8px solid rgba(255, 255, 255, 0.98);
+                        filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.06));
+                    }
+                    
+                    .message-context-menu.menu-above::after {
+                        content: '';
+                        position: absolute;
+                        bottom: -7px;
+                        left: var(--arrow-left, 50%);
+                        transform: translateX(-50%);
+                        width: 0;
+                        height: 0;
+                        border-left: 8px solid transparent;
+                        border-right: 8px solid transparent;
+                        border-top: 8px solid rgba(255, 255, 255, 0.98);
+                        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
                     }
                     
                     .msg-menu-item {
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 4px;
-                        padding: 8px 10px;
-                        color: #333;
+                        justify-content: center;
+                        gap: 6px;
+                        padding: 12px 14px;
+                        color: #1a1a1a;
                         cursor: pointer;
-                        transition: all 0.15s;
-                        font-size: 11px;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 6px;
-                        background: white;
+                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        font-size: 12px;
+                        font-weight: 400;
+                        border-radius: 10px;
+                        background: transparent;
                         white-space: nowrap;
                         flex-shrink: 0;
-                        min-width: fit-content;
-                    }
-                    
-                    .msg-menu-item:hover {
-                        background: #f5f5f5;
-                        border-color: #bbb;
+                        min-width: 64px;
+                        position: relative;
+                        -webkit-tap-highlight-color: transparent;
+                        user-select: none;
                     }
                     
                     .msg-menu-item:active {
-                        background: #efefef;
+                        transform: scale(0.95);
+                        background: rgba(0, 0, 0, 0.06);
+                    }
+                    
+                    @media (hover: hover) {
+                        .msg-menu-item:hover {
+                            background: rgba(0, 0, 0, 0.04);
+                        }
                     }
                     
                     .msg-menu-icon {
-                        width: 16px;
-                        height: 16px;
-                        stroke: #333;
+                        width: 22px;
+                        height: 22px;
+                        stroke: #1a1a1a;
                         stroke-width: 1.8;
                         fill: none;
                         stroke-linecap: round;
                         stroke-linejoin: round;
                         flex-shrink: 0;
+                        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    }
+                    
+                    .msg-menu-item:active .msg-menu-icon {
+                        transform: scale(0.9);
+                    }
+                    
+                    .msg-menu-item span {
+                        letter-spacing: 0.2px;
+                        color: #1a1a1a;
+                        font-weight: 400;
+                    }
+                    
+                    /* 移动端优化 */
+                    @media (max-width: 768px) {
+                        .message-context-menu {
+                            padding: 6px;
+                            gap: 0px;
+                        }
+                        
+                        .msg-menu-item {
+                            padding: 10px 12px;
+                            min-width: 58px;
+                            gap: 5px;
+                            font-size: 11px;
+                        }
+                        
+                        .msg-menu-icon {
+                            width: 20px;
+                            height: 20px;
+                        }
+                    }
+                    
+                    /* 暗色模式支持 */
+                    @media (prefers-color-scheme: dark) {
+                        .message-context-menu {
+                            background: rgba(44, 44, 46, 0.98);
+                            border-color: rgba(255, 255, 255, 0.1);
+                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                                        0 2px 8px rgba(0, 0, 0, 0.3),
+                                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                        }
+                        
+                        .message-context-menu.menu-below::before {
+                            border-bottom-color: rgba(44, 44, 46, 0.98);
+                        }
+                        
+                        .message-context-menu.menu-above::after {
+                            border-top-color: rgba(44, 44, 46, 0.98);
+                        }
+                        
+                        .msg-menu-item {
+                            color: #f5f5f7;
+                        }
+                        
+                        .msg-menu-item:active {
+                            background: rgba(255, 255, 255, 0.1);
+                        }
+                        
+                        @media (hover: hover) {
+                            .msg-menu-item:hover {
+                                background: rgba(255, 255, 255, 0.06);
+                            }
+                        }
+                        
+                        .msg-menu-icon {
+                            stroke: #f5f5f7;
+                        }
+                        
+                        .msg-menu-item span {
+                            color: #f5f5f7;
+                        }
                     }
                 `;
                 document.head.appendChild(style);
             }
             
-            // 点击外部关闭菜单
+            // 点击外部关闭菜单 - 带动画
             const closeMenuHandler = (e) => {
                 if (!e.target.closest('#message-context-menu')) {
-                    menu.remove();
-                    // 移除高亮背景
-                    if (bubbleElement) {
-                        bubbleElement.style.backgroundColor = '';
-                    }
+                    menu.classList.add('closing');
+                    setTimeout(() => {
+                        menu.remove();
+                        // 移除高亮背景
+                        if (bubbleElement) {
+                            bubbleElement.style.backgroundColor = '';
+                        }
+                    }, 200);
                     document.removeEventListener('click', closeMenuHandler);
                     document.removeEventListener('touchend', closeMenuHandler);
                 }
@@ -3462,7 +3649,22 @@
             setTimeout(() => {
                 document.addEventListener('click', closeMenuHandler);
                 document.addEventListener('touchend', closeMenuHandler);
-            }, 300);
+            }, 600);
+        }
+        
+        // 统一的菜单关闭函数 - 带动画效果
+        function closeMessageContextMenu() {
+            const menu = document.getElementById('message-context-menu');
+            if (!menu) return;
+            
+            menu.classList.add('closing');
+            setTimeout(() => {
+                menu.remove();
+                // 移除所有消息气泡的高亮背景
+                document.querySelectorAll('.message-bubble').forEach(bubble => {
+                    bubble.style.backgroundColor = '';
+                });
+            }, 200);
         }
         
         function copyMessage(msgId) {
@@ -3480,8 +3682,7 @@
             // 复制到剪贴板
             navigator.clipboard.writeText(msg.content).then(() => {
                 showToast('复制成功');
-                const menu = document.getElementById('message-context-menu');
-                if (menu) menu.remove();
+                closeMessageContextMenu();
             }).catch(() => {
                 // 降级方案
                 const textArea = document.createElement('textarea');
@@ -3491,8 +3692,7 @@
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
                 showToast('复制成功');
-                const menu = document.getElementById('message-context-menu');
-                if (menu) menu.remove();
+                closeMessageContextMenu();
             });
         }
 
@@ -3520,8 +3720,7 @@
             if (!chatInput || !quoteContainer) return;
             
             // 关闭菜单
-            const menu = document.getElementById('message-context-menu');
-            if (menu) menu.remove();
+            closeMessageContextMenu();
             
             // 记录引用的消息ID到输入框的数据属性
             chatInput.dataset.replyToId = msgId;
@@ -3567,8 +3766,7 @@
                 }
                 
                 // 关闭菜单
-                const menu = document.getElementById('message-context-menu');
-                if (menu) menu.remove();
+                closeMessageContextMenu();
             });
         }
 
@@ -3616,8 +3814,7 @@
                 }
                 
                 // 关闭菜单
-                const menu = document.getElementById('message-context-menu');
-                if (menu) menu.remove();
+                closeMessageContextMenu();
             });
         }
 
@@ -3629,8 +3826,7 @@
             if (!msg) return;
             
             // 关闭菜单
-            const menu = document.getElementById('message-context-menu');
-            if (menu) menu.remove();
+            closeMessageContextMenu();
             
             // 创建编辑对话框
             const modal = document.createElement('div');
@@ -3697,8 +3893,7 @@
             showMultiSelectToolbar();
             
             // 关闭菜单
-            const menu = document.getElementById('message-context-menu');
-            if (menu) menu.remove();
+            closeMessageContextMenu();
         }
 
         function toggleMessageSelection(msgId) {
@@ -3720,6 +3915,7 @@
             }
             
             // 优化:只更新当前气泡的选中状态,而不是重新渲染所有消息
+            // 尝试查找普通消息气泡
             const bubble = document.querySelector(`.chat-bubble[data-msg-id="${msgId}"]`);
             if (bubble) {
                 if (index > -1) {
@@ -3728,6 +3924,18 @@
                 } else {
                     // 选中
                     bubble.classList.add('selected');
+                }
+            }
+            
+            // 尝试查找撤回消息
+            const retractWrapper = document.querySelector(`.retracted-message-wrapper[data-message-id="${msgId}"]`);
+            if (retractWrapper) {
+                if (index > -1) {
+                    // 取消选中
+                    retractWrapper.classList.remove('selected');
+                } else {
+                    // 选中
+                    retractWrapper.classList.add('selected');
                 }
             }
             
@@ -3981,8 +4189,7 @@
             // 只支持文字消息翻译
             if (msg.emojiUrl) {
                 showToast('暂不支持翻译该类型消息');
-                const menu = document.getElementById('message-context-menu');
-                if (menu) menu.remove();
+                closeMessageContextMenu();
                 return;
             }
             
@@ -4002,14 +4209,12 @@
             }
             
             // 关闭菜单
-            const menu = document.getElementById('message-context-menu');
-            if (menu) menu.remove();
+            closeMessageContextMenu();
         }
 
         // 显示中文翻译选项菜单 - 位置在消息气泡正下方，按钮横向排列
         function showChineseTranslationOptions(msg) {
-            const menu = document.getElementById('message-context-menu');
-            if (menu) menu.remove();
+            closeMessageContextMenu();
             
             // 查找对应的消息气泡元素
             const bubbleElement = document.querySelector(`[data-msg-id="${msg.id}"]`);
@@ -8944,17 +9149,7 @@
             showToast('已收藏');
             
             // 立即关闭菜单和移除高亮
-            const menu = document.getElementById('message-context-menu');
-            if (menu) {
-                menu.remove();
-            }
-            // 查找并移除高亮背景
-            const allBubbles = document.querySelectorAll('.chat-bubble');
-            allBubbles.forEach(bubble => {
-                if (bubble.style.backgroundColor === 'rgba(0,0,0,0.05)' || bubble.style.backgroundColor !== '') {
-                    bubble.style.backgroundColor = '';
-                }
-            });
+            closeMessageContextMenu();
         }
 
         // 打开收藏页面 - 现代化设计

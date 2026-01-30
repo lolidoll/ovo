@@ -2404,6 +2404,8 @@ input[type="range"]::-ms-fill-upper {
             will-change: transform;
             display: flex;
             flex-direction: column;
+            /* 修复移动端滚动问题 */
+            overflow: hidden;
         }
         .chat-page.open {
             transform: translateX(0);
@@ -2505,11 +2507,18 @@ input[type="range"]::-ms-fill-upper {
         .chat-messages {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 15px;
             -webkit-overflow-scrolling: touch;
+            /* 修复移动端滚动问题 */
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            /* 确保可以滚动到顶部查看历史消息 */
+            min-height: 0;
+            position: relative;
         }
         
         .chat-bubble {
@@ -2534,6 +2543,41 @@ input[type="range"]::-ms-fill-upper {
         /* 多选模式下的样式 */
         .chat-bubble.selected {
             background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 撤回消息的选中样式 */
+        .retracted-message-wrapper.selected {
+            background-color: rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            padding: 8px 0;
+        }
+        
+        /* 图片消息的选中样式 */
+        .chat-bubble.image-message.selected img {
+            opacity: 0.7;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 表情包消息的选中样式 */
+        .chat-bubble.emoji-message.selected img {
+            opacity: 0.7;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 语音消息的选中样式 */
+        .chat-bubble.voice-message.selected .voice-bubble {
+            background-color: rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 地理位置消息的选中样式 */
+        .chat-bubble.location-message.selected .location-bubble {
+            background-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 转发朋友圈消息的选中样式 */
+        .chat-bubble.forward-moment-message.selected > div:last-child > div {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
         }
         
         /* 平板端优化 */
