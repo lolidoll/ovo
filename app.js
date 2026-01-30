@@ -532,51 +532,21 @@
                 closeChatPage();
             });
 
-            // 聊天页面 - 角色设置按钮
-            // 优化：立即响应，只防止50ms内的重复触发
-            let chatMoreLastClick = 0;
-            let chatMoreHandling = false;
-            
-            function handleChatMoreClick(e) {
-                // 检查是否点击了chat-more相关元素
-                const chatMoreDots = e.target.closest('.chat-more-dots') || e.target.closest('.chat-more');
-                if (chatMoreDots) {
-                    // 防止极短时间内重复触发（仅50ms）
-                    const now = Date.now();
-                    if (chatMoreHandling || (now - chatMoreLastClick < 50)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                    }
-                    
-                    chatMoreLastClick = now;
-                    chatMoreHandling = true;
-                    console.log('Chat more button clicked, currentChat:', AppState.currentChat);
-                    
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    
-                    // 立即执行
-                    if (AppState.currentChat) {
-                        openChatMoreMenu(AppState.currentChat);
-                    } else {
-                        console.warn('AppState.currentChat is not set');
-                        showToast('未找到当前对话');
-                    }
-                    
-                    // 重置处理标志
-                    setTimeout(() => {
-                        chatMoreHandling = false;
-                    }, 50);
-                    
-                    return false;
+            // 聊天页面 - 角色设置按钮（全局函数，直接绑定到HTML）
+            window.handleChatMoreButtonClick = function(e) {
+                console.log('Chat more button clicked, currentChat:', AppState.currentChat);
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (AppState.currentChat) {
+                    openChatMoreMenu(AppState.currentChat);
+                } else {
+                    console.warn('AppState.currentChat is not set');
+                    showToast('未找到当前对话');
                 }
-            }
-            
-            // 使用冒泡阶段监听（更兼容Opera等浏览器）
-            document.addEventListener('click', handleChatMoreClick, false);
-            document.addEventListener('touchstart', handleChatMoreClick, false);
+                
+                return false;
+            };
 
             document.getElementById('chat-send-btn').addEventListener('click', function() {
                 sendMessage();
@@ -5962,10 +5932,26 @@
    - 必要时可基于图片内容给出建议或进行评论
    - 如果用户在"用户对图片的描述"中补充了说明，请结合该描述分析
 
-3. 【普通文字消息】这是用户的正常对话文字
+3. 【语音条消息】格式为：[用户名发送了语音条，时长X秒]\n语音内容：文字内容
+   - 用户发送的是语音条，但会以文字形式展示给你
+   - 识别这是语音条后，你可以：
+     * 理解这是更亲密、更口语化的交流方式
+     * 适当回应语音的特点（如"听到你的声音了"、"你的语气..."等）
+     * 也可以用语音条回复（使用【语音条】格式）
+   - 语音条通常用于表达更私密、犹豫、情绪化的内容
+
+4. 【地理位置消息】格式为：[用户名发送了地理位置]\n位置名称：...\n详细地址：...\n距离范围：...
+   - 用户分享了一个地理位置
+   - 识别后应该：
+     * 确认收到位置信息
+     * 根据情境回应（如"好的，我知道了"、"这个地方我知道"等）
+     * 如果合适，可以分享相关的地点或约定见面
+   - 可以使用【地理位置】格式回复自己的位置
+
+5. 【普通文字消息】这是用户的正常对话文字
    - 直接理解和回应用户的文字内容
 
-记住：表情包是情绪表达工具，图片是视觉内容；处理时方式完全不同。`);
+记住：不同类型的消息代表不同的交流意图，要正确识别并做出恰当回应。`);
 
 
 
@@ -6152,6 +6138,22 @@
                     } else {
                         messageContent = '[用户发送了一张图片]';
                     }
+                }
+                
+                // 如果消息是语音条，提供语音条信息
+                if (m.type === 'voice') {
+                    const duration = m.duration || 1;
+                    const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                    messageContent = `[${senderName}发送了语音条，时长${duration}秒]\n语音内容：${m.content}`;
+                }
+                
+                // 如果消息是地理位置，提供地理位置信息
+                if (m.type === 'location') {
+                    const locationName = m.locationName || '位置';
+                    const locationAddress = m.locationAddress || '';
+                    const locationDistance = m.locationDistance || 5;
+                    const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                    messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离范围：约${locationDistance}米`;
                 }
                 
                 // 如果消息是转发的朋友圈，提供朋友圈信息
