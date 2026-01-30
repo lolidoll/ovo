@@ -2,11 +2,16 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ffffff">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
     <link rel="apple-touch-icon" href="https://image.uglycat.cc/qs8mf5.png">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='90' fill='%23333'>薯</text></svg>">
     <title>薯片机</title>
@@ -20,6 +25,59 @@
     <link rel="stylesheet" href="mind-state-styles.css">
     <style>
     </style>
+    <script>
+        // 移动端全屏适配 - 动态计算视口高度
+        (function() {
+            function setViewportHeight() {
+                // 获取真实的视口高度
+                const vh = window.innerHeight * 0.01;
+                const appHeight = window.innerHeight;
+                
+                // 设置CSS自定义属性
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+                document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
+                
+                // 针对iOS Safari的额外处理
+                if (CSS.supports && CSS.supports('-webkit-fill-available', '100vh')) {
+                    document.documentElement.style.height = '-webkit-fill-available';
+                }
+            }
+            
+            // 初始设置
+            setViewportHeight();
+            
+            // 监听窗口大小变化
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(setViewportHeight, 100);
+            });
+            
+            // 监听设备方向变化
+            window.addEventListener('orientationchange', function() {
+                setTimeout(setViewportHeight, 200);
+            });
+            
+            // 页面可见性变化时重新计算（处理浏览器地址栏显示/隐藏）
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    setTimeout(setViewportHeight, 100);
+                }
+            });
+            
+            // 滚动事件时重新计算（某些浏览器滚动时会改变地址栏状态）
+            let scrollTimer;
+            window.addEventListener('scroll', function() {
+                clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(setViewportHeight, 100);
+            }, { passive: true });
+            
+            // 页面加载完成后再次确认
+            window.addEventListener('load', function() {
+                setTimeout(setViewportHeight, 300);
+            });
+        })();
+    </script>
     <script src="auth-modal.js" defer></script>
     <script src="login.js" defer></script>
     <script src="voice-message.js" defer></script>

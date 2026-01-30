@@ -714,6 +714,11 @@
                 charAlphaInput.value = Math.round(alpha * 100);
                 
                 charPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                
+                // 同步更新字体颜色预览的背景
+                if (charTextPreview) {
+                    charTextPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                }
             };
             
             // 更新用户气泡预览
@@ -730,6 +735,11 @@
                 userAlphaInput.value = Math.round(alpha * 100);
                 
                 userPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                
+                // 同步更新字体颜色预览的背景
+                if (userTextPreview) {
+                    userTextPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                }
             };
             
             // 从输入框更新滑块（角色）
@@ -751,6 +761,11 @@
                 charAlphaInput.value = alpha;
                 
                 charPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+                
+                // 同步更新字体颜色预览的背景
+                if (charTextPreview) {
+                    charTextPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+                }
             };
             
             // 从输入框更新滑块（用户）
@@ -772,6 +787,11 @@
                 userAlphaInput.value = alpha;
                 
                 userPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+                
+                // 同步更新字体颜色预览的背景
+                if (userTextPreview) {
+                    userTextPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha / 100})`;
+                }
             };
             
             // 绑定滑块事件监听器
@@ -815,6 +835,7 @@
             
             // 更新角色字体颜色预览
             const updateCharTextPreview = () => {
+                if (isLocked) return;
                 const r = charTextR.value;
                 const g = charTextG.value;
                 const b = charTextB.value;
@@ -824,10 +845,20 @@
                 charTextBInput.value = b;
                 
                 charTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+                
+                // 同步更新背景色为当前气泡颜色
+                if (charR && charG && charB && charAlpha) {
+                    const bgR = charR.value;
+                    const bgG = charG.value;
+                    const bgB = charB.value;
+                    const bgAlpha = charAlpha.value / 100;
+                    charTextPreview.style.backgroundColor = `rgba(${bgR}, ${bgG}, ${bgB}, ${bgAlpha})`;
+                }
             };
             
             // 更新用户字体颜色预览
             const updateUserTextPreview = () => {
+                if (isLocked) return;
                 const r = userTextR.value;
                 const g = userTextG.value;
                 const b = userTextB.value;
@@ -837,10 +868,20 @@
                 userTextBInput.value = b;
                 
                 userTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+                
+                // 同步更新背景色为当前气泡颜色
+                if (userR && userG && userB && userAlpha) {
+                    const bgR = userR.value;
+                    const bgG = userG.value;
+                    const bgB = userB.value;
+                    const bgAlpha = userAlpha.value / 100;
+                    userTextPreview.style.backgroundColor = `rgba(${bgR}, ${bgG}, ${bgB}, ${bgAlpha})`;
+                }
             };
             
             // 从输入框更新滑块（角色字体）
             const updateCharTextFromInput = () => {
+                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(charTextRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(charTextGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(charTextBInput.value) || 0));
@@ -854,10 +895,20 @@
                 charTextBInput.value = b;
                 
                 charTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+                
+                // 同步更新背景色为当前气泡颜色
+                if (charR && charG && charB && charAlpha) {
+                    const bgR = charR.value;
+                    const bgG = charG.value;
+                    const bgB = charB.value;
+                    const bgAlpha = charAlpha.value / 100;
+                    charTextPreview.style.backgroundColor = `rgba(${bgR}, ${bgG}, ${bgB}, ${bgAlpha})`;
+                }
             };
             
             // 从输入框更新滑块（用户字体）
             const updateUserTextFromInput = () => {
+                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(userTextRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(userTextGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(userTextBInput.value) || 0));
@@ -871,6 +922,15 @@
                 userTextBInput.value = b;
                 
                 userTextPreview.style.color = `rgb(${r}, ${g}, ${b})`;
+                
+                // 同步更新背景色为当前气泡颜色
+                if (userR && userG && userB && userAlpha) {
+                    const bgR = userR.value;
+                    const bgG = userG.value;
+                    const bgB = userB.value;
+                    const bgAlpha = userAlpha.value / 100;
+                    userTextPreview.style.backgroundColor = `rgba(${bgR}, ${bgG}, ${bgB}, ${bgAlpha})`;
+                }
             };
             
             // 绑定字体颜色滑块事件监听器
@@ -902,7 +962,8 @@
                 }
             };
             
-            [charR, charG, charB, charAlpha, userR, userG, userB, userAlpha].forEach(el => {
+            [charR, charG, charB, charAlpha, userR, userG, userB, userAlpha,
+             charTextR, charTextG, charTextB, userTextR, userTextG, userTextB].forEach(el => {
                 if (el) {
                     el.addEventListener('mousedown', preventLockedChange);
                     el.addEventListener('touchstart', preventLockedChange);
