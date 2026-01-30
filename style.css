@@ -2350,6 +2350,17 @@ input[type="range"]::-ms-fill-upper {
             background-color: #fff;
             border-bottom: 1px solid #f0f0f0;
             flex-shrink: 0;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .chat-toolbar-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            position: relative;
+            z-index: 150;
+            pointer-events: auto;
         }
         
         .chat-title {
@@ -2371,7 +2382,7 @@ input[type="range"]::-ms-fill-upper {
             padding: 0;
             margin: 0;
             position: relative;
-            z-index: 150;
+            z-index: 200;
             flex-shrink: 0;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
             touch-action: manipulation;
@@ -2380,6 +2391,9 @@ input[type="range"]::-ms-fill-upper {
             /* 增加移动端点击区域 */
             min-width: 44px;
             min-height: 44px;
+            /* 确保按钮可点击 */
+            pointer-events: auto;
+            outline: none;
         }
         .chat-more:active {
             background-color: rgba(0, 0, 0, 0.1);
