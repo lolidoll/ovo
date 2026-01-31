@@ -4,7 +4,7 @@
  * 采用黑白简约风设计，参考QQ发送定位的效果
  */
 
-const LocationMessageModule = (function() {
+window.LocationMessageModule = (function() {
     // 私有变量
     let locationModalOpen = false;
     let locationMessages = new Map(); // 存储地理位置消息内容 { messageId: { locationName, address, type: 'location' } }
@@ -251,6 +251,7 @@ const LocationMessageModule = (function() {
     // 导出公开方法
     return {
         init: init,
+        openLocationModal: openLocationModal,
         sendLocationMessage: sendLocationMessage,
         sendAILocationMessage: sendAILocationMessage,
         getLocationMessage: getLocationMessage,

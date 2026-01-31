@@ -1,0 +1,591 @@
+/* ========================================
+   QQ风格聊天页面样式
+   适配移动端,顶部和底部布局参考QQ
+======================================== */
+
+/* 聊天页面容器 - 重置为flex布局 */
+.chat-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background-color: #f5f5f5;
+    z-index: 150;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-page.open {
+    transform: translateX(0);
+}
+
+/* ========================================
+   顶部导航栏 - QQ风格
+======================================== */
+.chat-nav {
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    background: #f7f7f7;
+    border-bottom: 0.5px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    position: relative;
+    z-index: 200;
+    flex-shrink: 0;
+}
+
+/* 返回按钮 */
+.chat-nav .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    cursor: pointer;
+    color: #000;
+    font-size: 16px;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.chat-nav .back-arrow {
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #000;
+    border-bottom: 2px solid #000;
+    transform: rotate(45deg);
+}
+
+/* 标题区域 */
+.chat-title-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: calc(100% - 140px);
+    overflow: hidden;
+}
+
+.chat-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.chat-typing-status {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+}
+
+/* 右侧按钮组 */
+.chat-toolbar-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 60px;
+    justify-content: flex-end;
+}
+
+/* 心声按钮 */
+#chat-mind-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 更多按钮(三点) */
+.chat-more {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-more-dots {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+}
+
+.chat-more-dots span {
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+}
+
+/* ========================================
+   顶部导航栏 - QQ风格
+======================================== */
+.chat-nav .back-btn span {
+    display: none; /* 隐藏"返回"文字 */
+}
+
+/* 汉堡菜单样式（三条横线） */
+.chat-more-hamburger {
+    width: 20px;
+    height: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-more-hamburger span {
+    display: block;
+    width: 18px;
+    height: 2.5px;
+    background: #000;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* 隐藏旧的三点样式 */
+.chat-more-dots {
+    display: none;
+}
+
+/* ========================================
+   消息区域
+======================================== */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    background: #f5f5f5;
+}
+
+/* ========================================
+   引用消息栏
+======================================== */
+.quote-message-bar-container {
+    display: none;
+    background: #fff;
+    border-top: 0.5px solid #e5e5e5;
+    flex-shrink: 0;
+    z-index: 51;
+}
+
+.quote-message-bar-container[style*="display: block"],
+.quote-message-bar-container[style*="display:block"] {
+    display: block !important;
+}
+
+.quote-message-bar {
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+}
+
+.quote-content {
+    flex: 1;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quote-cancel-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ========================================
+   底部区域 - QQ风格(工具栏在输入框上方)
+======================================== */
+
+/* 输入区域(在最底部) */
+.chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f7f7f7;
+    border-top: none;
+    flex-shrink: 0;
+    min-height: 50px;
+    z-index: 50;
+}
+
+.chat-input {
+    flex: 1;
+    min-height: 30px;
+    max-height: 100px;
+    line-height: 18px;
+    padding: 6px 10px;
+    border: 0.5px solid #ebebeb;
+    border-radius: 8px;
+    background: rgba(255, 253, 250, 0.95);
+    font-size: 15px;
+    color: #000;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    -webkit-user-select: text;
+    user-select: text;
+    transition: background 0.2s ease;
+    margin: 0 4px;
+}
+
+.chat-input::placeholder {
+    color: transparent;
+}
+
+.chat-input:focus {
+    background: rgba(255, 253, 250, 1);
+    border-color: #e0e0e0;
+}
+
+.chat-send-btn {
+    width: 52px;
+    height: 30px;
+    min-width: 52px;
+    min-height: 30px;
+    border: none;
+    background: #ffd5e0;
+    border-radius: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.chat-send-btn:active {
+    opacity: 0.7;
+}
+
+.chat-send-btn svg {
+    display: none;
+}
+
+/* 工具栏(在最底部) */
+.chat-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0;
+    background: #f7f7f7;
+    border-top: none;
+    flex-shrink: 0;
+    min-height: 36px;
+    height: 36px;
+    z-index: 49;
+}
+
+/* 工具栏按钮 - 6个核心按钮 */
+.tb-btn {
+    flex: 1;
+    height: 36px;
+    max-width: 60px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+
+.tb-btn:active {
+    opacity: 0.6;
+}
+
+.tb-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: #666;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.tb-btn-label {
+    display: none;
+}
+
+/* 隐藏超出6个的按钮 */
+.tb-btn.hidden-btn {
+    display: none;
+}
+
+/* ========================================
+   更多功能面板 - QQ风格
+======================================== */
+.toolbar-more-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f7f7f7;
+    border-top: 0.5px solid #e5e5e5;
+    z-index: 160;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 70vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar-more-panel.show {
+    transform: translateY(0);
+}
+
+/* 关闭按钮 */
+.more-panel-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-bottom: 0.5px solid #e5e5e5;
+    background: #fff;
+}
+
+.more-panel-close-btn {
+    width: 32px;
+    height: 4px;
+    background: #d0d0d0;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+}
+
+/* 滑动容器 */
+.more-panel-swiper {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    display: flex;
+}
+
+.more-panel-swiper::-webkit-scrollbar {
+    display: none;
+}
+
+/* 每一页 */
+.more-panel-page {
+    min-width: 100%;
+    width: 100%;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 20px 16px;
+    box-sizing: border-box;
+}
+
+/* 网格布局 - 一行4个 */
+.more-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 12px;
+}
+
+/* 功能项 */
+.more-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: opacity 0.2s;
+}
+
+.more-item:active {
+    opacity: 0.6;
+}
+
+.more-item-icon {
+    width: 48px;
+    height: 48px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.more-item-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #666;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.more-item span {
+    font-size: 12px;
+    color: #000;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* 分页指示器 */
+.more-panel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    background: #f7f7f7;
+}
+
+.more-panel-dot {
+    width: 6px;
+    height: 6px;
+    background: #d0d0d0;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.more-panel-dot.active {
+    width: 18px;
+    background: #666;
+    border-radius: 3px;
+}
+
+/* ========================================
+   表情包库 - 保持原有功能
+======================================== */
+.emoji-library {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 0.5px solid #e5e5e5;
+    z-index: 150;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.emoji-library.show {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* ========================================
+   移动端适配
+======================================== */
+@media screen and (max-width: 375px) {
+    .chat-nav {
+        height: 46px;
+        min-height: 46px;
+    }
+    
+    .chat-title {
+        font-size: 16px;
+    }
+    
+    .tb-btn {
+        max-width: 55px;
+    }
+    
+    .tb-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .tb-btn-label {
+        font-size: 9px;
+    }
+    
+    .more-panel-grid {
+        gap: 16px 10px;
+    }
+    
+    .more-item-icon {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .more-item span {
+        font-size: 11px;
+    }
+}
+
+/* 横屏适配 */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .chat-toolbar {
+        padding: 6px 8px;
+        min-height: 48px;
+    }
+    
+    .tb-btn {
+        height: 30px;
+    }
+    
+    .toolbar-more-panel {
+        max-height: 80vh;
+    }
+    
+    .emoji-library.show {
+        max-height: 60vh;
+    }
+}
+
+/* ========================================
+   主题适配(如果需要)
+======================================== */
+@media (prefers-color-scheme: dark) {
+    /* 暗色模式可以在这里添加 */
+}

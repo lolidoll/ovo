@@ -120,8 +120,9 @@ const MainAPIManager = {
             if (this.AppState.currentChat && this.AppState.currentChat.id === convId) {
                 const chatTitle = document.getElementById('chat-title');
                 const chatTypingStatus = document.getElementById('chat-typing-status');
-                if (chatTypingStatus) chatTypingStatus.style.display = 'inline-block';
-                if (chatTitle) chatTitle.style.display = 'none';
+                if (chatTypingStatus) chatTypingStatus.style.display = 'block';
+                // QQ风格：角色名始终显示，"正在打字中"显示在下方
+                // if (chatTitle) chatTitle.style.display = 'none';
             }
         };
         updateTypingStatus();
@@ -250,7 +251,8 @@ const MainAPIManager = {
             const chatTitle = document.getElementById('chat-title');
             const chatTypingStatus = document.getElementById('chat-typing-status');
             if (chatTypingStatus) chatTypingStatus.style.display = 'none';
-            if (chatTitle) chatTitle.style.display = 'inline';
+            // QQ风格：角色名始终显示，无需切换
+            // if (chatTitle) chatTitle.style.display = 'inline';
             // appendAssistantMessage 内部已经处理了渲染，无需重复调用
         }
         
