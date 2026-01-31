@@ -15,7 +15,9 @@ const AIImageGenerator = {
 
     /**
      * 从AI回复中提取图片生成指令
-     * 支持格式：[IMAGE]图片描述[/IMAGE] 或 [IMG]图片描述[/IMG]
+     * 支持格式：
+     * 1. [IMAGE]图片描述[/IMAGE] 或 [IMG]图片描述[/IMG]
+     * 2. [角色名发送了一张图片，图片内容：描述] (AI模仿用户发图格式)
      */
     extractImageInstructions: function(text) {
         if (!text || typeof text !== 'string') return [];
@@ -52,6 +54,33 @@ const AIImageGenerator = {
             }
         }
         
+        // 匹配 [角色名发送了一张图片，图片内容：...] 格式
+        // 这是AI模仿用户发图时的格式
+        const userStyleRegex = /\[([^发]+)发送了一张图片[，,]图片内容[：:]([^\]]+)\]/gi;
+        while ((match = userStyleRegex.exec(text)) !== null) {
+            const description = match[2].trim();
+            if (description) {
+                // 检查是否是base64数据，如果是则提取实际图片
+                if (description.startsWith('data:image')) {
+                    instructions.push({
+                        type: 'direct_image',  // 直接使用图片数据
+                        imageData: description,
+                        description: `${match[1]}发送的图片`,
+                        fullMatch: match[0],
+                        index: match.index
+                    });
+                } else {
+                    // 如果是文字描述，则作为生图指令
+                    instructions.push({
+                        type: 'image',
+                        description: description,
+                        fullMatch: match[0],
+                        index: match.index
+                    });
+                }
+            }
+        }
+        
         // 按出现顺序排序
         instructions.sort((a, b) => a.index - b.index);
         
@@ -67,6 +96,9 @@ const AIImageGenerator = {
         // 移除 [IMAGE]...[/IMAGE] 和 [IMG]...[/IMG] 标记
         text = text.replace(/\[IMAGE\][\s\S]*?\[\/IMAGE\]/gi, '');
         text = text.replace(/\[IMG\][\s\S]*?\[\/IMG\]/gi, '');
+        
+        // 移除 [角色名发送了一张图片，图片内容：...] 格式
+        text = text.replace(/\[([^发]+)发送了一张图片[，,]图片内容[：:][^\]]+\]/gi, '');
         
         // 清理多余空行
         text = text.replace(/\n{3,}/g, '\n\n');
@@ -288,7 +320,7 @@ const AIImageGenerator = {
      * 处理AI回复中的图片生成指令
      * @param {string} convId - 对话ID
      * @param {string} text - AI回复文本
-     * @returns {Promise<string>} - 返回清理后的文本
+     * @returns {Promise<string>} - 返回清理后的文本（用于文字消息显示）
      */
     processImageInstructions: async function(convId, text) {
         const instructions = this.extractImageInstructions(text);
@@ -299,44 +331,57 @@ const AIImageGenerator = {
 
         console.log(`🎨 检测到 ${instructions.length} 个图片生成指令`);
 
-        // 清理文本中的图片标记
-        const cleanedText = this.removeImageTags(text);
+        // 清理文本中的图片标记，保留其他文字内容
+        let cleanedText = this.removeImageTags(text);
+        
+        // 如果清理后文本为空或只有空白，返回空字符串
+        // 这样文字消息就不会显示
+        cleanedText = cleanedText.trim();
 
         // 获取API类型设置
         const apiType = this.AppState.apiSettings?.imageApiType || 'openai';
 
         // 异步生成并发送图片（不阻塞文本消息）
+        // 延迟稍微长一点，确保文字消息先显示
         setTimeout(async () => {
             for (const instruction of instructions) {
                 let imageData = null;
                 let generationFailed = false;
                 
-                try {
-                    this.showToast('🎨 正在生成图片...');
+                // 如果是直接图片数据，直接使用
+                if (instruction.type === 'direct_image') {
+                    imageData = instruction.imageData;
+                    this.sendImageMessage(convId, imageData, instruction.description, false);
+                    console.log('✅ 直接使用AI提供的图片数据');
+                } else {
+                    // 需要生成图片
+                    try {
+                        this.showToast('🎨 正在生成图片...');
+                        
+                        // 尝试生成图片
+                        imageData = await this.generateImage(instruction.description, apiType);
+                        
+                        this.showToast('✅ 图片已生成');
+                        
+                    } catch (error) {
+                        console.error('生成图片失败，使用默认图片:', error);
+                        this.showToast('⚠️ 生图失败，使用默认图片');
+                        
+                        // 使用默认图片
+                        imageData = 'https://image.uglycat.cc/q3w37y.jpg';
+                        generationFailed = true;
+                    }
                     
-                    // 尝试生成图片
-                    imageData = await this.generateImage(instruction.description, apiType);
-                    
-                    this.showToast('✅ 图片已生成');
-                    
-                } catch (error) {
-                    console.error('生成图片失败，使用默认图片:', error);
-                    this.showToast('⚠️ 生图失败，使用默认图片');
-                    
-                    // 使用默认图片
-                    imageData = 'https://image.uglycat.cc/q3w37y.jpg';
-                    generationFailed = true;
+                    // 发送图片消息（无论成功还是失败）
+                    this.sendImageMessage(convId, imageData, instruction.description, generationFailed);
                 }
-                
-                // 发送图片消息（无论成功还是失败）
-                this.sendImageMessage(convId, imageData, instruction.description, generationFailed);
                 
                 // 每张图片之间间隔一下
                 if (instructions.length > 1) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
-        }, 500);
+        }, 800);  // 延迟800ms，确保文字消息先显示
 
         return cleanedText;
     },

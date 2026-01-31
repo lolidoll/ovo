@@ -3142,14 +3142,18 @@
         
         // 主渲染函数：使用虚拟滚动和事件委托优化
         function renderChatMessages(forceScrollToBottom = false) {
+            console.log('🎨 renderChatMessages 被调用 - forceScrollToBottom:', forceScrollToBottom, 'currentChat:', AppState.currentChat?.id);
+            
             const container = document.getElementById('chat-messages');
             
             if (!AppState.currentChat) {
+                console.warn('⚠️ renderChatMessages: currentChat 为空，无法渲染');
                 container.innerHTML = '';
                 return;
             }
             
             const messages = AppState.messages[AppState.currentChat.id] || [];
+            console.log('📊 当前对话消息数量:', messages.length);
             
             // 移除旧的事件监听器（如果存在）
             if (container._avatarDblClickHandler) {
@@ -6227,6 +6231,12 @@
                 const chatTypingStatus = document.getElementById('chat-typing-status');
                 if (chatTypingStatus) chatTypingStatus.style.display = 'none';
                 if (chatTitle) chatTitle.style.display = 'inline';
+                
+                // 🔧 修复：API调用完成后强制刷新聊天界面，确保消息立即显示
+                if (success) {
+                    console.log('🔄 API调用成功，强制刷新聊天界面');
+                    renderChatMessages(true);
+                }
             }
             
             setLoadingStatus(false);
@@ -6857,6 +6867,8 @@
         let currentApiCallRound = null;
 
         function appendAssistantMessage(convId, text) {
+            console.log('📝 appendAssistantMessage 被调用 - convId:', convId, 'currentChat:', AppState.currentChat?.id);
+            
             // ========== 第一步：提前提取并保存心声数据（无论单消息还是多消息） ==========
             MindStateManager.handleMindStateSave(convId, text);
             
@@ -6874,9 +6886,11 @@
             
             if (thinkingData) {
                 // 存在思考过程，分批添加消息
+                console.log('🔀 检测到思考过程，调用 appendMultipleAssistantMessages');
                 appendMultipleAssistantMessages(convId, thinkingData);
             } else {
                 // 普通消息，按原有逻辑处理
+                console.log('💬 普通消息，调用 appendSingleAssistantMessage');
                 appendSingleAssistantMessage(convId, text, true); // 传递skipMindStateExtraction=true，避免重复提取
             }
             
