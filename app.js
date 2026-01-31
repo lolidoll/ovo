@@ -3798,20 +3798,20 @@
                     /* 移动端优化 */
                     @media (max-width: 768px) {
                         .message-context-menu {
-                            padding: 6px;
+                            padding: 4px;
                             gap: 0px;
                         }
                         
                         .msg-menu-item {
-                            padding: 10px 12px;
-                            min-width: 58px;
-                            gap: 5px;
-                            font-size: 11px;
+                            padding: 8px 8px;
+                            min-width: 44px;
+                            gap: 3px;
+                            font-size: 10px;
                         }
                         
                         .msg-menu-icon {
-                            width: 20px;
-                            height: 20px;
+                            width: 18px;
+                            height: 18px;
                         }
                     }
                     
@@ -3875,11 +3875,11 @@
                 }
             };
             
-            // 延迟添加关闭监听器，避免长按松开时立即关闭菜单
+            // 立即添加关闭监听器，点击任何地方都会关闭菜单
             setTimeout(() => {
                 document.addEventListener('click', closeMenuHandler);
                 document.addEventListener('touchend', closeMenuHandler);
-            }, 600);
+            }, 100);
         }
         
         // 统一的菜单关闭函数 - 带动画效果
