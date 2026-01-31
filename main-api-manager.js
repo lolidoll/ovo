@@ -100,9 +100,9 @@ const MainAPIManager = {
         }
 
         const api = this.AppState.apiSettings || {};
-        if (!api.endpoint || !api.selectedModel) { 
-            this.showToast('请先在 API 设置中填写端点并选择模型'); 
-            return; 
+        if (!api.endpoint || !api.selectedModel) {
+            this.showToast('请先在 API 设置中填写端点并选择模型');
+            return;
         }
 
         // 生成新的API调用回合ID
@@ -126,10 +126,8 @@ const MainAPIManager = {
         };
         updateTypingStatus();
 
-        // 规范化端点：移除末尾斜杠,并确保包含 /v1
-        const normalized = api.endpoint.replace(/\/$/, '');
-        const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-        
+        // 使用 APIUtils 规范化端点
+        const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
         const apiKey = api.apiKey || '';
         const messages = this.collectConversationForApi(convId);
         
@@ -154,18 +152,13 @@ const MainAPIManager = {
 
         let lastError = null;
         let success = false;
-        let timeoutId = null;
 
         try {
-            const controller = new AbortController();
-            timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+            // 使用 APIUtils 创建超时控制器
+            const { controller, timeoutId } = window.APIUtils.createTimeoutController(300000);
             
-            const fetchOptions = {
-                method: 'POST',
-                headers: Object.assign({ 'Content-Type': 'application/json' }, apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}),
-                body: JSON.stringify(body),
-                signal: controller.signal
-            };
+            // 使用 APIUtils 创建 fetch 选项
+            const fetchOptions = window.APIUtils.createFetchOptions(apiKey, body, controller.signal);
 
             console.log('📤 [线上模式] 发送主API请求:', {
                 endpoint: endpoint,
@@ -182,7 +175,7 @@ const MainAPIManager = {
             })));
 
             const res = await fetch(endpoint, fetchOptions);
-            clearTimeout(timeoutId);
+            window.APIUtils.clearTimeoutController(timeoutId);
 
             console.log('📥 [线上模式] 主API响应状态:', res.status, res.statusText);
 
@@ -216,7 +209,8 @@ const MainAPIManager = {
                 }
 
                 if (data) {
-                    let assistantText = this.extractTextFromApiResponse(data);
+                    // 使用 APIUtils 提取文本
+                    let assistantText = window.APIUtils.extractTextFromResponse(data);
 
                     if (assistantText && assistantText.trim()) {
                         console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
@@ -231,19 +225,9 @@ const MainAPIManager = {
                 }
             }
         } catch (err) {
-            if (timeoutId) clearTimeout(timeoutId);
-            
-            if (err.name === 'AbortError') {
-                lastError = 'API 请求超时（5分钟）- 模型响应时间过长';
-                console.error('❌ 请求超时:', endpoint);
-                console.error('超时详情: 请求已等待5分钟但未收到响应');
-            } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                lastError = 'CORS 错误或网络连接问题。请检查 API 端点是否正确,或尝试使用支持 CORS 的代理';
-                console.error('网络错误:', err.message);
-            } else {
-                lastError = err.message || '未知错误';
-                console.error(`主API 调用出错:`, err);
-            }
+            // 使用 APIUtils 处理错误
+            lastError = window.APIUtils.handleApiError(err, 300000);
+            console.error(`主API 调用出错:`, err);
         }
 
         if (!success) {
@@ -252,21 +236,8 @@ const MainAPIManager = {
             // 显示详细的错误信息给用户
             this.showToast(`❌ 主API调用失败: ${errorMsg}`);
             
-            // 在控制台输出完整的诊断信息
-            console.error('═══════════════════════════════════════');
-            console.error('❌ 主API调用失败 - 完整诊断信息');
-            console.error('═══════════════════════════════════════');
-            console.error('📍 API端点:', api.endpoint);
-            console.error('🤖 使用模型:', api.selectedModel);
-            console.error('💬 消息数量:', messages.length);
-            console.error('❗ 错误信息:', errorMsg);
-            console.error('🔍 请检查:');
-            console.error('  1. API端点是否正确且可访问');
-            console.error('  2. API密钥是否有效');
-            console.error('  3. 所选模型是否支持');
-            console.error('  4. 网络连接是否正常');
-            console.error('  5. 是否存在CORS跨域问题');
-            console.error('═══════════════════════════════════════');
+            // 使用 APIUtils 记录错误日志
+            window.APIUtils.logApiError('主API', api.endpoint, api.selectedModel, messages.length, errorMsg);
         }
 
         // 清除对话的API调用状态
@@ -282,90 +253,6 @@ const MainAPIManager = {
         }
         
         setLoadingStatus(false);
-    },
-
-    /**
-     * 从API响应中提取文本内容
-     */
-    extractTextFromApiResponse: function(data) {
-        // 辅助函数：从嵌套对象中提取第一个非空字符串
-        function extractFirstString(obj, maxDepth = 5) {
-            if (typeof obj === 'string' && obj.trim()) return obj;
-            if (maxDepth <= 0 || !obj || typeof obj !== 'object') return '';
-            
-            for (let key in obj) {
-                if (typeof obj[key] === 'string' && obj[key].trim()) {
-                    return obj[key];
-                }
-                if (typeof obj[key] === 'object') {
-                    const nested = extractFirstString(obj[key], maxDepth - 1);
-                    if (nested) return nested;
-                }
-            }
-            return '';
-        }
-            
-        let assistantText = '';
-        
-        // 尝试多种可能的响应格式（按优先级排序）
-        if (data.choices && Array.isArray(data.choices) && data.choices[0]) {
-            const choice = data.choices[0];
-            // OpenAI格式：message.content
-            if (choice.message?.content) {
-                assistantText = choice.message.content;
-            }
-            // Anthropic格式 (text字段)
-            else if (choice.text) {
-                assistantText = choice.text;
-            }
-            // 其他消息格式（可能是字符串或对象）
-            else if (choice.message) {
-                assistantText = typeof choice.message === 'string'
-                    ? choice.message
-                    : (choice.message.content || extractFirstString(choice.message));
-            }
-            // 尝试从整个choice对象中提取文本
-            else {
-                assistantText = extractFirstString(choice);
-            }
-        }
-        // Google Gemini格式
-        else if (data.candidates && Array.isArray(data.candidates) && data.candidates[0]) {
-            const candidate = data.candidates[0];
-            if (candidate.content?.parts?.[0]?.text) {
-                assistantText = candidate.content.parts[0].text;
-            } else {
-                assistantText = extractFirstString(candidate);
-            }
-        }
-        // 其他常见的一级字段
-        else if (data.output && typeof data.output === 'string') {
-            assistantText = data.output;
-        }
-        else if (data.result && typeof data.result === 'string') {
-            assistantText = data.result;
-        }
-        else if (data.reply && typeof data.reply === 'string') {
-            assistantText = data.reply;
-        }
-        else if (data.content && typeof data.content === 'string') {
-            assistantText = data.content;
-        }
-        else if (data.text && typeof data.text === 'string') {
-            assistantText = data.text;
-        }
-        else if (data.message && typeof data.message === 'string') {
-            assistantText = data.message;
-        }
-        else if (data.response && typeof data.response === 'string') {
-            assistantText = data.response;
-        }
-        // 最后的兜底方案：深度搜索第一个有效的字符串
-        else {
-            assistantText = extractFirstString(data);
-        }
-
-        return assistantText;
     },
 
     // ========== 辅助函数 ==========
@@ -542,18 +429,18 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         systemPrompts.push(`【多消息回复格式】
 你可以一次发送多条消息（不局限于最多三条，格式以此类推）,使用以下格式：
 
-[MSG1]第一条消息内容[/MSG1]
+[MSG1]嗯嗯[/MSG1]
 [WAIT:1]  <!-- 等待1秒 -->
-[MSG2]第二条消息内容[/MSG2]
+[MSG2]我知道了[/MSG2]
 [WAIT:0.5] <!-- 等待0.5秒 -->
-[MSG3]第三条消息内容[/MSG3]
+[MSG3]那我们明天见吧[/MSG3]
 
 规则：
 1. 每条消息用[MSG1][/MSG1]等标签包裹
 2. 标签间的数字表示第几条消息
 3. [WAIT:秒数]控制下条消息的延迟
-4. 每条消息应该简短（最多10-30字）
-5. 适合用在：思考过程、情绪变化、分段表达时`);
+4. 每条消息应该简短
+5. **重要：消息末尾不要加句号，保持聊天的自然感**`);
 
         // 添加对话风格指令
         systemPrompts.push(`### 最重要的认知
@@ -586,6 +473,8 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
 句号给人「话讲完了」「正式」「冷漠」的感觉。日常聊天很少用。
 
 但这不是绝对。如果你说一句很郑重的话，用句号也没问题。关键是「你现在想传达什么感觉」。
+
+**重要提醒：在 [MSG1][/MSG1] 等标签内的消息，末尾也不要加句号！**
 
 **2. 分多条短消息回复**
 

@@ -56,12 +56,12 @@ const SecondaryAPIManager = (function() {
             return;
         }
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        const normalized = api.secondaryEndpoint.replace(/\/$/, '');
-        const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+        // 使用 APIUtils 规范化端点
+        const baseEndpoint = window.APIUtils.normalizeEndpoint(api.secondaryEndpoint);
         const endpoint = baseEndpoint + '/chat/completions';
+        
+        // 使用 APIUtils 创建超时控制器
+        const { controller, timeoutId } = window.APIUtils.createTimeoutController(timeout);
         
         console.log('📤 副API请求信息:', {
             endpoint: endpoint,
@@ -70,30 +70,22 @@ const SecondaryAPIManager = (function() {
             hasApiKey: !!api.secondaryApiKey
         });
 
-        const headers = {
-            'Content-Type': 'application/json'
+        const body = {
+            model: api.secondarySelectedModel,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                ...messages
+            ],
+            temperature: 0.7,
+            max_tokens: 10000
         };
-        
-        if (api.secondaryApiKey) {
-            headers['Authorization'] = `Bearer ${api.secondaryApiKey}`;
-        }
 
-        fetch(endpoint, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                model: api.secondarySelectedModel,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    ...messages
-                ],
-                temperature: 0.7,
-                max_tokens: 10000
-            }),
-            signal: controller.signal
-        })
+        // 使用 APIUtils 创建 fetch 选项
+        const fetchOptions = window.APIUtils.createFetchOptions(api.secondaryApiKey, body, controller.signal);
+
+        fetch(endpoint, fetchOptions)
         .then(res => {
-            clearTimeout(timeoutId);
+            window.APIUtils.clearTimeoutController(timeoutId);
             console.log('📥 副API响应状态:', res.status, res.statusText);
             if (!res.ok) {
                 return res.text().then(text => {
@@ -111,38 +103,25 @@ const SecondaryAPIManager = (function() {
                 firstChoicePreview: data.choices && data.choices[0] ? String(data.choices[0]).substring(0, 100) : null
             });
             
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-                const result = data.choices[0].message.content;
+            // 使用 APIUtils 提取文本
+            const result = window.APIUtils.extractTextFromResponse(data);
+            
+            if (result && result.trim()) {
                 console.log('✨ 副API成功返回内容，长度:', result.length);
                 if (onSuccess) onSuccess(result);
             } else {
                 console.error('❌ 响应数据结构异常:', data);
-                throw new Error('响应格式错误：无法找到choices或message内容');
+                throw new Error('响应格式错误：无法找到有效内容');
             }
         })
         .catch(err => {
-            clearTimeout(timeoutId);
+            window.APIUtils.clearTimeoutController(timeoutId);
             
-            // 输出详细的错误诊断信息
-            console.error('═══════════════════════════════════════');
-            console.error('❌ 副API调用失败 - 完整诊断信息');
-            console.error('═══════════════════════════════════════');
-            console.error('📍 错误类型:', err.name);
-            console.error('💬 错误信息:', err.message);
-            console.error('🔍 完整错误对象:', err);
+            // 使用 APIUtils 处理错误
+            const userMessage = window.APIUtils.handleApiError(err, timeout);
             
-            let userMessage = '';
-            if (err.name === 'AbortError') {
-                userMessage = `副API请求超时（${timeout/1000}秒 = ${timeout/60000}分钟）- 模型响应时间过长`;
-                console.error('⏱️ 超时详情: 请求已等待', timeout/1000, '秒但未收到响应');
-            } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                userMessage = '副API错误: CORS或网络问题，请检查端点配置';
-                console.error('🚫 网络错误: 可能是CORS跨域问题或网络连接失败');
-            } else {
-                userMessage = `副API错误: ${err.message}`;
-            }
-            
-            console.error('═══════════════════════════════════════');
+            // 使用 APIUtils 记录错误日志
+            window.APIUtils.logApiError('副API', api.secondaryEndpoint, api.secondarySelectedModel, messages.length, userMessage);
             
             showToast(`❌ ${userMessage}`);
             if (onError) onError(userMessage);
@@ -191,11 +170,11 @@ const SecondaryAPIManager = (function() {
             console.log('⚙️ 使用预设提示词:', promptType);
         }
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+        // 使用 APIUtils 创建超时控制器
+        const { controller, timeoutId } = window.APIUtils.createTimeoutController(300000);
 
-        const normalized = api.secondaryEndpoint.replace(/\/$/, '');
-        const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+        // 使用 APIUtils 规范化端点
+        const baseEndpoint = window.APIUtils.normalizeEndpoint(api.secondaryEndpoint);
         const endpoint = baseEndpoint + '/chat/completions';
         
         console.log('📤 副API请求信息:', {
@@ -205,30 +184,22 @@ const SecondaryAPIManager = (function() {
             hasApiKey: !!api.secondaryApiKey
         });
 
-        const headers = {
-            'Content-Type': 'application/json'
+        const body = {
+            model: api.secondarySelectedModel,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: content }
+            ],
+            temperature: 0.7,
+            max_tokens: 10000
         };
-        
-        if (api.secondaryApiKey) {
-            headers['Authorization'] = `Bearer ${api.secondaryApiKey}`;
-        }
 
-        fetch(endpoint, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                model: api.secondarySelectedModel,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: content }
-                ],
-                temperature: 0.7,
-                max_tokens: 10000
-            }),
-            signal: controller.signal
-        })
+        // 使用 APIUtils 创建 fetch 选项
+        const fetchOptions = window.APIUtils.createFetchOptions(api.secondaryApiKey, body, controller.signal);
+
+        fetch(endpoint, fetchOptions)
         .then(res => {
-            clearTimeout(timeoutId);
+            window.APIUtils.clearTimeoutController(timeoutId);
             console.log('📥 副API响应状态:', res.status, res.statusText);
             if (!res.ok) {
                 return res.text().then(text => {
@@ -242,17 +213,22 @@ const SecondaryAPIManager = (function() {
         .then(data => {
             console.log('✅ 副API返回数据 [' + promptType + ']');
             
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-                const result = data.choices[0].message.content;
+            // 使用 APIUtils 提取文本
+            const result = window.APIUtils.extractTextFromResponse(data);
+            
+            if (result && result.trim()) {
                 console.log('✨ 副API成功返回内容，长度:', result.length);
                 if (onSuccess) onSuccess(result);
             } else {
                 console.error('❌ 响应数据结构异常:', data);
-                throw new Error('响应格式错误：无法找到choices或message内容');
+                throw new Error('响应格式错误：无法找到有效内容');
             }
         })
         .catch(err => {
-            clearTimeout(timeoutId);
+            window.APIUtils.clearTimeoutController(timeoutId);
+            
+            // 使用 APIUtils 处理错误
+            const userMessage = window.APIUtils.handleApiError(err, 300000);
             
             // 输出详细的错误诊断信息
             console.error('═══════════════════════════════════════');
@@ -262,18 +238,6 @@ const SecondaryAPIManager = (function() {
             console.error('💬 错误信息:', err.message);
             console.error('🎯 提示词类型:', promptType);
             console.error('🔍 完整错误对象:', err);
-            
-            let userMessage = '';
-            if (err.name === 'AbortError') {
-                userMessage = '副API请求超时（5分钟）- 模型响应时间过长';
-                console.error('⏱️ 超时详情: 请求已等待5分钟但未收到响应');
-            } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                userMessage = '副API错误: CORS或网络问题，请检查端点配置';
-                console.error('🚫 网络错误: 可能是CORS跨域问题或网络连接失败');
-            } else {
-                userMessage = `副API错误: ${err.message}`;
-            }
-            
             console.error('═══════════════════════════════════════');
             
             showToast(`❌ ${userMessage}`);
@@ -307,98 +271,16 @@ const SecondaryAPIManager = (function() {
         // 显示加载提示框
         showLoadingOverlay('正在拉取副API模型...');
 
-        // 规范化端点：移除末尾斜杠，并确保包含 /v1
-        const normalized = endpoint.replace(/\/$/, '');
-        const normalizedEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-        
-        const tryUrls = [
-            normalizedEndpoint + '/models',
-            normalized + '/models',  // 尝试不带/v1的端点
-            endpoint + '/models'     // 尝试原始端点
-        ];
-
-        console.log('🔍 将尝试以下端点:', tryUrls);
-
         let models = [];
-        let lastError = null;
-
-        for (const url of tryUrls) {
-            try {
-                console.log('🌐 正在尝试:', url);
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
-                
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
-                
-                if (apiKey) {
-                    headers['Authorization'] = `Bearer ${apiKey}`;
-                }
-                
-                const res = await fetch(url, {
-                    method: 'GET',
-                    headers: headers,
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                
-                console.log('📡 响应状态:', res.status, res.statusText);
-                
-                if (!res.ok) {
-                    lastError = `HTTP ${res.status}: ${res.statusText}`;
-                    console.warn('❌ 请求失败:', url, lastError);
-                    continue;
-                }
-                
-                const data = await res.json();
-                console.log('📦 收到数据结构:', {
-                    hasData: !!data.data,
-                    hasModels: !!data.models,
-                    isArray: Array.isArray(data),
-                    keys: Object.keys(data)
-                });
-                
-                if (Array.isArray(data.data)) {
-                    models = data.data.map(m => ({
-                        id: typeof m === 'string' ? m : (m.id || m.name || m.model || String(m))
-                    }));
-                    console.log('✅ 从data字段解析到', models.length, '个模型');
-                } else if (Array.isArray(data.models)) {
-                    models = data.models.map(m => ({
-                        id: typeof m === 'string' ? m : (m.id || m.name || m.model || String(m))
-                    }));
-                    console.log('✅ 从models字段解析到', models.length, '个模型');
-                } else if (Array.isArray(data)) {
-                    models = data.map(m => ({
-                        id: typeof m === 'string' ? m : (m.id || m.name || m.model || String(m))
-                    }));
-                    console.log('✅ 从数组直接解析到', models.length, '个模型');
-                }
-                
-                if (models.length > 0) {
-                    console.log('🎉 成功拉取模型列表:', models.map(m => m.id).join(', '));
-                    break;
-                }
-            } catch (e) {
-                if (e.name === 'AbortError') {
-                    lastError = '请求超时（5分钟）';
-                    console.error('⏱️ 超时:', url);
-                } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
-                    lastError = 'CORS 错误或网络问题。请检查副API端点是否支持跨域访问';
-                    console.error('🚫 CORS/网络错误:', url, e);
-                } else {
-                    lastError = e.message;
-                    console.error('❌ 其他错误:', url, e);
-                }
-            }
-        }
         
-        if (models.length === 0) {
+        try {
+            // 使用 APIUtils 拉取模型
+            models = await window.APIUtils.fetchModels(endpoint, apiKey, 300000);
+            console.log('🎉 成功拉取模型列表:', models.map(m => m.id).join(', '));
+        } catch (error) {
             // 隐藏加载提示框
             hideLoadingOverlay();
-            const msg = lastError ? `未能拉取到模型：${lastError}` : '未能拉取到模型，请检查副API端点与密钥（或查看控制台）';
-            showToast(msg);
+            showToast(`未能拉取到模型：${error.message}`);
             console.error('❌ 获取副API模型列表失败。请检查：');
             console.error('- 副API 端点是否正确（当前: ' + endpoint + '）');
             console.error('- 副API 密钥是否正确');

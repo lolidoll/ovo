@@ -77,7 +77,7 @@ function retryDeleteLastAiReply() {
     // 立即触发AI重新回复
     showToast(`已删除上一轮回复（${deletedCount}条消息），正在重新生成...`);
     setTimeout(() => {
-        callApiWithConversation();
+        MainAPIManager.callApiWithConversation();
     }, 500);
 }
 

@@ -812,7 +812,7 @@
 
                 // 触发主API调用（AI会在回复末尾返回心声数据）
                 console.log('========== 🎯 【新架构】双击头像：触发主API调用，心声将在响应中自动提取 ==========');
-                const apiResult = callApiWithConversation();
+                const apiResult = MainAPIManager.callApiWithConversation();
                 
                 // 注意：在新架构中，心声数据已经在主API响应中由 appendSingleAssistantMessage 自动提取
                 // 副API现在用于其他功能（翻译、总结等），不再用于心声生成
@@ -3239,7 +3239,7 @@
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('🎯 双击头像触发API调用');
-                    callApiWithConversation();
+                    MainAPIManager.callApiWithConversation();
                 }
             };
             container._avatarDblClickHandler = avatarDblClickHandler;
@@ -3261,7 +3261,7 @@
                         e.preventDefault();
                         e.stopPropagation();
                         console.log('🎯 双击头像触发API调用（移动端）');
-                        callApiWithConversation();
+                        MainAPIManager.callApiWithConversation();
                         avatarTapCount = 0;
                     }
                 }
@@ -5436,41 +5436,9 @@
         async function fetchModelsForPreset(preset) {
             if (!preset.endpoint) return;
             
-            // 规范化端点：移除末尾斜杠，并确保包含 /v1
-            const normalized = preset.endpoint.replace(/\/$/, '');
-            const normalizedEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            
-            const tryUrl = normalizedEndpoint + '/models';
-            
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
-                
-                const res = await fetch(tryUrl, {
-                    headers: Object.assign(
-                        { 'Content-Type': 'application/json' },
-                        preset.apiKey ? { 'Authorization': 'Bearer ' + preset.apiKey } : {}
-                    ),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                
-                if (!res.ok) {
-                    console.warn('fetch models failed:', tryUrl, res.status);
-                    showToast(`拉取模型失败: HTTP ${res.status}`);
-                    return;
-                }
-                
-                const data = await res.json();
-                let models = [];
-                
-                if (Array.isArray(data.data)) {
-                    models = data.data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                } else if (Array.isArray(data.models)) {
-                    models = data.models.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name) }));
-                } else if (Array.isArray(data)) {
-                    models = data.map(m => ({ id: typeof m === 'string' ? m : (m.id || m.name || m) }));
-                }
+                // 使用 APIUtils 拉取模型（30秒超时）
+                const models = await window.APIUtils.fetchModels(preset.endpoint, preset.apiKey, 30000);
                 
                 if (models.length > 0) {
                     AppState.apiSettings.models = models;
@@ -5500,16 +5468,9 @@
                     showToast('未能拉取到模型，请检查端点与密钥');
                 }
             } catch (e) {
-                if (e.name === 'AbortError') {
-                    showToast('拉取模型超时（30秒）');
-                    console.error('fetch models timeout:', e);
-                } else if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
-                    showToast('拉取模型失败: CORS 或网络问题');
-                    console.error('fetch models CORS/network error:', e);
-                } else {
-                    console.error('fetch models for preset failed:', e);
-                    showToast(`拉取模型失败: ${e.message}`);
-                }
+                const userMessage = window.APIUtils.handleApiError(e, 30000);
+                showToast(`拉取模型失败: ${userMessage}`);
+                console.error('fetch models for preset failed:', e);
             }
         }
 
@@ -5973,274 +5934,9 @@
             return SecondaryAPIManager.fetchModels();
         }
 
-        async function callApiWithConversation() {
-            if (!AppState.currentChat) {
-                showToast('请先打开或创建一个聊天会话，然后双击头像触发。');
-                return;
-            }
-
-            const convId = AppState.currentChat.id;
-            const convState = getConversationState(convId);
-            
-            // 检查该对话是否已在进行API调用
-            if (convState.isApiCalling) {
-                showToast('正在等待上一次回复完成...');
-                return;
-            }
-
-            const api = AppState.apiSettings || {};
-            if (!api.endpoint || !api.selectedModel) { showToast('请先在 API 设置中填写端点并选择模型'); return; }
-
-            // 生成新的API调用回合ID
-            currentApiCallRound = 'round_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
-            // 标记该对话正在进行API调用
-            convState.isApiCalling = true;
-            convState.isTyping = true;
-            
-            setLoadingStatus(true);
-            
-            // 只在当前对话仍打开时显示正在打字中
-            const updateTypingStatus = () => {
-                if (AppState.currentChat && AppState.currentChat.id === convId) {
-                    const chatTitle = document.getElementById('chat-title');
-                    const chatTypingStatus = document.getElementById('chat-typing-status');
-                    if (chatTypingStatus) chatTypingStatus.style.display = 'inline-block';
-                    if (chatTitle) chatTitle.style.display = 'none';
-                }
-            };
-            updateTypingStatus();
-
-            // 规范化端点：移除末尾斜杠，并确保包含 /v1
-            const normalized = api.endpoint.replace(/\/$/, '');
-            const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-            
-            const apiKey = api.apiKey || '';
-            const messages = collectConversationForApi(convId);
-            
-            // 验证消息列表的有效性
-            const validation = validateApiMessageList(messages);
-            if (validation.hasWarnings) {
-                console.warn('API 消息列表存在警告，但仍然继续调用:', validation.errors);
-            }
-            // 注意：即使有验证错误，我们也不会阻止 API 调用
-            // 因为我们允许 AI 在任何时候回复，包括最后一条已经是 assistant 的情况
-            
-            const body = {
-                model: api.selectedModel,
-                messages: messages,
-                temperature: api.temperature !== undefined ? api.temperature : 0.8,
-                max_tokens: 10000,
-                frequency_penalty: api.frequencyPenalty !== undefined ? api.frequencyPenalty : 0.2,
-                presence_penalty: api.presencePenalty !== undefined ? api.presencePenalty : 0.1,
-                top_p: api.topP !== undefined ? api.topP : 1.0
-            };
-
-            // 固定使用 /v1 路径
-            const endpoint = baseEndpoint + '/chat/completions';
-
-            let lastError = null;
-            let success = false;
-            let timeoutId = null;
-
-            try {
-                const controller = new AbortController();
-                timeoutId = setTimeout(() => controller.abort(), 60000);
-                
-                const fetchOptions = {
-                    method: 'POST',
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}),
-                    body: JSON.stringify(body),
-                    signal: controller.signal
-                };
-
-                console.log('📤 发送API请求:', {
-                    endpoint: endpoint,
-                    model: api.selectedModel,
-                    messageCount: messages.length,
-                    bodyPreview: JSON.stringify(body).substring(0, 200)
-                });
-                
-                // 详细的消息角色日志
-                console.log('📋 API 消息列表详情：', messages.map((m, i) => ({
-                    index: i,
-                    role: m.role,
-                    contentPreview: m.content.substring(0, 50) + (m.content.length > 50 ? '...' : '')
-                })));
-
-                const res = await fetch(endpoint, fetchOptions);
-                clearTimeout(timeoutId);
-
-                console.log('📥 API响应状态:', res.status, res.statusText);
-
-                // 🔧 修复：无论用户是否离开对话，都处理API响应
-                // 这样即使用户切换到其他页面，API调用也能正常完成并触发通知
-                if (!res.ok) {
-                    lastError = `${res.status}: ${res.statusText}`;
-                    console.error(`❌ API 请求失败 [${res.status}]:`, endpoint);
-                    
-                    // 尝试解析错误响应体
-                    try {
-                        const errorData = await res.text();
-                        if (errorData) {
-                            console.error('错误详情:', errorData);
-                        }
-                    } catch (e) {}
-                } else {
-                    let data;
-                    try {
-                        data = await res.json();
-                        console.log('✅ JSON解析成功，响应结构:', {
-                            hasChoices: !!data.choices,
-                            hasCandidates: !!data.candidates,
-                            keys: Object.keys(data).slice(0, 10)
-                        });
-                    } catch (parseErr) {
-                        lastError = '响应内容不是有效的JSON';
-                        console.error('❌ JSON 解析错误:', parseErr);
-                        console.error('响应文本:', await res.text());
-                    }
-
-                    if (data) {
-                        let assistantText = '';
-                        
-                        // 辅助函数：从嵌套对象中提取第一个非空字符串
-                        function extractFirstString(obj, maxDepth = 5) {
-                            if (typeof obj === 'string' && obj.trim()) return obj;
-                            if (maxDepth <= 0 || !obj || typeof obj !== 'object') return '';
-                            
-                            for (let key in obj) {
-                                if (typeof obj[key] === 'string' && obj[key].trim()) {
-                                    return obj[key];
-                                }
-                                if (typeof obj[key] === 'object') {
-                                    const nested = extractFirstString(obj[key], maxDepth - 1);
-                                    if (nested) return nested;
-                                }
-                            }
-                            return '';
-                        }
-                            
-                        // 尝试多种可能的响应格式（按优先级排序）
-                        if (data.choices && Array.isArray(data.choices) && data.choices[0]) {
-                            const choice = data.choices[0];
-                            // OpenAI格式：message.content
-                            if (choice.message?.content) {
-                                assistantText = choice.message.content;
-                            }
-                            // Anthropic格式 (text字段)
-                            else if (choice.text) {
-                                assistantText = choice.text;
-                            }
-                            // 其他消息格式（可能是字符串或对象）
-                            else if (choice.message) {
-                                assistantText = typeof choice.message === 'string'
-                                    ? choice.message
-                                    : (choice.message.content || extractFirstString(choice.message));
-                            }
-                            // 尝试从整个choice对象中提取文本
-                            else {
-                                assistantText = extractFirstString(choice);
-                            }
-                        }
-                        // Google Gemini格式
-                        else if (data.candidates && Array.isArray(data.candidates) && data.candidates[0]) {
-                            const candidate = data.candidates[0];
-                            if (candidate.content?.parts?.[0]?.text) {
-                                assistantText = candidate.content.parts[0].text;
-                            } else {
-                                assistantText = extractFirstString(candidate);
-                            }
-                        }
-                        // 其他常见的一级字段
-                        else if (data.output && typeof data.output === 'string') {
-                            assistantText = data.output;
-                        }
-                        else if (data.result && typeof data.result === 'string') {
-                            assistantText = data.result;
-                        }
-                        else if (data.reply && typeof data.reply === 'string') {
-                            assistantText = data.reply;
-                        }
-                        else if (data.content && typeof data.content === 'string') {
-                            assistantText = data.content;
-                        }
-                        else if (data.text && typeof data.text === 'string') {
-                            assistantText = data.text;
-                        }
-                        else if (data.message && typeof data.message === 'string') {
-                            assistantText = data.message;
-                        }
-                        else if (data.response && typeof data.response === 'string') {
-                            assistantText = data.response;
-                        }
-                        // 最后的兜底方案：深度搜索第一个有效的字符串
-                        else {
-                            assistantText = extractFirstString(data);
-                        }
-
-                        if (assistantText && assistantText.trim()) {
-                            console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
-                            appendAssistantMessage(convId, assistantText);
-                            success = true;
-                            
-                            // 🔧 修复：强制立即刷新聊天界面，确保AI回复立即显示
-                            // appendAssistantMessage内部已经处理了渲染，这里不需要再次调用
-                        } else {
-                            lastError = '未在返回中找到文本回复';
-                            console.error('❌ 无法从API响应中提取文本。完整响应数据:');
-                            console.error(JSON.stringify(data, null, 2));
-                            console.error('响应keys:', Object.keys(data));
-                        }
-                    }
-                }
-            } catch (err) {
-                if (timeoutId) clearTimeout(timeoutId);
-                
-                if (err.name === 'AbortError') {
-                    lastError = 'API 请求超时（60秒）';
-                    console.error('请求超时:', endpoint);
-                } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                    lastError = 'CORS 错误或网络连接问题。请检查 API 端点是否正确，或尝试使用支持 CORS 的代理';
-                    console.error('网络错误:', err.message);
-                } else {
-                    lastError = err.message || '未知错误';
-                    console.error(`API 调用出错:`, err);
-                }
-            }
-
-            // 🔧 修复：无论用户是否在当前对话，都显示错误提示
-            if (!success) {
-                const errorMsg = lastError || '未知错误';
-                showToast(`API 请求失败: ${errorMsg}`);
-                
-                console.error('API 调用失败，请检查以下信息：');
-                console.error('- API 端点:', api.endpoint);
-                console.error('- 模型:', api.selectedModel);
-                console.error('- 错误信息:', errorMsg);
-                console.error('- 更多信息请查看上面的控制台错误');
-            }
-
-            // 清除对话的API调用状态
-            convState.isApiCalling = false;
-            convState.isTyping = false;
-            
-            // 只在当前对话仍打开时恢复UI
-            if (AppState.currentChat && AppState.currentChat.id === convId) {
-                const chatTitle = document.getElementById('chat-title');
-                const chatTypingStatus = document.getElementById('chat-typing-status');
-                if (chatTypingStatus) chatTypingStatus.style.display = 'none';
-                if (chatTitle) chatTitle.style.display = 'inline';
-                
-                // 🔧 修复：API调用完成后强制刷新聊天界面，确保消息立即显示
-                if (success) {
-                    console.log('🔄 API调用成功，强制刷新聊天界面');
-                    renderChatMessages(true);
-                }
-            }
-            
-            setLoadingStatus(false);
-        }
+        // ========== 主API调用已迁移到 MainAPIManager ==========
+        // callApiWithConversation() 和 collectConversationForApi() 已移至 main-api-manager.js
+        // 请使用 MainAPIManager.callApiWithConversation() 代替
 
 
         // 获取表情包使用说明
@@ -6359,348 +6055,8 @@
             return { isValid: true, errors: [], hasWarnings: false };
         }
 
-        function collectConversationForApi(convId) {
-            const msgs = AppState.messages[convId] || [];
-            const out = [];
-            const conv = AppState.conversations.find(c => c.id === convId) || {};
-
-            // 获取用户名称和角色名称用于替换
-            const userNameToUse = conv.userNameForChar || (AppState.user && AppState.user.name);
-            const charName = conv.name || 'AI';
-
-            // 首先添加强制性的系统提示词
-            const systemPrompts = [];
-            
-            // 强制AI读取角色名称和性别
-            if (conv.name) {
-                systemPrompts.push(`你将角色扮演一个名字叫做"${conv.name}"的人类，绝对禁止out of character。`);
-            }
-            
-            // 从角色描述中提取性别信息
-            const charGender = extractGenderInfo(conv.description) || '未指定';
-            systemPrompts.push(`角色性别：${charGender}`);
-            
-            // 强制AI读取角色人设
-            if (conv.description) {
-                // 替换角色人设中的占位符
-                const replacedDescription = replaceNamePlaceholders(conv.description, userNameToUse, charName);
-                systemPrompts.push(`你扮演的人设描述如下：${replacedDescription}`);
-            }
-            
-            // 强制AI读取用户名称
-            if (userNameToUse) {
-                systemPrompts.push(`你对面的用户的名字是"${userNameToUse}"。`);
-            }
-            
-            // 从用户人物设定中提取性别信息
-            const userGender = extractGenderInfo(AppState.user && AppState.user.personality) || '未指定';
-            systemPrompts.push(`用户性别：${userGender}`);
-            
-            // 添加用户人物设定
-            if (AppState.user && AppState.user.personality) {
-                // 替换用户人物设定中的占位符
-                const replacedPersonality = replaceNamePlaceholders(AppState.user.personality, userNameToUse, charName);
-                systemPrompts.push(`用户人物设定：${replacedPersonality}`);
-            }
-            
-            // 添加心声相关的提示
-            // 注意：这个提示告诉AI生成心声数据，但这些数据会在客户端被完全清理，用户无法看到
-            systemPrompts.push(MindStateManager.getMindStateSystemPrompt());
-            
-            // 添加用户消息类型识别说明
-            systemPrompts.push(`【用户内容识别规则】用户可能发送以下类型的内容，你需要正确识别并做出相应回应：
-
-1. 【表情包消息】格式为：[用户发送了表情包: 表情描述文字]
-   - 用户发送的是预设的表情包，你需要识别并了解其情绪含义
-   - 例如："[用户发送了表情包: 开心]" 表示用户当前心情很开心
-   - 对于表情包消息，分析其代表的情绪并在回复中予以回应
-   - 不需要询问"你发送的表情是什么意思"，直接按照表情含义理解
-
-2. 【图片消息】格式为：[用户发送了一张图片，图片内容：data:image/...]
-   - 用户发送的是真实图片（如照片、截图、绘画）
-   - 图片内容以Base64编码格式传输，你需要进行图片分析
-   - 请描述图片中看到的内容、分析其背景和上下文
-   - 必要时可基于图片内容给出建议或进行评论
-   - 如果用户在"用户对图片的描述"中补充了说明，请结合该描述分析
-
-3. 【语音条消息】格式为：[用户名发送了语音条，时长X秒]\n语音内容：文字内容
-   - 用户发送的是语音条，但会以文字形式展示给你
-   - 识别这是语音条后，你可以：
-     * 理解这是更亲密、更口语化的交流方式
-     * 适当回应语音的特点（如"听到你的声音了"、"你的语气..."等）
-     * 也可以用语音条回复（使用【语音条】格式）
-   - 语音条通常用于表达更私密、犹豫、情绪化的内容
-
-4. 【地理位置消息】格式为：[用户名发送了地理位置]\n位置名称：...\n详细地址：...\n距离范围：...
-   - 用户分享了一个地理位置
-   - 识别后应该：
-     * 确认收到位置信息
-     * 根据情境回应（如"好的，我知道了"、"这个地方我知道"等）
-     * 如果合适，可以分享相关的地点或约定见面
-   - 可以使用【地理位置】格式回复自己的位置
-
-5. 【普通文字消息】这是用户的正常对话文字
-   - 直接理解和回应用户的文字内容
-
-记住：不同类型的消息代表不同的交流意图，要正确识别并做出恰当回应。`);
-
-
-
-            // 添加新的多消息回复格式说明（解决单气泡问题）
-            systemPrompts.push(`【多消息回复格式】
-你可以一次发送多条消息，使用以下格式：
-
-[MSG1]第一条消息内容[/MSG1]
-[WAIT:1]  <!-- 等待1秒 -->
-[MSG2]第二条消息内容[/MSG2]
-[WAIT:0.5] <!-- 等待0.5秒 -->
-[MSG3]第三条消息内容[/MSG3]
-
-规则：
-1. 每条消息用[MSG1][/MSG1]等标签包裹
-2. 标签间的数字表示第几条消息
-3. [WAIT:秒数]控制下条消息的延迟
-4. 每条消息应该简短（最多10-30字）
-5. 适合用在：思考过程、情绪变化、分段表达时`);
-
-            // 添加对话风格指令（解决标点问题）
-            systemPrompts.push(`【对话风格要求】
-1. 回复要简短自然，像真实聊天一样
-2. 避免使用太多标点符号，不要每句话都用句号结尾
-3. 可以适当使用省略号...、感叹号！、问号？
-4. 回复长度控制在50-150字之间
-5. 用口语化的表达，不要像写文章
-6. 可以分多条消息回复（重要）`);
-            
-            // 添加表情包使用说明
-            const emojiInstructions = getEmojiInstructions(conv);
-            if (emojiInstructions) {
-                systemPrompts.push(emojiInstructions);
-            }
-            
-            // 添加语音消息和地理位置发送说明
-            systemPrompts.push(`【语音消息和地理位置发送格式】
-你可以主动发送语音消息和地理位置，使用以下格式：
-
-1. 【语音消息】使用格式：【语音条】语音内容文字|时长【/语音条】
-   - 语音内容：你想说的话（会被转换为语音条显示）
-   - 时长：语音时长（秒），建议1-60秒，根据内容长度合理设置
-   - 示例：【语音条】嗯...我在想要不要去那边看看|3【/语音条】
-   - 示例：【语音条】好啊，我也想去！|2【/语音条】
-   - 注意：语音条适合表达犹豫、思考、私密的话，或者想要更亲密的交流时使用
-
-2. 【地理位置】使用格式：【地理位置】位置名称|详细地址|距离【/地理位置】
-   - 位置名称：地点的名字（必填）
-   - 详细地址：具体地址（选填，可以为空）
-   - 距离：距离范围，单位米（选填，默认5米）
-   - 示例：【地理位置】星巴克咖啡|北京市朝阳区建国路1号|10【/地理位置】
-   - 示例：【地理位置】天安门广场||【/地理位置】
-   - 注意：分享位置时适合约见面、推荐地点、告诉对方你在哪里
-
-3. 【撤回消息】使用格式：【撤回】消息ID【/撤回】
-   - 消息ID：你要撤回的之前发送的消息的ID（从上下文中获取）
-   - 示例：【撤回】msg_1738070123456【/撤回】
-   - 使用场景：
-     * 说错话或发错内容时（如口误、信息错误）
-     * 后悔刚才说的话时（如太冲动、情绪失控）
-     * 需要改口或纠正之前的说法时
-     * 意识到信息不应该透露时
-   - 重要提示：
-     * 只在真正需要时使用，不要频繁撤回
-     * 撤回后用户会看到"角色名撤回了一条消息"的提示
-     * 撤回的原始内容会被保存，但用户看不到
-     * 通常在撤回后需要重新表达或解释
-
-使用建议：
-- 语音条：适合表达情绪、犹豫、私密内容，或想要更真实的交流感时
-- 地理位置：适合约见面、分享你在的地方、推荐好去处
-- 撤回消息：只在说错话、后悔、需要改口等特殊情况下使用，不要滥用
-- 不要每次都使用这些功能，根据对话情境自然地选择
-- 可以和普通文字消息结合使用，先发文字再发语音/位置，或反之`);
-            
-            // 合并所有系统提示
-            if (systemPrompts.length > 0) {
-                out.push({ role: 'system', content: systemPrompts.join('\n') });
-            }
-
-            // 添加全局提示词（强制遵守）
-            const prompts = AppState.apiSettings && AppState.apiSettings.prompts ? AppState.apiSettings.prompts : [];
-            let systemPrompt = '';
-            
-            // 如果有选中的提示词，使用选中的；否则使用默认提示词
-            if (AppState.apiSettings && AppState.apiSettings.selectedPromptId) {
-                const selectedPrompt = prompts.find(p => p.id === AppState.apiSettings.selectedPromptId);
-                systemPrompt = selectedPrompt ? selectedPrompt.content : (AppState.apiSettings.defaultPrompt || '');
-            } else {
-                systemPrompt = AppState.apiSettings && AppState.apiSettings.defaultPrompt ? AppState.apiSettings.defaultPrompt : '';
-            }
-            
-            if (systemPrompt) {
-                // 替换全局提示词中的占位符
-                systemPrompt = replaceNamePlaceholders(systemPrompt, userNameToUse, charName);
-                out.push({ role: 'system', content: systemPrompt });
-            }
-
-            // 包含其他会话相关的内容
-            const worldbookParts = [];
-            
-            // 添加全局世界书内容
-            const globalWorldbooks = AppState.worldbooks.filter(w => w.isGlobal);
-            if (globalWorldbooks.length > 0) {
-                const worldbookContent = globalWorldbooks.map(w => {
-                    // 替换世界书中的占位符
-                    const replacedContent = replaceNamePlaceholders(w.content, userNameToUse, charName);
-                    return `【${w.name}】\n${replacedContent}`;
-                }).join('\n\n');
-                worldbookParts.push('世界观背景:\n' + worldbookContent);
-            }
-            
-            // 添加角色绑定的局部世界书
-            if (conv.boundWorldbooks && Array.isArray(conv.boundWorldbooks) && conv.boundWorldbooks.length > 0) {
-                const boundWbs = AppState.worldbooks.filter(w => conv.boundWorldbooks.includes(w.id) && !w.isGlobal);
-                if (boundWbs.length > 0) {
-                    const boundWorldbookContent = boundWbs.map(w => {
-                        // 替换世界书中的占位符
-                        const replacedContent = replaceNamePlaceholders(w.content, userNameToUse, charName);
-                        return `【${w.name}】\n${replacedContent}`;
-                    }).join('\n\n');
-                    worldbookParts.push('角色专属世界观:\n' + boundWorldbookContent);
-                }
-            }
-
-            if (worldbookParts.length) {
-                out.push({ role: 'system', content: worldbookParts.join('\n') });
-            }
-            
-            // 添加绑定的表情包分组信息（支持多个分组）
-            const boundGroups = conv.boundEmojiGroups || (conv.boundEmojiGroup ? [conv.boundEmojiGroup] : []);
-            if (boundGroups && boundGroups.length > 0) {
-                boundGroups.forEach(groupId => {
-                    const emojiGroup = AppState.emojiGroups && AppState.emojiGroups.find(g => g.id === groupId);
-                    if (emojiGroup && emojiGroup.description) {
-                        out.push({ role: 'system', content: `表情包分组【${emojiGroup.name}】描述：${emojiGroup.description}` });
-                    }
-                });
-            }
-            
-            // 单独处理时间信息：不在worldbookParts中，而是在单独的system消息中
-            // 这样可以确保AI知道当前时间，但用户不会在对话中看到这个时间戳
-            if (AppState.apiSettings && AppState.apiSettings.aiTimeAware) {
-                out.push({ role: 'system', content: '当前时间：' + new Date().toLocaleString('zh-CN') });
-            }
-
-            // 直接使用所有消息，不再限制上下文条数
-            msgs.forEach((m, index) => {
-                let messageContent = m.content;
-                
-                // 如果消息是系统消息，直接作为系统提示发送
-                if (m.type === 'system') {
-                    out.push({ role: 'system', content: messageContent });
-                    return;
-                }
-                
-                // 如果消息已撤回，通知AI
-                if (m.isRetracted) {
-                    messageContent = `[${messageContent}]`;
-                    if (m.type === 'sent') {
-                        out.push({ role: 'user', content: messageContent });
-                    } else {
-                        // AI的撤回消息也需要通知，但用不同的角色
-                        out.push({ role: 'system', content: messageContent });
-                    }
-                    return;
-                }
-                
-                // 如果消息包含表情包，添加表情包描述，并告知AI这是表情包
-                if (m.isEmoji && m.content) {
-                    messageContent = '[用户发送了表情包: ' + m.content + ']';
-                }
-                
-                // 如果消息是图片，提供图片识别信息
-                if (m.isImage) {
-                    if (m.imageData && m.imageData.startsWith('data:image')) {
-                        // 包含图片数据的完整base64
-                        messageContent = `[用户发送了一张图片，图片内容：${m.imageData}]`;
-                        if (m.photoDescription) {
-                            messageContent += `\n用户对图片的描述：${m.photoDescription}`;
-                        }
-                    } else if (m.photoDescription) {
-                        messageContent = `[用户发送了一张图片，描述为：${m.photoDescription}]`;
-                    } else {
-                        messageContent = '[用户发送了一张图片]';
-                    }
-                }
-                
-                // 如果消息是语音条，提供语音条信息
-                if (m.type === 'voice') {
-                    const duration = m.duration || 1;
-                    const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
-                    messageContent = `[${senderName}发送了语音条，时长${duration}秒]\n语音内容：${m.content}`;
-                }
-                
-                // 如果消息是地理位置，提供地理位置信息
-                if (m.type === 'location') {
-                    const locationName = m.locationName || '位置';
-                    const locationAddress = m.locationAddress || '';
-                    const locationDistance = m.locationDistance || 5;
-                    const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
-                    messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离范围：约${locationDistance}米`;
-                }
-                
-                // 如果消息是转发的朋友圈，提供朋友圈信息
-                if (m.isForward && m.forwardedMoment) {
-                    const forwarded = m.forwardedMoment;
-                    messageContent = `[用户转发了朋友圈]\n朋友圈发送者：${forwarded.author || '用户'}\n朋友圈内容：${forwarded.content || ''}`;
-                }
-                
-                // 如果消息是引用消息，添加引用前缀
-                if (m.replyTo) {
-                    const replyToMsg = msgs.find(msg => msg.id === m.replyTo);
-                    if (replyToMsg) {
-                        const replyContent = replyToMsg.content || '[表情包]';
-                        messageContent = `[回复: "${replyContent.substring(0, 30)}${replyContent.length > 30 ? '...' : ''}"]\n${messageContent}`;
-                    }
-                }
-                
-                // 确定消息角色：根据 type 字段准确分配 role
-                // sent 类型 → user 角色
-                // received 类型 → assistant 角色
-                // system 类型 → system 角色
-                // 其他类型 → 基于内容推断
-                let roleToUse = 'assistant'; // 默认为 assistant
-                
-                if (m.type === 'sent') {
-                    roleToUse = 'user';
-                } else if (m.type === 'received') {
-                    roleToUse = 'assistant';
-                } else if (m.type === 'system') {
-                    roleToUse = 'system';
-                } else if (m.type === 'assistant') {
-                    roleToUse = 'assistant';
-                } else {
-                    // 对于未知类型，仍然默认为 assistant
-                    // 但记录一条警告
-                    console.warn(`[消息角色推断] 第 ${index} 条消息类型未知: ${m.type}，默认使用 assistant 角色`);
-                    roleToUse = 'assistant';
-                }
-                
-                // 检查连续的相同角色（仅针对非 system 消息）
-                if (out.length > 0) {
-                    const lastMsgInOut = out[out.length - 1];
-                    if (lastMsgInOut.role === roleToUse && lastMsgInOut.role !== 'system') {
-                        console.warn(`[API消息警告] 第 ${index + 1} 条消息与前一条消息角色相同（都是 ${roleToUse}）`, {
-                            prevMsg: { content: lastMsgInOut.content.substring(0, 40) },
-                            currMsg: { type: m.type, content: messageContent.substring(0, 40) }
-                        });
-                        // 仍然添加消息，不阻止 - 这样可以支持 AI 连续回复的场景
-                    }
-                }
-                
-                out.push({ role: roleToUse, content: messageContent });
-            });
-
-            return out;
-        }
+        // ========== collectConversationForApi 已迁移到 MainAPIManager ==========
+        // 该函数已移至 main-api-manager.js，请使用 MainAPIManager.collectConversationForApi() 代替
         
         // 从文本中提取性别信息
         function extractGenderInfo(text) {
@@ -7118,18 +6474,16 @@
             }
 
             saveToStorage();
-            
-            // 🔧 修复：确保在当前聊天时立即渲染消息
-            const shouldRender = AppState.currentChat && AppState.currentChat.id === convId;
-            console.log('💬 appendSingleAssistantMessage - 是否需要渲染:', shouldRender, 'currentChat:', AppState.currentChat?.id, 'convId:', convId);
-            
-            if (shouldRender) {
-                console.log('🎨 立即调用 renderChatMessages() - 直接渲染，不使用防抖');
-                // 直接调用 renderChatMessages，不使用防抖，确保立即显示
-                renderChatMessages(true); // 强制滚动到底部
-            }
-            
             renderConversations();
+            
+            // 🔧 修复：无条件强制渲染，确保消息立即显示
+            console.log('💬 appendSingleAssistantMessage - 强制渲染消息');
+            console.log('   - convId:', convId);
+            console.log('   - currentChat:', AppState.currentChat?.id);
+            console.log('   - 消息数量:', AppState.messages[convId]?.length);
+            
+            // 立即同步渲染，不检查currentChat（因为可能在异步过程中被改变）
+            renderChatMessages(true);
 
             // 检查是否需要自动总结
             checkAndAutoSummarize(convId);
@@ -7273,18 +6627,13 @@
                     }
                     
                     saveToStorage();
-                    
-                    // 🔧 修复：确保在当前聊天时立即渲染每条消息
-                    const shouldRender = AppState.currentChat && AppState.currentChat.id === convId;
-                    console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 是否需要渲染:', shouldRender);
-                    
-                    if (shouldRender) {
-                        console.log('🎨 立即调用 renderChatMessages() - 直接渲染，不使用防抖');
-                        // 直接调用 renderChatMessages，不使用防抖，确保立即显示
-                        renderChatMessages(true); // 强制滚动到底部
-                    }
-                    
                     renderConversations();
+                    
+                    // 🔧 修复：无条件强制渲染每条消息
+                    console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 强制渲染');
+                    
+                    // 立即同步渲染，不检查currentChat
+                    renderChatMessages(true);
                     
                     // 只在最后一条消息后触发通知
                     if (index === messages.length - 1) {

@@ -54,29 +54,43 @@ const AIImageGenerator = {
             }
         }
         
-        // 匹配 [角色名发送了一张图片，图片内容：...] 格式
-        // 这是AI模仿用户发图时的格式
-        const userStyleRegex = /\[([^发]+)发送了一张图片[，,]图片内容[：:]([^\]]+)\]/gi;
-        while ((match = userStyleRegex.exec(text)) !== null) {
-            const description = match[2].trim();
-            if (description) {
-                // 检查是否是base64数据，如果是则提取实际图片
-                if (description.startsWith('data:image')) {
-                    instructions.push({
-                        type: 'direct_image',  // 直接使用图片数据
-                        imageData: description,
-                        description: `${match[1]}发送的图片`,
-                        fullMatch: match[0],
-                        index: match.index
-                    });
-                } else {
-                    // 如果是文字描述，则作为生图指令
-                    instructions.push({
-                        type: 'image',
-                        description: description,
-                        fullMatch: match[0],
-                        index: match.index
-                    });
+        // 匹配多种用户发图格式
+        // 格式1: [角色名发送了一张图片，图片内容：...]
+        // 格式2: [角色名发送了一张自拍：...]
+        // 格式3: [角色名发送了一张照片：...]
+        // 格式4: [角色名发送了图片：...]
+        const userStylePatterns = [
+            /\[([^发\]]+)发送了一张图片[，,]?图片内容[：:]([^\]]+)\]/gi,
+            /\[([^发\]]+)发送了一张自拍[：:]([^\]]+)\]/gi,
+            /\[([^发\]]+)发送了一张照片[：:]([^\]]+)\]/gi,
+            /\[([^发\]]+)发送了图片[：:]([^\]]+)\]/gi,
+            /\[([^发\]]+)发了一张图[：:]([^\]]+)\]/gi
+        ];
+        
+        for (const regex of userStylePatterns) {
+            // 重置regex的lastIndex
+            regex.lastIndex = 0;
+            while ((match = regex.exec(text)) !== null) {
+                const description = match[2].trim();
+                if (description) {
+                    // 检查是否是base64数据，如果是则提取实际图片
+                    if (description.startsWith('data:image')) {
+                        instructions.push({
+                            type: 'direct_image',  // 直接使用图片数据
+                            imageData: description,
+                            description: `${match[1]}发送的图片`,
+                            fullMatch: match[0],
+                            index: match.index
+                        });
+                    } else {
+                        // 如果是文字描述，则作为生图指令
+                        instructions.push({
+                            type: 'image',
+                            description: description,
+                            fullMatch: match[0],
+                            index: match.index
+                        });
+                    }
                 }
             }
         }
@@ -97,8 +111,12 @@ const AIImageGenerator = {
         text = text.replace(/\[IMAGE\][\s\S]*?\[\/IMAGE\]/gi, '');
         text = text.replace(/\[IMG\][\s\S]*?\[\/IMG\]/gi, '');
         
-        // 移除 [角色名发送了一张图片，图片内容：...] 格式
-        text = text.replace(/\[([^发]+)发送了一张图片[，,]图片内容[：:][^\]]+\]/gi, '');
+        // 移除各种用户发图格式
+        text = text.replace(/\[([^发\]]+)发送了一张图片[，,]?图片内容[：:][^\]]+\]/gi, '');
+        text = text.replace(/\[([^发\]]+)发送了一张自拍[：:][^\]]+\]/gi, '');
+        text = text.replace(/\[([^发\]]+)发送了一张照片[：:][^\]]+\]/gi, '');
+        text = text.replace(/\[([^发\]]+)发送了图片[：:][^\]]+\]/gi, '');
+        text = text.replace(/\[([^发\]]+)发了一张图[：:][^\]]+\]/gi, '');
         
         // 清理多余空行
         text = text.replace(/\n{3,}/g, '\n\n');
