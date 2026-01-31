@@ -6500,6 +6500,10 @@
             let currentDelay = 0;
             const messages = thinkingData.messages || [];
             
+            // 🔧 修复：在开始处理前保存当前对话状态，避免异步延迟导致的状态不一致
+            const isCurrentChatAtStart = AppState.currentChat && AppState.currentChat.id === convId;
+            console.log('🔀 appendMultipleAssistantMessages 开始 - convId:', convId, '当前对话匹配:', isCurrentChatAtStart);
+            
             messages.forEach((msgData, index) => {
                 setTimeout(() => {
                     // 每条消息都进行独立的清理和处理
@@ -6632,14 +6636,18 @@
                     saveToStorage();
                     renderConversations();
                     
-                    // 🔧 修复：只在当前对话匹配时才渲染每条消息
+                    // 🔧 修复：使用开始时保存的状态判断是否渲染，避免异步延迟导致的问题
                     console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 检查渲染');
-                    console.log('   - convId:', convId, 'currentChat:', AppState.currentChat?.id);
+                    console.log('   - convId:', convId);
+                    console.log('   - 开始时对话匹配:', isCurrentChatAtStart);
+                    console.log('   - 当前对话:', AppState.currentChat?.id);
                     
-                    // 只在当前对话匹配时立即渲染
-                    if (AppState.currentChat && AppState.currentChat.id === convId) {
-                        console.log('✅ 当前对话匹配，立即渲染消息');
+                    // 使用开始时的状态判断，并且再次确认当前对话仍然匹配
+                    if (isCurrentChatAtStart && AppState.currentChat && AppState.currentChat.id === convId) {
+                        console.log('✅ 对话匹配，立即渲染消息');
                         renderChatMessages(true);
+                    } else {
+                        console.log('⚠️ 对话不匹配或用户已离开，跳过渲染');
                     }
                     
                     // 只在最后一条消息后触发通知

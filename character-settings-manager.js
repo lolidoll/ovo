@@ -1499,43 +1499,238 @@
         },
 
         /**
+         * 显示自定义确认弹窗（公主风格）
+         */
+        showPrincessConfirm: function(message, onConfirm, isDanger = false) {
+            // 创建遮罩层
+            const overlay = document.createElement('div');
+            overlay.className = 'princess-confirm-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                animation: fadeIn 0.2s ease;
+            `;
+            
+            // 创建弹窗
+            const dialog = document.createElement('div');
+            dialog.className = 'princess-confirm-dialog';
+            dialog.style.cssText = `
+                background: #ffffff;
+                border-radius: 24px;
+                padding: 0;
+                max-width: 90%;
+                width: 340px;
+                box-shadow: 0 12px 40px rgba(255, 182, 193, 0.3);
+                animation: slideUp 0.3s ease;
+                overflow: hidden;
+                border: 2px solid ${isDanger ? '#ffe4e4' : '#ffe9f3'};
+            `;
+            
+            // 弹窗头部
+            const header = document.createElement('div');
+            header.style.cssText = `
+                background: linear-gradient(135deg, ${isDanger ? '#ffe4e4 0%, #ffd4d4 100%' : '#fff5f9 0%, #ffeff5 100%'});
+                padding: 20px;
+                text-align: center;
+                border-bottom: 2px solid ${isDanger ? '#ffcccc' : '#ffe4ed'};
+            `;
+            
+            const icon = document.createElement('div');
+            icon.innerHTML = isDanger
+                ? `<svg viewBox="0 0 24 24" style="width:48px;height:48px;stroke:#ff6b6b;stroke-width:2;fill:none;margin:0 auto;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                   </svg>`
+                : `<svg viewBox="0 0 24 24" style="width:48px;height:48px;stroke:#ffb6c8;stroke-width:2;fill:none;margin:0 auto;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                   </svg>`;
+            header.appendChild(icon);
+            
+            // 弹窗内容
+            const content = document.createElement('div');
+            content.style.cssText = `
+                padding: 24px;
+                text-align: center;
+                color: #333;
+                font-size: 15px;
+                line-height: 1.6;
+                white-space: pre-line;
+            `;
+            content.textContent = message;
+            
+            // 按钮容器
+            const buttons = document.createElement('div');
+            buttons.style.cssText = `
+                display: flex;
+                gap: 12px;
+                padding: 0 24px 24px;
+            `;
+            
+            // 取消按钮
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '取消';
+            cancelBtn.style.cssText = `
+                flex: 1;
+                padding: 12px 24px;
+                border: 2px solid #e0e0e0;
+                background: #fff;
+                color: #666;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            `;
+            cancelBtn.onmouseover = () => {
+                cancelBtn.style.background = '#f5f5f5';
+                cancelBtn.style.borderColor = '#d0d0d0';
+            };
+            cancelBtn.onmouseout = () => {
+                cancelBtn.style.background = '#fff';
+                cancelBtn.style.borderColor = '#e0e0e0';
+            };
+            cancelBtn.onclick = () => {
+                overlay.style.animation = 'fadeOut 0.2s ease';
+                setTimeout(() => overlay.remove(), 200);
+            };
+            
+            // 确认按钮
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = '确定';
+            confirmBtn.style.cssText = `
+                flex: 1;
+                padding: 12px 24px;
+                border: none;
+                background: linear-gradient(135deg, ${isDanger ? '#ff6b6b 0%, #ff5252 100%' : '#ffb6c8 0%, #ff9db8 100%'});
+                color: #fff;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px ${isDanger ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 182, 193, 0.3)'};
+            `;
+            confirmBtn.onmouseover = () => {
+                confirmBtn.style.transform = 'translateY(-2px)';
+                confirmBtn.style.boxShadow = `0 6px 16px ${isDanger ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 182, 193, 0.4)'}`;
+            };
+            confirmBtn.onmouseout = () => {
+                confirmBtn.style.transform = 'translateY(0)';
+                confirmBtn.style.boxShadow = `0 4px 12px ${isDanger ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 182, 193, 0.3)'}`;
+            };
+            confirmBtn.onclick = () => {
+                overlay.style.animation = 'fadeOut 0.2s ease';
+                setTimeout(() => {
+                    overlay.remove();
+                    if (onConfirm) onConfirm();
+                }, 200);
+            };
+            
+            // 组装弹窗
+            buttons.appendChild(cancelBtn);
+            buttons.appendChild(confirmBtn);
+            dialog.appendChild(header);
+            dialog.appendChild(content);
+            dialog.appendChild(buttons);
+            overlay.appendChild(dialog);
+            
+            // 添加动画样式
+            if (!document.getElementById('princess-confirm-animations')) {
+                const style = document.createElement('style');
+                style.id = 'princess-confirm-animations';
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes fadeOut {
+                        from { opacity: 1; }
+                        to { opacity: 0; }
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(30px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // 添加到页面
+            document.body.appendChild(overlay);
+            
+            // 点击遮罩层关闭
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    cancelBtn.click();
+                }
+            };
+        },
+
+        /**
          * 删除角色
          */
         deleteCharacter: function(charId) {
             const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
 
-            if (!confirm(`确定要删除 ${conv.name} 及其所有聊天记录吗？`)) return;
+            this.showPrincessConfirm(
+                `确定要删除 ${conv.name} 及其所有聊天记录吗？`,
+                () => {
+                    window.AppState.conversations = window.AppState.conversations.filter(c => c.id !== charId);
+                    window.AppState.friends = window.AppState.friends.filter(f => f.id !== charId);
+                    delete window.AppState.messages[charId];
 
-            window.AppState.conversations = window.AppState.conversations.filter(c => c.id !== charId);
-            window.AppState.friends = window.AppState.friends.filter(f => f.id !== charId);
-            delete window.AppState.messages[charId];
+                    if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
+                        window.AppState.currentChat = null;
+                        document.getElementById('chat-page').classList.remove('open');
+                    }
 
-            if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
-                window.AppState.currentChat = null;
-                document.getElementById('chat-page').classList.remove('open');
-            }
+                    saveToStorage();
+                    renderConversations();
+                    renderFriends();
 
-            saveToStorage();
-            renderConversations();
-            renderFriends();
-
-            document.getElementById('character-settings-page').classList.remove('open');
-            showToast('角色已删除');
+                    document.getElementById('character-settings-page').classList.remove('open');
+                    showToast('角色已删除');
+                },
+                true
+            );
         },
 
         /**
          * 删除所有聊天记录
          */
         deleteAllMessages: function(chatId) {
-            if (!confirm('确定要删除该角色的所有聊天记录吗？\n\n此操作将清空所有对话消息和心声，无法恢复！')) {
-                return;
-            }
-            
-            // 二次确认
-            if (!confirm('这是最后的确认！\n\n删除后将回到初始状态，所有聊天记录将永久消失，确定继续吗？')) {
-                return;
-            }
+            this.showPrincessConfirm(
+                '确定要删除该角色的所有聊天记录吗？\n\n此操作将清空所有对话消息和心声，无法恢复！',
+                () => {
+                    // 二次确认
+                    this.showPrincessConfirm(
+                        '这是最后的确认！\n\n删除后将回到初始状态，所有聊天记录将永久消失，确定继续吗？',
+                        () => {
+                            this.performDeleteAllMessages(chatId);
+                        },
+                        true
+                    );
+                },
+                true
+            );
+        },
+
+        /**
+         * 执行删除所有聊天记录
+         */
+        performDeleteAllMessages: function(chatId) {
             
             const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === chatId);
             if (!conv) {

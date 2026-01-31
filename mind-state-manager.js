@@ -497,7 +497,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         
         confirmModal = document.createElement('div');
         confirmModal.id = 'delete-confirm-modal';
-        confirmModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,240,245,0.92);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;justify-content:center;align-items:center;z-index:50001;';
+        confirmModal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,240,245,0.92);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;justify-content:center;align-items:center;z-index:9999999;';
         
         confirmModal.addEventListener('click', function(e) {
             if (e.target === confirmModal) {
