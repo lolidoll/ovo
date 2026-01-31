@@ -1,0 +1,895 @@
+/**
+ * 粉白公主风语音通话样式
+ * 完整的通话界面、悬浮窗、来电弹窗样式
+ */
+
+/* ========================================
+   通话主界面 - 粉白公主风
+======================================== */
+.voice-call-interface {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 50%, #ffd5e0 100%);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voice-call-interface.show {
+    display: flex;
+    transform: translateY(0);
+}
+
+.call-main-view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================
+   顶部栏
+======================================== */
+.call-header {
+    height: 56px;
+    min-height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+}
+
+.call-minimize-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(255, 158, 175, 0.3);
+}
+
+.call-minimize-btn:active {
+    background: linear-gradient(135deg, #ff9eaf 0%, #ff8fa3 100%);
+    transform: scale(0.95);
+}
+
+.call-status-text {
+    font-size: 14px;
+    color: #d4678a;
+    font-weight: 600;
+}
+
+/* ========================================
+   中间内容区
+======================================== */
+.call-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px;
+    overflow: hidden;
+}
+
+/* 角色信息 */
+.call-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.call-avatar-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.call-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid #ffb3c1;
+    box-shadow: 0 8px 24px rgba(255, 158, 175, 0.3);
+}
+
+.call-avatar-ring {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border: 2px solid #ffd5e0;
+    border-radius: 50%;
+    animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.5;
+    }
+}
+
+.call-username {
+    font-size: 20px;
+    font-weight: 700;
+    color: #d4678a;
+    text-shadow: 0 2px 4px rgba(255, 182, 193, 0.3);
+}
+
+/* 通话内聊天容器 */
+.call-chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.call-chat-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.call-chat-message {
+    display: flex;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.call-chat-message-user {
+    justify-content: flex-end;
+}
+
+.call-chat-message-ai {
+    justify-content: flex-start;
+}
+
+.call-chat-message-system {
+    justify-content: center;
+}
+
+.call-chat-bubble {
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-break: break-word;
+}
+
+.call-chat-message-user .call-chat-bubble {
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    color: #fff;
+    border-radius: 12px 12px 2px 12px;
+    box-shadow: 0 2px 8px rgba(255, 158, 175, 0.25);
+}
+
+.call-chat-message-ai .call-chat-bubble {
+    background: #f0f0f0;
+    color: #333;
+    border-radius: 12px 12px 12px 2px;
+}
+
+.call-chat-system-text {
+    font-size: 12px;
+    color: #999;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+}
+
+.call-chat-text {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* 聊天输入区 */
+.call-chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #e5e5e5;
+    background: #fff;
+}
+
+.call-chat-input {
+    flex: 1;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    border-radius: 18px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.call-chat-input:focus {
+    border-color: #ffb3c1;
+}
+
+.call-chat-send-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(255, 158, 175, 0.3);
+}
+
+.call-chat-send-btn:active {
+    transform: scale(0.95);
+}
+
+/* ========================================
+   底部控制栏
+======================================== */
+.call-controls {
+    padding: 20px 16px 32px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 8px rgba(255, 182, 193, 0.1);
+}
+
+.call-duration {
+    font-size: 18px;
+    font-weight: 700;
+    color: #d4678a;
+    text-shadow: 0 2px 4px rgba(255, 182, 193, 0.2);
+}
+
+.call-buttons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+.call-control-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    transition: all 0.2s;
+}
+
+.call-control-btn svg {
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+    background: linear-gradient(135deg, #ffe4ec 0%, #ffd5e0 100%);
+    border-radius: 50%;
+    color: #d4678a;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
+}
+
+.call-control-btn:active svg {
+    transform: scale(0.95);
+}
+
+.call-control-btn.muted svg,
+.call-control-btn.active svg {
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    color: #fff;
+}
+
+.call-end-btn svg {
+    background: linear-gradient(135deg, #ff6b9d 0%, #f06292 100%) !important;
+    color: #fff !important;
+}
+
+.call-btn-label {
+    font-size: 12px;
+    color: #d4678a;
+    font-weight: 600;
+}
+
+/* ========================================
+   最小化悬浮窗
+======================================== */
+.call-floating-window {
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    width: 80px;
+    height: 120px;
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(255, 158, 175, 0.4);
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 99999;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+}
+
+.call-floating-window.show {
+    opacity: 1 !important;
+    pointer-events: all !important;
+    transform: scale(1);
+}
+
+.call-floating-window:active {
+    transform: scale(0.95);
+}
+
+.floating-avatar-wrapper {
+    position: relative;
+}
+
+.floating-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+.floating-pulse {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    animation: pulse-float 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-float {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.3;
+    }
+}
+
+.floating-duration {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* ========================================
+   来电弹窗
+======================================== */
+.incoming-call-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 10001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.incoming-call-modal.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.incoming-call-content {
+    background: #fff;
+    border-radius: 24px;
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 320px;
+    width: 90%;
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.incoming-call-avatar-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.incoming-call-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid #ffb3c1;
+}
+
+.incoming-call-ring {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border: 3px solid #ffd5e0;
+    border-radius: 50%;
+    animation: pulse-ring 1.5s ease-in-out infinite;
+}
+
+.incoming-call-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.incoming-call-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 32px;
+}
+
+.incoming-call-buttons {
+    display: flex;
+    gap: 24px;
+}
+
+.incoming-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.incoming-btn svg {
+    width: 64px;
+    height: 64px;
+    padding: 18px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.incoming-btn:active svg {
+    transform: scale(0.95);
+}
+
+.incoming-reject-btn svg {
+    background: #f44336;
+    color: #fff;
+}
+
+.incoming-accept-btn svg {
+    background: #4caf50;
+    color: #fff;
+}
+
+.incoming-btn span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* ========================================
+   拨通确认弹窗
+======================================== */
+.call-confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.call-confirm-modal.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.call-confirm-content {
+    background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 100%);
+    border-radius: 20px;
+    padding: 32px 24px;
+    width: 90%;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(255, 182, 193, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: confirmSlideUp 0.3s ease;
+}
+
+@keyframes confirmSlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.call-confirm-avatar-wrapper {
+    position: relative;
+}
+
+.call-confirm-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #ffb3c1;
+    box-shadow: 0 4px 12px rgba(255, 179, 193, 0.3);
+}
+
+.call-confirm-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #d4678a;
+    text-align: center;
+}
+
+.call-confirm-text {
+    font-size: 14px;
+    color: #999;
+    text-align: center;
+}
+
+.call-confirm-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.call-confirm-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.call-confirm-cancel {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.call-confirm-cancel:active {
+    background: #e0e0e0;
+}
+
+.call-confirm-ok {
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 179, 193, 0.3);
+}
+
+.call-confirm-ok:active {
+    transform: scale(0.98);
+}
+
+/* ========================================
+   拨通中界面
+======================================== */
+.calling-interface {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 50%, #ffd5e0 100%);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.calling-interface.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.calling-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.calling-avatar-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.calling-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 8px 24px rgba(255, 179, 193, 0.3);
+}
+
+.calling-ring,
+.calling-ring-2 {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border: 3px solid #ffb3c1;
+    border-radius: 50%;
+    animation: callingPulse 2s ease-in-out infinite;
+}
+
+.calling-ring-2 {
+    animation-delay: 1s;
+}
+
+@keyframes callingPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+
+.calling-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: #d4678a;
+}
+
+.calling-status {
+    font-size: 16px;
+    color: #999;
+}
+
+.calling-cancel-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #ff6b9d 0%, #f06292 100%);
+    border: none;
+    border-radius: 50px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(240, 98, 146, 0.3);
+    transition: all 0.2s;
+    margin-top: 32px;
+}
+
+.calling-cancel-btn:active {
+    transform: scale(0.95);
+}
+
+.calling-cancel-btn svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* ========================================
+   聊天页面通话状态
+======================================== */
+.chat-call-status {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.call-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
+    border-radius: 12px;
+    font-size: 12px;
+    color: #fff;
+}
+
+.call-status-dot {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+    }
+}
+
+.call-status-text {
+    font-weight: 600;
+}
+
+/* ========================================
+   通话记录样式
+======================================== */
+.call-record-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+    border-left: 3px solid #ffb3c1;
+}
+
+.call-record-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.call-record-content {
+    flex: 1;
+}
+
+.call-record-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.call-record-detail {
+    font-size: 12px;
+    color: #666;
+}
+
+/* ========================================
+   移动端适配
+======================================== */
+@media screen and (max-width: 375px) {
+    .call-avatar {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .call-username {
+        font-size: 18px;
+    }
+    
+    .call-buttons {
+        gap: 16px;
+    }
+    
+    .call-control-btn svg {
+        width: 44px;
+        height: 44px;
+        padding: 10px;
+    }
+    
+    .incoming-call-avatar {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .incoming-btn svg {
+        width: 56px;
+        height: 56px;
+        padding: 14px;
+    }
+}
+
+/* 滚动条样式 */
+.call-chat-messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+.call-chat-messages::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 2px;
+}
+
+.call-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}

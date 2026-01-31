@@ -52,7 +52,7 @@
         btnMore.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🔘 更多按钮被点击');
+            console.log('[Toolbar] 更多按钮被点击');
             toggleMorePanel();
         });
         
@@ -306,7 +306,18 @@
     }
     
     function handleVoiceCall() {
-        showToast('语音通话功能尚未实现');
+        console.log('[Toolbar] 触发语音通话');
+        
+        // 关闭更多面板
+        closeMorePanel();
+        
+        // 调用语音通话系统
+        if (window.VoiceCallSystem && typeof window.VoiceCallSystem.startCall === 'function') {
+            window.VoiceCallSystem.startCall();
+        } else {
+            console.warn('⚠️ 语音通话系统未初始化');
+            showToast('语音通话功能加载中，请稍后再试');
+        }
     }
     
     function handleVideoCall() {

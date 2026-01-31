@@ -90,7 +90,7 @@ const VoiceMessageModule = (function() {
                     <textarea class="voice-input" id="voice-input" placeholder="输入语音内容..." rows="6"></textarea>
                     <div class="voice-duration-control">
                         <label for="voice-duration-input">时长（秒）：</label>
-                        <input type="number" id="voice-duration-input" min="1" max="300" value="1" class="voice-duration-input">
+                        <input type="number" id="voice-duration-input" min="1" max="300" value="6" class="voice-duration-input">
                     </div>
                     <div class="voice-tips">
                         <div class="voice-tip-item">按 Ctrl+Enter 快速发送</div>

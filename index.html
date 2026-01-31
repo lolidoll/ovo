@@ -25,15 +25,39 @@
     <link rel="stylesheet" href="mind-state-styles.css">
     <link rel="stylesheet" href="couples-space.css">
     <link rel="stylesheet" href="chat-qq-style.css">
+    <link rel="stylesheet" href="voice-call.css">
     <style>
     </style>
     <script>
         // 移动端全屏适配 - 动态计算视口高度
         (function() {
+            // 检测是否为iOS设备
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isIOSStandalone = isIOS && (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
+            
             function setViewportHeight() {
                 // 获取真实的视口高度
-                const vh = window.innerHeight * 0.01;
-                const appHeight = window.innerHeight;
+                let vh = window.innerHeight * 0.01;
+                let appHeight = window.innerHeight;
+                
+                // iOS设备特殊处理：在全屏模式下减去状态栏高度
+                if (isIOS) {
+                    // iOS状态栏标准高度
+                    const statusBarHeight = 20; // iPhone标准状态栏高度
+                    const statusBarHeightX = 44; // iPhone X及以上的状态栏高度（包含刘海）
+                    
+                    // 检测是否有刘海屏（通过安全区域判断）
+                    const hasNotch = window.CSS && window.CSS.supports &&
+                                   (window.CSS.supports('padding-top: env(safe-area-inset-top)') ||
+                                    window.CSS.supports('padding-top: constant(safe-area-inset-top)'));
+                    
+                    // 在iOS全屏模式下，减去状态栏高度
+                    if (isIOSStandalone || document.documentElement.classList.contains('ios-fullscreen')) {
+                        const adjustHeight = hasNotch ? statusBarHeightX : statusBarHeight;
+                        appHeight = appHeight - adjustHeight;
+                        vh = appHeight * 0.01;
+                    }
+                }
                 
                 // 设置CSS自定义属性
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -42,6 +66,14 @@
                 // 针对iOS Safari的额外处理
                 if (CSS.supports && CSS.supports('-webkit-fill-available', '100vh')) {
                     document.documentElement.style.height = '-webkit-fill-available';
+                }
+                
+                // 标记iOS设备
+                if (isIOS) {
+                    document.documentElement.classList.add('is-ios');
+                    if (isIOSStandalone) {
+                        document.documentElement.classList.add('ios-standalone');
+                    }
                 }
             }
             
@@ -100,6 +132,7 @@
     <script src="couples-space.js" defer></script>
     <script src="moments-group-interaction.js" defer></script>
     <script src="moments.js" defer></script>
+    <script src="voice-call.js" defer></script>
     <script src="chat-qq-toolbar.js" defer></script>
     <script src="app.js" defer></script>
   

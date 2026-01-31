@@ -3006,81 +3006,35 @@
                     
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div style="
-                            width: 160px;
-                        ">
-                            <div style="
-                                background: #fff;
-                                border: 1px solid #e0e0e0;
-                                border-radius: 12px;
-                                overflow: hidden;
-                            ">
-                                <!-- 头部 - 灰色背景 -->
-                                <div style="
-                                    background: #f9f9f9;
-                                    padding: 8px 12px;
-                                    border-bottom: 1px solid #e0e0e0;
-                                    font-size: 11px;
-                                    color: #888;
-                                    font-weight: 500;
-                                ">
-                                    朋友圈
+                        <div class="forward-moment-card">
+                            <!-- 头部 -->
+                            <div class="forward-moment-header">
+                                <div class="forward-moment-title">
+                                    <div class="forward-moment-icon"></div>
+                                    <span class="forward-moment-label">朋友圈</span>
+                                </div>
+                                <div class="forward-moment-arrow"></div>
+                            </div>
+                            
+                            <!-- 内容 -->
+                            <div class="forward-moment-content">
+                                <!-- 作者和日期 -->
+                                <div class="forward-moment-meta">
+                                    <div class="forward-moment-author">${momentAuthor}</div>
+                                    <div class="forward-moment-date">${momentDate}</div>
                                 </div>
                                 
-                                <!-- 内容 -->
-                                <div style="
-                                    padding: 10px 12px;
-                                ">
-                                    <!-- 作者和日期 -->
-                                    <div style="
-                                        display: flex;
-                                        justify-content: space-between;
-                                        align-items: center;
-                                        margin-bottom: 6px;
-                                    ">
-                                        <div style="
-                                            font-size: 12px;
-                                            font-weight: 500;
-                                            color: #222;
-                                        ">
-                                            ${momentAuthor}
-                                        </div>
-                                        <div style="
-                                            font-size: 10px;
-                                            color: #aaa;
-                                        ">
-                                            ${momentDate}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- 内容文本 - 清理所有缩进，严格左对齐 -->
-                                    <div style="
-                                        font-size: 12px;
-                                        color: #333;
-                                        line-height: 1.5;
-                                        word-break: break-word;
-                                        margin-bottom: 8px;
-                                        white-space: normal;
-                                        text-align: left;
-                                    ">
-                                        ${momentContent.length > 150 ? momentContent.substring(0, 150) + '...' : momentContent}
-                                    </div>
-                                    
-                                    <!-- 分隔线 -->
-                                    <div style="
-                                        height: 1px;
-                                        background: #e0e0e0;
-                                        margin: 8px 0;
-                                    "></div>
-                                    
-                                    <!-- 底部提示 -->
-                                    <div style="
-                                        font-size: 10px;
-                                        color: #bbb;
-                                        text-align: center;
-                                    ">
-                                        来自朋友圈
-                                    </div>
+                                <!-- 内容文本 -->
+                                <div class="forward-moment-text">
+                                    ${momentContent.length > 150 ? momentContent.substring(0, 150) + '...' : momentContent}
+                                </div>
+                                
+                                <!-- 分隔线 -->
+                                <div class="forward-moment-divider"></div>
+                                
+                                <!-- 底部提示 -->
+                                <div class="forward-moment-footer">
+                                    转发自朋友圈
                                 </div>
                             </div>
                         </div>
@@ -6422,6 +6376,16 @@
             }
         }
 
+        // 获取角色头像的辅助函数
+        function getCharacterAvatar() {
+            const avatarImg = document.querySelector('.chat-avatar img');
+            if (avatarImg && avatarImg.src) {
+                return avatarImg.src;
+            }
+            // 返回默认头像
+            return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23ff9a9e"/></svg>';
+        }
+        
         function appendSingleAssistantMessage(convId, text, skipMindStateExtraction = false) {
             // ========== 第一步：清理AI回复（移除心声标记） ==========
             // 首先应用强大的清理函数
@@ -6570,6 +6534,34 @@
                 }
                 // 从文本中移除地理位置标记
                 text = text.replace(locationRegex, '').trim();
+            }
+            
+            // ========== 第5.5步：处理语音通话信息 ==========
+            // 匹配语音通话标记：【语音通话】【/语音通话】
+            const voiceCallRegex = /【语音通话】【\/语音通话】/;
+            const voiceCallMatch = text.match(voiceCallRegex);
+            let isVoiceCall = false;
+            
+            if (voiceCallMatch) {
+                isVoiceCall = true;
+                console.log('[VoiceCall] 检测到AI主动发起语音通话请求');
+                
+                // 从文本中移除语音通话标记
+                text = text.replace(voiceCallRegex, '').trim();
+                
+                // 获取角色信息
+                const conv = AppState.conversations.find(c => c.id === convId);
+                const characterName = conv?.name || 'AI助手';
+                const characterAvatar = getCharacterAvatar();
+                
+                // 延迟一小段时间后触发来电
+                setTimeout(() => {
+                    if (window.VoiceCallSystem && typeof window.VoiceCallSystem.receiveCall === 'function') {
+                        window.VoiceCallSystem.receiveCall(characterName, characterAvatar);
+                    } else {
+                        console.warn('⚠️ 语音通话系统未初始化');
+                    }
+                }, 800);
             }
             
             // 第二次清理：确保没有遗漏
