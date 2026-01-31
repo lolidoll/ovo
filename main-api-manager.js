@@ -679,8 +679,34 @@ This mindset beats memorizing 100 rules.`);
             out.push({ role: 'system', content: '当前时间：' + new Date().toLocaleString('zh-CN') });
         }
 
-        // 添加对话消息
+        // 添加对话总结（如果存在）
+        if (conv.summaries && conv.summaries.length > 0) {
+            const summariesContent = conv.summaries.map((s, idx) => {
+                const type = s.isAutomatic ? '自动总结' : '手动总结';
+                const time = new Date(s.timestamp).toLocaleString('zh-CN');
+                return `【${type} #${idx + 1}】(${time}, 基于${s.messageCount}条消息)\n${s.content}`;
+            }).join('\n\n');
+            
+            out.push({
+                role: 'system',
+                content: `【对话历史总结】\n以下是之前对话的总结，帮助你了解对话背景：\n\n${summariesContent}`
+            });
+            
+            console.log(`📝 已添加 ${conv.summaries.length} 条总结到API上下文`);
+        }
+
+        // 添加对话消息（过滤已总结的消息）
+        let includedCount = 0;
+        let skippedCount = 0;
+        
         msgs.forEach((m, index) => {
+            // 跳过已总结的消息（如果启用了总结功能）
+            if (m.isSummarized && this.AppState.apiSettings.summaryEnabled) {
+                skippedCount++;
+                return;
+            }
+            
+            includedCount++;
             let messageContent = m.content;
             
             // 如果消息是系统消息,直接作为系统提示发送
@@ -803,6 +829,10 @@ This mindset beats memorizing 100 rules.`);
             
             out.push({ role: roleToUse, content: messageContent });
         });
+
+        if (skippedCount > 0) {
+            console.log(`📝 已跳过 ${skippedCount} 条已总结的消息，包含 ${includedCount} 条最新消息`);
+        }
 
         return out;
     },

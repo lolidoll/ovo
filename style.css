@@ -2527,6 +2527,13 @@ input[type="range"]::-ms-fill-upper {
             -webkit-transform: translateZ(0);
         }
         
+        /* 引用消息栏在移动端的样式 */
+        .quote-message-bar-container {
+            flex-shrink: 0;
+            position: relative;
+            z-index: 50;
+        }
+        
         /* 加载更多提示样式 */
         .load-more-hint {
             text-align: center;

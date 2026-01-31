@@ -1247,6 +1247,24 @@
                     saveToStorage();
                     showToast('总结已生成');
                     
+                    // 如果是自动总结，清理旧消息，只保留最新的N条
+                    if (isAutomatic) {
+                        const keepLatest = window.AppState.apiSettings.summaryKeepLatest || 10;
+                        const allMessages = window.AppState.messages[convId] || [];
+                        
+                        if (allMessages.length > keepLatest) {
+                            // 标记旧消息为已总结
+                            const oldMessages = allMessages.slice(0, allMessages.length - keepLatest);
+                            oldMessages.forEach(m => {
+                                m.isSummarized = true;
+                            });
+                            
+                            saveToStorage();
+                            console.log(`✅ 自动总结完成，标记了 ${oldMessages.length} 条旧消息为已总结`);
+                            showToast(`已标记 ${oldMessages.length} 条旧消息，保留最新 ${keepLatest} 条`);
+                        }
+                    }
+                    
                     // 刷新总结列表
                     const summariesContainer = document.getElementById('summaries-container');
                     if (summariesContainer) {

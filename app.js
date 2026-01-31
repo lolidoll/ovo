@@ -3142,18 +3142,23 @@
         
         // 主渲染函数：使用虚拟滚动和事件委托优化
         function renderChatMessages(forceScrollToBottom = false) {
-            console.log('🎨 renderChatMessages 被调用 - forceScrollToBottom:', forceScrollToBottom, 'currentChat:', AppState.currentChat?.id);
+            console.log('🎨 renderChatMessages 被调用');
+            console.log('   - forceScrollToBottom:', forceScrollToBottom);
+            console.log('   - currentChat:', AppState.currentChat?.id);
+            console.log('   - 调用栈:', new Error().stack.split('\n').slice(1, 4).join('\n'));
             
             const container = document.getElementById('chat-messages');
+            console.log('   - container 存在:', !!container);
             
             if (!AppState.currentChat) {
                 console.warn('⚠️ renderChatMessages: currentChat 为空，无法渲染');
-                container.innerHTML = '';
+                if (container) container.innerHTML = '';
                 return;
             }
             
             const messages = AppState.messages[AppState.currentChat.id] || [];
             console.log('📊 当前对话消息数量:', messages.length);
+            console.log('   - 消息列表:', messages.map(m => ({ id: m.id, type: m.type, content: m.content?.substring(0, 20) })));
             
             // 移除旧的事件监听器（如果存在）
             if (container._avatarDblClickHandler) {
@@ -3189,21 +3194,26 @@
             
             // 如果消息数量较少或禁用虚拟滚动，使用传统渲染
             if (!AppState.virtualScroll.enabled || messages.length <= AppState.virtualScroll.renderBatchSize) {
+                console.log('📝 使用传统渲染模式 - 消息数:', messages.length);
                 container.innerHTML = '';
                 for (let index = 0; index < messages.length; index++) {
                     renderSingleMessage(messages[index], index, container);
                 }
+                console.log('✅ 传统渲染完成，DOM 子元素数:', container.children.length);
             } else {
                 // 使用虚拟滚动：只渲染最新的消息
+                console.log('📝 使用虚拟滚动模式');
                 const totalMessages = messages.length;
                 const batchSize = AppState.virtualScroll.renderBatchSize;
                 
                 // 计算起始索引：从最新消息往前数
                 const startIndex = Math.max(0, totalMessages - batchSize);
                 AppState.virtualScroll.currentStartIndex = startIndex;
+                console.log('   - 起始索引:', startIndex, '总数:', totalMessages);
                 
                 // 渲染最新的一批消息
                 renderMessageRange(startIndex, totalMessages, false);
+                console.log('✅ 虚拟滚动渲染完成，DOM 子元素数:', container.children.length);
                 
                 // 如果还有更早的消息，添加"加载更多"提示
                 if (startIndex > 0) {
@@ -3882,12 +3892,12 @@
                 }
             };
             
-            // 立即添加关闭监听器，点击任何地方都会关闭菜单
-            // 使用 requestAnimationFrame 确保菜单渲染完成后再添加监听器
-            requestAnimationFrame(() => {
-                document.addEventListener('click', closeMenuHandler, { capture: true });
-                document.addEventListener('touchend', closeMenuHandler, { capture: true });
-            });
+            // 添加关闭监听器，点击菜单外的地方会关闭菜单
+            // 使用 setTimeout 确保菜单完全渲染和定位后再添加监听器，避免立即触发关闭
+            setTimeout(() => {
+                document.addEventListener('click', closeMenuHandler);
+                document.addEventListener('touchend', closeMenuHandler);
+            }, 50);
         }
         
         // 统一的菜单关闭函数 - 带动画效果
@@ -4188,8 +4198,8 @@
                 const countSpan = toolbar.querySelector('#msg-select-count');
                 
                 const count = AppState.selectedMessages.length;
-                if (deleteBtn) deleteBtn.textContent = `删除 (${count})`;
-                if (forwardBtn) forwardBtn.textContent = `转发 (${count})`;
+                if (deleteBtn) deleteBtn.textContent = '删除';
+                if (forwardBtn) forwardBtn.textContent = '转发';
                 if (countSpan) countSpan.textContent = count;
             }
         }
@@ -4388,21 +4398,22 @@
                 right: 0;
                 background: #fff;
                 border-top: 1px solid #ddd;
-                padding: 12px;
+                padding: 8px 6px;
                 display: flex;
-                gap: 8px;
+                gap: 4px;
                 justify-content: space-between;
                 align-items: center;
                 z-index: 9999;
                 animation: slideUp 0.2s ease-out;
+                box-sizing: border-box;
             `;
             
             toolbar.innerHTML = `
-                <button onclick="selectAllMessages()" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;background:#f5f5f5;cursor:pointer;font-size:14px;">全选</button>
-                <div style="flex:1;text-align:center;font-size:14px;color:#666;">已选择 <span id="msg-select-count">1</span> 条</div>
-                <button id="msg-forward-selected-btn" onclick="forwardSelectedMessages()" style="padding:8px 12px;border:1px solid #0066cc;border-radius:6px;background:#0066cc;color:#fff;cursor:pointer;font-size:14px;">转发 (1)</button>
-                <button onclick="exitMultiSelectMode()" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;background:#f5f5f5;cursor:pointer;font-size:14px;">取消</button>
-                <button id="msg-delete-selected-btn" onclick="deleteSelectedMessages()" style="padding:8px 12px;border:1px solid #f44;border-radius:6px;background:#f44;color:#fff;cursor:pointer;font-size:14px;">删除 (1)</button>
+                <button onclick="selectAllMessages()" style="padding:6px 8px;border:1px solid #ddd;border-radius:4px;background:#f5f5f5;cursor:pointer;font-size:12px;white-space:nowrap;min-width:0;flex-shrink:0;">全选</button>
+                <div style="flex:1;text-align:center;font-size:12px;color:#666;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">已选 <span id="msg-select-count">1</span> 条</div>
+                <button id="msg-forward-selected-btn" onclick="forwardSelectedMessages()" style="padding:6px 8px;border:1px solid #0066cc;border-radius:4px;background:#0066cc;color:#fff;cursor:pointer;font-size:12px;white-space:nowrap;min-width:0;flex-shrink:0;">转发</button>
+                <button onclick="exitMultiSelectMode()" style="padding:6px 8px;border:1px solid #ddd;border-radius:4px;background:#f5f5f5;cursor:pointer;font-size:12px;white-space:nowrap;min-width:0;flex-shrink:0;">取消</button>
+                <button id="msg-delete-selected-btn" onclick="deleteSelectedMessages()" style="padding:6px 8px;border:1px solid #f44;border-radius:4px;background:#f44;color:#fff;cursor:pointer;font-size:12px;white-space:nowrap;min-width:0;flex-shrink:0;">删除</button>
             `;
             
             document.body.appendChild(toolbar);
@@ -4465,55 +4476,90 @@
                 positionLeft = rect.left + rect.width / 2;  // 水平居中
             }
             
+            // 移动端检测和响应式配置
+            const isMobile = window.innerWidth <= 768;
+            const menuMaxWidth = isMobile ? Math.min(window.innerWidth - 32, 280) : 320;
+            const menuPadding = isMobile ? 10 : 12;
+            const menuGap = isMobile ? 4 : 6;
+            
             const optionsMenu = document.createElement('div');
             optionsMenu.id = 'translation-options-menu';
             optionsMenu.style.cssText = `
                 position: fixed;
                 background: white;
                 border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 8px 4px;
+                border-radius: 12px;
+                padding: ${menuPadding}px;
                 z-index: 10001;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                box-shadow: 0 4px 16px rgba(0,0,0,0.2);
                 display: flex;
-                gap: 4px;
+                gap: ${menuGap}px;
                 flex-wrap: wrap;
-                max-width: 200px;
+                max-width: ${menuMaxWidth}px;
                 justify-content: center;
-                top: ${positionTop}px;
-                left: ${positionLeft}px;
-                transform: translateX(-50%);
+                max-height: ${isMobile ? '60vh' : '80vh'};
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             `;
             
             const options = [
                 { label: '英文', action: () => { showToast('翻译中...'); translateToEnglishViaAPI(msg.content, msg); } },
+                { label: '日文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '日文'); } },
+                { label: '韩文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '韩文'); } },
+                { label: '法文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '法文'); } },
+                { label: '德文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '德文'); } },
+                { label: '西班牙文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '西班牙文'); } },
+                { label: '俄文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '俄文'); } },
+                { label: '意大利文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '意大利文'); } },
+                { label: '葡萄牙文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '葡萄牙文'); } },
+                { label: '阿拉伯文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '阿拉伯文'); } },
+                { label: '泰文', action: () => { showToast('翻译中...'); translateToLanguage(msg, '泰文'); } },
                 { label: '火星文', action: () => convertToMartianText(msg) }
             ];
             
             options.forEach(opt => {
                 const item = document.createElement('button');
+                const buttonPadding = isMobile ? '8px 10px' : '6px 12px';
+                const buttonFontSize = isMobile ? '14px' : '13px';
+                
                 item.style.cssText = `
-                    padding: 6px 12px;
+                    padding: ${buttonPadding};
                     cursor: pointer;
                     user-select: none;
                     transition: all 0.2s;
-                    font-size: 13px;
+                    font-size: ${buttonFontSize};
                     border: 1px solid #e0e0e0;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     background: white;
                     color: #333;
                     white-space: nowrap;
                     flex-shrink: 0;
+                    -webkit-tap-highlight-color: transparent;
+                    touch-action: manipulation;
                 `;
                 item.textContent = opt.label;
-                item.onmouseover = () => {
-                    item.style.background = '#f5f5f5';
-                    item.style.borderColor = '#bbb';
-                };
-                item.onmouseout = () => {
-                    item.style.background = 'white';
-                    item.style.borderColor = '#e0e0e0';
-                };
+                
+                // 移动端使用触摸事件，桌面端使用鼠标事件
+                if (isMobile) {
+                    item.ontouchstart = () => {
+                        item.style.background = '#f5f5f5';
+                        item.style.borderColor = '#bbb';
+                    };
+                    item.ontouchend = () => {
+                        item.style.background = 'white';
+                        item.style.borderColor = '#e0e0e0';
+                    };
+                } else {
+                    item.onmouseover = () => {
+                        item.style.background = '#f5f5f5';
+                        item.style.borderColor = '#bbb';
+                    };
+                    item.onmouseout = () => {
+                        item.style.background = 'white';
+                        item.style.borderColor = '#e0e0e0';
+                    };
+                }
+                
                 item.onclick = (e) => {
                     e.stopPropagation();
                     opt.action();
@@ -4524,7 +4570,45 @@
                 optionsMenu.appendChild(item);
             });
             
+            // 先添加到DOM以获取实际尺寸
             document.body.appendChild(optionsMenu);
+            
+            // 计算菜单实际尺寸并调整位置，防止超出屏幕
+            const menuRect = optionsMenu.getBoundingClientRect();
+            const menuWidth = menuRect.width;
+            const menuHeight = menuRect.height;
+            
+            // 水平方向边界检测
+            let finalLeft = positionLeft;
+            const halfWidth = menuWidth / 2;
+            const margin = 16; // 屏幕边缘留白
+            
+            if (finalLeft - halfWidth < margin) {
+                // 左边界溢出
+                finalLeft = halfWidth + margin;
+            } else if (finalLeft + halfWidth > window.innerWidth - margin) {
+                // 右边界溢出
+                finalLeft = window.innerWidth - halfWidth - margin;
+            }
+            
+            // 垂直方向边界检测
+            let finalTop = positionTop;
+            if (finalTop + menuHeight > window.innerHeight - margin) {
+                // 下边界溢出，显示在气泡上方
+                if (bubbleElement) {
+                    const rect = bubbleElement.getBoundingClientRect();
+                    finalTop = rect.top - menuHeight - 8;
+                }
+                // 如果上方也放不下，则固定在屏幕底部
+                if (finalTop < margin) {
+                    finalTop = window.innerHeight - menuHeight - margin;
+                }
+            }
+            
+            // 应用最终位置
+            optionsMenu.style.top = `${finalTop}px`;
+            optionsMenu.style.left = `${finalLeft}px`;
+            optionsMenu.style.transform = 'translateX(-50%)';
             
             // 点击屏幕其他位置关闭弹窗
             const closeTranslationMenuHandler = (e) => {
@@ -4538,6 +4622,47 @@
             setTimeout(() => {
                 document.addEventListener('click', closeTranslationMenuHandler);
             }, 100);
+        }
+
+        // 通用翻译函数 - 支持多种语言
+        function translateToLanguage(msg, targetLanguage) {
+            const content = msg.content;
+            
+            // 构建翻译提示词
+            const languagePrompts = {
+                '日文': '你是一个翻译助手。将用户提供的中文文本翻译成日文。只返回翻译结果，不要有其他内容。',
+                '韩文': '你是一个翻译助手。将用户提供的中文文本翻译成韩文。只返回翻译结果，不要有其他内容。',
+                '法文': '你是一个翻译助手。将用户提供的中文文本翻译成法文。只返回翻译结果，不要有其他内容。',
+                '德文': '你是一个翻译助手。将用户提供的中文文本翻译成德文。只返回翻译结果，不要有其他内容。',
+                '西班牙文': '你是一个翻译助手。将用户提供的中文文本翻译成西班牙文。只返回翻译结果，不要有其他内容。',
+                '俄文': '你是一个翻译助手。将用户提供的中文文本翻译成俄文。只返回翻译结果，不要有其他内容。',
+                '意大利文': '你是一个翻译助手。将用户提供的中文文本翻译成意大利文。只返回翻译结果，不要有其他内容。',
+                '葡萄牙文': '你是一个翻译助手。将用户提供的中文文本翻译成葡萄牙文。只返回翻译结果，不要有其他内容。',
+                '阿拉伯文': '你是一个翻译助手。将用户提供的中文文本翻译成阿拉伯文。只返回翻译结果，不要有其他内容。',
+                '泰文': '你是一个翻译助手。将用户提供的中文文本翻译成泰文。只返回翻译结果，不要有其他内容。'
+            };
+            
+            const systemPrompt = languagePrompts[targetLanguage] || languagePrompts['英文'];
+            
+            // 使用副API进行翻译
+            callSecondaryAPI(
+                [{ role: 'user', content: content }],
+                systemPrompt,
+                (result) => {
+                    msg.translation = {
+                        sourceLanguage: '简体中文',
+                        targetLanguage: targetLanguage,
+                        result: result
+                    };
+                    saveToStorage();
+                    renderChatMessagesDebounced();
+                    showToast('翻译完成');
+                },
+                (error) => {
+                    console.error('翻译出错:', error);
+                    showToast('翻译失败: ' + error);
+                }
+            );
         }
 
         // 转换为火星文
@@ -4823,17 +4948,37 @@
             );
         }
 
-        function translateToEnglishViaAPI(text, msg) {
-            // ========== 【新架构】使用副API动态提示词翻译 ==========
-            showToast('翻译中...');
-            
+        function translateToChineseViaAPI(text, msg) {
+            // ========== 【新架构】使用副API动态提示词翻译为中文 ==========
             translateTextViaSecondaryAPI(
                 text,
                 'Chinese',
                 (result) => {
                     msg.translation = {
-                        sourceLanguage: '非中文',
-                        targetLanguage: 'Chinese',
+                        sourceLanguage: '其他语言',
+                        targetLanguage: '简体中文',
+                        result: result
+                    };
+                    saveToStorage();
+                    renderChatMessagesDebounced();
+                    showToast('翻译完成');
+                },
+                (error) => {
+                    console.error('翻译出错:', error);
+                    showToast('翻译失败: ' + error);
+                }
+            );
+        }
+
+        function translateToEnglishViaAPI(text, msg) {
+            // ========== 【新架构】使用副API动态提示词翻译为英文 ==========
+            translateTextViaSecondaryAPI(
+                text,
+                'English',
+                (result) => {
+                    msg.translation = {
+                        sourceLanguage: '简体中文',
+                        targetLanguage: '英文',
                         result: result
                     };
                     saveToStorage();
@@ -6518,15 +6663,22 @@
             renderConversations();
             
             // 🔧 修复：强制立即渲染，确保消息在当前对话中立即显示
-            console.log('💬 appendSingleAssistantMessage - 强制渲染消息');
+            console.log('💬 appendSingleAssistantMessage - 准备渲染消息');
             console.log('   - convId:', convId);
             console.log('   - currentChat:', AppState.currentChat?.id);
             console.log('   - 消息数量:', AppState.messages[convId]?.length);
+            console.log('   - 最后一条消息:', AppState.messages[convId]?.[AppState.messages[convId].length - 1]);
             
             // 只在当前对话匹配时立即渲染（renderChatMessages内部会检查）
             if (AppState.currentChat && AppState.currentChat.id === convId) {
-                console.log('✅ 当前对话匹配，立即渲染消息');
+                console.log('✅ 当前对话匹配，立即调用 renderChatMessages(true)');
+                console.log('   - 调用前 DOM 元素数:', document.getElementById('chat-messages')?.children.length);
                 renderChatMessages(true);
+                console.log('   - 调用后 DOM 元素数:', document.getElementById('chat-messages')?.children.length);
+            } else {
+                console.log('⚠️ 当前对话不匹配，跳过渲染');
+                console.log('   - AppState.currentChat 存在:', !!AppState.currentChat);
+                console.log('   - ID 匹配:', AppState.currentChat?.id === convId);
             }
 
             // 检查是否需要自动总结
@@ -6617,9 +6769,12 @@
                         AppState.messages[convId] = [];
                     }
                     
+                    // 🔧 修复：在外部定义 aiMsg 变量，避免作用域错误
+                    let aiMsg = null;
+                    
                     // 创建语音消息
                     if (isVoice && voiceContent) {
-                        const aiVoiceMsg = {
+                        aiMsg = {
                             id: 'msg_' + Date.now() + '_' + Math.random(),
                             type: 'voice',
                             content: voiceContent,
@@ -6628,12 +6783,12 @@
                             time: new Date().toISOString(),
                             apiCallRound: currentApiCallRound
                         };
-                        AppState.messages[convId].push(aiVoiceMsg);
+                        AppState.messages[convId].push(aiMsg);
                     }
                     
                     // 创建地理位置消息
                     if (isLocation && locationName) {
-                        const aiLocationMsg = {
+                        aiMsg = {
                             id: 'msg_' + Date.now() + '_' + Math.random(),
                             type: 'location',
                             content: `${locationName}${locationAddress ? ' - ' + locationAddress : ''} (${locationDistance}米范围)`,
@@ -6644,12 +6799,12 @@
                             time: new Date().toISOString(),
                             apiCallRound: currentApiCallRound
                         };
-                        AppState.messages[convId].push(aiLocationMsg);
+                        AppState.messages[convId].push(aiMsg);
                     }
                     
                     // 创建普通文本或表情包消息
                     if (content || emojiUrl) {
-                        const aiMsg = {
+                        aiMsg = {
                             id: 'msg_' + Date.now() + '_' + Math.random(),
                             type: 'received',
                             content: content,
@@ -6663,14 +6818,14 @@
                     
                     // 更新会话信息
                     const conv = AppState.conversations.find(c => c.id === convId);
-                    if (conv) {
+                    if (conv && aiMsg) {
                         conv.lastMsg = content || '[表情包]';
                         conv.time = formatTime(new Date());
                         conv.lastMessageTime = aiMsg.time;
                     }
                     
                     // 更新最后一条心声记录的消息ID（只在最后一条消息时）
-                    if (index === messages.length - 1) {
+                    if (index === messages.length - 1 && aiMsg) {
                         MindStateManager.updateMindStateMessageId(convId, aiMsg.id);
                     }
                     
