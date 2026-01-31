@@ -216,12 +216,7 @@ const MainAPIManager = {
                         console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
                         appendAssistantMessage(convId, assistantText);
                         success = true;
-                        
-                        // 🔧 修复：强制刷新聊天界面，确保AI回复立即显示
-                        console.log('🔄 [MainAPIManager] API调用成功，强制刷新聊天界面');
-                        if (this.AppState.currentChat && this.AppState.currentChat.id === convId) {
-                            renderChatMessages(true);
-                        }
+                        // appendAssistantMessage 内部已经处理了渲染，无需重复调用
                     } else {
                         lastError = '未在返回中找到文本回复';
                         console.error('❌ 无法从主API响应中提取文本。完整响应数据:');
@@ -256,12 +251,7 @@ const MainAPIManager = {
             const chatTypingStatus = document.getElementById('chat-typing-status');
             if (chatTypingStatus) chatTypingStatus.style.display = 'none';
             if (chatTitle) chatTitle.style.display = 'inline';
-            
-            // 🔧 修复：API调用完成后再次强制刷新，确保消息显示（兜底保障）
-            if (success) {
-                console.log('🔄 [MainAPIManager] API调用完成，最终强制刷新聊天界面');
-                renderChatMessages(true);
-            }
+            // appendAssistantMessage 内部已经处理了渲染，无需重复调用
         }
         
         setLoadingStatus(false);

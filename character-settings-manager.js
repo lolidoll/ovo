@@ -1551,6 +1551,55 @@
                 conv.summaries = [];
             }
             
+            // 清空该角色的心声数据
+            if (typeof momentsManager !== 'undefined' && momentsManager) {
+                try {
+                    // 获取角色名称（优先使用备注名）
+                    const charName = conv.remark || conv.name;
+                    
+                    // 删除该角色发布的所有心声
+                    if (momentsManager.moments && Array.isArray(momentsManager.moments)) {
+                        momentsManager.moments = momentsManager.moments.filter(moment => {
+                            return moment.author !== charName;
+                        });
+                    }
+                    
+                    // 删除该角色的所有评论和回复
+                    if (momentsManager.comments && typeof momentsManager.comments === 'object') {
+                        Object.keys(momentsManager.comments).forEach(momentId => {
+                            if (Array.isArray(momentsManager.comments[momentId])) {
+                                // 过滤掉该角色的评论
+                                momentsManager.comments[momentId] = momentsManager.comments[momentId].filter(comment => {
+                                    // 删除该角色的评论
+                                    if (comment.author === charName) {
+                                        return false;
+                                    }
+                                    // 删除该角色的回复
+                                    if (comment.replies && Array.isArray(comment.replies)) {
+                                        comment.replies = comment.replies.filter(reply => reply.author !== charName);
+                                    }
+                                    return true;
+                                });
+                            }
+                        });
+                    }
+                    
+                    // 删除该角色相关的通知
+                    if (momentsManager.notifications && Array.isArray(momentsManager.notifications)) {
+                        momentsManager.notifications = momentsManager.notifications.filter(notif => {
+                            return notif.from !== charName;
+                        });
+                    }
+                    
+                    // 保存心声数据
+                    momentsManager.saveToStorage();
+                    
+                    console.log(`已清除角色 ${charName} 的所有心声数据`);
+                } catch (e) {
+                    console.error('清除心声数据时出错:', e);
+                }
+            }
+            
             // 保存到存储
             saveToStorage();
             
@@ -1567,7 +1616,7 @@
                 }
             }
             
-            showToast('所有聊天记录已删除');
+            showToast('所有聊天记录和心声已删除');
         },
 
         /**

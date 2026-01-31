@@ -6476,14 +6476,17 @@
             saveToStorage();
             renderConversations();
             
-            // 🔧 修复：无条件强制渲染，确保消息立即显示
+            // 🔧 修复：强制立即渲染，确保消息在当前对话中立即显示
             console.log('💬 appendSingleAssistantMessage - 强制渲染消息');
             console.log('   - convId:', convId);
             console.log('   - currentChat:', AppState.currentChat?.id);
             console.log('   - 消息数量:', AppState.messages[convId]?.length);
             
-            // 立即同步渲染，不检查currentChat（因为可能在异步过程中被改变）
-            renderChatMessages(true);
+            // 只在当前对话匹配时立即渲染（renderChatMessages内部会检查）
+            if (AppState.currentChat && AppState.currentChat.id === convId) {
+                console.log('✅ 当前对话匹配，立即渲染消息');
+                renderChatMessages(true);
+            }
 
             // 检查是否需要自动总结
             checkAndAutoSummarize(convId);
@@ -6629,11 +6632,15 @@
                     saveToStorage();
                     renderConversations();
                     
-                    // 🔧 修复：无条件强制渲染每条消息
-                    console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 强制渲染');
+                    // 🔧 修复：只在当前对话匹配时才渲染每条消息
+                    console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 检查渲染');
+                    console.log('   - convId:', convId, 'currentChat:', AppState.currentChat?.id);
                     
-                    // 立即同步渲染，不检查currentChat
-                    renderChatMessages(true);
+                    // 只在当前对话匹配时立即渲染
+                    if (AppState.currentChat && AppState.currentChat.id === convId) {
+                        console.log('✅ 当前对话匹配，立即渲染消息');
+                        renderChatMessages(true);
+                    }
                     
                     // 只在最后一条消息后触发通知
                     if (index === messages.length - 1) {
