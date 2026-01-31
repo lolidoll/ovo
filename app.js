@@ -3795,23 +3795,30 @@
                         font-weight: 400;
                     }
                     
-                    /* 移动端优化 */
+                    /* 移动端优化 - 更紧凑的布局，确保一行显示 */
                     @media (max-width: 768px) {
                         .message-context-menu {
-                            padding: 4px;
+                            padding: 3px;
                             gap: 0px;
+                            max-width: calc(100vw - 16px);
                         }
                         
                         .msg-menu-item {
-                            padding: 8px 8px;
-                            min-width: 44px;
-                            gap: 3px;
-                            font-size: 10px;
+                            padding: 6px 6px;
+                            min-width: 40px;
+                            gap: 2px;
+                            font-size: 9px;
                         }
                         
                         .msg-menu-icon {
-                            width: 18px;
-                            height: 18px;
+                            width: 16px;
+                            height: 16px;
+                            stroke-width: 2;
+                        }
+                        
+                        .msg-menu-item span {
+                            font-size: 9px;
+                            letter-spacing: 0;
                         }
                     }
                     
@@ -3876,10 +3883,11 @@
             };
             
             // 立即添加关闭监听器，点击任何地方都会关闭菜单
-            setTimeout(() => {
-                document.addEventListener('click', closeMenuHandler);
-                document.addEventListener('touchend', closeMenuHandler);
-            }, 100);
+            // 使用 requestAnimationFrame 确保菜单渲染完成后再添加监听器
+            requestAnimationFrame(() => {
+                document.addEventListener('click', closeMenuHandler, { capture: true });
+                document.addEventListener('touchend', closeMenuHandler, { capture: true });
+            });
         }
         
         // 统一的菜单关闭函数 - 带动画效果
@@ -6273,6 +6281,39 @@
             // ========== 第一步：清理AI回复（移除心声标记） ==========
             // 首先应用强大的清理函数
             text = cleanAIResponse(text);
+            
+            // ========== 第1.5步：检测并拆分包含换行的消息为多个独立气泡 ==========
+            // 如果文本包含连续的换行符（两个或更多），将其拆分为多个消息
+            const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+            
+            if (paragraphs.length > 1) {
+                // 检测到多个段落，转换为多消息格式
+                console.log('🔀 检测到多段落消息，拆分为', paragraphs.length, '个独立气泡');
+                const thinkingData = {
+                    messages: paragraphs.map((para, index) => ({
+                        content: para,
+                        delay: index === 0 ? 0 : 800 // 第一条立即显示，后续每条延迟800ms
+                    }))
+                };
+                appendMultipleAssistantMessages(convId, thinkingData);
+                return; // 提前返回，不继续执行单消息逻辑
+            }
+            
+            // 如果只有单个换行符，也拆分为多个消息（更自然的聊天体验）
+            const lines = text.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+            
+            if (lines.length > 1) {
+                // 检测到多行消息，转换为多消息格式
+                console.log('🔀 检测到多行消息，拆分为', lines.length, '个独立气泡');
+                const thinkingData = {
+                    messages: lines.map((line, index) => ({
+                        content: line,
+                        delay: index === 0 ? 0 : 600 // 第一条立即显示，后续每条延迟600ms
+                    }))
+                };
+                appendMultipleAssistantMessages(convId, thinkingData);
+                return; // 提前返回，不继续执行单消息逻辑
+            }
             
             // ========== 第二步：处理撤回标记 ==========
             // 匹配撤回标记：【撤回】消息ID【/撤回】
