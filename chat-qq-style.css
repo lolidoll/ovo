@@ -145,14 +145,35 @@
 /* ========================================
    顶部导航栏 - QQ风格
 ======================================== */
+.chat-nav {
+    border-bottom: none !important;
+}
+
 .chat-nav .back-btn span {
     display: none; /* 隐藏"返回"文字 */
 }
 
+/* 角色名字体大小和颜色 */
+.chat-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+}
+
+/* 正在打字中的颜色 */
+.chat-typing-status {
+    color: #666;
+}
+
+/* 返回按钮箭头颜色 */
+.back-arrow {
+    border-color: #666 !important;
+}
+
 /* 汉堡菜单样式（三条横线） */
 .chat-more-hamburger {
-    width: 20px;
-    height: 16px;
+    width: 16px;
+    height: 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -161,10 +182,10 @@
 
 .chat-more-hamburger span {
     display: block;
-    width: 18px;
-    height: 2.5px;
-    background: #000;
-    border-radius: 2px;
+    width: 14px;
+    height: 2px;
+    background: #666;
+    border-radius: 1px;
     transition: all 0.3s ease;
 }
 
