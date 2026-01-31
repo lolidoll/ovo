@@ -228,6 +228,38 @@
                         </div>
                     </div>
 
+                    <!-- Token统计 - 公主风格卡片 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            <span>Token统计</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="token-stats-container">
+                                <div class="token-stat-item">
+                                    <div class="token-stat-label">当前对话Token数</div>
+                                    <div class="token-stat-value" id="current-token-count">计算中...</div>
+                                    <div class="form-hint">包含系统提示词、角色设定、对话历史等所有内容</div>
+                                </div>
+                                <div class="token-stat-item">
+                                    <div class="token-stat-label">消息数量</div>
+                                    <div class="token-stat-value" id="message-count">-</div>
+                                </div>
+                                <button id="refresh-token-count-btn" class="btn-secondary btn-full" style="margin-top: 12px;">
+                                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                    </svg>
+                                    <span>刷新统计</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 对话总结功能 - 公主风格卡片 -->
                     <div class="settings-card">
                         <div class="card-header">
@@ -685,6 +717,14 @@
                 });
             }
 
+            // Token统计刷新按钮
+            const refreshTokenBtn = document.getElementById('refresh-token-count-btn');
+            if (refreshTokenBtn) {
+                refreshTokenBtn.addEventListener('click', () => {
+                    this.updateTokenCount(chat.id);
+                });
+            }
+
             // 手动总结按钮
             const manualSummaryBtn = document.getElementById('manual-summary-btn');
             if (manualSummaryBtn) {
@@ -692,6 +732,9 @@
                     this.manualSummarize(chat.id);
                 });
             }
+            
+            // 初始加载token统计
+            this.updateTokenCount(chat.id);
 
             // 保存按钮
             const saveBtn = document.getElementById('save-char-settings-btn');
@@ -1525,6 +1568,49 @@
             }
             
             showToast('所有聊天记录已删除');
+        },
+
+        /**
+         * 更新Token统计显示
+         */
+        updateTokenCount: function(chatId) {
+            const tokenCountEl = document.getElementById('current-token-count');
+            const messageCountEl = document.getElementById('message-count');
+            
+            if (!tokenCountEl || !messageCountEl) return;
+            
+            try {
+                // 检查MainAPIManager是否可用
+                if (window.MainAPIManager && typeof window.MainAPIManager.getConversationTokenStats === 'function') {
+                    const stats = window.MainAPIManager.getConversationTokenStats(chatId);
+                    tokenCountEl.textContent = stats.formattedTokens + ' tokens';
+                    // 使用粉色公主风格主题颜色
+                    tokenCountEl.style.color = '#ff9db8';
+                    tokenCountEl.style.fontWeight = 'bold';
+                    tokenCountEl.style.fontSize = '24px';
+                    tokenCountEl.style.textShadow = '0 1px 2px rgba(255, 157, 184, 0.1)';
+                    
+                    messageCountEl.textContent = stats.messageCount + ' 条';
+                    // 使用粉色公主风格主题颜色
+                    messageCountEl.style.color = '#ff9db8';
+                    messageCountEl.style.fontWeight = 'bold';
+                    messageCountEl.style.fontSize = '20px';
+                } else {
+                    tokenCountEl.textContent = '功能不可用';
+                    tokenCountEl.style.color = '#ffb6c8';
+                    tokenCountEl.style.opacity = '0.6';
+                    messageCountEl.textContent = '-';
+                    messageCountEl.style.color = '#ffb6c8';
+                    messageCountEl.style.opacity = '0.6';
+                }
+            } catch (error) {
+                console.error('Token统计计算失败:', error);
+                tokenCountEl.textContent = '计算失败';
+                tokenCountEl.style.color = '#ff6b9d';
+                messageCountEl.textContent = '-';
+                messageCountEl.style.color = '#ffb6c8';
+                messageCountEl.style.opacity = '0.6';
+            }
         },
 
         /**

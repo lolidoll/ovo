@@ -58,7 +58,11 @@
                     translateChinese: '你是一个翻译助手。将用户提供的非中文文本翻译成简体中文。只返回翻译结果，不要有其他内容。',
                     translateEnglish: '你是一个翻译助手。将用户提供的中文文本翻译成英文。只返回翻译结果，不要有其他内容。',
                     summarize: '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。总结应该：1. 抓住对话的核心内容和主题；2. 保留重要信息和决策；3. 简洁明了，长度适中（200-300字）；4. 用简体中文或原语言撰写。'
-                }
+                },
+                // AI图片生成设置
+                imageEndpoint: '', // 图片生成API端点（可选，默认使用主API端点）
+                imageApiKey: '', // 图片生成API密钥（可选，默认使用主API密钥）
+                imageApiType: 'openai' // 图片生成API类型：'openai', 'stability', 'custom'
             },
             user: {
                 name: '薯片机用户',
@@ -125,6 +129,12 @@
                 
                 // 初始化心声管理器
                 MindStateManager.init(AppState, saveToStorage, showToast, escapeHtml);
+                
+                // 初始化AI图片生成器
+                if (window.AIImageGenerator) {
+                    AIImageGenerator.init(AppState, showToast, saveToStorage);
+                    console.log('✅ AI图片生成器已初始化');
+                }
                 
                 renderUI();
                 updateDynamicFuncList();
@@ -3078,12 +3088,25 @@
                     bubble.classList.add('forward-moment-message');
                 } else if (msg.isImage && msg.imageData) {
                     // 图片消息：限制大小为100px（与表情包相同），保持纵横比，对齐头像
+                    // 如果是AI生成的图片，添加点击事件显示描述
+                    const clickHandler = msg.isAIGenerated && msg.imageDescription
+                        ? `onclick="AIImageGenerator.showImageDescriptionModal('${escapeHtml(msg.imageDescription).replace(/'/g, "\\'")}', ${msg.isGenerationFailed || false})"`
+                        : '';
+                    const cursorStyle = msg.isAIGenerated && msg.imageDescription ? 'cursor:pointer;' : '';
+                    
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <img src="${msg.imageData}" alt="图片" style="max-width:100px;max-height:100px;width:auto;height:auto;border-radius:8px;display:block;">
+                        <img src="${msg.imageData}"
+                             alt="图片"
+                             style="max-width:100px;max-height:100px;width:auto;height:auto;border-radius:8px;display:block;${cursorStyle}"
+                             ${clickHandler}
+                             title="${msg.isAIGenerated ? '点击查看图片描述' : ''}">
                     `;
                     // 为图片消息添加特殊class
                     bubble.classList.add('image-message');
+                    if (msg.isAIGenerated) {
+                        bubble.classList.add('ai-generated-image');
+                    }
                 } else if (msg.emojiUrl || msg.isEmoji) {
                     // 表情包消息：显示头像 + 100px表情包（统一处理AI和用户发送的表情包）
                     // emojiUrl是新格式，isEmoji标记的旧格式也需要支持
@@ -6837,7 +6860,16 @@
             // ========== 第一步：提前提取并保存心声数据（无论单消息还是多消息） ==========
             MindStateManager.handleMindStateSave(convId, text);
             
-            // ========== 第二步：检查是否包含思考过程格式 ==========
+            // ========== 第二步：处理AI图片生成指令 ==========
+            if (window.AIImageGenerator) {
+                text = AIImageGenerator.removeImageTags(text);
+                // 异步处理图片生成，不阻塞消息显示
+                AIImageGenerator.processImageInstructions(convId, text).catch(err => {
+                    console.error('处理图片生成指令失败:', err);
+                });
+            }
+            
+            // ========== 第三步：检查是否包含思考过程格式 ==========
             const thinkingData = parseThinkingProcess(text);
             
             if (thinkingData) {
@@ -6848,13 +6880,13 @@
                 appendSingleAssistantMessage(convId, text, true); // 传递skipMindStateExtraction=true，避免重复提取
             }
             
-            // ========== 第三步：更新心声按钮 ==========
+            // ========== 第四步：更新心声按钮 ==========
             const conv = AppState.conversations.find(c => c.id === convId);
             if (AppState.currentChat && AppState.currentChat.id === convId && conv) {
                 MindStateManager.updateMindStateButton(conv);
             }
             
-            // ========== 第四步：触发自动生成朋友圈 ==========
+            // ========== 第五步：触发自动生成朋友圈 ==========
             if (typeof MomentsGroupInteraction !== 'undefined' && conv) {
                 // 异步触发，不阻塞主流程
                 setTimeout(() => {
@@ -7078,18 +7110,9 @@
             console.log('💬 appendSingleAssistantMessage - 是否需要渲染:', shouldRender, 'currentChat:', AppState.currentChat?.id, 'convId:', convId);
             
             if (shouldRender) {
-                console.log('🎨 立即调用 renderChatMessages()');
-                // 使用 requestAnimationFrame 确保 DOM 更新在下一帧执行
-                requestAnimationFrame(() => {
-                    renderChatMessagesDebounced();
-                    // 确保滚动到底部
-                    requestAnimationFrame(() => {
-                        const container = document.getElementById('chat-messages');
-                        if (container) {
-                            container.scrollTop = container.scrollHeight;
-                        }
-                    });
-                });
+                console.log('🎨 立即调用 renderChatMessages() - 直接渲染，不使用防抖');
+                // 直接调用 renderChatMessages，不使用防抖，确保立即显示
+                renderChatMessages(true); // 强制滚动到底部
             }
             
             renderConversations();
@@ -7242,18 +7265,9 @@
                     console.log('💬 appendMultipleAssistantMessages [消息', index + 1, '/', messages.length, '] - 是否需要渲染:', shouldRender);
                     
                     if (shouldRender) {
-                        console.log('🎨 立即调用 renderChatMessages()');
-                        // 使用 requestAnimationFrame 确保 DOM 更新在下一帧执行
-                        requestAnimationFrame(() => {
-                            renderChatMessagesDebounced();
-                            // 确保滚动到底部
-                            requestAnimationFrame(() => {
-                                const container = document.getElementById('chat-messages');
-                                if (container) {
-                                    container.scrollTop = container.scrollHeight;
-                                }
-                            });
-                        });
+                        console.log('🎨 立即调用 renderChatMessages() - 直接渲染，不使用防抖');
+                        // 直接调用 renderChatMessages，不使用防抖，确保立即显示
+                        renderChatMessages(true); // 强制滚动到底部
                     }
                     
                     renderConversations();
