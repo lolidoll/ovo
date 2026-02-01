@@ -93,7 +93,8 @@ const MainAPIManager = {
         const convId = this.AppState.currentChat.id;
         const convState = getConversationState(convId);
         
-        // 检查该对话是否已在进行API调用
+        // 检查该对话的文字聊天是否已在进行API调用
+        // 注意：语音通话API使用独立的锁 isVoiceCallApiCalling，不影响文字聊天
         if (convState.isApiCalling) {
             this.showToast('正在等待上一次回复完成...');
             return;
@@ -131,6 +132,48 @@ const MainAPIManager = {
         const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
         const apiKey = api.apiKey || '';
         const messages = this.collectConversationForApi(convId);
+        
+        // 检查是否正在与当前角色进行语音通话，如果是则注入通话上下文
+        if (window.VoiceCallSystem && window.VoiceCallSystem.isInCall()) {
+            const currentCallerId = window.VoiceCallSystem.getCurrentCallerId();
+            if (currentCallerId === convId) {
+                // 正在与当前角色通话中，注入通话上下文
+                const callConversation = window.VoiceCallSystem.getCurrentCallConversation();
+                if (callConversation && callConversation.length > 0) {
+                    console.log('📞 检测到正在进行语音通话，注入通话上下文');
+                    
+                    // 构建通话上下文摘要
+                    const callContext = callConversation.map(msg => {
+                        const role = msg.sender === 'user' ? '用户' : '角色';
+                        return `${role}: ${msg.text}`;
+                    }).join('\n');
+                    
+                    // 在system消息之后添加通话上下文
+                    const contextMessage = {
+                        role: 'system',
+                        content: `【当前通话状态】你正在与用户进行语音通话，以下是通话中的最近对话内容（请作为重要上下文参考）：\n\n${callContext}\n\n请在回复时考虑通话中的对话内容，保持话题的连贯性。`
+                    };
+                    
+                    // 找到最后一个system消息的位置，在其后插入
+                    let lastSystemIndex = -1;
+                    for (let i = messages.length - 1; i >= 0; i--) {
+                        if (messages[i].role === 'system') {
+                            lastSystemIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    if (lastSystemIndex >= 0) {
+                        messages.splice(lastSystemIndex + 1, 0, contextMessage);
+                    } else {
+                        // 如果没有system消息，添加到开头
+                        messages.unshift(contextMessage);
+                    }
+                    
+                    console.log('✅ 通话上下文已注入，共', callConversation.length, '条对话');
+                }
+            }
+        }
         
         // 验证消息列表的有效性
         const validation = this.validateApiMessageList(messages);

@@ -91,7 +91,7 @@
             collections: [], // 收藏的消息 [{ id, convId, messageId, messageContent, senderName, senderAvatar, collectedAt, originalMessageTime }]
             walletHistory: [], // 钱包充值记录
             importedCards: [],
-            conversationStates: {},  // 运行时状态：{ convId: { isApiCalling, isTyping } }
+            conversationStates: {},  // 运行时状态：{ convId: { isApiCalling, isTyping, isVoiceCallApiCalling } }
             notification: {
                 current: null,  // 当前通知数据 { convId, name, avatar, message, time }
                 autoHideTimer: null,

@@ -33,6 +33,12 @@
     let ringtoneAudio = null;
     const RINGTONE_STORAGE_KEY = 'voiceCallRingtones';
     
+    // AI消息队列系统
+    let isAIResponding = false;
+    let aiRandomReplyTimer = null;
+    let messageQueue = [];
+    let isProcessingQueue = false;
+    
     /**
      * 初始化语音通话系统
      */
@@ -50,7 +56,11 @@
             startCall: startOutgoingCall,
             receiveCall: receiveIncomingCall,
             endCall: endCall,
-            getCallHistory: () => callHistory
+            getCallHistory: () => callHistory,
+            // 新增：获取当前通话状态和上下文
+            isInCall: () => callState.isInCall,
+            getCurrentCallerId: () => callState.callerId,
+            getCurrentCallConversation: () => currentCallConversation
         };
         
         console.log('[VoiceCall] 语音通话系统初始化完成');
@@ -101,7 +111,7 @@
                     <div class="call-chat-container">
                         <div class="call-chat-messages" id="call-chat-messages"></div>
                         <div class="call-chat-input-area">
-                            <input type="text" class="call-chat-input" id="call-chat-input" placeholder="在通话中发送消息...">
+                            <input type="text" class="call-chat-input" id="call-chat-input" placeholder="">
                             <button class="call-chat-send-btn" id="call-chat-send-btn">
                                 <svg viewBox="0 0 24 24" width="20" height="20">
                                     <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor"/>
@@ -354,24 +364,60 @@
             return;
         }
         
-        const characterName = currentChat.remark || currentChat.name || 'AI助手';
-        const characterAvatar = currentChat.avatar || getCharacterAvatar();
+        // 正确获取角色信息
+        const characterId = currentChat.id;
         
-        console.log('[VoiceCall] 角色信息:', characterName, characterAvatar);
+        // 优先使用备注名，其次使用角色名，最后用ID
+        let characterName = 'AI助手';
+        if (currentChat.remark && currentChat.remark.trim()) {
+            characterName = currentChat.remark.trim();
+        } else if (currentChat.name && currentChat.name.trim()) {
+            characterName = currentChat.name.trim();
+        }
+        
+        // 获取头像，确保有效
+        let characterAvatar = '';
+        if (currentChat.avatar && currentChat.avatar.trim()) {
+            characterAvatar = currentChat.avatar.trim();
+        } else {
+            characterAvatar = getCharacterAvatar();
+        }
+        
+        console.log('[VoiceCall] ===== 拨打语音通话 =====');
+        console.log('[VoiceCall] 当前聊天对象:', {
+            id: characterId,
+            name: characterName,
+            remark: currentChat.remark,
+            originalName: currentChat.name,
+            avatar: characterAvatar ? characterAvatar.substring(0, 50) + '...' : 'none'
+        });
+        console.log('[VoiceCall] AppState.currentChat完整对象:', currentChat);
         
         // 显示拨通确认弹窗
-        showCallConfirmModal(characterName, characterAvatar);
+        showCallConfirmModal(characterId, characterName, characterAvatar);
     }
     
     /**
      * 确认拨通后开始呼叫
      */
-    function confirmAndStartCall(characterName, characterAvatar) {
-        console.log('[VoiceCall] 开始拨通:', characterName);
+    function confirmAndStartCall(characterId, characterName, characterAvatar) {
+        console.log('[VoiceCall] ===== 确认并开始拨通 =====');
+        console.log('[VoiceCall] 参数:', {
+            id: characterId,
+            name: characterName,
+            avatar: characterAvatar ? characterAvatar.substring(0, 50) + '...' : 'none'
+        });
         
         callState.callType = 'outgoing';
+        callState.callerId = characterId;
         callState.callerName = characterName;
         callState.callerAvatar = characterAvatar;
+        
+        console.log('[VoiceCall] callState已更新:', {
+            callerId: callState.callerId,
+            callerName: callState.callerName,
+            callerAvatar: callState.callerAvatar ? callState.callerAvatar.substring(0, 50) + '...' : 'none'
+        });
         
         // 显示拨通中界面
         showCallingInterface(characterName, characterAvatar);
@@ -513,19 +559,38 @@
      * 显示通话界面
      */
     function showCallInterface(name, avatar) {
+        console.log('[VoiceCall] ===== 显示通话界面 =====');
+        console.log('[VoiceCall] 显示参数:', {
+            name: name,
+            avatar: avatar ? avatar.substring(0, 50) + '...' : 'none'
+        });
+        
         const callInterface = document.getElementById('voice-call-interface');
         const callAvatar = document.getElementById('call-avatar');
         const callUsername = document.getElementById('call-username');
         const floatingAvatar = document.getElementById('floating-avatar');
         
-        callAvatar.src = avatar;
-        callUsername.textContent = name;
-        floatingAvatar.src = avatar;
+        if (callAvatar) {
+            callAvatar.src = avatar;
+            console.log('[VoiceCall] 已设置 call-avatar.src:', avatar ? avatar.substring(0, 50) + '...' : 'none');
+        }
+        
+        if (callUsername) {
+            callUsername.textContent = name;
+            console.log('[VoiceCall] 已设置 call-username.textContent:', name);
+        }
+        
+        if (floatingAvatar) {
+            floatingAvatar.src = avatar;
+            console.log('[VoiceCall] 已设置 floating-avatar.src:', avatar ? avatar.substring(0, 50) + '...' : 'none');
+        }
         
         // 清空聊天记录
         document.getElementById('call-chat-messages').innerHTML = '';
         
         callInterface.classList.add('show');
+        
+        console.log('[VoiceCall] 通话界面已显示');
     }
     
     /**
@@ -726,8 +791,55 @@
         // 清空输入框
         input.value = '';
         
-        // 调用AI回复（包含通话上下文）
-        callAIInCall(message);
+        // 重置AI随机回复定时器（用户发言后延迟AI主动发言）
+        stopAIRandomReply();
+        startAIRandomReply();
+        
+        // 将消息加入队列
+        addToMessageQueue(message, false);
+    }
+    
+    /**
+     * 将消息添加到队列
+     */
+    function addToMessageQueue(userMessage, isAIInitiated = false) {
+        messageQueue.push({ userMessage, isAIInitiated, timestamp: Date.now() });
+        console.log(`📝 消息已加入队列 (队列长度: ${messageQueue.length})`);
+        
+        // 如果没有正在处理，立即开始处理队列
+        if (!isProcessingQueue) {
+            processMessageQueue();
+        }
+    }
+    
+    /**
+     * 处理消息队列
+     */
+    async function processMessageQueue() {
+        if (isProcessingQueue || messageQueue.length === 0) {
+            return;
+        }
+        
+        isProcessingQueue = true;
+        
+        while (messageQueue.length > 0) {
+            const { userMessage, isAIInitiated } = messageQueue.shift();
+            console.log(`⚙️ 处理队列消息 (剩余: ${messageQueue.length})`);
+            
+            try {
+                await callAIInCall(userMessage, isAIInitiated);
+            } catch (error) {
+                console.error('队列处理出错:', error);
+            }
+            
+            // 每条消息之间留一点间隔，避免过快
+            if (messageQueue.length > 0) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+        
+        isProcessingQueue = false;
+        console.log('✅ 队列处理完成');
     }
     
     /**
@@ -736,25 +848,34 @@
      * @param {boolean} isAIInitiated - 是否为AI主动发言
      */
     async function callAIInCall(userMessage, isAIInitiated = false) {
+        // 检查是否已有AI正在回复
+        if (isAIResponding) {
+            console.log('⚠️ AI正在回复中，跳过本次调用');
+            return;
+        }
+        
+        // 设置锁
+        isAIResponding = true;
+        
         try {
             // 检查API设置
             const api = window.AppState?.apiSettings || {};
             if (!api.endpoint || !api.selectedModel) {
-                removeTypingIndicator();
-                addCallMessage('ai', '请先在API设置中配置端点和模型');
+                isAIResponding = false;
+                console.error('❌ API未配置');
                 return;
             }
             
             // 获取当前角色信息
             const currentChat = window.AppState?.currentChat;
             if (!currentChat) {
-                removeTypingIndicator();
-                addCallMessage('ai', '未找到当前对话');
+                isAIResponding = false;
+                console.error('❌ 未找到当前对话');
                 return;
             }
             
-            // 显示AI正在输入
-            addCallMessage('ai', '正在输入...');
+            // 显示AI正在说话
+            addCallMessage('ai', '正在说话...');
             
             // 构建API消息数组
             const messages = [];
@@ -802,12 +923,12 @@
             callMessages.forEach(msg => {
                 if (msg.classList.contains('call-chat-message-user')) {
                     const text = msg.querySelector('.call-chat-text')?.textContent || '';
-                    if (text && text !== '正在输入...') {
+                    if (text && text !== '正在说话...') {
                         messages.push({ role: 'user', content: text });
                     }
                 } else if (msg.classList.contains('call-chat-message-ai')) {
                     const text = msg.querySelector('.call-chat-text')?.textContent || '';
-                    if (text && text !== '正在输入...') {
+                    if (text && text !== '正在说话...') {
                         messages.push({ role: 'assistant', content: text });
                     }
                 }
@@ -843,20 +964,20 @@
             const data = await response.json();
             const aiText = window.APIUtils.extractTextFromResponse(data);
             
-            // 移除"正在输入"
+            // 移除"正在说话"
             removeTypingIndicator();
             
             if (aiText && aiText.trim()) {
                 // 添加AI回复到通话界面
                 addCallMessage('ai', aiText);
             } else {
-                addCallMessage('ai', '抱歉，没有收到有效回复');
+                console.error('❌ AI回复为空');
             }
             
         } catch (error) {
             console.error('❌ AI回复失败:', error);
             removeTypingIndicator();
-            addCallMessage('ai', '抱歉，我遇到了一些问题。');
+            // 静默处理错误，不在聊天界面显示错误消息
         }
     }
     
@@ -905,12 +1026,12 @@
     }
     
     /**
-     * 移除"正在输入"指示器
+     * 移除"正在说话"指示器
      */
     function removeTypingIndicator() {
         const messagesContainer = document.getElementById('call-chat-messages');
         const lastMessage = messagesContainer.lastElementChild;
-        if (lastMessage && lastMessage.textContent.includes('正在输入')) {
+        if (lastMessage && lastMessage.textContent.includes('正在说话')) {
             lastMessage.remove();
         }
     }
@@ -1054,12 +1175,24 @@
     /**
      * 确认并开始通话（从确认弹窗点击拨打后）
      */
-    function confirmAndStartCall(characterName, characterAvatar) {
-        console.log('[VoiceCall] 确认拨打通话');
+    function confirmAndStartCall(characterId, characterName, characterAvatar) {
+        console.log('[VoiceCall] ===== 确认并开始拨通 =====');
+        console.log('[VoiceCall] 接收到的参数:', {
+            id: characterId,
+            name: characterName,
+            avatar: characterAvatar ? characterAvatar.substring(0, 50) + '...' : 'none'
+        });
         
         callState.callType = 'outgoing';
+        callState.callerId = characterId;
         callState.callerName = characterName;
         callState.callerAvatar = characterAvatar;
+        
+        console.log('[VoiceCall] callState已更新:', {
+            callerId: callState.callerId,
+            callerName: callState.callerName,
+            callerAvatar: callState.callerAvatar ? callState.callerAvatar.substring(0, 50) + '...' : 'none'
+        });
         
         // 清空之前的通话记录
         currentCallConversation = [];
@@ -1475,7 +1608,7 @@
     /**
      * 显示拨通确认弹窗
      */
-    function showCallConfirmModal(characterName, characterAvatar) {
+    function showCallConfirmModal(characterId, characterName, characterAvatar) {
         // 创建或获取确认弹窗
         let modal = document.getElementById('call-confirm-modal');
         if (!modal) {
@@ -1497,20 +1630,25 @@
             `;
             document.body.appendChild(modal);
             
-            // 绑定事件
+            // 绑定取消事件
             document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
                 modal.classList.remove('show');
-            });
-            
-            document.getElementById('confirm-ok-btn').addEventListener('click', () => {
-                modal.classList.remove('show');
-                confirmAndStartCall(characterName, characterAvatar);
             });
         }
         
         // 更新内容
         document.getElementById('confirm-avatar').src = characterAvatar;
         document.getElementById('confirm-name').textContent = characterName;
+        
+        // 每次都重新绑定确认按钮事件，确保使用最新的角色信息
+        const okBtn = document.getElementById('confirm-ok-btn');
+        const newOkBtn = okBtn.cloneNode(true);
+        okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+        
+        newOkBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            confirmAndStartCall(characterId, characterName, characterAvatar);
+        });
         
         // 显示
         modal.classList.add('show');
@@ -1627,9 +1765,6 @@
         callAIInCall('', true);
     }
     
-    // AI随机回复计时器
-    let aiRandomReplyTimer = null;
-    
     /**
      * 开始AI随机主动回复
      */
@@ -1644,8 +1779,8 @@
             
             aiRandomReplyTimer = setTimeout(() => {
                 if (callState.isInCall) {
-                    // 调用AI生成主动话题
-                    callAIInCall('', true);
+                    // 加入队列，由队列系统自动处理
+                    addToMessageQueue('', true);
                     
                     // 安排下一次
                     scheduleNextReply();
