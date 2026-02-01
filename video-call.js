@@ -263,9 +263,18 @@
      * 发起视频通话
      */
     function startVideoCall() {
+        console.log('[VideoCall] === 开始视频通话流程 ===');
+        console.log('[VideoCall] 当前状态检查:', JSON.stringify({
+            isInCall: videoCallState.isInCall,
+            callStartTime: videoCallState.callStartTime,
+            callType: videoCallState.callType,
+            callerId: videoCallState.callerId
+        }));
+        
         if (videoCallState.isInCall) {
-            showToast('当前正在视频通话中');
-            return;
+            console.warn('[VideoCall] 检测到异常：isInCall为true，但没有正在进行的通话');
+            showToast('检测到异常状态，正在重置...');
+            resetVideoCallState();
         }
         
         console.log('[VideoCall] 准备发起视频通话');
@@ -558,6 +567,9 @@
         
         showToast('视频通话已接通');
         
+        // 启动计时器
+        startDurationTimer();
+        
         // AI主动打招呼
         setTimeout(() => {
             triggerVideoAIGreeting();
@@ -577,7 +589,13 @@
         // 更新视频显示
         updateVideoDisplay();
         
-        // 清空聊天记录
+        // 重置计时器显示
+        const durationEl = document.getElementById('video-call-duration');
+        if (durationEl) {
+            durationEl.textContent = '00:00';
+        }
+        
+        // 清空当前聊天记录显示（但不清除历史，只显示当前通话消息）
         const chatMessages = document.getElementById('video-chat-messages');
         if (chatMessages) {
             chatMessages.innerHTML = '';
@@ -609,15 +627,32 @@
             // 滚动时显示消息容器
             chatContainer.classList.add('show-messages');
             
+            // 检测是否在底部附近（50px以内）
+            const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+            
+            // 标记用户是否正在查看历史
+            chatMessages.setAttribute('data-user-scrolling', !isNearBottom ? 'true' : 'false');
+            
             // 清除之前的定时器
             clearTimeout(scrollTimeout);
             
-            // 停止滚动3秒后隐藏（如果没有新消息）
+            // 停止滚动3秒后隐藏
             scrollTimeout = setTimeout(() => {
-                if (chatMessages.children.length === 0) {
+                if (chatMessages.children.length > 0) {
                     chatContainer.classList.remove('show-messages');
                 }
             }, 3000);
+        });
+        
+        // 触摸开始时不自动滚动
+        chatMessages.addEventListener('touchstart', () => {
+            chatMessages.setAttribute('data-user-scrolling', 'true');
+        });
+        
+        // 触摸结束时检查是否在底部
+        chatMessages.addEventListener('touchend', () => {
+            const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+            chatMessages.setAttribute('data-user-scrolling', !isNearBottom ? 'true' : 'false');
         });
     }
     
@@ -669,40 +704,16 @@
     }
     
     /**
-     * 结束视频通话
+     * 重置视频通话状态
+     * 用于初始化和异常状态清理
      */
-    function endVideoCall() {
-        console.log('[VideoCall] 结束视频通话');
-        
-        if (!videoCallState.isInCall) return;
-        
-        // 计算通话时长（秒）
-        const duration = Math.floor((Date.now() - videoCallState.callStartTime) / 1000);
-        
-        // 隐藏界面
-        const videoInterface = document.getElementById('video-call-interface');
-        if (videoInterface) {
-            videoInterface.classList.remove('show');
-        }
-        
-        // 隐藏悬浮窗
-        const floatingWindow = document.getElementById('video-call-floating-window');
-        if (floatingWindow) {
-            floatingWindow.classList.remove('show');
-        }
+    function resetVideoCallState() {
+        console.log('[VideoCall] 重置视频通话状态');
         
         // 停止计时器
         if (videoCallState.timerInterval) {
             clearInterval(videoCallState.timerInterval);
             videoCallState.timerInterval = null;
-        }
-        
-        // 更新聊天记录为"已挂断"
-        updateLastVideoCallRecord('ended', duration);
-        
-        // 如果有通话内容，进行总结
-        if (currentVideoCallConversation.length > 0) {
-            summarizeVideoCallConversation();
         }
         
         // 重置所有状态
@@ -723,10 +734,50 @@
         isVideoAIResponding = false;
         isProcessingVideoQueue = false;
         
-        console.log('[VideoCall] ✅ 所有状态已重置');
+        // 隐藏界面
+        const videoInterface = document.getElementById('video-call-interface');
+        if (videoInterface) {
+            videoInterface.classList.remove('show');
+        }
+        
+        // 隐藏悬浮窗
+        const floatingWindow = document.getElementById('video-call-floating-window');
+        if (floatingWindow) {
+            floatingWindow.classList.remove('show');
+        }
         
         // 更新聊天页面状态
         updateChatPageStatus();
+        
+        console.log('[VideoCall] ✅ 状态已重置');
+    }
+    
+    /**
+     * 结束视频通话
+     */
+    function endVideoCall() {
+        console.log('[VideoCall] 结束视频通话');
+        console.log('[VideoCall] 当前状态:', JSON.stringify({
+            isInCall: videoCallState.isInCall,
+            callStartTime: videoCallState.callStartTime,
+            isMinimized: videoCallState.isMinimized
+        }));
+        
+        // 计算通话时长（秒）
+        const duration = videoCallState.callStartTime
+            ? Math.floor((Date.now() - videoCallState.callStartTime) / 1000)
+            : 0;
+        
+        // 更新聊天记录为"已挂断"
+        updateLastVideoCallRecord('ended', duration);
+        
+        // 如果有通话内容，进行总结
+        if (currentVideoCallConversation.length > 0) {
+            summarizeVideoCallConversation();
+        }
+        
+        // 重置所有状态
+        resetVideoCallState();
         
         showToast('视频通话已结束');
     }
@@ -879,6 +930,12 @@
                 durationEl.textContent = timeStr;
             }
             
+            // 更新视频通话界面时长显示
+            const videoDurationEl = document.getElementById('video-call-duration');
+            if (videoDurationEl) {
+                videoDurationEl.textContent = timeStr;
+            }
+            
             // 更新聊天页面状态
             updateChatPageStatus();
         }, 1000);
@@ -897,6 +954,7 @@
             e.preventDefault();
             pos3 = e.clientX;
             pos4 = e.clientY;
+            element.classList.add('dragging');
             document.onmouseup = closeDragElement;
             document.onmousemove = elementDrag;
         }
@@ -905,6 +963,7 @@
             e.preventDefault();
             pos3 = e.touches[0].clientX;
             pos4 = e.touches[0].clientY;
+            element.classList.add('dragging');
             document.ontouchend = closeDragElement;
             document.ontouchmove = elementDragTouch;
         }
@@ -932,6 +991,7 @@
         }
         
         function closeDragElement() {
+            element.classList.remove('dragging');
             document.onmouseup = null;
             document.onmousemove = null;
             document.ontouchend = null;
@@ -1385,46 +1445,40 @@
      * 添加视频聊天消息（带自动隐藏功能）
      */
     function addVideoMessage(sender, text) {
-        const messagesContainer = document.getElementById('video-chat-messages');
-        const chatContainer = document.getElementById('video-chat-container');
-        if (!messagesContainer || !chatContainer) return;
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `video-chat-message ${sender}`;
-        messageDiv.textContent = text;
-        
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        // 显示聊天容器
-        chatContainer.classList.add('show-messages');
-        
-        // 5秒后隐藏消息
-        setTimeout(() => {
-            messageDiv.classList.add('hiding');
-            setTimeout(() => {
-                messageDiv.remove();
-                // 如果没有消息了，隐藏聊天容器
-                if (messagesContainer.children.length === 0) {
-                    chatContainer.classList.remove('show-messages');
-                }
-            }, 300);
-        }, 5000);
-        
-        // 保存到对话记录
-        currentVideoCallConversation.push({
-            sender: sender,
-            text: text,
-            timestamp: Date.now()
-        });
-        
-        // 如果是 AI 消息，使用 MiniMax TTS 播放语音
-        if (sender === 'ai' && window.MinimaxTTS && MinimaxTTS.isConfigured()) {
-            MinimaxTTS.speak(text).catch(err => {
-                console.error('[VideoCall] MiniMax TTS 播放失败:', err);
-            });
-        }
-    }
+       const messagesContainer = document.getElementById('video-chat-messages');
+       const chatContainer = document.getElementById('video-chat-container');
+       if (!messagesContainer || !chatContainer) return;
+       
+       const messageDiv = document.createElement('div');
+       messageDiv.className = `video-chat-message ${sender}`;
+       messageDiv.textContent = text;
+       
+       messagesContainer.appendChild(messageDiv);
+       
+       // 检查用户是否正在滚动查看历史
+       const isUserScrolling = messagesContainer.getAttribute('data-user-scrolling') === 'true';
+       if (!isUserScrolling) {
+           // 自动滚动到底部
+           messagesContainer.scrollTop = messagesContainer.scrollHeight;
+       }
+       
+       // 显示聊天容器
+       chatContainer.classList.add('show-messages');
+       
+       // 保存到对话记录
+       currentVideoCallConversation.push({
+           sender: sender,
+           text: text,
+           timestamp: Date.now()
+       });
+       
+       // 如果是 AI 消息，使用 MiniMax TTS 播放语音
+       if (sender === 'ai' && window.MinimaxTTS && MinimaxTTS.isConfigured()) {
+           MinimaxTTS.speak(text).catch(err => {
+               console.error('[VideoCall] MiniMax TTS 播放失败:', err);
+           });
+       }
+   }
     
     /**
      * Toast提示
@@ -1637,6 +1691,9 @@
     function initVideoCallSystem() {
         console.log('[VideoCall] 初始化视频通话系统');
         
+        // 确保状态被重置（防止页面刷新或异常后的残留状态）
+        resetVideoCallState();
+        
         // 绑定最小化按钮
         const minimizeBtn = document.getElementById('video-call-minimize-btn');
         if (minimizeBtn) {
@@ -1651,6 +1708,7 @@
             start: startVideoCall,
             receiveCall: receiveIncomingVideoCall,
             end: endVideoCall,
+            reset: resetVideoCallState,
             minimize: minimizeVideoCall,
             maximize: maximizeVideoCall,
             switchScreen: switchMainAndSmallScreen,

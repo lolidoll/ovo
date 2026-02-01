@@ -359,7 +359,7 @@
 /* ========== 聊天输入框（居中高级感） ========== */
 .video-chat-input-wrapper {
     position: absolute;
-    bottom: 120px;
+    bottom: 160px;
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
@@ -501,6 +501,7 @@
 }
 
 .video-btn-label {
+    display: none;
     font-size: 11px;
     color: rgba(255, 255, 255, 0.95);
     font-weight: 500;
@@ -798,10 +799,14 @@
     z-index: 9999;
     display: none;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.3),
         0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.video-call-floating-window.dragging {
+    transition: none;
 }
 
 .video-call-floating-window.show {

@@ -114,15 +114,46 @@ const MinimaxTTS = {
                 throw new Error(`MiniMax API 错误: ${response.status} ${errorText}`);
             }
 
-            const data = await response.json();
+            // 检查响应内容类型
+            const contentType = response.headers.get('content-type');
+            console.log('[MinimaxTTS] 响应内容类型:', contentType);
+
+            // 如果返回的是直接音频数据
+            if (contentType && contentType.includes('audio')) {
+                console.log('[MinimaxTTS] 检测到直接音频响应');
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // 缓存音频（注意：blob URL 在页面卸载后会失效）
+                this.audioCache.set(cacheKey, audioUrl);
+                
+                console.log('[MinimaxTTS] 语音合成成功（直接音频）');
+                return audioUrl;
+            }
+
+            // 尝试解析 JSON 响应
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                // 如果不是 JSON，尝试读取文本
+                const textResponse = await response.text();
+                console.error('[MinimaxTTS] 无法解析 JSON，原始响应:', textResponse.substring(0, 200));
+                throw new Error(`无法解析 API 响应: ${textResponse.substring(0, 100)}`);
+            }
             
-            if (!data.audio_file) {
-                console.error('[MinimaxTTS] 响应格式错误:', data);
-                throw new Error('未能获取音频数据');
+            console.log('[MinimaxTTS] API 响应数据:', data);
+
+            // 检查不同的响应格式
+            const audioBase64 = data.audio_file || data.audio || data.data;
+            
+            if (!audioBase64) {
+                console.error('[MinimaxTTS] 响应格式错误，缺少音频数据:', data);
+                throw new Error('未能获取音频数据，响应格式不正确');
             }
 
             // MiniMax 返回 base64 编码的音频
-            const audioUrl = `data:audio/mp3;base64,${data.audio_file}`;
+            const audioUrl = `data:audio/mp3;base64,${audioBase64}`;
             
             // 缓存音频
             this.audioCache.set(cacheKey, audioUrl);

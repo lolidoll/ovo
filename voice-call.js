@@ -978,6 +978,10 @@
             console.error('❌ AI回复失败:', error);
             removeTypingIndicator();
             // 静默处理错误，不在聊天界面显示错误消息
+        } finally {
+            // 无论成功或失败，都必须重置AI回复状态
+            isAIResponding = false;
+            console.log('✅ AI回复状态已重置');
         }
     }
     

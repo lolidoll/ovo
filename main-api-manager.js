@@ -56,6 +56,11 @@ const MainAPIManager = {
                         totalTokens += 128;
                     }
                 });
+            } else {
+                // 处理其他类型的消息（语音、位置、表情包等）
+                // 这些消息的 content 可能不是字符串也不是数组
+                // 给一个估算值来代表这类消息的 token 消耗
+                totalTokens += 20;
             }
         });
         
