@@ -787,6 +787,24 @@ This mindset beats memorizing 100 rules.`);
                 messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离范围：约${locationDistance}米`;
             }
             
+            // 如果消息是语音通话，提供通话状态信息
+            if (m.type === 'voicecall') {
+                const callStatus = m.callStatus || 'calling';
+                const callDuration = m.callDuration || 0;
+                const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                
+                if (callStatus === 'calling') {
+                    messageContent = `[${senderName}发起了语音通话，正在通话中...]`;
+                } else if (callStatus === 'cancelled') {
+                    messageContent = `[${senderName}取消了语音通话]`;
+                } else if (callStatus === 'ended') {
+                    const mins = Math.floor(callDuration / 60);
+                    const secs = callDuration % 60;
+                    const durationText = `${mins}分${secs}秒`;
+                    messageContent = `[${senderName}结束了语音通话，通话时长：${durationText}]`;
+                }
+            }
+            
             // 如果消息是转发的朋友圈,提供朋友圈信息
             if (m.isForward && m.forwardedMoment) {
                 const forwarded = m.forwardedMoment;

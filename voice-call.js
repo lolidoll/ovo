@@ -19,11 +19,19 @@
         callType: 'outgoing', // 'outgoing' | 'incoming'
         callerId: null,
         callerName: null,
-        callerAvatar: null
+        callerAvatar: null,
+        callingTimeout: null // 拨通等待的定时器
     };
     
     // 通话历史记录
     const callHistory = [];
+    
+    // 当前通话的对话记录
+    let currentCallConversation = [];
+    
+    // 铃声管理
+    let ringtoneAudio = null;
+    const RINGTONE_STORAGE_KEY = 'voiceCallRingtones';
     
     /**
      * 初始化语音通话系统
@@ -71,7 +79,11 @@
                         </svg>
                     </button>
                     <span class="call-status-text">语音通话中</span>
-                    <div style="width: 32px;"></div>
+                    <button class="call-ringtone-btn" id="call-ringtone-btn" title="设置铃声">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                        </svg>
+                    </button>
                 </div>
                 
                 <!-- 中间内容区 -->
@@ -131,17 +143,22 @@
                 </div>
             </div>
             
-            <!-- 最小化悬浮窗 -->
-            <div class="call-floating-window" id="call-floating-window">
-                <div class="floating-avatar-wrapper">
-                    <img class="floating-avatar" id="floating-avatar" src="" alt="avatar">
-                    <div class="floating-pulse"></div>
-                </div>
-                <div class="floating-duration" id="floating-duration">00:00</div>
-            </div>
         `;
         
         document.body.appendChild(callInterface);
+        
+        // 创建独立的悬浮窗（不在通话界面内部，避免被父容器隐藏）
+        const floatingWindow = document.createElement('div');
+        floatingWindow.id = 'call-floating-window';
+        floatingWindow.className = 'call-floating-window';
+        floatingWindow.innerHTML = `
+            <div class="floating-avatar-wrapper">
+                <img class="floating-avatar" id="floating-avatar" src="" alt="avatar">
+                <div class="floating-pulse"></div>
+            </div>
+            <div class="floating-duration" id="floating-duration">00:00</div>
+        `;
+        document.body.appendChild(floatingWindow);
         
         // 绑定事件
         bindCallInterfaceEvents();
@@ -199,8 +216,12 @@
         // 最小化按钮
         document.getElementById('call-minimize-btn').addEventListener('click', minimizeCall);
         
-        // 悬浮窗点击（恢复）
-        document.getElementById('call-floating-window').addEventListener('click', restoreCall);
+        // 铃声设置按钮
+        document.getElementById('call-ringtone-btn').addEventListener('click', openRingtoneSettings);
+        
+        // 悬浮窗拖拽和点击
+        const floatingWindow = document.getElementById('call-floating-window');
+        initFloatingWindowDrag(floatingWindow);
         
         // 麦克风按钮
         document.getElementById('call-mute-btn').addEventListener('click', toggleMute);
@@ -221,6 +242,98 @@
                 sendCallMessage();
             }
         });
+    }
+    
+    /**
+     * 初始化悬浮窗拖拽功能（支持触摸和鼠标）
+     */
+    function initFloatingWindowDrag(floatingWindow) {
+        let isDragging = false;
+        let startX, startY;
+        let initialX, initialY;
+        let hasMoved = false;
+        
+        // 鼠标事件
+        floatingWindow.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        
+        // 触摸事件（移动端）
+        floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
+        document.addEventListener('touchmove', drag, { passive: false });
+        document.addEventListener('touchend', dragEnd);
+        
+        function dragStart(e) {
+            isDragging = true;
+            hasMoved = false;
+            
+            // 获取初始位置
+            const rect = floatingWindow.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            
+            // 获取鼠标/触摸起始位置
+            if (e.type === 'touchstart') {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else {
+                startX = e.clientX;
+                startY = e.clientY;
+                e.preventDefault();
+            }
+            
+            floatingWindow.style.transition = 'none';
+        }
+        
+        function drag(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            hasMoved = true;
+            
+            let currentX, currentY;
+            if (e.type === 'touchmove') {
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+            } else {
+                currentX = e.clientX;
+                currentY = e.clientY;
+            }
+            
+            // 计算移动距离
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            
+            // 计算新位置
+            let newX = initialX + deltaX;
+            let newY = initialY + deltaY;
+            
+            // 边界限制
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const elementWidth = floatingWindow.offsetWidth;
+            const elementHeight = floatingWindow.offsetHeight;
+            
+            newX = Math.max(0, Math.min(newX, windowWidth - elementWidth));
+            newY = Math.max(0, Math.min(newY, windowHeight - elementHeight));
+            
+            // 应用新位置
+            floatingWindow.style.left = newX + 'px';
+            floatingWindow.style.top = newY + 'px';
+            floatingWindow.style.right = 'auto';
+        }
+        
+        function dragEnd(e) {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            floatingWindow.style.transition = 'all 0.3s ease';
+            
+            // 如果没有移动，则视为点击，恢复通话界面
+            if (!hasMoved) {
+                restoreCall();
+            }
+        }
     }
     
     /**
@@ -265,7 +378,7 @@
         
         // 模拟拨通等待过程（1.5-3秒随机）
         const waitTime = 1500 + Math.random() * 1500;
-        setTimeout(() => {
+        callState.callingTimeout = setTimeout(() => {
             // 拨通成功
             callConnected(characterName, characterAvatar);
         }, waitTime);
@@ -276,6 +389,12 @@
      */
     function callConnected(characterName, characterAvatar) {
         console.log('[VoiceCall] 通话已接通');
+        
+        // 隐藏拨通中界面
+        const callingInterface = document.getElementById('calling-interface');
+        if (callingInterface) {
+            callingInterface.classList.remove('show');
+        }
         
         callState.isInCall = true;
         callState.callStartTime = Date.now();
@@ -418,16 +537,53 @@
         const callInterface = document.getElementById('voice-call-interface');
         const floatingWindow = document.getElementById('call-floating-window');
         
-        console.log('[VoiceCall] 悬浮窗元素:', floatingWindow);
-        console.log('[VoiceCall] 悬浮窗当前类名:', floatingWindow?.className);
+        if (!floatingWindow) {
+            console.error('[VoiceCall] 错误：找不到悬浮窗元素！');
+            return;
+        }
         
-        callInterface.classList.remove('show');
+        console.log('[VoiceCall] 悬浮窗元素存在:', floatingWindow);
+        console.log('[VoiceCall] 悬浮窗当前类名:', floatingWindow.className);
+        
+        // 隐藏通话界面
+        if (callInterface) {
+            callInterface.classList.remove('show');
+        }
+        
+        // 显示悬浮窗
         floatingWindow.classList.add('show');
         
-        console.log('[VoiceCall] 添加show后的类名:', floatingWindow?.className);
-        console.log('[VoiceCall] 悬浮窗样式 display:', window.getComputedStyle(floatingWindow).display);
-        console.log('[VoiceCall] 悬浮窗样式 opacity:', window.getComputedStyle(floatingWindow).opacity);
-        console.log('[VoiceCall] 悬浮窗样式 z-index:', window.getComputedStyle(floatingWindow).zIndex);
+        // 强制刷新样式
+        floatingWindow.style.display = 'flex';
+        floatingWindow.style.visibility = 'visible';
+        floatingWindow.style.opacity = '1';
+        
+        console.log('[VoiceCall] 添加show后的类名:', floatingWindow.className);
+        
+        // 延迟检查样式
+        setTimeout(() => {
+            const styles = window.getComputedStyle(floatingWindow);
+            console.log('[VoiceCall] 最终样式:');
+            console.log('  - display:', styles.display);
+            console.log('  - visibility:', styles.visibility);
+            console.log('  - opacity:', styles.opacity);
+            console.log('  - z-index:', styles.zIndex);
+            console.log('  - position:', styles.position);
+            console.log('  - top:', styles.top);
+            console.log('  - right:', styles.right);
+            console.log('  - width:', styles.width);
+            console.log('  - height:', styles.height);
+            
+            // 检查是否可见
+            const rect = floatingWindow.getBoundingClientRect();
+            console.log('[VoiceCall] 元素位置:', {
+                top: rect.top,
+                right: window.innerWidth - rect.right,
+                width: rect.width,
+                height: rect.height,
+                inViewport: rect.top >= 0 && rect.right <= window.innerWidth
+            });
+        }, 100);
         
         callState.isMinimized = true;
     }
@@ -500,8 +656,13 @@
         callInterface.classList.remove('show');
         floatingWindow.classList.remove('show');
         
-        // 记录通话历史
-        addCallRecordToChat(callState.callType === 'incoming' ? '通话时长' : '通话时长', duration);
+        // 更新聊天记录为"已挂断"
+        updateLastCallRecord('ended', duration);
+        
+        // 如果有通话内容，进行总结
+        if (currentCallConversation.length > 0) {
+            summarizeCallConversation();
+        }
         
         // 重置状态
         resetCallState();
@@ -571,44 +732,127 @@
     
     /**
      * 在通话中调用AI
+     * @param {string} userMessage - 用户消息
+     * @param {boolean} isAIInitiated - 是否为AI主动发言
      */
-    async function callAIInCall(userMessage) {
+    async function callAIInCall(userMessage, isAIInitiated = false) {
         try {
-            // 获取最近30条对话作为上下文
-            const context = getRecentChatContext(30);
-            
-            // 获取角色设定
-            const characterSettings = window.currentCharacterSettings || {};
-            const userSettings = getUserSettings();
-            
-            // 构建提示词
-            const systemPrompt = `你正在与用户进行语音通话。
-角色设定: ${characterSettings.personality || '友好的AI助手'}
-用户设定: ${userSettings.name || '用户'}
-当前状态: 语音通话中
-
-最近的聊天记录:
-${context}
-
-请用简短、口语化的方式回复，就像在打电话一样。`;
-            
-            // 调用主API管理器
-            if (window.MainAPIManager && typeof window.MainAPIManager.callApiWithConversation === 'function') {
-                addCallMessage('ai', '正在输入...');
-                
-                const response = await window.MainAPIManager.callApiWithConversation(
-                    userMessage,
-                    systemPrompt
-                );
-                
-                // 移除"正在输入"
+            // 检查API设置
+            const api = window.AppState?.apiSettings || {};
+            if (!api.endpoint || !api.selectedModel) {
                 removeTypingIndicator();
-                
-                // 添加AI回复
-                addCallMessage('ai', response);
-            } else {
-                addCallMessage('ai', '抱歉，通话功能暂时不可用。');
+                addCallMessage('ai', '请先在API设置中配置端点和模型');
+                return;
             }
+            
+            // 获取当前角色信息
+            const currentChat = window.AppState?.currentChat;
+            if (!currentChat) {
+                removeTypingIndicator();
+                addCallMessage('ai', '未找到当前对话');
+                return;
+            }
+            
+            // 显示AI正在输入
+            addCallMessage('ai', '正在输入...');
+            
+            // 构建API消息数组
+            const messages = [];
+            
+            // 系统提示词：包含角色设定
+            const charName = currentChat.name || 'AI';
+            const charDescription = currentChat.description || '';
+            const userName = currentChat.userNameForChar || window.AppState?.user?.name || '用户';
+            const userPersonality = window.AppState?.user?.personality || '';
+            
+            let systemPrompt = `你正在与用户进行语音通话。
+
+角色名称：${charName}
+角色设定：${charDescription}
+
+用户名称：${userName}
+用户设定：${userPersonality}
+
+当前状态：语音通话中
+
+回复要求：
+1. 用简短、口语化的方式回复，就像在打电话一样
+2. 每次回复1-2句话即可，不要太长
+3. 语气要自然，符合角色性格`;
+
+            if (isAIInitiated) {
+                systemPrompt += `
+
+4. 现在请你主动说一句话，可以是：
+   - 延续刚才的话题
+   - 通话刚接通时的打招呼
+   - 询问对方的近况
+   - 分享一个轻松的话题
+   - 关心对方
+请用简短、自然的方式说话，只需一句话。`;
+            }
+            
+            messages.push({
+                role: 'system',
+                content: systemPrompt
+            });
+            
+            // 添加通话聊天记录作为上下文
+            const callMessages = document.querySelectorAll('.call-chat-message');
+            callMessages.forEach(msg => {
+                if (msg.classList.contains('call-chat-message-user')) {
+                    const text = msg.querySelector('.call-chat-text')?.textContent || '';
+                    if (text && text !== '正在输入...') {
+                        messages.push({ role: 'user', content: text });
+                    }
+                } else if (msg.classList.contains('call-chat-message-ai')) {
+                    const text = msg.querySelector('.call-chat-text')?.textContent || '';
+                    if (text && text !== '正在输入...') {
+                        messages.push({ role: 'assistant', content: text });
+                    }
+                }
+            });
+            
+            // 添加当前用户消息
+            if (!isAIInitiated && userMessage) {
+                messages.push({ role: 'user', content: userMessage });
+            } else if (isAIInitiated) {
+                messages.push({ role: 'user', content: '请说一句话' });
+            }
+            
+            // 调用API
+            const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
+            const endpoint = baseEndpoint + '/chat/completions';
+            
+            const body = {
+                model: api.selectedModel,
+                messages: messages,
+                temperature: 0.8,
+                max_tokens: 500, // 语音通话回复要简短
+                stream: false
+            };
+            
+            const fetchOptions = window.APIUtils.createFetchOptions(api.apiKey || '', body);
+            
+            const response = await fetch(endpoint, fetchOptions);
+            
+            if (!response.ok) {
+                throw new Error(`API调用失败: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const aiText = window.APIUtils.extractTextFromResponse(data);
+            
+            // 移除"正在输入"
+            removeTypingIndicator();
+            
+            if (aiText && aiText.trim()) {
+                // 添加AI回复到通话界面
+                addCallMessage('ai', aiText);
+            } else {
+                addCallMessage('ai', '抱歉，没有收到有效回复');
+            }
+            
         } catch (error) {
             console.error('❌ AI回复失败:', error);
             removeTypingIndicator();
@@ -632,6 +876,21 @@ ${context}
                     <div class="call-chat-text">${escapeHtml(content)}</div>
                 </div>
             `;
+            
+            // 记录非系统消息到通话对话历史
+            if (type === 'user') {
+                currentCallConversation.push({
+                    role: 'user',
+                    content: content,
+                    timestamp: Date.now()
+                });
+            } else if (type === 'ai') {
+                currentCallConversation.push({
+                    role: 'assistant',
+                    content: content,
+                    timestamp: Date.now()
+                });
+            }
         }
         
         messagesContainer.appendChild(messageDiv);
@@ -708,32 +967,40 @@ ${context}
      * 添加通话记录到聊天
      */
     function addCallRecordToChat(status, duration) {
-        // 调用主应用的添加消息方法
-        if (window.addMessageToChatUI) {
-            const durationText = duration > 0 ? formatDuration(duration) : '';
-            const recordHTML = `
-                <div class="call-record-message">
-                    <div class="call-record-icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16">
-                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="currentColor"/>
-                        </svg>
-                    </div>
-                    <div class="call-record-content">
-                        <div class="call-record-title">语音通话</div>
-                        <div class="call-record-detail">${status} ${durationText}</div>
-                    </div>
-                </div>
-            `;
-            
-            const bubble = document.createElement('div');
-            bubble.className = 'chat-bubble system-bubble';
-            bubble.innerHTML = recordHTML;
-            
-            const chatArea = document.getElementById('chat-messages-area');
-            if (chatArea) {
-                chatArea.appendChild(bubble);
-                chatArea.scrollTop = chatArea.scrollHeight;
-            }
+        const currentConv = window.AppState?.currentChat;
+        if (!currentConv) {
+            console.warn('[VoiceCall] 无法添加通话记录：未找到当前对话');
+            return;
+        }
+        
+        const convId = currentConv.id;
+        
+        // 创建通话消息对象
+        const callMessage = {
+            id: generateCallMessageId(),
+            conversationId: convId,
+            type: 'voicecall',
+            callStatus: status, // 'calling' | 'cancelled' | 'ended'
+            callDuration: duration,
+            sender: callState.callType === 'outgoing' ? 'sent' : 'received',
+            timestamp: new Date().toISOString(),
+            content: `${status} ${duration > 0 ? formatDuration(duration) : ''}`
+        };
+        
+        // 添加到AppState消息列表
+        if (!window.AppState.messages[convId]) {
+            window.AppState.messages[convId] = [];
+        }
+        window.AppState.messages[convId].push(callMessage);
+        
+        // 保存到本地存储
+        if (typeof window.saveToStorage === 'function') {
+            window.saveToStorage();
+        }
+        
+        // 重新渲染聊天消息
+        if (typeof window.renderChatMessages === 'function') {
+            window.renderChatMessages();
         }
         
         // 添加到历史记录
@@ -744,6 +1011,111 @@ ${context}
             duration: duration,
             timestamp: Date.now()
         });
+    }
+    
+    /**
+     * 生成通话消息ID
+     */
+    function generateCallMessageId() {
+        return `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    /**
+     * 更新最后一条通话记录
+     */
+    function updateLastCallRecord(newStatus, newDuration) {
+        const currentConv = window.AppState?.currentChat;
+        if (!currentConv) return;
+        
+        const convId = currentConv.id;
+        const messages = window.AppState.messages[convId];
+        
+        if (!messages || messages.length === 0) return;
+        
+        // 找到最后一条通话消息
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].type === 'voicecall') {
+                messages[i].callStatus = newStatus;
+                messages[i].callDuration = newDuration;
+                messages[i].content = `${newStatus} ${newDuration > 0 ? formatDuration(newDuration) : ''}`;
+                
+                // 保存并重新渲染
+                if (typeof window.saveToStorage === 'function') {
+                    window.saveToStorage();
+                }
+                if (typeof window.renderChatMessages === 'function') {
+                    window.renderChatMessages();
+                }
+                break;
+            }
+        }
+    }
+    
+    /**
+     * 确认并开始通话（从确认弹窗点击拨打后）
+     */
+    function confirmAndStartCall(characterName, characterAvatar) {
+        console.log('[VoiceCall] 确认拨打通话');
+        
+        callState.callType = 'outgoing';
+        callState.callerName = characterName;
+        callState.callerAvatar = characterAvatar;
+        
+        // 清空之前的通话记录
+        currentCallConversation = [];
+        
+        // 添加"正在通话中"状态到聊天
+        addCallRecordToChat('calling', 0);
+        
+        // 显示拨通中界面
+        showCallingInterface(characterName, characterAvatar);
+        
+        // 设置自动接通定时器（3秒后）
+        callState.callingTimeout = setTimeout(() => {
+            acceptCallingAndConnect();
+        }, 3000);
+    }
+    
+    /**
+     * 接通通话（拨通中自动接通）
+     */
+    function acceptCallingAndConnect() {
+        console.log('[VoiceCall] 通话已接通');
+        
+        // 清除定时器
+        if (callState.callingTimeout) {
+            clearTimeout(callState.callingTimeout);
+            callState.callingTimeout = null;
+        }
+        
+        // 隐藏拨通中界面
+        const callingInterface = document.getElementById('calling-interface');
+        if (callingInterface) {
+            callingInterface.classList.remove('show');
+        }
+        
+        // 设置通话状态
+        callState.isInCall = true;
+        callState.callStartTime = Date.now();
+        
+        // 显示通话界面
+        showCallInterface(callState.callerName, callState.callerAvatar);
+        
+        // 开始计时
+        startCallTimer();
+        
+        // 添加系统消息
+        addCallSystemMessage('通话已接通');
+        
+        showToast('语音通话已接通');
+        
+        // AI主动打招呼
+        setTimeout(() => {
+            triggerAIGreeting();
+        }, 800);
+        
+        // 开始AI随机回复机制
+        startAIRandomReply();
     }
     
     /**
@@ -759,6 +1131,7 @@ ${context}
         callState.callType = 'outgoing';
         callState.callerName = null;
         callState.callerAvatar = null;
+        callState.callingTimeout = null;
         
         // 重置按钮状态
         document.getElementById('call-mute-btn')?.classList.remove('muted');
@@ -769,8 +1142,29 @@ ${context}
      * 播放铃声
      */
     function playRingtone() {
-        // 可以在这里添加实际的铃声播放逻辑
         console.log('🔔 播放铃声');
+        
+        // 停止之前的铃声
+        if (ringtoneAudio) {
+            ringtoneAudio.pause();
+            ringtoneAudio.currentTime = 0;
+        }
+        
+        // 获取当前角色的自定义铃声
+        const characterId = callState.callerId || window.currentCharacterId;
+        const customRingtone = getCustomRingtone(characterId);
+        
+        if (customRingtone) {
+            ringtoneAudio = new Audio(customRingtone);
+            ringtoneAudio.loop = true;
+            ringtoneAudio.volume = 0.5;
+            ringtoneAudio.play().catch(err => {
+                console.error('播放自定义铃声失败:', err);
+            });
+        } else {
+            // 使用默认铃声（可选）
+            console.log('使用默认铃声');
+        }
     }
     
     /**
@@ -778,6 +1172,280 @@ ${context}
      */
     function stopRingtone() {
         console.log('🔕 停止铃声');
+        
+        if (ringtoneAudio) {
+            ringtoneAudio.pause();
+            ringtoneAudio.currentTime = 0;
+            ringtoneAudio = null;
+        }
+    }
+    
+    /**
+     * 打开铃声设置弹窗
+     */
+    function openRingtoneSettings() {
+        const characterId = callState.callerId || window.currentCharacterId;
+        const characterName = callState.callerName || window.currentCharacterName || '当前角色';
+        
+        // 创建铃声设置弹窗
+        const modal = document.createElement('div');
+        modal.className = 'ringtone-settings-modal';
+        modal.innerHTML = `
+            <div class="ringtone-settings-content">
+                <div class="ringtone-settings-header">
+                    <h3>设置铃声</h3>
+                    <button class="ringtone-close-btn" onclick="this.closest('.ringtone-settings-modal').remove()">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="ringtone-settings-body">
+                    <p class="ringtone-character-name">为 <strong>${characterName}</strong> 设置专属铃声</p>
+                    
+                    <div class="ringtone-current">
+                        <p class="ringtone-label">当前铃声：</p>
+                        <p class="ringtone-status" id="ringtone-status">
+                            ${getCustomRingtone(characterId) ? '已设置自定义铃声' : '使用默认铃声'}
+                        </p>
+                    </div>
+                    
+                    <div class="ringtone-actions">
+                        <button class="ringtone-upload-btn" id="ringtone-upload-btn">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z" fill="currentColor"/>
+                            </svg>
+                            导入本地铃声
+                        </button>
+                        
+                        ${getCustomRingtone(characterId) ? `
+                            <button class="ringtone-test-btn" id="ringtone-test-btn">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M8 5v14l11-7z" fill="currentColor"/>
+                                </svg>
+                                试听铃声
+                            </button>
+                            
+                            <button class="ringtone-delete-btn" id="ringtone-delete-btn">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                </svg>
+                                删除铃声
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    <p class="ringtone-hint">💡 支持 MP3、WAV、OGG 等音频格式</p>
+                </div>
+                
+                <input type="file" id="ringtone-file-input" accept="audio/*" style="display: none;">
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // 绑定事件
+        const uploadBtn = modal.querySelector('#ringtone-upload-btn');
+        const fileInput = modal.querySelector('#ringtone-file-input');
+        const testBtn = modal.querySelector('#ringtone-test-btn');
+        const deleteBtn = modal.querySelector('#ringtone-delete-btn');
+        
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleRingtoneUpload(e, characterId, modal);
+        });
+        
+        if (testBtn) {
+            testBtn.addEventListener('click', () => {
+                testRingtone(characterId);
+            });
+        }
+        
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                deleteRingtone(characterId, modal);
+            });
+        }
+        
+        // 点击背景关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+    
+    /**
+     * 处理铃声上传
+     */
+    function handleRingtoneUpload(event, characterId, modal) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // 检查文件类型
+        if (!file.type.startsWith('audio/')) {
+            alert('请选择音频文件！');
+            return;
+        }
+        
+        // 检查文件大小（限制10MB）
+        if (file.size > 10 * 1024 * 1024) {
+            alert('文件过大！请选择小于10MB的音频文件。');
+            return;
+        }
+        
+        // 读取文件为Base64
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const audioData = e.target.result;
+            
+            // 保存铃声
+            saveCustomRingtone(characterId, audioData);
+            
+            // 更新界面
+            const statusEl = modal.querySelector('#ringtone-status');
+            if (statusEl) {
+                statusEl.textContent = '已设置自定义铃声';
+            }
+            
+            // 重新打开弹窗以显示新按钮
+            modal.remove();
+            openRingtoneSettings();
+            
+            // 提示成功
+            showToast('铃声设置成功！');
+        };
+        
+        reader.onerror = function() {
+            alert('文件读取失败，请重试！');
+        };
+        
+        reader.readAsDataURL(file);
+    }
+    
+    /**
+     * 保存自定义铃声
+     */
+    function saveCustomRingtone(characterId, audioData) {
+        let ringtones = {};
+        try {
+            const stored = localStorage.getItem(RINGTONE_STORAGE_KEY);
+            if (stored) {
+                ringtones = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('读取铃声数据失败:', e);
+        }
+        
+        ringtones[characterId] = audioData;
+        
+        try {
+            localStorage.setItem(RINGTONE_STORAGE_KEY, JSON.stringify(ringtones));
+            console.log(`已为角色 ${characterId} 保存自定义铃声`);
+        } catch (e) {
+            console.error('保存铃声失败:', e);
+            alert('保存失败！可能是存储空间不足。');
+        }
+    }
+    
+    /**
+     * 获取自定义铃声
+     */
+    function getCustomRingtone(characterId) {
+        try {
+            const stored = localStorage.getItem(RINGTONE_STORAGE_KEY);
+            if (stored) {
+                const ringtones = JSON.parse(stored);
+                return ringtones[characterId] || null;
+            }
+        } catch (e) {
+            console.error('读取铃声数据失败:', e);
+        }
+        return null;
+    }
+    
+    /**
+     * 删除自定义铃声
+     */
+    function deleteRingtone(characterId, modal) {
+        if (!confirm('确定要删除这个铃声吗？')) {
+            return;
+        }
+        
+        try {
+            const stored = localStorage.getItem(RINGTONE_STORAGE_KEY);
+            if (stored) {
+                const ringtones = JSON.parse(stored);
+                delete ringtones[characterId];
+                localStorage.setItem(RINGTONE_STORAGE_KEY, JSON.stringify(ringtones));
+                
+                // 更新界面
+                modal.remove();
+                openRingtoneSettings();
+                
+                showToast('铃声已删除');
+            }
+        } catch (e) {
+            console.error('删除铃声失败:', e);
+            alert('删除失败！');
+        }
+    }
+    
+    /**
+     * 试听铃声
+     */
+    function testRingtone(characterId) {
+        const ringtone = getCustomRingtone(characterId);
+        if (!ringtone) {
+            alert('没有设置铃声！');
+            return;
+        }
+        
+        // 停止之前的试听
+        if (ringtoneAudio) {
+            ringtoneAudio.pause();
+            ringtoneAudio = null;
+        }
+        
+        // 播放试听
+        ringtoneAudio = new Audio(ringtone);
+        ringtoneAudio.volume = 0.5;
+        ringtoneAudio.play().catch(err => {
+            console.error('播放失败:', err);
+            alert('播放失败！');
+        });
+        
+        // 3秒后自动停止
+        setTimeout(() => {
+            if (ringtoneAudio) {
+                ringtoneAudio.pause();
+                ringtoneAudio = null;
+            }
+        }, 3000);
+    }
+    
+    /**
+     * 显示提示消息
+     */
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'ringtone-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 2000);
     }
     
     /**
@@ -879,8 +1547,7 @@ ${context}
             
             // 绑定取消按钮
             document.getElementById('calling-cancel-btn').addEventListener('click', () => {
-                callingInterface.classList.remove('show');
-                showToast('已取消通话');
+                cancelCalling();
             });
         }
         
@@ -890,6 +1557,35 @@ ${context}
         
         // 显示
         callingInterface.classList.add('show');
+    }
+    
+    /**
+     * 取消拨通
+     */
+    function cancelCalling() {
+        console.log('[VoiceCall] 取消拨通');
+        
+        // 清除拨通定时器
+        if (callState.callingTimeout) {
+            clearTimeout(callState.callingTimeout);
+            callState.callingTimeout = null;
+        }
+        
+        // 隐藏拨通中界面
+        const callingInterface = document.getElementById('calling-interface');
+        if (callingInterface) {
+            callingInterface.classList.remove('show');
+        }
+        
+        // 更新聊天记录为"已取消"
+        updateLastCallRecord('cancelled', 0);
+        
+        // 重置状态
+        callState.callType = 'outgoing';
+        callState.callerName = null;
+        callState.callerAvatar = null;
+        
+        showToast('已取消通话');
     }
     
     /**
@@ -927,15 +1623,8 @@ ${context}
      * AI打招呼（通话接通时）
      */
     function triggerAIGreeting() {
-        const greetings = [
-            '喂？听得到吗？',
-            '嗨~',
-            '接通啦！',
-            '你好呀~',
-            '诶，在吗？'
-        ];
-        const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-        callAIInCall(greeting, true);
+        // 调用AI生成打招呼内容
+        callAIInCall('', true);
     }
     
     // AI随机回复计时器
@@ -955,17 +1644,8 @@ ${context}
             
             aiRandomReplyTimer = setTimeout(() => {
                 if (callState.isInCall) {
-                    // 随机主动话题
-                    const topics = [
-                        '对了，你那边怎么样？',
-                        '嗯...我在想...',
-                        '话说...',
-                        '诶，刚刚想到一件事',
-                        '你有空吗？',
-                        '最近怎么样呀？'
-                    ];
-                    const topic = topics[Math.floor(Math.random() * topics.length)];
-                    callAIInCall(topic, true);
+                    // 调用AI生成主动话题
+                    callAIInCall('', true);
                     
                     // 安排下一次
                     scheduleNextReply();
@@ -984,6 +1664,84 @@ ${context}
         if (aiRandomReplyTimer) {
             clearTimeout(aiRandomReplyTimer);
             aiRandomReplyTimer = null;
+        }
+    }
+    
+    /**
+     * 总结通话内容（使用副API）
+     */
+    function summarizeCallConversation() {
+        console.log('[VoiceCall] 开始总结通话内容');
+        
+        const currentConv = window.AppState?.currentChat;
+        if (!currentConv) {
+            console.warn('[VoiceCall] 无法总结：未找到当前对话');
+            return;
+        }
+        
+        // 检查副API是否配置
+        const hasSecondaryApi = window.AppState?.apiSettings?.secondaryEndpoint &&
+                               window.AppState?.apiSettings?.secondaryApiKey &&
+                               window.AppState?.apiSettings?.secondarySelectedModel;
+        
+        if (!hasSecondaryApi) {
+            console.log('[VoiceCall] 副API未配置，跳过通话总结');
+            return;
+        }
+        
+        // 检查是否有对话内容
+        if (currentCallConversation.length === 0) {
+            console.log('[VoiceCall] 没有通话内容需要总结');
+            return;
+        }
+        
+        // 构建通话文本
+        const userName = currentConv.userNameForChar || window.AppState?.user?.name || '用户';
+        const charName = currentConv.name || '角色';
+        
+        let callText = `【语音通话记录】\n时间：${new Date().toLocaleString('zh-CN')}\n\n`;
+        currentCallConversation.forEach(msg => {
+            const speaker = msg.role === 'user' ? userName : charName;
+            callText += `${speaker}: ${msg.content}\n`;
+        });
+        
+        console.log('[VoiceCall] 通话文本长度:', callText.length);
+        
+        // 调用副API进行总结
+        if (window.summarizeTextViaSecondaryAPI) {
+            window.summarizeTextViaSecondaryAPI(
+                callText,
+                (summary) => {
+                    console.log('[VoiceCall] 通话总结成功');
+                    
+                    // 保存总结到角色的summaries中
+                    if (!currentConv.summaries) {
+                        currentConv.summaries = [];
+                    }
+                    
+                    currentConv.summaries.push({
+                        content: `📞 语音通话总结\n\n${summary}`,
+                        isAutomatic: true,
+                        isVoiceCall: true,
+                        timestamp: new Date().toISOString(),
+                        messageCount: currentCallConversation.length,
+                        callDuration: callState.callDuration
+                    });
+                    
+                    // 保存到本地存储
+                    if (typeof window.saveToStorage === 'function') {
+                        window.saveToStorage();
+                    }
+                    
+                    console.log('[VoiceCall] 通话总结已保存到角色记忆');
+                    showToast('✅ 通话内容已自动总结');
+                },
+                (error) => {
+                    console.error('[VoiceCall] 通话总结失败:', error);
+                }
+            );
+        } else {
+            console.error('[VoiceCall] summarizeTextViaSecondaryAPI 函数不存在');
         }
     }
     
