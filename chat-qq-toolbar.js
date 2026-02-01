@@ -321,7 +321,18 @@
     }
     
     function handleVideoCall() {
-        showToast('视频通话功能尚未实现');
+        console.log('[Toolbar] 触发视频通话');
+        
+        // 关闭更多面板
+        closeMorePanel();
+        
+        // 调用视频通话系统
+        if (window.VideoCallSystem && typeof window.VideoCallSystem.start === 'function') {
+            window.VideoCallSystem.start();
+        } else {
+            console.warn('⚠️ 视频通话系统未初始化');
+            showToast('视频通话功能加载中，请稍后再试');
+        }
     }
     
     function handleTakeout() {

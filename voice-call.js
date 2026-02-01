@@ -1011,6 +1011,15 @@
                     content: content,
                     timestamp: Date.now()
                 });
+                
+                // 使用 MiniMax TTS 播放 AI 语音
+                if (window.MinimaxTTS && MinimaxTTS.isConfigured()) {
+                    MinimaxTTS.speak(content).catch(err => {
+                        console.error('[VoiceCall] MiniMax TTS 播放失败:', err);
+                    });
+                } else {
+                    console.log('[VoiceCall] MiniMax TTS 未配置，跳过语音播放');
+                }
             }
         }
         

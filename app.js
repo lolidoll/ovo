@@ -136,6 +136,12 @@
                     console.log('✅ AI图片生成器已初始化');
                 }
                 
+                // 初始化 MiniMax TTS
+                if (window.MinimaxTTS) {
+                    MinimaxTTS.init(AppState);
+                    console.log('✅ MiniMax TTS 已初始化');
+                }
+                
                 renderUI();
                 updateDynamicFuncList();
                 setupEmojiLibraryObserver();
@@ -2859,7 +2865,7 @@
                 const bubble = document.createElement('div');
                 const isSelected = AppState.selectedMessages.includes(msg.id);
                 // 对于语音、地理位置和通话消息，使用sender属性来设置样式（sent/received）；其他消息使用type
-                let bubbleClass = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall') ? msg.sender : msg.type;
+                let bubbleClass = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall') ? msg.sender : msg.type;
                 let className = 'chat-bubble ' + bubbleClass;
                 if (isSelected) {
                     className += ' selected';
@@ -2870,7 +2876,7 @@
                 
                 let avatarContent;
                 // 对于语音、地理位置和通话消息，使用sender属性判断；其他消息使用type
-                const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall')
+                const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall')
                     ? msg.sender === 'sent'
                     : msg.type === 'sent';
                 
@@ -2915,6 +2921,9 @@
                     textContent = ``; // 清空，由下面的bubble.innerHTML处理
                 } else if (msg.type === 'voicecall') {
                     // 语音通话消息：显示通话状态卡片
+                    textContent = ``; // 清空，由下面的bubble.innerHTML处理
+                } else if (msg.type === 'videocall') {
+                    // 视频通话消息：显示通话状态卡片
                     textContent = ``; // 清空，由下面的bubble.innerHTML处理
                 } else if (msg.isImage && msg.imageData) {
                     // 图片消息：清空textContent，将由下面的bubble.innerHTML处理
@@ -3001,6 +3010,13 @@
                     bubble.classList.add('location-message');
                 } else if (msg.type === 'voicecall') {
                     // 语音通话消息渲染
+                    // 通话时长格式化辅助函数（供语音通话和视频通话共用）
+                    const formatDuration = (seconds) => {
+                        const mins = Math.floor(seconds / 60);
+                        const secs = seconds % 60;
+                        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    };
+                    
                     const callStatus = msg.callStatus || 'calling';
                     const callDuration = msg.callDuration || 0;
                     const senderName = msg.sender === 'sent' ? AppState.user.name : AppState.currentChat.name;
@@ -3033,13 +3049,6 @@
                         </div>`;
                     }
                     
-                    // Helper function for duration formatting
-                    function formatDuration(seconds) {
-                        const mins = Math.floor(seconds / 60);
-                        const secs = seconds % 60;
-                        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                    }
-                    
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
                         <div class="voicecall-bubble">
@@ -3051,6 +3060,58 @@
                         </div>
                     `;
                     bubble.classList.add('voicecall-message');
+                } else if (msg.type === 'videocall') {
+                    // 视频通话消息渲染
+                    // 通话时长格式化辅助函数（供语音通话和视频通话共用）
+                    const formatDuration = (seconds) => {
+                        const mins = Math.floor(seconds / 60);
+                        const secs = seconds % 60;
+                        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    };
+                    
+                    const callStatus = msg.callStatus || 'calling';
+                    const callDuration = msg.callDuration || 0;
+                    const senderName = msg.sender === 'sent' ? AppState.user.name : AppState.currentChat.name;
+                    
+                    let statusText = '';
+                    let statusIcon = '';
+                    let durationText = '';
+                    
+                    if (callStatus === 'calling') {
+                        statusText = '正在视频通话中';
+                        statusIcon = `<div class="videocall-icon calling-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/>
+                            </svg>
+                        </div>`;
+                    } else if (callStatus === 'cancelled') {
+                        statusText = '已取消';
+                        statusIcon = `<div class="videocall-icon cancelled-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" fill="currentColor"/>
+                            </svg>
+                        </div>`;
+                    } else if (callStatus === 'ended') {
+                        statusText = '已挂断';
+                        durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                        statusIcon = `<div class="videocall-icon ended-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/>
+                            </svg>
+                        </div>`;
+                    }
+                    
+                    bubble.innerHTML = `
+                        <div class="chat-avatar">${avatarContent}</div>
+                        <div class="videocall-bubble">
+                            ${statusIcon}
+                            <div class="videocall-info">
+                                <div class="videocall-title">视频通话</div>
+                                <div class="videocall-status">${escapeHtml(statusText)}${durationText ? ' ' + durationText : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                    bubble.classList.add('videocall-message');
                 } else if (msg.isForward && msg.forwardedMoment) {
                     // 转发朋友圈消息 - 简洁优雅的卡片（黑白灰风格）
                     console.log('🎯 检测到转发朋友圈消息:', msg);
@@ -3321,8 +3382,19 @@
                     if (bubble) {
                         const msgId = bubble.dataset.msgId;
                         const msg = messages.find(m => m.id === msgId);
-                        if (msg && typeof VoiceMessageModule !== 'undefined' && VoiceMessageModule.showVoiceTranscript) {
-                            VoiceMessageModule.showVoiceTranscript(msg.content, voiceBubble);
+                        if (msg) {
+                            // 如果是 AI 发送的语音条且启用了 MiniMax TTS，则播放真实语音
+                            if (msg.sender === 'received' && window.MinimaxTTS && MinimaxTTS.isConfigured()) {
+                                MinimaxTTS.speak(msg.content).catch(err => {
+                                    console.error('MiniMax TTS 播放失败:', err);
+                                    showToast('语音播放失败: ' + err.message);
+                                });
+                            }
+                            
+                            // 显示/隐藏语音转文字内容
+                            if (typeof VoiceMessageModule !== 'undefined' && VoiceMessageModule.showVoiceTranscript) {
+                                VoiceMessageModule.showVoiceTranscript(msg.content, voiceBubble);
+                            }
                         }
                     }
                     return;
@@ -5363,8 +5435,98 @@
             // 注意：副API密钥显示/隐藏切换已在SecondaryAPIManager.initEventListeners()中处理
             // 避免重复绑定事件
             
+            // MiniMax TTS 相关事件
+            initMinimaxTTSEvents();
+            
             // 添加全局按钮处理 - 确保在手机端也能工作
             setupGlobalButtonHandlers();
+        }
+        
+        // 初始化 MiniMax TTS 事件
+        function initMinimaxTTSEvents() {
+            // API Key 显示/隐藏切换
+            const minimaxKeyToggle = document.getElementById('minimax-api-key-toggle');
+            const minimaxKeyInput = document.getElementById('minimax-api-key');
+            if (minimaxKeyToggle && minimaxKeyInput) {
+                minimaxKeyToggle.addEventListener('click', function() {
+                    if (minimaxKeyInput.type === 'password') {
+                        minimaxKeyInput.type = 'text';
+                        this.textContent = '隐藏';
+                    } else {
+                        minimaxKeyInput.type = 'password';
+                        this.textContent = '显示';
+                    }
+                });
+            }
+            
+            // 测试按钮
+            const testBtn = document.getElementById('test-minimax-tts-btn');
+            if (testBtn) {
+                testBtn.addEventListener('click', async function() {
+                    try {
+                        // 保存当前配置
+                        saveMinimaxTTSSettings();
+                        
+                        showToast('正在测试 MiniMax TTS...');
+                        await MinimaxTTS.test();
+                        showToast('✅ MiniMax TTS 测试成功！');
+                    } catch (error) {
+                        console.error('MiniMax TTS 测试失败:', error);
+                        showToast('❌ 测试失败: ' + error.message);
+                    }
+                });
+            }
+        }
+        
+        // 保存 MiniMax TTS 设置
+        function saveMinimaxTTSSettings() {
+            const enabled = document.getElementById('minimax-tts-enabled')?.checked || false;
+            const groupId = document.getElementById('minimax-group-id')?.value || '';
+            const apiKey = document.getElementById('minimax-api-key')?.value || '';
+            const voiceId = document.getElementById('minimax-voice-id')?.value || 'female-tianmei';
+            const speed = parseFloat(document.getElementById('minimax-speed-input')?.value || 1.0);
+            const volume = parseFloat(document.getElementById('minimax-volume-input')?.value || 1.0);
+            
+            const config = {
+                enabled,
+                groupId,
+                apiKey,
+                voiceId,
+                speed,
+                volume
+            };
+            
+            if (window.MinimaxTTS) {
+                MinimaxTTS.updateConfig(config);
+            }
+            
+            saveToStorage();
+            console.log('[MiniMax TTS] 设置已保存', config);
+        }
+        
+        // 加载 MiniMax TTS 设置到 UI
+        function loadMinimaxTTSSettingsToUI() {
+            const config = AppState.apiSettings?.minimaxTTS || {};
+            
+            const enabledCheckbox = document.getElementById('minimax-tts-enabled');
+            const groupIdInput = document.getElementById('minimax-group-id');
+            const apiKeyInput = document.getElementById('minimax-api-key');
+            const voiceIdInput = document.getElementById('minimax-voice-id');
+            const speedInput = document.getElementById('minimax-speed-input');
+            const volumeInput = document.getElementById('minimax-volume-input');
+            
+            if (enabledCheckbox) enabledCheckbox.checked = config.enabled || false;
+            if (groupIdInput) groupIdInput.value = config.groupId || '';
+            if (apiKeyInput) apiKeyInput.value = config.apiKey || '';
+            if (voiceIdInput) voiceIdInput.value = config.voiceId || 'female-tianmei';
+            if (speedInput) {
+                speedInput.value = config.speed || 1.0;
+                document.getElementById('minimax-speed-value').textContent = config.speed || 1.0;
+            }
+            if (volumeInput) {
+                volumeInput.value = config.volume || 1.0;
+                document.getElementById('minimax-volume-value').textContent = config.volume || 1.0;
+            }
         }
         
         // 全局按钮处理器 - 用于处理动态生成的按钮
@@ -5834,6 +5996,9 @@
 
                 // 副API设置加载已迁移到 secondary-api-manager.js
                 SecondaryAPIManager.loadSettingsToUI();
+                
+                // 加载 MiniMax TTS 设置
+                loadMinimaxTTSSettingsToUI();
             } catch (e) { console.error(e); }
         }
 
@@ -6074,6 +6239,9 @@
 
             // 保存副API设置 - 已迁移到 secondary-api-manager.js
             SecondaryAPIManager.saveSettingsFromUI();
+            
+            // 保存 MiniMax TTS 设置
+            saveMinimaxTTSSettings();
 
             // persist
             saveToStorage();
@@ -6615,6 +6783,34 @@
                         window.VoiceCallSystem.receiveCall(characterName, characterAvatar);
                     } else {
                         console.warn('⚠️ 语音通话系统未初始化');
+                    }
+                }, 800);
+            }
+            
+            // ========== 第5.6步：处理视频通话信息 ==========
+            // 匹配视频通话标记：【视频通话】【/视频通话】
+            const videoCallRegex = /【视频通话】【\/视频通话】/;
+            const videoCallMatch = text.match(videoCallRegex);
+            let isVideoCall = false;
+            
+            if (videoCallMatch) {
+                isVideoCall = true;
+                console.log('[VideoCall] 检测到AI主动发起视频通话请求');
+                
+                // 从文本中移除视频通话标记
+                text = text.replace(videoCallRegex, '').trim();
+                
+                // 获取角色信息
+                const conv = AppState.conversations.find(c => c.id === convId);
+                const characterName = conv?.name || 'AI助手';
+                const characterAvatar = getCharacterAvatar();
+                
+                // 延迟一小段时间后触发来电
+                setTimeout(() => {
+                    if (window.VideoCallSystem && typeof window.VideoCallSystem.receiveCall === 'function') {
+                        window.VideoCallSystem.receiveCall(characterName, characterAvatar);
+                    } else {
+                        console.warn('⚠️ 视频通话系统未初始化');
                     }
                 }, 800);
             }
