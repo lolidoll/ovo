@@ -50,7 +50,15 @@ const APIUtils = {
             if (typeof obj === 'string' && obj.trim()) return obj;
             if (maxDepth <= 0 || !obj || typeof obj !== 'object') return '';
             
+            // 需要跳过的字段（这些字段不是实际的消息内容）
+            const skipFields = ['id', 'object', 'created', 'model', 'usage', 'system_fingerprint', 'role'];
+            
             for (let key in obj) {
+                // 跳过已知的非内容字段
+                if (skipFields.includes(key)) {
+                    continue;
+                }
+                
                 if (typeof obj[key] === 'string' && obj[key].trim()) {
                     return obj[key];
                 }
