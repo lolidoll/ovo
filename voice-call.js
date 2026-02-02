@@ -166,23 +166,6 @@
                 <img class="floating-avatar" id="floating-avatar" src="" alt="avatar">
                 <div class="floating-pulse"></div>
             </div>
-            <div class="floating-control-menu" id="floating-control-menu">
-                <button class="floating-menu-btn mute-btn" id="floating-mute-btn" title="静音">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3 0 1.66 1.34 3 3 3v6c0 1.66-1.34 3-3 3 0-1.66-1.34-3-3-3v-6c0-1.66 1.34-3 3-3zM17 3v5.67l2.5 1.5V3H17zm-7 0l8.5 5v-5h-8.5zM5 5.67V12l2.5-1.5V5H5zm8.5 9.33L19 14v-5h-5.5z"/>
-                    </svg>
-                </button>
-                <button class="floating-menu-btn speaker-btn" id="floating-speaker-btn" title="外放">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c-0.83 0-1.5-.67-1.5-1.5 0-0.83.67-1.5 1.5-1.5.67 0 1.5.67 1.5 1.5 0 .83-.67 1.5-1.5 1.5zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71V17h4v-2h-4v-2h-4V7.23zM19 12v4h3c.55 0 1-.45 1-1s-.45-1-1-1v-4h-3z"/>
-                    </svg>
-                </button>
-                <button class="floating-menu-btn end-btn" id="floating-end-btn" title="挂断">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
-                    </svg>
-                </button>
-            </div>
         `;
         
         document.body.appendChild(floatingWindow);
@@ -250,39 +233,6 @@
         const floatingWindow = document.getElementById('call-floating-window');
         initFloatingWindowDrag(floatingWindow);
         
-        // 麦克风按钮
-        document.getElementById('call-mute-btn').addEventListener('click', toggleMute);
-        
-        // 外放按钮
-        document.getElementById('call-speaker-btn').addEventListener('click', toggleSpeaker);
-        
-        // 悬浮窗控制菜单按钮
-        const floatingMuteBtn = document.getElementById('floating-mute-btn');
-        if (floatingMuteBtn) {
-            floatingMuteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleMute();
-                updateFloatingMenuButtons();
-            });
-        }
-        
-        const floatingSpeakerBtn = document.getElementById('floating-speaker-btn');
-        if (floatingSpeakerBtn) {
-            floatingSpeakerBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleSpeaker();
-                updateFloatingMenuButtons();
-            });
-        }
-        
-        const floatingEndBtn = document.getElementById('floating-end-btn');
-       if (floatingEndBtn) {
-           floatingEndBtn.addEventListener('click', (e) => {
-               e.stopPropagation();
-               endCall();
-           });
-       }
-       
        // 挂断按钮
        document.getElementById('call-end-btn').addEventListener('click', endCall);
        
@@ -298,36 +248,13 @@
        });
    }
   
-  /**
-    * 更新悬浮窗控制菜单按钮状态
-    */
-  function updateFloatingMenuButtons() {
-      const floatingMuteBtn = document.getElementById('floating-mute-btn');
-      const floatingSpeakerBtn = document.getElementById('floating-speaker-btn');
-      
-      if (floatingMuteBtn) {
-          if (callState.isMuted) {
-              floatingMuteBtn.classList.add('muted');
-          } else {
-              floatingMuteBtn.classList.remove('muted');
-          }
-      }
-      
-      if (floatingSpeakerBtn) {
-          if (!callState.isSpeakerOn) {
-              floatingSpeakerBtn.classList.add('speaker-off');
-          } else {
-              floatingSpeakerBtn.classList.remove('speaker-off');
-          }
-      }
-  }
-    
     /**
      * 初始化悬浮窗拖拽功能（支持触摸和鼠标）
+     * 重构版本：添加移动位移阈值，防止误触，阻止事件冒泡
      */
     function initFloatingWindowDrag(floatingWindow) {
-       // 缓存 DOM 引用，避免重复查询
-       const menu = document.getElementById('floating-control-menu');
+       // 移动位移阈值（像素）- 超过此阈值才视为拖拽
+       const DRAG_THRESHOLD = 10;
        
        // 窗口尺寸缓存
        let cachedWindowWidth = window.innerWidth;
@@ -359,19 +286,21 @@
        let isDragging = false;
        let startX, startY;
        let initialX, initialY;
-       let hasMoved = false;
+       let hasMovedBeyondThreshold = false; // 是否超过移动阈值
        let animationFrameId = null;
-       let menuHideTimeout = null;
        
-       // 优化后的拖拽开始函数 - 避免强制重排
+       // 计算两点之间的距离
+       function calculateDistance(x1, y1, x2, y2) {
+           return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+       }
+       
+       // 拖拽开始函数
        function dragStart(e) {
            isDragging = true;
-           hasMoved = false;
+           hasMovedBeyondThreshold = false;
            
-           // 隐藏控制菜单
-           if (menu) {
-               menu.classList.remove('show');
-           }
+           // 阻止事件冒泡，避免触发底层页面事件
+           e.stopPropagation();
            
            // 从直接获取的样式值中读取位置，避免 getComputedStyle
            const styleLeft = floatingWindow.style.left;
@@ -411,57 +340,72 @@
            document.addEventListener('touchend', dragEnd, { once: true });
        }
        
-       // 优化后的拖拽函数
+       // 拖拽函数
        function drag(e) {
            if (!isDragging) return;
            
            e.preventDefault();
-           hasMoved = true;
+           e.stopPropagation(); // 阻止事件冒泡
            
-           // 使用 requestAnimationFrame 优化性能
-           if (animationFrameId) {
-               cancelAnimationFrame(animationFrameId);
+           let currentX, currentY;
+           if (e.type === 'touchmove') {
+               currentX = e.touches[0].clientX;
+               currentY = e.touches[0].clientY;
+           } else {
+               currentX = e.clientX;
+               currentY = e.clientY;
            }
            
-           animationFrameId = requestAnimationFrame(function() {
-               let currentX, currentY;
-               if (e.type === 'touchmove') {
-                   currentX = e.touches[0].clientX;
-                   currentY = e.touches[0].clientY;
-               } else {
-                   currentX = e.clientX;
-                   currentY = e.clientY;
+           // 计算移动距离
+           const moveDistance = calculateDistance(startX, startY, currentX, currentY);
+           
+           // 只有超过阈值才开始真正拖拽
+           if (moveDistance > DRAG_THRESHOLD) {
+               hasMovedBeyondThreshold = true;
+           }
+           
+           // 如果超过阈值，开始拖拽
+           if (hasMovedBeyondThreshold) {
+               // 使用 requestAnimationFrame 优化性能
+               if (animationFrameId) {
+                   cancelAnimationFrame(animationFrameId);
                }
                
-               // 计算新位置
-               let newX = initialX + (currentX - startX);
-               let newY = initialY + (currentY - startY);
-               
-               // 缓存元素尺寸
-               const elementWidth = floatingWindow.offsetWidth;
-               const elementHeight = floatingWindow.offsetHeight;
-               
-               // 边界限制（使用缓存的窗口尺寸）
-               newX = Math.max(0, Math.min(newX, cachedWindowWidth - elementWidth));
-               newY = Math.max(0, Math.min(newY, cachedWindowHeight - elementHeight));
-               
-               // 使用 transform 代替 left/top，性能更好
-               floatingWindow.style.transform = `translate(${newX}px, ${newY}px)`;
-               
-               // 更新初始位置供下次使用
-               initialX = newX;
-               initialY = newY;
-               startX = currentX;
-               startY = currentY;
-           });
+               animationFrameId = requestAnimationFrame(function() {
+                   // 计算新位置
+                   let newX = initialX + (currentX - startX);
+                   let newY = initialY + (currentY - startY);
+                   
+                   // 缓存元素尺寸
+                   const elementWidth = floatingWindow.offsetWidth;
+                   const elementHeight = floatingWindow.offsetHeight;
+                   
+                   // 边界限制（使用缓存的窗口尺寸）
+                   newX = Math.max(0, Math.min(newX, cachedWindowWidth - elementWidth));
+                   newY = Math.max(0, Math.min(newY, cachedWindowHeight - elementHeight));
+                   
+                   // 使用 transform 代替 left/top，性能更好
+                   floatingWindow.style.transform = `translate(${newX}px, ${newY}px)`;
+                   
+                   // 更新初始位置供下次使用
+                   initialX = newX;
+                   initialY = newY;
+                   startX = currentX;
+                   startY = currentY;
+               });
+           }
        }
        
-       // 优化后的拖拽结束函数
+       // 拖拽结束函数
        function dragEnd(e) {
            if (!isDragging) return;
            
+           e.stopPropagation(); // 阻止事件冒泡
+           
+           const wasDragging = hasMovedBeyondThreshold;
+           
            isDragging = false;
-           hasMoved = false;
+           hasMovedBeyondThreshold = false;
            
            // 取消动画帧
            if (animationFrameId) {
@@ -486,50 +430,20 @@
            
            floatingWindow.classList.remove('dragging');
            
-           // 如果没有移动，则视为点击，恢复通话界面
-           if (!hasMoved) {
+           // 只有在未拖拽的情况下才视为点击，恢复通话界面
+           if (!wasDragging) {
+               // 阻止默认行为和事件冒泡
+               if (e.cancelable) {
+                   e.preventDefault();
+               }
                restoreCall();
            }
-       }
-       
-       // 优化后的菜单显示函数
-       function showFloatingMenu() {
-           if (!menu) return;
-           clearTimeout(menuHideTimeout);
-           menu.classList.add('show');
-       }
-       
-       // 优化后的菜单隐藏函数
-       function hideFloatingMenu() {
-           if (!menu) return;
-           menu.classList.remove('show');
        }
        
        // 事件监听器 - 使用事件委托和被动监听器
        floatingWindow.addEventListener('mousedown', dragStart);
        floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
        
-       // 悬停显示控制菜单（桌面端）
-       floatingWindow.addEventListener('mouseenter', function() {
-           showFloatingMenu();
-       });
-       
-       floatingWindow.addEventListener('mouseleave', function() {
-           clearTimeout(menuHideTimeout);
-           menuHideTimeout = setTimeout(hideFloatingMenu, 300);
-       });
-       
-       // 点击显示/隐藏菜单（移动端）
-       floatingWindow.addEventListener('click', function(e) {
-           // 阻止事件冒泡，避免触发其他点击事件
-           e.stopPropagation();
-           
-           if (!hasMoved) {
-               if (menu) {
-                   menu.classList.toggle('show');
-               }
-           }
-       });
    }
     
     /**
@@ -871,9 +785,6 @@
                showToast('麦克风已开启');
            }
        }
-       
-       // 更新悬浮窗控制菜单按钮
-       updateFloatingMenuButtons();
    }
    
    /**
@@ -893,9 +804,6 @@
                showToast('外放已关闭');
            }
        }
-       
-       // 更新悬浮窗控制菜单按钮
-       updateFloatingMenuButtons();
    }
     
     /**
