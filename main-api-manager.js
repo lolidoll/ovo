@@ -140,6 +140,9 @@ const MainAPIManager = {
         };
         updateTypingStatus();
 
+        // 获取 API 设置
+        const api = this.AppState.apiSettings || {};
+
         // 使用 APIUtils 规范化端点
         const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
         const apiKey = api.apiKey || '';

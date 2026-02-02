@@ -354,7 +354,7 @@
     z-index: 999999 !important;
     cursor: move !important;
     cursor: grab !important;
-    /* 只过渡 transform 和 box-shadow，避免 all */
+    /* 只在非拖拽状态下过渡 transform 和 box-shadow */
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     will-change: transform !important;
     user-select: none !important;
@@ -381,10 +381,10 @@
     box-shadow: 0 12px 40px rgba(255, 182, 193, 0.4), 0 6px 20px rgba(255, 192, 203, 0.3) !important;
 }
 
-/* 拖拽时禁用过渡并提升性能 */
+/* 拖拽时完全禁用过渡，消除延迟 */
 .call-floating-window.dragging {
     transition: none !important;
-    will-change: auto !important;
+    will-change: transform !important;
 }
 
 .floating-avatar-wrapper {

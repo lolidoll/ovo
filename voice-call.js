@@ -250,201 +250,177 @@
   
     /**
      * 初始化悬浮窗拖拽功能（支持触摸和鼠标）
-     * 重构版本：添加移动位移阈值，防止误触，阻止事件冒泡
+     * 优化版本：消除移动延迟，使用直接DOM操作
      */
-    function initFloatingWindowDrag(floatingWindow) {
-       // 移动位移阈值（像素）- 超过此阈值才视为拖拽
-       const DRAG_THRESHOLD = 10;
-       
-       // 窗口尺寸缓存
-       let cachedWindowWidth = window.innerWidth;
-       let cachedWindowHeight = window.innerHeight;
-       
-       // 防抖函数
-       function debounce(func, wait) {
-           let timeout;
-           return function executedFunction(...args) {
-               const later = () => {
-                   timeout = null;
-                   func(...args);
-               };
-               clearTimeout(timeout);
-               timeout = setTimeout(later, wait);
-           };
-       }
-       
-       // 更新窗口尺寸缓存（防抖）
-       const updateWindowSize = debounce(() => {
-           cachedWindowWidth = window.innerWidth;
-           cachedWindowHeight = window.innerHeight;
-       }, 100);
-       
-       // 监听窗口大小变化
-       window.addEventListener('resize', updateWindowSize);
-       window.addEventListener('orientationchange', updateWindowSize);
-       
-       let isDragging = false;
-       let startX, startY;
-       let initialX, initialY;
-       let hasMovedBeyondThreshold = false; // 是否超过移动阈值
-       let animationFrameId = null;
-       
-       // 计算两点之间的距离
-       function calculateDistance(x1, y1, x2, y2) {
-           return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-       }
-       
-       // 拖拽开始函数
-       function dragStart(e) {
-           isDragging = true;
-           hasMovedBeyondThreshold = false;
-           
-           // 阻止事件冒泡，避免触发底层页面事件
-           e.stopPropagation();
-           
-           // 从直接获取的样式值中读取位置，避免 getComputedStyle
-           const styleLeft = floatingWindow.style.left;
-           const styleTop = floatingWindow.style.top;
-           
-           if (styleLeft && styleTop) {
-               // 已经设置过 left/top
-               initialX = parseFloat(styleLeft);
-               initialY = parseFloat(styleTop);
-           } else {
-               // 首次拖拽，从 rect 获取
-               const rect = floatingWindow.getBoundingClientRect();
-               initialX = rect.left;
-               initialY = rect.top;
-               floatingWindow.style.right = 'auto';
-               floatingWindow.style.bottom = 'auto';
-               floatingWindow.style.left = initialX + 'px';
-               floatingWindow.style.top = initialY + 'px';
-           }
-           
-           // 获取鼠标/触摸起始位置
-           if (e.type === 'touchstart') {
-               startX = e.touches[0].clientX;
-               startY = e.touches[0].clientY;
-           } else {
-               startX = e.clientX;
-               startY = e.clientY;
-               e.preventDefault();
-           }
-           
-           floatingWindow.classList.add('dragging');
-           
-           // 绑定全局事件监听器（只在拖拽开始时绑定）
-           document.addEventListener('mousemove', drag, { passive: false });
-           document.addEventListener('mouseup', dragEnd, { once: true });
-           document.addEventListener('touchmove', drag, { passive: false });
-           document.addEventListener('touchend', dragEnd, { once: true });
-       }
-       
-       // 拖拽函数
-       function drag(e) {
-           if (!isDragging) return;
-           
-           e.preventDefault();
-           e.stopPropagation(); // 阻止事件冒泡
-           
-           let currentX, currentY;
-           if (e.type === 'touchmove') {
-               currentX = e.touches[0].clientX;
-               currentY = e.touches[0].clientY;
-           } else {
-               currentX = e.clientX;
-               currentY = e.clientY;
-           }
-           
-           // 计算移动距离
-           const moveDistance = calculateDistance(startX, startY, currentX, currentY);
-           
-           // 只有超过阈值才开始真正拖拽
-           if (moveDistance > DRAG_THRESHOLD) {
-               hasMovedBeyondThreshold = true;
-           }
-           
-           // 如果超过阈值，开始拖拽
-           if (hasMovedBeyondThreshold) {
-               // 使用 requestAnimationFrame 优化性能
-               if (animationFrameId) {
-                   cancelAnimationFrame(animationFrameId);
-               }
-               
-               animationFrameId = requestAnimationFrame(function() {
-                   // 计算新位置
-                   let newX = initialX + (currentX - startX);
-                   let newY = initialY + (currentY - startY);
-                   
-                   // 缓存元素尺寸
-                   const elementWidth = floatingWindow.offsetWidth;
-                   const elementHeight = floatingWindow.offsetHeight;
-                   
-                   // 边界限制（使用缓存的窗口尺寸）
-                   newX = Math.max(0, Math.min(newX, cachedWindowWidth - elementWidth));
-                   newY = Math.max(0, Math.min(newY, cachedWindowHeight - elementHeight));
-                   
-                   // 使用 transform 代替 left/top，性能更好
-                   floatingWindow.style.transform = `translate(${newX}px, ${newY}px)`;
-                   
-                   // 更新初始位置供下次使用
-                   initialX = newX;
-                   initialY = newY;
-                   startX = currentX;
-                   startY = currentY;
-               });
-           }
-       }
-       
-       // 拖拽结束函数
-       function dragEnd(e) {
-           if (!isDragging) return;
-           
-           e.stopPropagation(); // 阻止事件冒泡
-           
-           const wasDragging = hasMovedBeyondThreshold;
-           
-           isDragging = false;
-           hasMovedBeyondThreshold = false;
-           
-           // 取消动画帧
-           if (animationFrameId) {
-               cancelAnimationFrame(animationFrameId);
-               animationFrameId = null;
-           }
-           
-           // 移除全局事件监听器（避免内存泄漏）
-           document.removeEventListener('mousemove', drag);
-           document.removeEventListener('touchmove', drag);
-           
-           // 将 transform 转换为 left/top
-           const transform = floatingWindow.style.transform;
-           if (transform) {
-               const match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
-               if (match) {
-                   floatingWindow.style.left = match[1] + 'px';
-                   floatingWindow.style.top = match[2] + 'px';
-                   floatingWindow.style.transform = '';
-               }
-           }
-           
-           floatingWindow.classList.remove('dragging');
-           
-           // 只有在未拖拽的情况下才视为点击，恢复通话界面
-           if (!wasDragging) {
-               // 阻止默认行为和事件冒泡
-               if (e.cancelable) {
-                   e.preventDefault();
-               }
-               restoreCall();
-           }
-       }
-       
-       // 事件监听器 - 使用事件委托和被动监听器
-       floatingWindow.addEventListener('mousedown', dragStart);
-       floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
-       
-   }
+   function initFloatingWindowDrag(floatingWindow) {
+      // 移动位移阈值（像素）- 超过此阈值才视为拖拽
+      const DRAG_THRESHOLD = 10;
+      
+      // 窗口尺寸缓存
+      let cachedWindowWidth = window.innerWidth;
+      let cachedWindowHeight = window.innerHeight;
+      
+      // 防抖函数
+      function debounce(func, wait) {
+          let timeout;
+          return function executedFunction(...args) {
+              const later = () => {
+                  timeout = null;
+                  func(...args);
+              };
+              clearTimeout(timeout);
+              timeout = setTimeout(later, wait);
+          };
+      }
+      
+      // 更新窗口尺寸缓存（防抖）
+      const updateWindowSize = debounce(() => {
+          cachedWindowWidth = window.innerWidth;
+          cachedWindowHeight = window.innerHeight;
+      }, 100);
+      
+      // 监听窗口大小变化
+      window.addEventListener('resize', updateWindowSize);
+      window.addEventListener('orientationchange', updateWindowSize);
+      
+      let isDragging = false;
+      let startX, startY;
+      let initialLeft, initialTop;
+      let hasMovedBeyondThreshold = false;
+      
+      // 计算两点之间的距离
+      function calculateDistance(x1, y1, x2, y2) {
+          return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+      }
+      
+      // 拖拽开始函数
+      function dragStart(e) {
+          isDragging = true;
+          hasMovedBeyondThreshold = false;
+          
+          // 阻止事件冒泡，避免触发底层页面事件
+          e.stopPropagation();
+          
+          // 获取当前元素位置
+          const rect = floatingWindow.getBoundingClientRect();
+          const styleLeft = floatingWindow.style.left;
+          const styleTop = floatingWindow.style.top;
+          
+          if (styleLeft && styleTop) {
+              // 已经设置过 left/top
+              initialLeft = parseFloat(styleLeft);
+              initialTop = parseFloat(styleTop);
+          } else {
+              // 首次拖拽，从 rect 获取
+              initialLeft = rect.left;
+              initialTop = rect.top;
+              floatingWindow.style.right = 'auto';
+              floatingWindow.style.bottom = 'auto';
+              floatingWindow.style.left = initialLeft + 'px';
+              floatingWindow.style.top = initialTop + 'px';
+          }
+          
+          // 获取鼠标/触摸起始位置
+          if (e.type === 'touchstart') {
+              startX = e.touches[0].clientX;
+              startY = e.touches[0].clientY;
+          } else {
+              startX = e.clientX;
+              startY = e.clientY;
+              e.preventDefault();
+          }
+          
+          floatingWindow.classList.add('dragging');
+          
+          // 绑定全局事件监听器
+          document.addEventListener('mousemove', drag, { passive: false });
+          document.addEventListener('mouseup', dragEnd);
+          document.addEventListener('touchmove', drag, { passive: false });
+          document.addEventListener('touchend', dragEnd);
+      }
+      
+      // 拖拽函数 - 直接操作DOM，消除延迟
+      function drag(e) {
+          if (!isDragging) return;
+          
+          e.preventDefault();
+          e.stopPropagation();
+          
+          let currentX, currentY;
+          if (e.type === 'touchmove') {
+              currentX = e.touches[0].clientX;
+              currentY = e.touches[0].clientY;
+          } else {
+              currentX = e.clientX;
+              currentY = e.clientY;
+          }
+          
+          // 计算移动距离
+          const moveDistance = calculateDistance(startX, startY, currentX, currentY);
+          
+          // 只有超过阈值才开始真正拖拽
+          if (moveDistance > DRAG_THRESHOLD) {
+              hasMovedBeyondThreshold = true;
+          }
+          
+          // 如果超过阈值，开始拖拽
+          if (hasMovedBeyondThreshold) {
+              // 直接计算新位置（不使用transform，避免CSS过渡延迟）
+              const deltaX = currentX - startX;
+              const deltaY = currentY - startY;
+              
+              let newX = initialLeft + deltaX;
+              let newY = initialTop + deltaY;
+              
+              // 缓存元素尺寸
+              const elementWidth = floatingWindow.offsetWidth;
+              const elementHeight = floatingWindow.offsetHeight;
+              
+              // 边界限制
+              newX = Math.max(0, Math.min(newX, cachedWindowWidth - elementWidth));
+              newY = Math.max(0, Math.min(newY, cachedWindowHeight - elementHeight));
+              
+              // 直接使用 left/top 定位，不使用 transform
+              // 因为 dragging 类已经禁用了 transition，所以不会有延迟
+              floatingWindow.style.left = newX + 'px';
+              floatingWindow.style.top = newY + 'px';
+          }
+      }
+      
+      // 拖拽结束函数
+      function dragEnd(e) {
+          if (!isDragging) return;
+          
+          e.stopPropagation();
+          
+          const wasDragging = hasMovedBeyondThreshold;
+          
+          isDragging = false;
+          hasMovedBeyondThreshold = false;
+          
+          // 移除全局事件监听器
+          document.removeEventListener('mousemove', drag);
+          document.removeEventListener('mouseup', dragEnd);
+          document.removeEventListener('touchmove', drag);
+          document.removeEventListener('touchend', dragEnd);
+          
+          // 移除拖拽状态（恢复CSS过渡效果）
+          floatingWindow.classList.remove('dragging');
+          
+          // 只有在未拖拽的情况下才视为点击，恢复通话界面
+          if (!wasDragging) {
+              if (e.cancelable) {
+                  e.preventDefault();
+              }
+              restoreCall();
+          }
+      }
+      
+      // 事件监听器
+      floatingWindow.addEventListener('mousedown', dragStart);
+      floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
+      
+  }
     
     /**
      * 发起呼叫 - 显示确认弹窗
