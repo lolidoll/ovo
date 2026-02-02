@@ -719,7 +719,11 @@
             speakerBtn.addEventListener('click', toggleVideoSpeaker);
         }
         
-        // 挂断按钮已在HTML中绑定
+        // 挂断按钮
+        const endBtn = document.getElementById('video-end-btn');
+        if (endBtn) {
+            endBtn.addEventListener('click', endVideoCall);
+        }
         
         // 最小化按钮
         const minimizeBtn = document.getElementById('video-call-minimize-btn');
@@ -1508,10 +1512,13 @@
         const messagesContainer = document.getElementById('video-chat-messages');
         if (!messagesContainer) return;
         
-        const lastMessage = messagesContainer.lastElementChild;
-        if (lastMessage && lastMessage.textContent.includes('正在说话')) {
-            lastMessage.remove();
-        }
+        // 查找并移除所有包含"正在说话..."的消息
+        const messages = messagesContainer.querySelectorAll('.video-chat-message');
+        messages.forEach(msg => {
+            if (msg.textContent.trim() === '正在说话...') {
+                msg.remove();
+            }
+        });
     }
     
     /**
