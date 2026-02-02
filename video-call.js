@@ -438,35 +438,6 @@
     }
     
     /**
-     * 更新最后一条视频通话记录
-     */
-    function updateLastVideoCallRecord(newStatus, newDuration) {
-        const currentConv = window.AppState?.currentChat;
-        if (!currentConv) return;
-        
-        const convId = currentConv.id;
-        const messages = window.AppState.messages[convId];
-        
-        if (!messages || messages.length === 0) return;
-        
-        for (let i = messages.length - 1; i >= 0; i--) {
-            if (messages[i].type === 'videocall') {
-                messages[i].callStatus = newStatus;
-                messages[i].callDuration = newDuration;
-                messages[i].content = `${newStatus} ${newDuration > 0 ? formatVideoDuration(newDuration) : ''}`;
-                
-                if (typeof window.saveToStorage === 'function') {
-                    window.saveToStorage();
-                }
-                if (typeof window.renderChatMessages === 'function') {
-                    window.renderChatMessages();
-                }
-                break;
-            }
-        }
-    }
-    
-    /**
      * 取消视频通话拨通
      */
     function cancelVideoCalling() {
@@ -814,17 +785,21 @@
      * 结束视频通话
      */
     function endVideoCall() {
-        console.log('[VideoCall] 结束视频通话');
-        console.log('[VideoCall] 当前状态:', JSON.stringify({
-            isInCall: videoCallState.isInCall,
-            callStartTime: videoCallState.callStartTime,
-            isMinimized: videoCallState.isMinimized
-        }));
+        console.log('[VideoCall] ========== 结束视频通话 ==========');
+        console.log('[VideoCall] callStartTime:', videoCallState.callStartTime);
+        console.log('[VideoCall] 当前时间:', Date.now());
+        console.log('[VideoCall] isInCall:', videoCallState.isInCall);
         
         // 计算通话时长（秒）
         const duration = videoCallState.callStartTime
             ? Math.floor((Date.now() - videoCallState.callStartTime) / 1000)
             : 0;
+        
+        console.log('[VideoCall] 计算的通话时长:', duration, '秒');
+        
+        if (duration === 0) {
+            console.warn('[VideoCall] ⚠️ 通话时长为0！callStartTime可能未设置或已被清除');
+        }
         
         // 更新聊天记录为"已挂断"
         updateLastVideoCallRecord('ended', duration);
@@ -885,7 +860,7 @@
         }
         
         // 开始计时
-        startVideoCallTimer();
+        startDurationTimer();
         
         // 更新聊天页面状态
         updateChatPageStatus();
@@ -1244,6 +1219,12 @@
                 messages[i].callStatus = newStatus;
                 messages[i].callDuration = newDuration;
                 messages[i].content = `${newStatus} ${newDuration > 0 ? formatVideoDuration(newDuration) : ''}`;
+                
+                console.log('[VideoCall] 更新通话记录:', {
+                    status: newStatus,
+                    duration: newDuration,
+                    formatted: formatVideoDuration(newDuration)
+                });
                 
                 // 保存并重新渲染
                 if (typeof window.saveToStorage === 'function') {

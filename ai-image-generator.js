@@ -347,7 +347,7 @@ const AIImageGenerator = {
             return text;  // 没有图片指令，直接返回原文本
         }
 
-        console.log(`🎨 检测到 ${instructions.length} 个图片生成指令`);
+        console.log(`🎨 检测到 ${instructions.length} 个图片描述指令`);
 
         // 清理文本中的图片标记，保留其他文字内容
         let cleanedText = this.removeImageTags(text);
@@ -356,47 +356,17 @@ const AIImageGenerator = {
         // 这样文字消息就不会显示
         cleanedText = cleanedText.trim();
 
-        // 获取API类型设置
-        const apiType = this.AppState.apiSettings?.imageApiType || 'openai';
-
-        // 异步生成并发送图片（不阻塞文本消息）
+        // 异步发送图片描述卡片（不阻塞文本消息）
         // 延迟稍微长一点，确保文字消息先显示
         setTimeout(async () => {
             for (const instruction of instructions) {
-                let imageData = null;
-                let generationFailed = false;
+                // 发送图片描述卡片（类似相机按钮的文字描述）
+                this.sendImageDescriptionMessage(convId, instruction.description);
+                console.log('✅ 已发送图片描述卡片');
                 
-                // 如果是直接图片数据，直接使用
-                if (instruction.type === 'direct_image') {
-                    imageData = instruction.imageData;
-                    this.sendImageMessage(convId, imageData, instruction.description, false);
-                    console.log('✅ 直接使用AI提供的图片数据');
-                } else {
-                    // 需要生成图片
-                    try {
-                        this.showToast('🎨 正在生成图片...');
-                        
-                        // 尝试生成图片
-                        imageData = await this.generateImage(instruction.description, apiType);
-                        
-                        this.showToast('✅ 图片已生成');
-                        
-                    } catch (error) {
-                        console.error('生成图片失败，使用默认图片:', error);
-                        this.showToast('⚠️ 生图失败，使用默认图片');
-                        
-                        // 使用默认图片
-                        imageData = 'https://image.uglycat.cc/q3w37y.jpg';
-                        generationFailed = true;
-                    }
-                    
-                    // 发送图片消息（无论成功还是失败）
-                    this.sendImageMessage(convId, imageData, instruction.description, generationFailed);
-                }
-                
-                // 每张图片之间间隔一下
+                // 每张图片描述之间间隔一下
                 if (instructions.length > 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
             }
         }, 800);  // 延迟800ms，确保文字消息先显示
@@ -405,9 +375,9 @@ const AIImageGenerator = {
     },
 
     /**
-     * 发送图片消息到对话
+     * 发送图片描述消息到对话（文字卡片形式）
      */
-    sendImageMessage: function(convId, imageData, description, isFallback = false) {
+    sendImageDescriptionMessage: function(convId, description) {
         if (!this.AppState.messages[convId]) {
             this.AppState.messages[convId] = [];
         }
@@ -415,12 +385,9 @@ const AIImageGenerator = {
         const msg = {
             id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
             type: 'received',  // AI发送的消息
-            content: description || '[AI生成的图片]',
-            imageData: imageData,
-            isImage: true,
-            isAIGenerated: true,  // 标记为AI生成的图片
-            imageDescription: description,  // 保存图片描述用于弹窗显示
-            isGenerationFailed: isFallback,  // 标记是否使用了默认图片
+            content: description || '[图片描述]',
+            isPhotoDescription: true,  // 标记为图片描述消息（文字卡片）
+            photoDescription: description,  // 保存图片描述
             time: new Date().toISOString()
         };
 
@@ -429,7 +396,7 @@ const AIImageGenerator = {
         // 更新会话
         const conv = this.AppState.conversations.find(c => c.id === convId);
         if (conv) {
-            conv.lastMsg = '[图片]';
+            conv.lastMsg = '[图片描述]';
             conv.time = formatTime(new Date());
             conv.lastMessageTime = msg.time;
         }

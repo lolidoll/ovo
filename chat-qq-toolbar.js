@@ -275,13 +275,11 @@
     // ==================== 按钮功能处理函数 ====================
     
     function handleCamera() {
-        // 触发相机功能 - 直接调用文件选择器
-        const toolbarFile = document.getElementById('toolbar-file-input');
-        if (toolbarFile) {
-            toolbarFile.dataset.mode = 'with-description';
-            toolbarFile.click();
+        // 触发相机功能 - 直接显示文字描述对话框
+        if (window.showPhotoDescriptionDialog && typeof window.showPhotoDescriptionDialog === 'function') {
+            window.showPhotoDescriptionDialog(null);
         } else {
-            showToast('拍照功能尚未实现');
+            showToast('拍照功能尚未加载');
         }
     }
     

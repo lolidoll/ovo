@@ -281,7 +281,10 @@ const MainAPIManager = {
             console.log('📋 API 消息列表详情：', messages.map((m, i) => ({
                 index: i,
                 role: m.role,
-                contentPreview: m.content.substring(0, 50) + (m.content.length > 50 ? '...' : '')
+                contentType: Array.isArray(m.content) ? 'array' : 'string',
+                contentPreview: Array.isArray(m.content)
+                    ? `[${m.content.length} items: ${m.content.map(c => c.type).join(', ')}]`
+                    : m.content.substring(0, 50) + (m.content.length > 50 ? '...' : '')
             })));
 
             const res = await fetch(endpoint, fetchOptions);
@@ -842,6 +845,11 @@ This mindset beats memorizing 100 rules.`);
                 messageContent = '[用户发送了表情包: ' + m.content + ']';
             }
             
+            // 如果消息是图片描述（相机按钮发送的文字描述）
+            if (m.isPhotoDescription) {
+                messageContent = `[用户发送了图片描述：${m.photoDescription || m.content}]`;
+            }
+            
             // 如果消息是图片,根据 needsVision 标志决定处理方式
             if (m.isImage) {
                 // 确定消息角色
@@ -849,6 +857,13 @@ This mindset beats memorizing 100 rules.`);
                 
                 // 照片按钮（needsVision=true）：使用 Vision API 格式让 AI 识图
                 if (m.needsVision && m.imageData && m.imageData.startsWith('data:image')) {
+                    console.log('🖼️ 检测到需要识图的图片消息:', {
+                        messageId: m.id,
+                        hasImageData: !!m.imageData,
+                        imageDataLength: m.imageData.length,
+                        role: roleToUse
+                    });
+                    
                     // 使用 Vision API 的 content 数组格式
                     const contentArray = [];
                     
@@ -866,10 +881,18 @@ This mindset beats memorizing 100 rules.`);
                         }
                     });
                     
-                    out.push({
+                    const visionMessage = {
                         role: roleToUse,
                         content: contentArray
+                    };
+                    
+                    console.log('✅ Vision API 消息已构建:', {
+                        role: visionMessage.role,
+                        contentItems: visionMessage.content.length,
+                        types: visionMessage.content.map(c => c.type)
                     });
+                    
+                    out.push(visionMessage);
                     return;
                 }
                 // 相机按钮（needsVision=false）：只发送用户的文字描述
@@ -949,9 +972,24 @@ This mindset beats memorizing 100 rules.`);
             if (out.length > 0) {
                 const lastMsgInOut = out[out.length - 1];
                 if (lastMsgInOut.role === roleToUse && lastMsgInOut.role !== 'system') {
+                    // 安全地获取content预览（处理字符串和数组两种情况）
+                    const getPrevContentPreview = () => {
+                        if (Array.isArray(lastMsgInOut.content)) {
+                            return `[Vision API: ${lastMsgInOut.content.length} items]`;
+                        }
+                        return lastMsgInOut.content.substring(0, 40);
+                    };
+                    
+                    const getCurrContentPreview = () => {
+                        if (Array.isArray(messageContent)) {
+                            return `[Vision API: ${messageContent.length} items]`;
+                        }
+                        return messageContent.substring(0, 40);
+                    };
+                    
                     console.warn(`[API消息警告] 第 ${index + 1} 条消息与前一条消息角色相同（都是 ${roleToUse}）`, {
-                        prevMsg: { content: lastMsgInOut.content.substring(0, 40) },
-                        currMsg: { type: m.type, content: messageContent.substring(0, 40) }
+                        prevMsg: { content: getPrevContentPreview() },
+                        currMsg: { type: m.type, content: getCurrContentPreview() }
                     });
                 }
             }
@@ -980,8 +1018,15 @@ This mindset beats memorizing 100 rules.`);
             const msg = messages[i];
             
             // 检查消息是否具有必需的属性
-            if (!msg.role || !msg.content) {
+            // content 可以是字符串或数组（Vision API格式）
+            if (!msg.role || (msg.content === undefined || msg.content === null)) {
                 errors.push(`消息 ${i}: 缺少 role 或 content 属性`);
+                continue;
+            }
+            
+            // 如果content是数组，检查是否为空
+            if (Array.isArray(msg.content) && msg.content.length === 0) {
+                errors.push(`消息 ${i}: content 数组为空`);
                 continue;
             }
             

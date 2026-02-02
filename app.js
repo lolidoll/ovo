@@ -1486,6 +1486,12 @@
                     initApiSettingsUI();
                 }, 100);
             }
+            // 打开世界书页面时，渲染世界书列表
+            if (pageId === 'worldbook-page') {
+                setTimeout(function() {
+                    renderWorldbooks();
+                }, 100);
+            }
             // 打开朋友圈页面时，立即刷新好友和分组数据
             if (pageId === 'moments-page') {
                 setTimeout(function() {
@@ -2906,8 +2912,11 @@
                 }
                 
                 // 处理不同类型消息的内容
-                // ⭐ 转发朋友圈消息优先检查，确保不会被其他条件拦截
-                if (msg.isForward && msg.forwardedMoment) {
+                // ⭐ 图片描述消息优先检查
+                if (msg.isPhotoDescription) {
+                    // 图片描述消息：清空textContent，将由下面的bubble.innerHTML处理
+                    textContent = ``;
+                } else if (msg.isForward && msg.forwardedMoment) {
                     // 转发朋友圈消息：直接跳过 textContent 处理
                     textContent = `</div>`; // 只添加关闭标签，不添加任何内容
                 } else if (msg.forwardedMoment && !msg.isForwarded) {
@@ -3073,6 +3082,12 @@
                     const callDuration = msg.callDuration || 0;
                     const senderName = msg.sender === 'sent' ? AppState.user.name : AppState.currentChat.name;
                     
+                    console.log('[VideoCall Render] 渲染视频通话卡片:', {
+                        callStatus: callStatus,
+                        callDuration: callDuration,
+                        messageId: msg.id
+                    });
+                    
                     let statusText = '';
                     let statusIcon = '';
                     let durationText = '';
@@ -3094,6 +3109,7 @@
                     } else if (callStatus === 'ended') {
                         statusText = '已挂断';
                         durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                        console.log('[VideoCall Render] ended状态 - callDuration:', callDuration, 'durationText:', durationText);
                         statusIcon = `<div class="videocall-icon ended-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/>
@@ -3112,6 +3128,42 @@
                         </div>
                     `;
                     bubble.classList.add('videocall-message');
+                } else if (msg.isPhotoDescription) {
+                    // 图片描述消息 - 文字卡片形式
+                    const photoDesc = escapeHtml(msg.photoDescription || msg.content || '');
+                    
+                    bubble.innerHTML = `
+                        <div class="chat-avatar">${avatarContent}</div>
+                        <div class="photo-description-card" style="
+                            background: #fff;
+                            border: 1px solid #e0e0e0;
+                            border-radius: 8px;
+                            padding: 12px;
+                            max-width: 260px;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                        ">
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                                margin-bottom: 8px;
+                                padding-bottom: 8px;
+                                border-bottom: 1px solid #f0f0f0;
+                            ">
+                                <svg viewBox="0 0 24 24" width="16" height="16" style="fill: #666;">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                                <span style="font-size: 12px; color: #666; font-weight: 500;">图片描述</span>
+                            </div>
+                            <div style="
+                                font-size: 12px;
+                                color: #333;
+                                line-height: 1.5;
+                                word-break: break-word;
+                            ">${photoDesc}</div>
+                        </div>
+                    `;
+                    bubble.classList.add('photo-description-message');
                 } else if (msg.isForward && msg.forwardedMoment) {
                     // 转发朋友圈消息 - 简洁优雅的卡片（黑白灰风格）
                     console.log('🎯 检测到转发朋友圈消息:', msg);
@@ -9514,6 +9566,7 @@
         }
         
         // 暴露关键函数到 window 对象，以便其他页面/脚本访问
+        window.saveToStorage = saveToStorage;
         window.saveToIndexDB = saveToIndexDB;
         window.getAppState = () => AppState;
         window.AppState = AppState;
