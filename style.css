@@ -5554,13 +5554,40 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     border-radius: 12px;
     background-size: cover;
     background-position: center;
-    background-color: linear-gradient(135deg, #fff5f8 0%, #ffe4ec 100%);
+    background-image: linear-gradient(135deg, #fff5f8 0%, #ffe4ec 100%);
+    background-color: #fff5f8;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 12px;
     border: 2px solid #ffd4e5;
     overflow: hidden;
+    min-height: 120px;
+    position: relative;
+}
+
+/* 当有背景图时的样式覆盖 */
+.bg-preview[style*="background-image"] {
+    background-repeat: no-repeat;
+}
+
+/* Edge移动版兼容性修复 */
+@supports (-ms-ime-align: auto) {
+    .bg-preview {
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+    }
+}
+
+/* 检测并适配荣耀等Android设备 */
+@supports (-webkit-touch-callout: none) {
+    .bg-preview {
+        will-change: background-image;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
 }
 
 .bg-placeholder {

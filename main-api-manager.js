@@ -87,6 +87,19 @@ const MainAPIManager = {
     // ========== 线上模式 - 主API调用核心函数 ==========
     
     /**
+     * 验证API配置是否完整
+     * 仅在准备实际API请求时调用，不应在UI交互中调用
+     * @returns {boolean} 配置是否有效
+     */
+    validateApiConfiguration: function() {
+        const api = this.AppState.apiSettings || {};
+        if (!api.endpoint || !api.selectedModel) {
+            return false;
+        }
+        return true;
+    },
+
+    /**
      * 调用主API进行对话
      */
     callApiWithConversation: async function() {
@@ -102,12 +115,6 @@ const MainAPIManager = {
         // 注意：语音通话API使用独立的锁 isVoiceCallApiCalling，不影响文字聊天
         if (convState.isApiCalling) {
             this.showToast('正在等待上一次回复完成...');
-            return;
-        }
-
-        const api = this.AppState.apiSettings || {};
-        if (!api.endpoint || !api.selectedModel) {
-            this.showToast('请先在 API 设置中填写端点并选择模型');
             return;
         }
 
@@ -226,6 +233,15 @@ const MainAPIManager = {
         const validation = this.validateApiMessageList(messages);
         if (validation.hasWarnings) {
             console.warn('API 消息列表存在警告,但仍然继续调用:', validation.errors);
+        }
+        
+        // 验证API配置（仅在准备实际API请求时检查）
+        if (!this.validateApiConfiguration()) {
+            this.showToast('请先在 API 设置中填写端点并选择模型');
+            setLoadingStatus(false);
+            convState.isApiCalling = false;
+            convState.isTyping = false;
+            return;
         }
         
         const body = {

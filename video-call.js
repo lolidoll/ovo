@@ -23,7 +23,10 @@
         // 视频相关
         currentCharacterPhoto: null, // 当前显示的角色照片
         currentUserPhoto: null, // 当前显示的用户照片
-        isUserPhotoInMain: false // true=用户照片在主屏，false=角色照片在主屏
+        isUserPhotoInMain: false, // true=用户照片在主屏，false=角色照片在主屏
+        
+        // 聊天界面自动隐藏
+        chatAutoHideTimer: null // 聊天界面5秒自动隐藏计时器
     };
     
     // 对话记录
@@ -613,48 +616,82 @@
         console.log('[VideoCall] 视频通话界面已显示');
     }
     
-    /**
-     * 初始化聊天滚动监听（滑动显示消息）
+   /**
+     * 初始化聊天界面交互监听器
+     * 监听用户与聊天界面的所有交互，并在交互时重置自动隐藏计时器
      */
-    function initChatScrollListener() {
-        const chatContainer = document.getElementById('video-chat-container');
-        const chatMessages = document.getElementById('video-chat-messages');
-        if (!chatContainer || !chatMessages) return;
-        
-        let scrollTimeout;
-        
-        chatMessages.addEventListener('scroll', () => {
-            // 滚动时显示消息容器
-            chatContainer.classList.add('show-messages');
-            
-            // 检测是否在底部附近（50px以内）
-            const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
-            
-            // 标记用户是否正在查看历史
-            chatMessages.setAttribute('data-user-scrolling', !isNearBottom ? 'true' : 'false');
-            
-            // 清除之前的定时器
-            clearTimeout(scrollTimeout);
-            
-            // 停止滚动3秒后隐藏
-            scrollTimeout = setTimeout(() => {
-                if (chatMessages.children.length > 0) {
-                    chatContainer.classList.remove('show-messages');
-                }
-            }, 3000);
-        });
-        
-        // 触摸开始时不自动滚动
-        chatMessages.addEventListener('touchstart', () => {
-            chatMessages.setAttribute('data-user-scrolling', 'true');
-        });
-        
-        // 触摸结束时检查是否在底部
-        chatMessages.addEventListener('touchend', () => {
-            const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
-            chatMessages.setAttribute('data-user-scrolling', !isNearBottom ? 'true' : 'false');
-        });
-    }
+   function initChatScrollListener() {
+       const chatContainer = document.getElementById('video-chat-container');
+       const chatMessages = document.getElementById('video-chat-messages');
+       const chatInput = document.getElementById('video-chat-input');
+       if (!chatContainer || !chatMessages) return;
+       
+       // 监听滚动事件
+       chatMessages.addEventListener('scroll', () => {
+           // 检测是否在底部附近（50px以内）
+           const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+           
+           // 标记用户是否正在查看历史
+           chatMessages.setAttribute('data-user-scrolling', !isNearBottom ? 'true' : 'false');
+           
+           // 重置自动隐藏计时器
+           resetChatAutoHideTimer();
+       });
+       
+       // 监听触摸事件
+       chatMessages.addEventListener('touchstart', () => {
+           chatMessages.setAttribute('data-user-scrolling', 'true');
+           resetChatAutoHideTimer();
+       });
+       
+       chatMessages.addEventListener('touchend', () => {
+           const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+           chatMessages.setAttribute('data-user-scrolling', !isNearBottom ? 'true' : 'false');
+           resetChatAutoHideTimer();
+       });
+       
+       chatMessages.addEventListener('touchmove', () => {
+           resetChatAutoHideTimer();
+       });
+       
+       // 监听鼠标事件
+       chatMessages.addEventListener('mousedown', () => {
+           resetChatAutoHideTimer();
+       });
+       
+       chatMessages.addEventListener('mousemove', () => {
+           resetChatAutoHideTimer();
+       });
+       
+       chatMessages.addEventListener('mouseup', () => {
+           resetChatAutoHideTimer();
+       });
+       
+       // 监听输入框事件
+       if (chatInput) {
+           chatInput.addEventListener('focus', () => {
+               resetChatAutoHideTimer();
+           });
+           
+           chatInput.addEventListener('input', () => {
+               resetChatAutoHideTimer();
+           });
+           
+           chatInput.addEventListener('keydown', () => {
+               resetChatAutoHideTimer();
+           });
+       }
+       
+       // 监听整个聊天容器的事件
+       chatContainer.addEventListener('mouseenter', () => {
+           resetChatAutoHideTimer();
+       });
+       
+       chatContainer.addEventListener('mouseleave', () => {
+           // 鼠标离开后，5秒自动隐藏
+           showChatContainer();
+       });
+   }
     
     /**
      * 初始化视频控制按钮
@@ -707,26 +744,33 @@
      * 重置视频通话状态
      * 用于初始化和异常状态清理
      */
-    function resetVideoCallState() {
-        console.log('[VideoCall] 重置视频通话状态');
-        
-        // 停止计时器
-        if (videoCallState.timerInterval) {
-            clearInterval(videoCallState.timerInterval);
-            videoCallState.timerInterval = null;
-        }
-        
-        // 重置所有状态
-        videoCallState.isInCall = false;
-        videoCallState.callType = null;
-        videoCallState.callerId = null;
-        videoCallState.callerName = null;
-        videoCallState.callerAvatar = null;
-        videoCallState.callStartTime = null;
-        videoCallState.isMinimized = false;
-        videoCallState.currentCharacterPhoto = null;
-        videoCallState.currentUserPhoto = null;
-        videoCallState.isUserPhotoInMain = false;
+   function resetVideoCallState() {
+       console.log('[VideoCall] 重置视频通话状态');
+       
+       // 停止计时器
+       if (videoCallState.timerInterval) {
+           clearInterval(videoCallState.timerInterval);
+           videoCallState.timerInterval = null;
+       }
+       
+       // 清除聊天自动隐藏计时器
+       if (videoCallState.chatAutoHideTimer) {
+           clearTimeout(videoCallState.chatAutoHideTimer);
+           videoCallState.chatAutoHideTimer = null;
+       }
+       
+       // 重置所有状态
+       videoCallState.isInCall = false;
+       videoCallState.callType = null;
+       videoCallState.callerId = null;
+       videoCallState.callerName = null;
+       videoCallState.callerAvatar = null;
+       videoCallState.callStartTime = null;
+       videoCallState.isMinimized = false;
+       videoCallState.currentCharacterPhoto = null;
+       videoCallState.currentUserPhoto = null;
+       videoCallState.isUserPhotoInMain = false;
+       videoCallState.chatAutoHideTimer = null;
         
         // 清空对话记录和消息队列
         currentVideoCallConversation = [];
@@ -946,6 +990,8 @@
      */
     function makeFloatingWindowDraggable(element) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        let hasMoved = false; // 跟踪是否发生了拖动
+        let startX = 0, startY = 0; // 记录起始位置
         
         element.onmousedown = dragMouseDown;
         element.ontouchstart = dragTouchStart;
@@ -954,6 +1000,9 @@
             e.preventDefault();
             pos3 = e.clientX;
             pos4 = e.clientY;
+            startX = e.clientX;
+            startY = e.clientY;
+            hasMoved = false;
             element.classList.add('dragging');
             document.onmouseup = closeDragElement;
             document.onmousemove = elementDrag;
@@ -963,6 +1012,9 @@
             e.preventDefault();
             pos3 = e.touches[0].clientX;
             pos4 = e.touches[0].clientY;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            hasMoved = false;
             element.classList.add('dragging');
             document.ontouchend = closeDragElement;
             document.ontouchmove = elementDragTouch;
@@ -974,6 +1026,16 @@
             pos2 = pos4 - e.clientY;
             pos3 = e.clientX;
             pos4 = e.clientY;
+            
+            // 检查是否移动了超过5像素（避免误触）
+            const moveDistance = Math.sqrt(
+                Math.pow(e.clientX - startX, 2) +
+                Math.pow(e.clientY - startY, 2)
+            );
+            if (moveDistance > 5) {
+                hasMoved = true;
+            }
+            
             element.style.top = (element.offsetTop - pos2) + "px";
             element.style.left = (element.offsetLeft - pos1) + "px";
             element.style.right = 'auto';
@@ -985,6 +1047,16 @@
             pos2 = pos4 - e.touches[0].clientY;
             pos3 = e.touches[0].clientX;
             pos4 = e.touches[0].clientY;
+            
+            // 检查是否移动了超过5像素（避免误触）
+            const moveDistance = Math.sqrt(
+                Math.pow(e.touches[0].clientX - startX, 2) +
+                Math.pow(e.touches[0].clientY - startY, 2)
+            );
+            if (moveDistance > 5) {
+                hasMoved = true;
+            }
+            
             element.style.top = (element.offsetTop - pos2) + "px";
             element.style.left = (element.offsetLeft - pos1) + "px";
             element.style.right = 'auto';
@@ -996,6 +1068,12 @@
             document.onmousemove = null;
             document.ontouchend = null;
             document.ontouchmove = null;
+            
+            // 如果没有拖动（只是点击），则最大化视频通话
+            if (!hasMoved) {
+                console.log('[VideoCall] 悬浮窗被点击，最大化视频通话');
+                maximizeVideoCall();
+            }
         }
     }
     
@@ -1187,8 +1265,8 @@
                 return;
             }
             
-            // 显示AI正在输入
-            addVideoMessage('ai', '正在输入...');
+            // 显示AI正在说话
+            addVideoMessage('ai', '正在说话...');
             
             // 构建API消息数组
             const messages = [];
@@ -1293,7 +1371,7 @@
             const data = await response.json();
             const aiText = window.APIUtils.extractTextFromResponse(data);
             
-            // 移除"正在输入"
+            // 移除"正在说话"
             removeVideoTypingIndicator();
             
             if (aiText && aiText.trim()) {
@@ -1406,14 +1484,14 @@
     }
     
     /**
-     * 移除"正在输入"指示器
+     * 移除"正在说话"指示器
      */
     function removeVideoTypingIndicator() {
         const messagesContainer = document.getElementById('video-chat-messages');
         if (!messagesContainer) return;
         
         const lastMessage = messagesContainer.lastElementChild;
-        if (lastMessage && lastMessage.textContent.includes('正在输入')) {
+        if (lastMessage && lastMessage.textContent.includes('正在说话')) {
             lastMessage.remove();
         }
     }
@@ -1435,16 +1513,121 @@
     }
     
     /**
+     * 设置视频聊天输入框事件监听
+     */
+    function setupVideoChatInput() {
+        const input = document.getElementById('video-chat-input');
+        if (!input) {
+            console.log('[VideoCall] 聊天输入框不存在');
+            return;
+        }
+        
+        console.log('[VideoCall] 绑定聊天输入框事件');
+        
+        // 跟踪输入法状态
+        let isComposing = false;
+        
+        // 输入法开始
+        input.addEventListener('compositionstart', function() {
+            isComposing = true;
+            console.log('[VideoCall] 输入法开始');
+        });
+        
+        // 输入法结束
+        input.addEventListener('compositionend', function() {
+            isComposing = false;
+            console.log('[VideoCall] 输入法结束');
+            // 延迟一点时间，确保输入完成
+            setTimeout(() => {
+                // 检查是否需要自动发送（某些输入法会在compositionend后触发keydown）
+                const message = input.value.trim();
+                if (message) {
+                    console.log('[VideoCall] 输入法完成，等待用户确认发送');
+                }
+            }, 100);
+        });
+        
+        // 监听键盘事件（支持PC端Enter键和移动端输入法发送键）
+        input.addEventListener('keydown', function(e) {
+            // Enter键发送（keyCode 13 或 key 'Enter'）
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                // 如果正在使用输入法，不发送
+                if (isComposing) {
+                    console.log('[VideoCall] 输入法中，忽略Enter键');
+                    return;
+                }
+                e.preventDefault();
+                console.log('[VideoCall] Enter键发送消息');
+                sendVideoMessage();
+            }
+        });
+        
+        // 监听输入法的确认事件（移动端输入法发送键）
+        input.addEventListener('keypress', function(e) {
+            // 某些移动端输入法使用 keypress 发送
+            if ((e.key === 'Enter' || e.keyCode === 13) && !isComposing) {
+                e.preventDefault();
+                console.log('[VideoCall] Keypress事件发送消息');
+                sendVideoMessage();
+            }
+        });
+    }
+    
+    /**
      * 发送消息的公共方法（供HTML调用）
      */
     function sendMessage() {
         sendVideoMessage();
     }
     
-    /**
+   /**
+     * 显示聊天容器并启动自动隐藏计时器
+     */
+   function showChatContainer() {
+       const chatContainer = document.getElementById('video-chat-container');
+       if (!chatContainer) return;
+       
+       // 显示聊天容器
+       chatContainer.classList.add('show-messages');
+       
+       // 清除之前的计时器
+       if (videoCallState.chatAutoHideTimer) {
+           clearTimeout(videoCallState.chatAutoHideTimer);
+       }
+       
+       // 启动新的5秒自动隐藏计时器
+       videoCallState.chatAutoHideTimer = setTimeout(() => {
+           chatContainer.classList.remove('show-messages');
+           console.log('[VideoCall] 聊天界面5秒无操作，自动隐藏');
+       }, 5000);
+   }
+   
+   /**
+     * 重置聊天界面自动隐藏计时器
+     */
+   function resetChatAutoHideTimer() {
+       const chatContainer = document.getElementById('video-chat-container');
+       if (!chatContainer) return;
+       
+       // 显示聊天容器
+       chatContainer.classList.add('show-messages');
+       
+       // 清除之前的计时器
+       if (videoCallState.chatAutoHideTimer) {
+           clearTimeout(videoCallState.chatAutoHideTimer);
+       }
+       
+       // 启动新的5秒自动隐藏计时器
+       videoCallState.chatAutoHideTimer = setTimeout(() => {
+           chatContainer.classList.remove('show-messages');
+           console.log('[VideoCall] 聊天界面5秒无操作，自动隐藏');
+       }, 5000);
+   }
+   
+   /**
      * 添加视频聊天消息（带自动隐藏功能）
      */
-    function addVideoMessage(sender, text) {
+   function addVideoMessage(sender, text) {
        const messagesContainer = document.getElementById('video-chat-messages');
        const chatContainer = document.getElementById('video-chat-container');
        if (!messagesContainer || !chatContainer) return;
@@ -1462,8 +1645,8 @@
            messagesContainer.scrollTop = messagesContainer.scrollHeight;
        }
        
-       // 显示聊天容器
-       chatContainer.classList.add('show-messages');
+       // 显示聊天容器并启动自动隐藏计时器
+       showChatContainer();
        
        // 保存到对话记录
        currentVideoCallConversation.push({
@@ -1702,6 +1885,9 @@
         
         // 绑定主屏幕和小屏幕的长按事件
         setupScreenInteractions();
+        
+        // 绑定视频聊天输入框的键盘事件
+        setupVideoChatInput();
         
         // 暴露全局方法
         window.VideoCallSystem = {

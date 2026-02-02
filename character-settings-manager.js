@@ -1118,7 +1118,7 @@
         },
 
         /**
-         * 打开聊天背景图片选择器（iOS兼容）
+         * 打开聊天背景图片选择器（iOS兼容，支持图片压缩）
          */
         openChatBgImagePicker: function(charId) {
             // 创建隐藏的文件输入元素
@@ -1138,7 +1138,7 @@
             input = newInput;
             
             // 添加change事件
-            input.addEventListener('change', (e) => {
+            input.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 
@@ -1148,17 +1148,22 @@
                     return;
                 }
                 
-                // 验证文件大小（限制5MB）
-                if (file.size > 5 * 1024 * 1024) {
-                    showToast('图片大小不能超过5MB');
+                // 验证文件大小（限制3MB，移动端更严格）
+                if (file.size > 3 * 1024 * 1024) {
+                    showToast('图片大小不能超过3MB');
                     return;
                 }
                 
-                const reader = new FileReader();
-                reader.onload = (readEvent) => {
+                try {
+                    // 显示加载提示
+                    showToast('正在处理图片...');
+                    
+                    // 使用Canvas压缩图片
+                    const compressedDataUrl = await this.compressImage(file, 1920, 1080, 0.85);
+                    
                     const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
                     if (conv) {
-                        conv.chatBgImage = readEvent.target.result;
+                        conv.chatBgImage = compressedDataUrl;
                         saveToStorage();
                         
                         // 关闭设置页面并重新打开以刷新界面
@@ -1168,18 +1173,119 @@
                             setTimeout(() => {
                                 this.openCharacterSettings(conv);
                                 showToast('背景图片已更新');
+                                
+                                // 检测并修复荣耀/Edge移动版渲染问题
+                                this.detectAndFixBackgroundIssues();
                             }, 100);
                         }
                     }
-                };
-                reader.onerror = () => {
-                    showToast('图片读取失败，请重试');
-                };
-                reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('图片处理失败:', error);
+                    showToast('图片处理失败，请重试');
+                }
             }, { once: true });
             
             // 触发文件选择（iOS需要在用户交互中直接调用）
             input.click();
+        },
+
+        /**
+         * 压缩图片以优化移动端性能
+         */
+        compressImage: function(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            // 计算缩放比例
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > maxWidth || height > maxHeight) {
+                                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                                width = Math.round(width * ratio);
+                                height = Math.round(height * ratio);
+                            }
+                            
+                            // 创建Canvas并绘制
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            
+                            // 设置平滑缩放
+                            ctx.imageSmoothingEnabled = true;
+                            ctx.imageSmoothingQuality = 'high';
+                            
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // 导出为JPEG（WebP在某些浏览器可能不支持）
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            console.log('图片压缩完成:', {
+                                原始尺寸: `${img.width}x${img.height}`,
+                                压缩后尺寸: `${width}x${height}`,
+                                原始大小: `${(file.size / 1024).toFixed(2)}KB`,
+                                压缩后大小: `${(dataUrl.length * 0.75 / 1024).toFixed(2)}KB`
+                            });
+                            resolve(dataUrl);
+                        } catch (error) {
+                            console.error('Canvas处理失败:', error);
+                            reject(error);
+                        }
+                    };
+                    img.onerror = (error) => {
+                        console.error('图片加载失败:', error);
+                        reject(new Error('图片加载失败'));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = (error) => {
+                    console.error('文件读取失败:', error);
+                    reject(new Error('文件读取失败'));
+                };
+                reader.readAsDataURL(file);
+            });
+        },
+
+        /**
+         * 检测并修复荣耀/Edge移动版背景图渲染问题
+         */
+        detectAndFixBackgroundIssues: function() {
+            const bgPreview = document.querySelector('.bg-preview');
+            if (!bgPreview) return;
+            
+            const computedStyle = window.getComputedStyle(bgPreview);
+            const backgroundImage = computedStyle.backgroundImage;
+            
+            console.log('背景图诊断:', {
+                backgroundImage: backgroundImage.substring(0, 100) + '...',
+                hasInlineStyle: bgPreview.hasAttribute('style'),
+                backgroundColor: computedStyle.backgroundColor
+            });
+            
+            // 检测Edge移动版或荣耀设备
+            const isEdgeMobile = /Edge/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent);
+            const isHonor = /Honor|HONOR|harmonyos/i.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            if (isEdgeMobile || isHonor || isAndroid) {
+                console.log('检测到移动设备，应用兼容性修复');
+                
+                // 强制重绘 - 解决某些浏览器的渲染缓存问题
+                bgPreview.style.display = 'none';
+                void bgPreview.offsetHeight; // 触发重排
+                bgPreview.style.display = 'flex';
+                
+                // 确保背景图样式正确应用
+                setTimeout(() => {
+                    const style = bgPreview.getAttribute('style');
+                    if (style && style.includes('background-image')) {
+                        console.log('背景图样式已正确应用');
+                    }
+                }, 50);
+            }
         },
 
         /**
