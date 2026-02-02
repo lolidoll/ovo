@@ -9341,53 +9341,250 @@
         }
 
 
-        // 打开个性装扮页面
+        // 打开个性装扮页面（字体管理器和CSS主题管理）
         function openDecorationPage() {
-            let page = document.getElementById('decoration-page');
+            let page = document.getElementById('decoration-main-page');
             if (!page) {
                 page = document.createElement('div');
-                page.id = 'decoration-page';
+                page.id = 'decoration-main-page';
                 page.className = 'sub-page';
                 document.getElementById('app-container').appendChild(page);
             }
-
-            const themes = [
-                { id: 'light', name: '黑白灰简约', icon: '⚪', color: '#f5f5f5' },
-                { id: 'pink', name: '白粉色系', icon: '🌸', color: '#fce4ec' },
-                { id: 'dark', name: '夜间模式', icon: '🌙', color: '#1a1a1a' }
-            ];
-
-            const themesHTML = themes.map(theme => `
-                <div onclick="switchTheme('${theme.id}')" style="padding:16px;margin:8px;background:white;border-radius:12px;cursor:pointer;border:${AppState.user.theme === theme.id ? '3px solid #667eea' : '1px solid #e0e0e0'};transition:all 0.2s;text-align:center;">
-                    <div style="font-size:32px;margin-bottom:8px;">${theme.icon}</div>
-                    <div style="font-size:14px;font-weight:bold;">${theme.name}</div>
-                    <div style="font-size:12px;color:#999;margin-top:4px;">${AppState.user.theme === theme.id ? '✓ 已选择' : '点击选择'}</div>
-                </div>
-            `).join('');
-
+            
             page.innerHTML = `
                 <div class="sub-nav">
-                    <div class="back-btn" id="decoration-back-btn">
+                    <div class="back-btn" id="decoration-main-back-btn">
                         <div class="back-arrow"></div>
                         <span>返回</span>
                     </div>
                     <div class="sub-title">个性装扮</div>
                 </div>
-                <div class="sub-content" style="overflow-y:auto;padding:16px;background-color:#f9f9f9;">
-                    <div style="font-size:16px;font-weight:bold;margin-bottom:12px;">选择主题</div>
-                    <div style="display:grid;grid-template-columns:1fr;gap:8px;">
-                        ${themesHTML}
+                <div class="sub-content" style="padding:0;background:#f5f5f7;overflow-y:auto;">
+                    <!-- 功能卡片区域 -->
+                    <div class="decoration-cards-container" style="padding-top:20px;">
+                        <!-- 字体管理 -->
+                        <div class="decoration-option-card" id="open-font-manager">
+                            <div class="decoration-option-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
+                                </svg>
+                            </div>
+                            <div class="decoration-option-content">
+                                <div class="decoration-option-title">字体管理</div>
+                                <div class="decoration-option-desc">导入和管理自定义字体</div>
+                            </div>
+                            <div class="decoration-option-arrow">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- CSS主题管理 -->
+                        <div class="decoration-option-card" id="open-theme-manager">
+                            <div class="decoration-option-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                                </svg>
+                            </div>
+                            <div class="decoration-option-content">
+                                <div class="decoration-option-title">CSS主题管理</div>
+                                <div class="decoration-option-desc">自定义聊天页面样式</div>
+                            </div>
+                            <div class="decoration-option-arrow">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
+                <style>
+                    /* ========================================
+                       个性装扮主页面 - 磨砂玻璃高级设计
+                       黑白灰配色 | iOS风格 | 极简主义
+                    ======================================== */
+                    
+                    /* 卡片容器 */
+                    .decoration-cards-container {
+                        padding: 20px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+                    
+                    /* 功能卡片 */
+                    .decoration-option-card {
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px) saturate(180%);
+                        -webkit-backdrop-filter: blur(20px) saturate(180%);
+                        border-radius: 16px;
+                        padding: 20px;
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                        cursor: pointer;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        border: 0.5px solid rgba(0, 0, 0, 0.06);
+                        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+                    }
+                    
+                    .decoration-option-card:hover {
+                        transform: translateY(-4px);
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                        border-color: rgba(0, 0, 0, 0.12);
+                    }
+                    
+                    .decoration-option-card:active {
+                        transform: translateY(-2px);
+                    }
+                    
+                    /* 图标样式 */
+                    .decoration-option-icon {
+                        width: 56px;
+                        height: 56px;
+                        border-radius: 14px;
+                        background: rgba(0, 0, 0, 0.06);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #1a1a1a;
+                        flex-shrink: 0;
+                        transition: all 0.3s;
+                    }
+                    
+                    .decoration-option-card:hover .decoration-option-icon {
+                        background: rgba(0, 0, 0, 0.1);
+                        transform: scale(1.05);
+                    }
+                    
+                    /* 内容区域 */
+                    .decoration-option-content {
+                        flex: 1;
+                    }
+                    
+                    .decoration-option-title {
+                        font-size: 17px;
+                        font-weight: 600;
+                        color: #1a1a1a;
+                        margin-bottom: 4px;
+                        letter-spacing: 0.2px;
+                    }
+                    
+                    .decoration-option-desc {
+                        font-size: 13px;
+                        color: #86868b;
+                        line-height: 1.4;
+                        letter-spacing: 0.1px;
+                    }
+                    
+                    /* 箭头 */
+                    .decoration-option-arrow {
+                        flex-shrink: 0;
+                        color: #86868b;
+                        transition: all 0.3s;
+                        display: flex;
+                        align-items: center;
+                    }
+                    
+                    .decoration-option-card:hover .decoration-option-arrow {
+                        color: #1a1a1a;
+                        transform: translateX(4px);
+                    }
+                    
+                    /* 响应式设计 - 移动端优化 */
+                    @media (max-width: 768px) {
+                        .decoration-cards-container {
+                            padding: 18px 16px;
+                        }
+                        
+                        .decoration-option-card {
+                            padding: 18px;
+                        }
+                    }
+                    
+                    @media (max-width: 480px) {
+                        .decoration-cards-container {
+                            padding: 16px 12px;
+                            gap: 12px;
+                        }
+                        
+                        .decoration-option-card {
+                            padding: 16px;
+                            border-radius: 14px;
+                        }
+                        
+                        .decoration-option-icon {
+                            width: 48px;
+                            height: 48px;
+                            border-radius: 12px;
+                        }
+                        
+                        .decoration-option-title {
+                            font-size: 16px;
+                        }
+                        
+                        .decoration-option-desc {
+                            font-size: 12px;
+                        }
+                    }
+                    
+                    /* 触摸设备优化 */
+                    @media (hover: none) and (pointer: coarse) {
+                        .decoration-option-card {
+                            min-height: 88px;
+                            touch-action: manipulation;
+                            -webkit-tap-highlight-color: transparent;
+                        }
+                        
+                        .decoration-option-card:hover {
+                            transform: none;
+                        }
+                        
+                        .decoration-option-card:active {
+                            transform: scale(0.98);
+                            opacity: 0.9;
+                        }
+                    }
+                </style>
             `;
-
+            
             page.classList.add('open');
-
-            page.addEventListener('click', function(e) {
-                if (e.target.closest('#decoration-back-btn')) {
+            
+            // 绑定返回按钮
+            const backBtn = page.querySelector('#decoration-main-back-btn');
+            if (backBtn) {
+                backBtn.onclick = () => {
                     page.classList.remove('open');
-                }
-            });
+                };
+            }
+            
+            // 绑定字体管理按钮
+            const fontManagerBtn = page.querySelector('#open-font-manager');
+            if (fontManagerBtn) {
+                fontManagerBtn.onclick = () => {
+                    if (window.FontManagerUI) {
+                        window.FontManagerUI.open();
+                    } else {
+                        console.error('字体管理器未加载');
+                        showToast('字体管理器加载失败');
+                    }
+                };
+            }
+            
+            // 绑定CSS主题管理按钮
+            const themeManagerBtn = page.querySelector('#open-theme-manager');
+            if (themeManagerBtn) {
+                themeManagerBtn.onclick = () => {
+                    if (window.ThemeManagerUI) {
+                        window.ThemeManagerUI.open();
+                    } else {
+                        console.error('CSS主题管理器未加载');
+                        showToast('CSS主题管理器加载失败');
+                    }
+                };
+            }
         }
 
         // 切换主题
