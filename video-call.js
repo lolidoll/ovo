@@ -1287,9 +1287,6 @@
                 return;
             }
             
-            // 显示AI正在说话
-            addVideoMessage('ai', '正在说话...');
-            
             // 构建API消息数组
             const messages = [];
             
@@ -1393,9 +1390,6 @@
             const data = await response.json();
             const aiText = window.APIUtils.extractTextFromResponse(data);
             
-            // 移除"正在说话"
-            removeVideoTypingIndicator();
-            
             if (aiText && aiText.trim()) {
                 // 添加AI回复到视频通话界面
                 addVideoMessage('ai', aiText);
@@ -1405,7 +1399,6 @@
             
         } catch (error) {
             console.error('[VideoCall] AI回复失败:', error);
-            removeVideoTypingIndicator();
         } finally {
             isVideoAIResponding = false;
         }
