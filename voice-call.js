@@ -166,32 +166,26 @@
                 <img class="floating-avatar" id="floating-avatar" src="" alt="avatar">
                 <div class="floating-pulse"></div>
             </div>
-        `;
-        
-        // 创建控制菜单
-        const controlMenu = document.createElement('div');
-        controlMenu.id = 'floating-control-menu';
-        controlMenu.className = 'floating-control-menu';
-        controlMenu.innerHTML = `
-            <button class="floating-menu-btn mute-btn" id="floating-mute-btn" title="静音">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3 0 1.66 1.34 3 3 3v6c0 1.66-1.34 3-3 3 0-1.66-1.34-3-3-3v-6c0-1.66 1.34-3 3-3zM17 3v5.67l2.5 1.5V3H17zm-7 0l8.5 5v-5h-8.5zM5 5.67V12l2.5-1.5V5H5zm8.5 9.33L19 14v-5h-5.5z"/>
-                </svg>
-            </button>
-            <button class="floating-menu-btn speaker-btn" id="floating-speaker-btn" title="外放">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c-0.83 0-1.5-.67-1.5-1.5 0-0.83.67-1.5 1.5-1.5.67 0 1.5.67 1.5 1.5 0 .83-.67 1.5-1.5 1.5zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71V17h4v-2h-4v-2h-4V7.23zM19 12v4h3c.55 0 1-.45 1-1s-.45-1-1-1v-4h-3z"/>
-                </svg>
-            </button>
-            <button class="floating-menu-btn end-btn" id="floating-end-btn" title="挂断">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
-                </svg>
-            </button>
+            <div class="floating-control-menu" id="floating-control-menu">
+                <button class="floating-menu-btn mute-btn" id="floating-mute-btn" title="静音">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3 0 1.66 1.34 3 3 3v6c0 1.66-1.34 3-3 3 0-1.66-1.34-3-3-3v-6c0-1.66 1.34-3 3-3zM17 3v5.67l2.5 1.5V3H17zm-7 0l8.5 5v-5h-8.5zM5 5.67V12l2.5-1.5V5H5zm8.5 9.33L19 14v-5h-5.5z"/>
+                    </svg>
+                </button>
+                <button class="floating-menu-btn speaker-btn" id="floating-speaker-btn" title="外放">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c-0.83 0-1.5-.67-1.5-1.5 0-0.83.67-1.5 1.5-1.5.67 0 1.5.67 1.5 1.5 0 .83-.67 1.5-1.5 1.5zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71V17h4v-2h-4v-2h-4V7.23zM19 12v4h3c.55 0 1-.45 1-1s-.45-1-1-1v-4h-3z"/>
+                    </svg>
+                </button>
+                <button class="floating-menu-btn end-btn" id="floating-end-btn" title="挂断">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+                    </svg>
+                </button>
+            </div>
         `;
         
         document.body.appendChild(floatingWindow);
-        document.body.appendChild(controlMenu);
         
         // 绑定事件
         bindCallInterfaceEvents();
@@ -332,62 +326,71 @@
      * 初始化悬浮窗拖拽功能（支持触摸和鼠标）
      */
     function initFloatingWindowDrag(floatingWindow) {
+       // 缓存 DOM 引用，避免重复查询
+       const menu = document.getElementById('floating-control-menu');
+       
+       // 窗口尺寸缓存
+       let cachedWindowWidth = window.innerWidth;
+       let cachedWindowHeight = window.innerHeight;
+       
+       // 防抖函数
+       function debounce(func, wait) {
+           let timeout;
+           return function executedFunction(...args) {
+               const later = () => {
+                   timeout = null;
+                   func(...args);
+               };
+               clearTimeout(timeout);
+               timeout = setTimeout(later, wait);
+           };
+       }
+       
+       // 更新窗口尺寸缓存（防抖）
+       const updateWindowSize = debounce(() => {
+           cachedWindowWidth = window.innerWidth;
+           cachedWindowHeight = window.innerHeight;
+       }, 100);
+       
+       // 监听窗口大小变化
+       window.addEventListener('resize', updateWindowSize);
+       window.addEventListener('orientationchange', updateWindowSize);
+       
        let isDragging = false;
        let startX, startY;
        let initialX, initialY;
        let hasMoved = false;
        let animationFrameId = null;
+       let menuHideTimeout = null;
        
-       // 鼠标事件
-       floatingWindow.addEventListener('mousedown', dragStart);
-       document.addEventListener('mousemove', drag);
-       document.addEventListener('mouseup', dragEnd);
-       
-       // 触摸事件（移动端）
-       floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
-       document.addEventListener('touchmove', drag, { passive: false });
-       document.addEventListener('touchend', dragEnd);
-       
-       // 悬停显示控制菜单
-       let menuHideTimeout;
-       floatingWindow.addEventListener('mouseenter', function() {
-           clearTimeout(menuHideTimeout);
-           showFloatingMenu();
-       });
-       
-       floatingWindow.addEventListener('mouseleave', function() {
-           clearTimeout(menuHideTimeout);
-           menuHideTimeout = setTimeout(function() {
-               hideFloatingMenu();
-           }, 300);
-       });
-       
-       // 点击显示/隐藏菜单
-       floatingWindow.addEventListener('click', function(e) {
-           if (!hasMoved) {
-               const menu = document.getElementById('floating-control-menu');
-               if (menu) {
-                   const isVisible = menu.classList.contains('show');
-                   if (isVisible) {
-                       hideFloatingMenu();
-                   } else {
-                       showFloatingMenu();
-                   }
-               }
-           }
-       });
-       
+       // 优化后的拖拽开始函数 - 避免强制重排
        function dragStart(e) {
            isDragging = true;
            hasMoved = false;
            
            // 隐藏控制菜单
-           hideFloatingMenu();
+           if (menu) {
+               menu.classList.remove('show');
+           }
            
-           // 获取初始位置
-           const rect = floatingWindow.getBoundingClientRect();
-           initialX = rect.left;
-           initialY = rect.top;
+           // 从直接获取的样式值中读取位置，避免 getComputedStyle
+           const styleLeft = floatingWindow.style.left;
+           const styleTop = floatingWindow.style.top;
+           
+           if (styleLeft && styleTop) {
+               // 已经设置过 left/top
+               initialX = parseFloat(styleLeft);
+               initialY = parseFloat(styleTop);
+           } else {
+               // 首次拖拽，从 rect 获取
+               const rect = floatingWindow.getBoundingClientRect();
+               initialX = rect.left;
+               initialY = rect.top;
+               floatingWindow.style.right = 'auto';
+               floatingWindow.style.bottom = 'auto';
+               floatingWindow.style.left = initialX + 'px';
+               floatingWindow.style.top = initialY + 'px';
+           }
            
            // 获取鼠标/触摸起始位置
            if (e.type === 'touchstart') {
@@ -400,8 +403,15 @@
            }
            
            floatingWindow.classList.add('dragging');
+           
+           // 绑定全局事件监听器（只在拖拽开始时绑定）
+           document.addEventListener('mousemove', drag, { passive: false });
+           document.addEventListener('mouseup', dragEnd, { once: true });
+           document.addEventListener('touchmove', drag, { passive: false });
+           document.addEventListener('touchend', dragEnd, { once: true });
        }
        
+       // 优化后的拖拽函数
        function drag(e) {
            if (!isDragging) return;
            
@@ -423,35 +433,35 @@
                    currentY = e.clientY;
                }
                
-               // 计算移动距离
-               const deltaX = currentX - startX;
-               const deltaY = currentY - startY;
-               
                // 计算新位置
-               let newX = initialX + deltaX;
-               let newY = initialY + deltaY;
+               let newX = initialX + (currentX - startX);
+               let newY = initialY + (currentY - startY);
                
-               // 边界限制
-               const windowWidth = window.innerWidth;
-               const windowHeight = window.innerHeight;
+               // 缓存元素尺寸
                const elementWidth = floatingWindow.offsetWidth;
                const elementHeight = floatingWindow.offsetHeight;
                
-               newX = Math.max(0, Math.min(newX, windowWidth - elementWidth));
-               newY = Math.max(0, Math.min(newY, windowHeight - elementHeight));
+               // 边界限制（使用缓存的窗口尺寸）
+               newX = Math.max(0, Math.min(newX, cachedWindowWidth - elementWidth));
+               newY = Math.max(0, Math.min(newY, cachedWindowHeight - elementHeight));
                
-               // 应用新位置（使用 transform 避免重排）
+               // 使用 transform 代替 left/top，性能更好
                floatingWindow.style.transform = `translate(${newX}px, ${newY}px)`;
-               floatingWindow.style.left = '0';
-               floatingWindow.style.top = '0';
+               
+               // 更新初始位置供下次使用
+               initialX = newX;
+               initialY = newY;
+               startX = currentX;
+               startY = currentY;
            });
        }
        
+       // 优化后的拖拽结束函数
        function dragEnd(e) {
            if (!isDragging) return;
            
            isDragging = false;
-           floatingWindow.classList.remove('dragging');
+           hasMoved = false;
            
            // 取消动画帧
            if (animationFrameId) {
@@ -459,14 +469,22 @@
                animationFrameId = null;
            }
            
-           // 恢复使用 left/top 定位
+           // 移除全局事件监听器（避免内存泄漏）
+           document.removeEventListener('mousemove', drag);
+           document.removeEventListener('touchmove', drag);
+           
+           // 将 transform 转换为 left/top
            const transform = floatingWindow.style.transform;
-           const match = transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/);
-           if (match) {
-               floatingWindow.style.left = match[1] + 'px';
-               floatingWindow.style.top = match[2] + 'px';
-               floatingWindow.style.transform = '';
+           if (transform) {
+               const match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
+               if (match) {
+                   floatingWindow.style.left = match[1] + 'px';
+                   floatingWindow.style.top = match[2] + 'px';
+                   floatingWindow.style.transform = '';
+               }
            }
+           
+           floatingWindow.classList.remove('dragging');
            
            // 如果没有移动，则视为点击，恢复通话界面
            if (!hasMoved) {
@@ -474,26 +492,44 @@
            }
        }
        
-       // 显示控制菜单
+       // 优化后的菜单显示函数
        function showFloatingMenu() {
-           const menu = document.getElementById('floating-control-menu');
            if (!menu) return;
-           
-           // 获取悬浮窗位置
-           const rect = floatingWindow.getBoundingClientRect();
-           
-           // 设置菜单位置在悬浮窗下方
-           menu.style.left = (rect.left + rect.width / 2) + 'px';
-           menu.style.top = (rect.bottom + 10) + 'px';
+           clearTimeout(menuHideTimeout);
            menu.classList.add('show');
        }
        
-       // 隐藏控制菜单
+       // 优化后的菜单隐藏函数
        function hideFloatingMenu() {
-           const menu = document.getElementById('floating-control-menu');
            if (!menu) return;
            menu.classList.remove('show');
        }
+       
+       // 事件监听器 - 使用事件委托和被动监听器
+       floatingWindow.addEventListener('mousedown', dragStart);
+       floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
+       
+       // 悬停显示控制菜单（桌面端）
+       floatingWindow.addEventListener('mouseenter', function() {
+           showFloatingMenu();
+       });
+       
+       floatingWindow.addEventListener('mouseleave', function() {
+           clearTimeout(menuHideTimeout);
+           menuHideTimeout = setTimeout(hideFloatingMenu, 300);
+       });
+       
+       // 点击显示/隐藏菜单（移动端）
+       floatingWindow.addEventListener('click', function(e) {
+           // 阻止事件冒泡，避免触发其他点击事件
+           e.stopPropagation();
+           
+           if (!hasMoved) {
+               if (menu) {
+                   menu.classList.toggle('show');
+               }
+           }
+       });
    }
     
     /**

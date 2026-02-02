@@ -343,8 +343,8 @@
     width: 64px !important;
     height: 64px !important;
     background: rgba(255, 245, 248, 0.9) !important;
-    backdrop-filter: blur(20px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     border: 2px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 50% !important;
     box-shadow: 0 8px 32px rgba(255, 182, 193, 0.35), 0 4px 16px rgba(255, 192, 203, 0.25) !important;
@@ -354,7 +354,9 @@
     z-index: 999999 !important;
     cursor: move !important;
     cursor: grab !important;
+    /* 只过渡 transform 和 box-shadow，避免 all */
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    will-change: transform !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     touch-action: none !important;
@@ -379,9 +381,10 @@
     box-shadow: 0 12px 40px rgba(255, 182, 193, 0.4), 0 6px 20px rgba(255, 192, 203, 0.3) !important;
 }
 
-/* 拖拽时禁用过渡 */
+/* 拖拽时禁用过渡并提升性能 */
 .call-floating-window.dragging {
     transition: none !important;
+    will-change: auto !important;
 }
 
 .floating-avatar-wrapper {
@@ -407,6 +410,7 @@
     border: 2px solid #ffd4e8;
     border-radius: 50%;
     animation: pulse-float 1.5s ease-in-out infinite;
+    will-change: transform, opacity;
 }
 
 @keyframes pulse-float {
@@ -427,15 +431,15 @@
 
 /* ========================================
    悬浮窗控制菜单
-======================================== */
+ ======================================== */
 .floating-control-menu {
     position: absolute;
-    bottom: 70px;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%) scale(0.9);
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     border-radius: 20px;
     padding: 12px 16px;
     display: flex;
@@ -443,10 +447,14 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* 只过渡需要的属性，避免 all */
+    transition: opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                visibility 0s linear 0.25s;
     pointer-events: none;
     white-space: nowrap;
     z-index: 1000000;
+    will-change: transform, opacity;
 }
 
 .floating-control-menu.show {
@@ -454,6 +462,9 @@
     visibility: visible;
     transform: translateX(-50%) scale(1);
     pointer-events: all;
+    transition: opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                visibility 0s linear 0s;
 }
 
 .floating-menu-btn {
@@ -465,14 +476,17 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    /* 只过渡 transform，避免 all */
+    transition: transform 0.2s ease;
     flex-shrink: 0;
+    position: relative;
+    will-change: transform;
 }
 
 .floating-menu-btn svg {
-    width: 22px;
-    height: 22px;
-    transition: all 0.2s ease;
+    width: 20px;
+    height: 20px;
+    /* SVG 不需要过渡 */
 }
 
 .floating-menu-btn:hover {
@@ -541,6 +555,8 @@
     .call-floating-window {
         width: 56px !important;
         height: 56px !important;
+        top: 60px;
+        right: 12px;
     }
     
     .floating-avatar-wrapper {
@@ -562,19 +578,58 @@
     }
     
     .floating-control-menu {
-        bottom: 62px;
+        bottom: 70px;
         padding: 10px 14px;
         gap: 10px;
+        border-radius: 16px;
     }
     
     .floating-menu-btn {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
     }
     
     .floating-menu-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 375px) {
+    .floating-control-menu {
+        bottom: 65px;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .floating-menu-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .floating-menu-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 375px) {
+    .floating-control-menu {
+        bottom: 65px;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .floating-menu-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .floating-menu-btn svg {
+        width: 16px;
+        height: 16px;
     }
 }
 
