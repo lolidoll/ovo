@@ -1125,15 +1125,10 @@
      */
     function removeTypingIndicator() {
         const messagesContainer = document.getElementById('call-chat-messages');
-        if (!messagesContainer) return;
-        
-        // 查找并移除所有包含"正在说话..."的消息
-        const messages = messagesContainer.querySelectorAll('.call-chat-message');
-        messages.forEach(msg => {
-            if (msg.textContent.trim() === '正在说话...') {
-                msg.remove();
-            }
-        });
+        const lastMessage = messagesContainer.lastElementChild;
+        if (lastMessage && lastMessage.textContent.includes('正在说话')) {
+            lastMessage.remove();
+        }
     }
     
     /**

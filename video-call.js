@@ -1512,13 +1512,19 @@
         const messagesContainer = document.getElementById('video-chat-messages');
         if (!messagesContainer) return;
         
-        // 查找并移除所有包含"正在说话..."的消息
-        const messages = messagesContainer.querySelectorAll('.video-chat-message');
-        messages.forEach(msg => {
-            if (msg.textContent.trim() === '正在说话...') {
-                msg.remove();
+        const lastMessage = messagesContainer.lastElementChild;
+        if (lastMessage && lastMessage.textContent.includes('正在说话')) {
+            lastMessage.remove();
+            
+            // 同时从对话记录中移除"正在说话"消息
+            if (currentVideoCallConversation.length > 0) {
+                const lastConvMsg = currentVideoCallConversation[currentVideoCallConversation.length - 1];
+                if (lastConvMsg.text && lastConvMsg.text.includes('正在说话')) {
+                    currentVideoCallConversation.pop();
+                    console.log('[VideoCall] 已从对话记录中移除"正在说话"消息');
+                }
             }
-        });
+        }
     }
     
     /**
