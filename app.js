@@ -1186,7 +1186,7 @@
                                 <div class="msg-title">${displayName}</div>
                                 <div class="msg-time">${conv.time || ''}</div>
                             </div>
-                            <div class="msg-desc">${conv.lastMsg || ''}</div>
+                            <div class="msg-desc">${escapeHtml(conv.lastMsg || '')}</div>
                         </div>
                     </div>
                 `;
@@ -2960,7 +2960,8 @@
                     }
                 } else {
                     // 普通文本消息
-                    textContent += escapeHtml(msg.content);
+                    // 渲染HTML内容（支持用户和AI消息都显示HTML格式）
+                    textContent += renderHtmlContent(msg.content);
                 }
                 
                 // 显示翻译结果（但转发朋友圈消息除外）
@@ -7311,6 +7312,13 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // 安全地渲染HTML内容（用于AI回复等需要显示HTML格式的消息）
+        function renderHtmlContent(text) {
+            // 直接返回文本，保留HTML标签
+            // 注意：不转换换行符，因为AI回复会在appendSingleAssistantMessage中根据换行符拆分成多个气泡
+            return text;
         }
 
         // 生成唯一ID
