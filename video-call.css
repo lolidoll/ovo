@@ -128,6 +128,57 @@
     display: flex;
 }
 
+/* 视频通话等待连接状态 */
+.video-call-interface.waiting {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.video-call-interface.waiting .video-main-screen {
+    opacity: 0.3;
+}
+
+.video-call-interface.waiting .video-small-screen {
+    opacity: 0.3;
+}
+
+/* 等待状态提示文字 */
+.video-waiting-status {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 100;
+    display: none;
+}
+
+.video-call-interface.waiting .video-waiting-status {
+    display: block;
+}
+
+.video-waiting-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: videoWaitingSpin 1s linear infinite;
+}
+
+@keyframes videoWaitingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.video-waiting-text {
+    font-size: 18px;
+    font-weight: 500;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 /* ========== 顶部工具栏 ========== */
 .video-call-header {
     position: absolute;

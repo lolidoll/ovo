@@ -381,10 +381,11 @@
         // 显示视频通话界面
         showVideoCallInterface();
         
-        // 模拟接通（1秒后）
+        // 模拟接通（1.5-3秒随机延迟）
+        const waitTime = 1500 + Math.random() * 1500;
         setTimeout(() => {
             videoCallConnected();
-        }, 1000);
+        }, waitTime);
     }
     
     /**
@@ -568,6 +569,12 @@
         videoCallState.isInCall = true;
         videoCallState.callStartTime = Date.now();
         
+        // 移除等待状态
+        const videoInterface = document.getElementById('video-call-interface');
+        if (videoInterface) {
+            videoInterface.classList.remove('waiting');
+        }
+        
         showToast('视频通话已接通');
         
         // 启动计时器
@@ -588,6 +595,9 @@
             console.error('[VideoCall] 找不到视频通话界面元素');
             return;
         }
+        
+        // 添加等待状态
+        videoInterface.classList.add('waiting');
         
         // 更新视频显示
         updateVideoDisplay();
@@ -861,6 +871,14 @@
         
         // 显示视频通话界面
         showVideoCallInterface();
+        
+        // 移除等待状态（来电直接接通，不需要等待）
+        const videoInterface = document.getElementById('video-call-interface');
+        if (videoInterface) {
+            setTimeout(() => {
+                videoInterface.classList.remove('waiting');
+            }, 100);
+        }
         
         // 开始计时
         startVideoCallTimer();

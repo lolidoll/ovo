@@ -166,9 +166,32 @@
                 <img class="floating-avatar" id="floating-avatar" src="" alt="avatar">
                 <div class="floating-pulse"></div>
             </div>
-            <div class="floating-duration" id="floating-duration">00:00</div>
         `;
+        
+        // 创建控制菜单
+        const controlMenu = document.createElement('div');
+        controlMenu.id = 'floating-control-menu';
+        controlMenu.className = 'floating-control-menu';
+        controlMenu.innerHTML = `
+            <button class="floating-menu-btn mute-btn" id="floating-mute-btn" title="静音">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3 0 1.66 1.34 3 3 3v6c0 1.66-1.34 3-3 3 0-1.66-1.34-3-3-3v-6c0-1.66 1.34-3 3-3zM17 3v5.67l2.5 1.5V3H17zm-7 0l8.5 5v-5h-8.5zM5 5.67V12l2.5-1.5V5H5zm8.5 9.33L19 14v-5h-5.5z"/>
+                </svg>
+            </button>
+            <button class="floating-menu-btn speaker-btn" id="floating-speaker-btn" title="外放">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c-0.83 0-1.5-.67-1.5-1.5 0-0.83.67-1.5 1.5-1.5.67 0 1.5.67 1.5 1.5 0 .83-.67 1.5-1.5 1.5zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71V17h4v-2h-4v-2h-4V7.23zM19 12v4h3c.55 0 1-.45 1-1s-.45-1-1-1v-4h-3z"/>
+                </svg>
+            </button>
+            <button class="floating-menu-btn end-btn" id="floating-end-btn" title="挂断">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+                </svg>
+            </button>
+        `;
+        
         document.body.appendChild(floatingWindow);
+        document.body.appendChild(controlMenu);
         
         // 绑定事件
         bindCallInterfaceEvents();
@@ -219,7 +242,7 @@
         document.getElementById('incoming-reject-btn').addEventListener('click', rejectIncomingCall);
     }
     
-    /**
+   /**
      * 绑定通话界面事件
      */
     function bindCallInterfaceEvents() {
@@ -239,112 +262,239 @@
         // 外放按钮
         document.getElementById('call-speaker-btn').addEventListener('click', toggleSpeaker);
         
-        // 挂断按钮
-        document.getElementById('call-end-btn').addEventListener('click', endCall);
+        // 悬浮窗控制菜单按钮
+        const floatingMuteBtn = document.getElementById('floating-mute-btn');
+        if (floatingMuteBtn) {
+            floatingMuteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMute();
+                updateFloatingMenuButtons();
+            });
+        }
         
-        // 聊天输入
-        const chatInput = document.getElementById('call-chat-input');
-        const sendBtn = document.getElementById('call-chat-send-btn');
+        const floatingSpeakerBtn = document.getElementById('floating-speaker-btn');
+        if (floatingSpeakerBtn) {
+            floatingSpeakerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSpeaker();
+                updateFloatingMenuButtons();
+            });
+        }
         
-        sendBtn.addEventListener('click', sendCallMessage);
-        chatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendCallMessage();
-            }
-        });
-    }
+        const floatingEndBtn = document.getElementById('floating-end-btn');
+       if (floatingEndBtn) {
+           floatingEndBtn.addEventListener('click', (e) => {
+               e.stopPropagation();
+               endCall();
+           });
+       }
+       
+       // 挂断按钮
+       document.getElementById('call-end-btn').addEventListener('click', endCall);
+       
+       // 聊天输入
+       const chatInput = document.getElementById('call-chat-input');
+       const sendBtn = document.getElementById('call-chat-send-btn');
+       
+       sendBtn.addEventListener('click', sendCallMessage);
+       chatInput.addEventListener('keypress', function(e) {
+           if (e.key === 'Enter') {
+               sendCallMessage();
+           }
+       });
+   }
+  
+  /**
+    * 更新悬浮窗控制菜单按钮状态
+    */
+  function updateFloatingMenuButtons() {
+      const floatingMuteBtn = document.getElementById('floating-mute-btn');
+      const floatingSpeakerBtn = document.getElementById('floating-speaker-btn');
+      
+      if (floatingMuteBtn) {
+          if (callState.isMuted) {
+              floatingMuteBtn.classList.add('muted');
+          } else {
+              floatingMuteBtn.classList.remove('muted');
+          }
+      }
+      
+      if (floatingSpeakerBtn) {
+          if (!callState.isSpeakerOn) {
+              floatingSpeakerBtn.classList.add('speaker-off');
+          } else {
+              floatingSpeakerBtn.classList.remove('speaker-off');
+          }
+      }
+  }
     
     /**
      * 初始化悬浮窗拖拽功能（支持触摸和鼠标）
      */
     function initFloatingWindowDrag(floatingWindow) {
-        let isDragging = false;
-        let startX, startY;
-        let initialX, initialY;
-        let hasMoved = false;
-        
-        // 鼠标事件
-        floatingWindow.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-        
-        // 触摸事件（移动端）
-        floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
-        document.addEventListener('touchmove', drag, { passive: false });
-        document.addEventListener('touchend', dragEnd);
-        
-        function dragStart(e) {
-            isDragging = true;
-            hasMoved = false;
-            
-            // 获取初始位置
-            const rect = floatingWindow.getBoundingClientRect();
-            initialX = rect.left;
-            initialY = rect.top;
-            
-            // 获取鼠标/触摸起始位置
-            if (e.type === 'touchstart') {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-            } else {
-                startX = e.clientX;
-                startY = e.clientY;
-                e.preventDefault();
-            }
-            
-            floatingWindow.style.transition = 'none';
-        }
-        
-        function drag(e) {
-            if (!isDragging) return;
-            
-            e.preventDefault();
-            hasMoved = true;
-            
-            let currentX, currentY;
-            if (e.type === 'touchmove') {
-                currentX = e.touches[0].clientX;
-                currentY = e.touches[0].clientY;
-            } else {
-                currentX = e.clientX;
-                currentY = e.clientY;
-            }
-            
-            // 计算移动距离
-            const deltaX = currentX - startX;
-            const deltaY = currentY - startY;
-            
-            // 计算新位置
-            let newX = initialX + deltaX;
-            let newY = initialY + deltaY;
-            
-            // 边界限制
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            const elementWidth = floatingWindow.offsetWidth;
-            const elementHeight = floatingWindow.offsetHeight;
-            
-            newX = Math.max(0, Math.min(newX, windowWidth - elementWidth));
-            newY = Math.max(0, Math.min(newY, windowHeight - elementHeight));
-            
-            // 应用新位置
-            floatingWindow.style.left = newX + 'px';
-            floatingWindow.style.top = newY + 'px';
-            floatingWindow.style.right = 'auto';
-        }
-        
-        function dragEnd(e) {
-            if (!isDragging) return;
-            
-            isDragging = false;
-            floatingWindow.style.transition = 'all 0.3s ease';
-            
-            // 如果没有移动，则视为点击，恢复通话界面
-            if (!hasMoved) {
-                restoreCall();
-            }
-        }
-    }
+       let isDragging = false;
+       let startX, startY;
+       let initialX, initialY;
+       let hasMoved = false;
+       let animationFrameId = null;
+       
+       // 鼠标事件
+       floatingWindow.addEventListener('mousedown', dragStart);
+       document.addEventListener('mousemove', drag);
+       document.addEventListener('mouseup', dragEnd);
+       
+       // 触摸事件（移动端）
+       floatingWindow.addEventListener('touchstart', dragStart, { passive: false });
+       document.addEventListener('touchmove', drag, { passive: false });
+       document.addEventListener('touchend', dragEnd);
+       
+       // 悬停显示控制菜单
+       let menuHideTimeout;
+       floatingWindow.addEventListener('mouseenter', function() {
+           clearTimeout(menuHideTimeout);
+           showFloatingMenu();
+       });
+       
+       floatingWindow.addEventListener('mouseleave', function() {
+           clearTimeout(menuHideTimeout);
+           menuHideTimeout = setTimeout(function() {
+               hideFloatingMenu();
+           }, 300);
+       });
+       
+       // 点击显示/隐藏菜单
+       floatingWindow.addEventListener('click', function(e) {
+           if (!hasMoved) {
+               const menu = document.getElementById('floating-control-menu');
+               if (menu) {
+                   const isVisible = menu.classList.contains('show');
+                   if (isVisible) {
+                       hideFloatingMenu();
+                   } else {
+                       showFloatingMenu();
+                   }
+               }
+           }
+       });
+       
+       function dragStart(e) {
+           isDragging = true;
+           hasMoved = false;
+           
+           // 隐藏控制菜单
+           hideFloatingMenu();
+           
+           // 获取初始位置
+           const rect = floatingWindow.getBoundingClientRect();
+           initialX = rect.left;
+           initialY = rect.top;
+           
+           // 获取鼠标/触摸起始位置
+           if (e.type === 'touchstart') {
+               startX = e.touches[0].clientX;
+               startY = e.touches[0].clientY;
+           } else {
+               startX = e.clientX;
+               startY = e.clientY;
+               e.preventDefault();
+           }
+           
+           floatingWindow.classList.add('dragging');
+       }
+       
+       function drag(e) {
+           if (!isDragging) return;
+           
+           e.preventDefault();
+           hasMoved = true;
+           
+           // 使用 requestAnimationFrame 优化性能
+           if (animationFrameId) {
+               cancelAnimationFrame(animationFrameId);
+           }
+           
+           animationFrameId = requestAnimationFrame(function() {
+               let currentX, currentY;
+               if (e.type === 'touchmove') {
+                   currentX = e.touches[0].clientX;
+                   currentY = e.touches[0].clientY;
+               } else {
+                   currentX = e.clientX;
+                   currentY = e.clientY;
+               }
+               
+               // 计算移动距离
+               const deltaX = currentX - startX;
+               const deltaY = currentY - startY;
+               
+               // 计算新位置
+               let newX = initialX + deltaX;
+               let newY = initialY + deltaY;
+               
+               // 边界限制
+               const windowWidth = window.innerWidth;
+               const windowHeight = window.innerHeight;
+               const elementWidth = floatingWindow.offsetWidth;
+               const elementHeight = floatingWindow.offsetHeight;
+               
+               newX = Math.max(0, Math.min(newX, windowWidth - elementWidth));
+               newY = Math.max(0, Math.min(newY, windowHeight - elementHeight));
+               
+               // 应用新位置（使用 transform 避免重排）
+               floatingWindow.style.transform = `translate(${newX}px, ${newY}px)`;
+               floatingWindow.style.left = '0';
+               floatingWindow.style.top = '0';
+           });
+       }
+       
+       function dragEnd(e) {
+           if (!isDragging) return;
+           
+           isDragging = false;
+           floatingWindow.classList.remove('dragging');
+           
+           // 取消动画帧
+           if (animationFrameId) {
+               cancelAnimationFrame(animationFrameId);
+               animationFrameId = null;
+           }
+           
+           // 恢复使用 left/top 定位
+           const transform = floatingWindow.style.transform;
+           const match = transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/);
+           if (match) {
+               floatingWindow.style.left = match[1] + 'px';
+               floatingWindow.style.top = match[2] + 'px';
+               floatingWindow.style.transform = '';
+           }
+           
+           // 如果没有移动，则视为点击，恢复通话界面
+           if (!hasMoved) {
+               restoreCall();
+           }
+       }
+       
+       // 显示控制菜单
+       function showFloatingMenu() {
+           const menu = document.getElementById('floating-control-menu');
+           if (!menu) return;
+           
+           // 获取悬浮窗位置
+           const rect = floatingWindow.getBoundingClientRect();
+           
+           // 设置菜单位置在悬浮窗下方
+           menu.style.left = (rect.left + rect.width / 2) + 'px';
+           menu.style.top = (rect.bottom + 10) + 'px';
+           menu.classList.add('show');
+       }
+       
+       // 隐藏控制菜单
+       function hideFloatingMenu() {
+           const menu = document.getElementById('floating-control-menu');
+           if (!menu) return;
+           menu.classList.remove('show');
+       }
+   }
     
     /**
      * 发起呼叫 - 显示确认弹窗
@@ -671,34 +821,46 @@
     /**
      * 切换静音
      */
-    function toggleMute() {
-        callState.isMuted = !callState.isMuted;
-        const btn = document.getElementById('call-mute-btn');
-        
-        if (callState.isMuted) {
-            btn.classList.add('muted');
-            showToast('麦克风已关闭');
-        } else {
-            btn.classList.remove('muted');
-            showToast('麦克风已开启');
-        }
-    }
-    
-    /**
+   function toggleMute() {
+       callState.isMuted = !callState.isMuted;
+       
+       // 更新通话界面按钮
+       const btn = document.getElementById('call-mute-btn');
+       if (btn) {
+           if (callState.isMuted) {
+               btn.classList.add('muted');
+               showToast('麦克风已关闭');
+           } else {
+               btn.classList.remove('muted');
+               showToast('麦克风已开启');
+           }
+       }
+       
+       // 更新悬浮窗控制菜单按钮
+       updateFloatingMenuButtons();
+   }
+   
+   /**
      * 切换外放
      */
-    function toggleSpeaker() {
-        callState.isSpeakerOn = !callState.isSpeakerOn;
-        const btn = document.getElementById('call-speaker-btn');
-        
-        if (callState.isSpeakerOn) {
-            btn.classList.add('active');
-            showToast('外放已开启');
-        } else {
-            btn.classList.remove('active');
-            showToast('外放已关闭');
-        }
-    }
+   function toggleSpeaker() {
+       callState.isSpeakerOn = !callState.isSpeakerOn;
+       
+       // 更新通话界面按钮
+       const btn = document.getElementById('call-speaker-btn');
+       if (btn) {
+           if (callState.isSpeakerOn) {
+               btn.classList.add('active');
+               showToast('外放已开启');
+           } else {
+               btn.classList.remove('active');
+               showToast('外放已关闭');
+           }
+       }
+       
+       // 更新悬浮窗控制菜单按钮
+       updateFloatingMenuButtons();
+   }
     
     /**
      * 结束通话

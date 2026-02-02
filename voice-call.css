@@ -334,32 +334,31 @@
 }
 
 /* ========================================
-   最小化悬浮窗
+   最小化悬浮窗 - 极简圆形模式
 ======================================== */
 .call-floating-window {
     position: fixed !important;
     top: 80px;
     right: 16px;
-    width: 80px !important;
-    height: 120px !important;
-    background: rgba(255, 245, 248, 0.85) !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: rgba(255, 245, 248, 0.9) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.25), 0 2px 8px rgba(255, 192, 203, 0.15) !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 8px 32px rgba(255, 182, 193, 0.35), 0 4px 16px rgba(255, 192, 203, 0.25) !important;
     display: none !important;
-    flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
     z-index: 999999 !important;
     cursor: move !important;
     cursor: grab !important;
-    transition: all 0.3s ease !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     touch-action: none !important;
+    overflow: visible !important;
 }
 
 .call-floating-window:active {
@@ -374,24 +373,37 @@
     visibility: visible !important;
 }
 
+/* 悬停时放大效果 */
+.call-floating-window:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 12px 40px rgba(255, 182, 193, 0.4), 0 6px 20px rgba(255, 192, 203, 0.3) !important;
+}
+
+/* 拖拽时禁用过渡 */
+.call-floating-window.dragging {
+    transition: none !important;
+}
 
 .floating-avatar-wrapper {
     position: relative;
+    width: 48px;
+    height: 48px;
 }
 
 .floating-avatar {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    border: 2px solid #ffd4e8;
+    border: 3px solid #ffd4e8;
+    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
 }
 
 .floating-pulse {
     position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
     border: 2px solid #ffd4e8;
     border-radius: 50%;
     animation: pulse-float 1.5s ease-in-out infinite;
@@ -408,10 +420,162 @@
     }
 }
 
+/* 隐藏时长文本 */
 .floating-duration {
-    font-size: 12px;
-    font-weight: 600;
-    color: #ffb3d9;
+    display: none !important;
+}
+
+/* ========================================
+   悬浮窗控制菜单
+======================================== */
+.floating-control-menu {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 20px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 1000000;
+}
+
+.floating-control-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) scale(1);
+    pointer-events: all;
+}
+
+.floating-menu-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.floating-menu-btn svg {
+    width: 22px;
+    height: 22px;
+    transition: all 0.2s ease;
+}
+
+.floating-menu-btn:hover {
+    transform: scale(1.1);
+}
+
+.floating-menu-btn:active {
+    transform: scale(0.95);
+}
+
+/* 静音按钮 */
+.floating-menu-btn.mute-btn {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.floating-menu-btn.mute-btn.muted {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+}
+
+.floating-menu-btn.mute-btn svg {
+    fill: #1976d2;
+}
+
+.floating-menu-btn.mute-btn.muted svg {
+    fill: #d32f2f;
+}
+
+/* 外放按钮 */
+.floating-menu-btn.speaker-btn {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2);
+}
+
+.floating-menu-btn.speaker-btn.speaker-off {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+}
+
+.floating-menu-btn.speaker-btn svg {
+    fill: #7b1fa2;
+}
+
+.floating-menu-btn.speaker-btn.speaker-off svg {
+    fill: #d32f2f;
+}
+
+/* 挂断按钮 */
+.floating-menu-btn.end-btn {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.25);
+}
+
+.floating-menu-btn.end-btn svg {
+    fill: #d32f2f;
+}
+
+.floating-menu-btn.end-btn:hover {
+    background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
+    box-shadow: 0 6px 16px rgba(244, 67, 54, 0.35);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .call-floating-window {
+        width: 56px !important;
+        height: 56px !important;
+    }
+    
+    .floating-avatar-wrapper {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .floating-avatar {
+        width: 42px;
+        height: 42px;
+        border-width: 2.5px;
+    }
+    
+    .floating-pulse {
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+    }
+    
+    .floating-control-menu {
+        bottom: 62px;
+        padding: 10px 14px;
+        gap: 10px;
+    }
+    
+    .floating-menu-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .floating-menu-btn svg {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 /* ========================================
