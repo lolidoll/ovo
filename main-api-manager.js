@@ -281,10 +281,10 @@ const MainAPIManager = {
             console.log('📋 API 消息列表详情：', messages.map((m, i) => ({
                 index: i,
                 role: m.role,
-                contentType: Array.isArray(m.content) ? 'array' : 'string',
+                contentType: Array.isArray(m.content) ? 'array' : typeof m.content,
                 contentPreview: Array.isArray(m.content)
                     ? `[${m.content.length} items: ${m.content.map(c => c.type).join(', ')}]`
-                    : m.content.substring(0, 50) + (m.content.length > 50 ? '...' : '')
+                    : (m.content ? String(m.content).substring(0, 50) + (String(m.content).length > 50 ? '...' : '') : '[Empty]')
             })));
 
             const res = await fetch(endpoint, fetchOptions);
@@ -687,9 +687,9 @@ This mindset beats memorizing 100 rules.`);
             systemPrompts.push(emojiInstructions);
         }
         
-        // 添加语音消息和地理位置发送说明
-        systemPrompts.push(`【语音消息和地理位置发送格式】
-你可以主动发送语音消息和地理位置,使用以下格式：
+        // 添加语音消息、地理位置、红包和转账发送说明
+        systemPrompts.push(`【语音消息、地理位置、红包和转账发送格式】
+你可以主动发送语音消息、地理位置、红包和转账,使用以下格式：
 
 1. 【语音消息】使用格式：【语音条】语音内容文字|时长【/语音条】
    - 语音内容：你想说的话（会被转换为语音条显示）
@@ -707,7 +707,52 @@ This mindset beats memorizing 100 rules.`);
    - 示例：【地理位置】天安门广场|北京市东城区|3000【/地理位置】（表示距离约3公里）
    - 注意：分享位置时适合约见面、推荐地点、告诉对方你在哪里。距离值要符合实际情况,不要总是使用默认值
 
-3. 【撤回消息】使用格式：【撤回】消息ID【/撤回】
+3. 【红包】使用格式：
+   - 发送红包：【红包】金额|留言【/红包】
+     * 金额：红包金额（人民币/薯片币）,建议0.01-200元
+     * 留言：红包留言（选填,默认"收下吧~"）
+     * 示例：【红包】6.66|恭喜发财【/红包】
+     * 示例：【红包】8.88|小小心意【/红包】
+   - 领取红包：【领取红包】红包ID【/领取红包】
+     * 当用户发送红包给你时,你会收到系统消息告知红包金额和留言
+     * 你可以选择领取或退还,用自然的语言表达你的态度
+     * 示例：【领取红包】envelope_xxx【/领取红包】
+   - 退还红包：【退还红包】红包ID【/退还红包】
+     * 示例：【退还红包】envelope_xxx【/退还红包】
+   - 使用场景：
+     * 发红包：表达心意、庆祝、感谢、道歉、关心等
+     * 领取：接受对方的心意时
+     * 退还：不好意思收、觉得不合适、想要拒绝等
+   - 注意：
+     * 薯片币就是人民币,1薯片币=1元人民币
+     * 红包金额要合理,根据关系和场景设置
+     * 不要频繁发红包,要有真实的理由和情感
+     * 收到红包时要用自然的语言回应,不要只是机械地领取或退还
+
+4. 【转账】使用格式：
+   - 发送转账：【转账】金额|说明【/转账】
+     * 金额：转账金额（人民币/薯片币）,建议0.01-2000元
+     * 说明：转账说明（选填,默认"转账给你"）
+     * 示例：【转账】100|生活费【/转账】
+     * 示例：【转账】520|爱你【/转账】
+   - 确认收款：【确认收款】转账ID【/确认收款】
+     * 当用户转账给你时,你会收到系统消息告知转账金额和说明
+     * 你可以选择确认收款或退还,用自然的语言表达你的态度
+     * 示例：【确认收款】transfer_xxx【/确认收款】
+   - 退还转账：【退还转账】转账ID【/退还转账】
+     * 示例：【退还转账】transfer_xxx【/退还转账】
+   - 使用场景：
+     * 发转账：借钱、还钱、支付费用、资助等金钱往来
+     * 确认收款：接受对方的转账时
+     * 退还：不能收、不合适、想要拒绝等
+   - 注意：
+     * 转账比红包更正式,适合较大金额或正式的金钱往来
+     * 转账金额上限2000元,红包上限200元
+     * 转账要有明确的理由和说明
+     * 不要频繁转账,要符合实际情况
+     * 收到转账时要用自然的语言回应,不要只是机械地确认或退还
+
+5. 【撤回消息】使用格式：【撤回】消息ID【/撤回】
    - 消息ID：你要撤回的之前发送的消息的ID（从上下文中获取）
    - 示例：【撤回】msg_1738070123456【/撤回】
    - 使用场景：
@@ -724,9 +769,11 @@ This mindset beats memorizing 100 rules.`);
 使用建议：
 - 语音条：适合表达情绪、犹豫、私密内容,或想要更真实的交流感时
 - 地理位置：适合约见面、分享你在的地方、推荐好去处
+- 红包：适合表达心意、庆祝、感谢等,要有真实的情感和理由（金额较小,0.01-200元）
+- 转账：适合大额的金钱往来,如借钱、还钱、支付费用等（金额较大,0.01-2000元）
 - 撤回消息：只在说错话、后悔、需要改口等特殊情况下使用,不要滥用
 - 不要每次都使用这些功能,根据对话情境自然地选择
-- 可以和普通文字消息结合使用,先发文字再发语音/位置,或反之`);
+- 可以和普通文字消息结合使用,先发文字再发语音/位置/红包/转账,或反之`);
         
         // 合并所有系统提示
         if (systemPrompts.length > 0) {
@@ -946,6 +993,48 @@ This mindset beats memorizing 100 rules.`);
                 }
             }
             
+            // 如果消息是红包，提供红包信息
+            if (m.type === 'redenvelope') {
+                const amount = m.amount || 0;
+                const message = m.message || '';
+                const status = m.status || 'pending';
+                const envelopeId = m.id || '';
+                const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                
+                if (status === 'pending') {
+                    if (m.sender === 'sent') {
+                        messageContent = `[${senderName}发送了红包]\n红包ID：${envelopeId}\n金额：${amount}元\n祝福语：${message}\n状态：等待领取\n\n**重要**：如果你想领取这个红包，使用：【领取红包】${envelopeId}【/领取红包】\n如果你想退还这个红包，使用：【退还红包】${envelopeId}【/退还红包】`;
+                    } else {
+                        messageContent = `[${senderName}发送了红包]\n红包ID：${envelopeId}\n金额：${amount}元\n祝福语：${message}\n状态：待领取（你可以选择领取或退还）`;
+                    }
+                } else if (status === 'received') {
+                    messageContent = `[红包已被领取]\n红包ID：${envelopeId}\n金额：${amount}元\n祝福语：${message}`;
+                } else if (status === 'returned') {
+                    messageContent = `[红包已被退还]\n红包ID：${envelopeId}\n金额：${amount}元\n祝福语：${message}`;
+                }
+            }
+            
+            // 如果消息是转账，提供转账信息
+            if (m.type === 'transfer') {
+                const amount = m.amount || 0;
+                const message = m.message || '';
+                const status = m.status || 'pending';
+                const transferId = m.id || '';
+                const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
+                
+                if (status === 'pending') {
+                    if (m.sender === 'sent') {
+                        messageContent = `[${senderName}发起了转账]\n转账ID：${transferId}\n金额：${amount}元\n转账说明：${message}\n状态：等待确认收款\n\n**重要**：如果你想确认收款，使用：【确认收款】${transferId}【/确认收款】\n如果你想退还转账，使用：【退还转账】${transferId}【/退还转账】`;
+                    } else {
+                        messageContent = `[${senderName}发起了转账]\n转账ID：${transferId}\n金额：${amount}元\n转账说明：${message}\n状态：待确认（你可以选择确认收款或退还）`;
+                    }
+                } else if (status === 'received') {
+                    messageContent = `[转账已确认收款]\n转账ID：${transferId}\n金额：${amount}元\n转账说明：${message}`;
+                } else if (status === 'returned') {
+                    messageContent = `[转账已被退还]\n转账ID：${transferId}\n金额：${amount}元\n转账说明：${message}`;
+                }
+            }
+            
             // 如果消息是转发的朋友圈,提供朋友圈信息
             if (m.isForward && m.forwardedMoment) {
                 const forwarded = m.forwardedMoment;
@@ -972,6 +1061,12 @@ This mindset beats memorizing 100 rules.`);
                 roleToUse = 'system';
             } else if (m.type === 'assistant') {
                 roleToUse = 'assistant';
+            } else if (m.type === 'redenvelope') {
+                // 红包消息根据sender字段判断角色
+                roleToUse = m.sender === 'sent' ? 'user' : 'assistant';
+            } else if (m.type === 'transfer') {
+                // 转账消息根据sender字段判断角色
+                roleToUse = m.sender === 'sent' ? 'user' : 'assistant';
             } else {
                 console.warn(`[消息角色推断] 第 ${index} 条消息类型未知: ${m.type},默认使用 assistant 角色`);
                 roleToUse = 'assistant';
@@ -993,7 +1088,10 @@ This mindset beats memorizing 100 rules.`);
                         if (Array.isArray(messageContent)) {
                             return `[Vision API: ${messageContent.length} items]`;
                         }
-                        return messageContent.substring(0, 40);
+                        if (!messageContent) {
+                            return '[Empty content]';
+                        }
+                        return String(messageContent).substring(0, 40);
                     };
                     
                     console.warn(`[API消息警告] 第 ${index + 1} 条消息与前一条消息角色相同（都是 ${roleToUse}）`, {

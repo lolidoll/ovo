@@ -25,11 +25,19 @@ function retryDeleteLastAiReply() {
     
     if (msgs.length === 0) return;
 
-    // 找到最后一条 AI 消息（received 类型）
+    // 检查最后一条消息的类型
+    const lastMsg = msgs[msgs.length - 1];
+    const isLastMsgFromUser = lastMsg.type === 'sent' || lastMsg.sender === 'sent';
+    
+    // 找到最后一条 AI 消息
+    // AI消息的判断条件：
+    // 1. type === 'received' (普通文本消息)
+    // 2. sender === 'received' (语音、通话等特殊类型消息)
     let lastAiIndex = -1;
     let lastAiRound = null;
     for (let i = msgs.length - 1; i >= 0; i--) {
-        if (msgs[i].type === 'received') {
+        const isAiMessage = msgs[i].type === 'received' || msgs[i].sender === 'received';
+        if (isAiMessage) {
             lastAiIndex = i;
             lastAiRound = msgs[i].apiCallRound;
             break;
@@ -44,9 +52,10 @@ function retryDeleteLastAiReply() {
     // 删除整个API调用回合的所有消息
     let deletedCount = 0;
     if (lastAiRound) {
-        // 删除所有属于同一个API调用回合的received类型消息
+        // 删除所有属于同一个API调用回合的AI消息（包括文本、语音、通话等所有类型）
         for (let i = msgs.length - 1; i >= 0; i--) {
-            if (msgs[i].type === 'received' && msgs[i].apiCallRound === lastAiRound) {
+            const isAiMessage = msgs[i].type === 'received' || msgs[i].sender === 'received';
+            if (isAiMessage && msgs[i].apiCallRound === lastAiRound) {
                 msgs.splice(i, 1);
                 deletedCount++;
             }
@@ -55,6 +64,23 @@ function retryDeleteLastAiReply() {
         // 如果没有apiCallRound标记（旧数据），只删除最后一条
         msgs.splice(lastAiIndex, 1);
         deletedCount = 1;
+    }
+    
+    // 如果最后一条消息是用户发送的，也要删除AI回复之后的所有用户消息
+    if (isLastMsgFromUser) {
+        let userDeletedCount = 0;
+        // 从后往前删除所有在AI回复之后的用户消息
+        for (let i = msgs.length - 1; i >= 0; i--) {
+            const isUserMessage = msgs[i].type === 'sent' || msgs[i].sender === 'sent';
+            if (isUserMessage) {
+                msgs.splice(i, 1);
+                userDeletedCount++;
+            } else {
+                // 遇到非用户消息就停止（说明已经到达AI回复或更早的消息）
+                break;
+            }
+        }
+        deletedCount += userDeletedCount;
     }
     
     // 同时清除该角色的心声数据（因为心声是在删除的消息中生成的）

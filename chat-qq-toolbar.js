@@ -235,6 +235,8 @@
             'more-location': handleLocation,
             'more-voicecall': handleVoiceCall,
             'more-videocall': handleVideoCall,
+            'more-redenvelope': handleRedEnvelope,
+            'more-transfer': handleTransfer,
             'more-takeout': handleTakeout,
             'more-offline': handleOffline,
             'more-phone': handlePhone,
@@ -330,6 +332,36 @@
         } else {
             console.warn('⚠️ 视频通话系统未初始化');
             showToast('视频通话功能加载中，请稍后再试');
+        }
+    }
+    
+    function handleRedEnvelope() {
+        console.log('[Toolbar] 触发红包功能');
+        
+        // 关闭更多面板
+        closeMorePanel();
+        
+        // 调用红包模块
+        if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.openSendModal === 'function') {
+            window.RedEnvelopeModule.openSendModal();
+        } else {
+            console.warn('⚠️ 红包模块未初始化');
+            showToast('红包功能加载中，请稍后再试');
+        }
+    }
+    
+    function handleTransfer() {
+        console.log('[Toolbar] 触发转账功能');
+        
+        // 关闭更多面板
+        closeMorePanel();
+        
+        // 调用转账模块
+        if (window.TransferModule && typeof window.TransferModule.openSendModal === 'function') {
+            window.TransferModule.openSendModal();
+        } else {
+            console.warn('⚠️ 转账模块未初始化');
+            showToast('转账功能加载中，请稍后再试');
         }
     }
     

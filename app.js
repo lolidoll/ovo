@@ -3115,8 +3115,8 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 
                 const bubble = document.createElement('div');
                 const isSelected = AppState.selectedMessages.includes(msg.id);
-                // 对于语音、地理位置和通话消息，使用sender属性来设置样式（sent/received）；其他消息使用type
-                let bubbleClass = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall') ? msg.sender : msg.type;
+                // 对于语音、地理位置、通话、红包和转账消息，使用sender属性来设置样式（sent/received）；其他消息使用type
+                let bubbleClass = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer') ? msg.sender : msg.type;
                 let className = 'chat-bubble ' + bubbleClass;
                 if (isSelected) {
                     className += ' selected';
@@ -3126,8 +3126,8 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 bubble.dataset.msgIndex = index;
                 
                 let avatarContent;
-                // 对于语音、地理位置和通话消息，使用sender属性判断；其他消息使用type
-                const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall')
+                // 对于语音、地理位置、通话、红包和转账消息，使用sender属性判断；其他消息使用type
+                const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer')
                     ? msg.sender === 'sent'
                     : msg.type === 'sent';
                 
@@ -3374,6 +3374,122 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                         </div>
                     `;
                     bubble.classList.add('videocall-message');
+                } else if (msg.type === 'redenvelope') {
+                    // 红包消息渲染
+                    // 优先从RedEnvelopeModule获取最新状态
+                    let envelopeData = null;
+                    if (window.RedEnvelopeModule) {
+                        envelopeData = window.RedEnvelopeModule.getRedEnvelope(msg.id);
+                    }
+                    
+                    // 如果Map中没有，从消息数组中获取最新数据
+                    if (!envelopeData) {
+                        const convId = AppState.currentChat?.id;
+                        if (convId && AppState.messages[convId]) {
+                            const latestMsg = AppState.messages[convId].find(m => m.id === msg.id);
+                            envelopeData = latestMsg || msg;
+                        } else {
+                            envelopeData = msg;
+                        }
+                    }
+                    
+                    console.log('🧧 渲染红包:', msg.id, '状态:', envelopeData.status, '来源:', envelopeData === msg ? 'msg参数' : 'Map/消息数组');
+                    
+                    if (!envelopeData.amount) {
+                        console.warn('红包数据不完整:', msg.id, envelopeData);
+                        return;
+                    }
+                    
+                    const isSent = msg.sender === 'sent';
+                    const senderName = isSent ? AppState.user.name : AppState.currentChat.name;
+                    const status = envelopeData.status || 'pending';
+                    
+                    let statusClass = status;
+                    let statusText = '';
+                    
+                    if (status === 'pending') {
+                        statusText = isSent ? '等待领取' : '点击领取';
+                    } else if (status === 'received') {
+                        statusText = '已领取';
+                    } else if (status === 'returned') {
+                        statusText = '已退还';
+                    }
+                    
+                    bubble.innerHTML = `
+                        <div class="chat-avatar">${avatarContent}</div>
+                        <div class="red-envelope-card ${statusClass}" onclick="RedEnvelopeModule.openDetailModal('${msg.id}')">
+                            <div class="red-envelope-card-header">
+                                <div class="red-envelope-card-icon">🧧</div>
+                                <div class="red-envelope-card-info">
+                                    <div class="red-envelope-card-sender">${escapeHtml(senderName)}</div>
+                                    <div class="red-envelope-card-message">${escapeHtml(envelopeData.message || '恭喜发财，大吉大利')}</div>
+                                </div>
+                            </div>
+                            <div class="red-envelope-card-amount">
+                                <span class="red-envelope-card-amount-unit">¥</span>${envelopeData.amount.toFixed(2)}
+                            </div>
+                            <div class="red-envelope-card-status">${statusText}</div>
+                        </div>
+                    `;
+                    bubble.classList.add('redenvelope-message');
+                } else if (msg.type === 'transfer') {
+                    // 转账消息渲染
+                    // 优先从TransferModule获取最新状态
+                    let transferData = null;
+                    if (window.TransferModule) {
+                        transferData = window.TransferModule.getTransfer(msg.id);
+                    }
+                    
+                    // 如果Map中没有，从消息数组中获取最新数据
+                    if (!transferData) {
+                        const convId = AppState.currentChat?.id;
+                        if (convId && AppState.messages[convId]) {
+                            const latestMsg = AppState.messages[convId].find(m => m.id === msg.id);
+                            transferData = latestMsg || msg;
+                        } else {
+                            transferData = msg;
+                        }
+                    }
+                    
+                    console.log('💰 渲染转账:', msg.id, '状态:', transferData.status, '来源:', transferData === msg ? 'msg参数' : 'Map/消息数组');
+                    
+                    if (!transferData.amount) {
+                        console.warn('转账数据不完整:', msg.id, transferData);
+                        return;
+                    }
+                    
+                    const isSent = msg.sender === 'sent';
+                    const senderName = isSent ? AppState.user.name : AppState.currentChat.name;
+                    const status = transferData.status || 'pending';
+                    
+                    let statusClass = status;
+                    let statusText = '';
+                    
+                    if (status === 'pending') {
+                        statusText = isSent ? '待确认' : '待收款';
+                    } else if (status === 'received') {
+                        statusText = '已收款';
+                    } else if (status === 'returned') {
+                        statusText = '已退还';
+                    }
+                    
+                    bubble.innerHTML = `
+                        <div class="chat-avatar">${avatarContent}</div>
+                        <div class="transfer-card ${statusClass}" onclick="TransferModule.openDetailModal('${msg.id}')">
+                            <div class="transfer-card-header">
+                                <div class="transfer-card-icon">💰</div>
+                                <div class="transfer-card-info">
+                                    <div class="transfer-card-title">转账</div>
+                                    <div class="transfer-card-note">${escapeHtml(transferData.note || '转账')}</div>
+                                </div>
+                            </div>
+                            <div class="transfer-card-amount">
+                                <span class="transfer-card-amount-unit">¥</span>${transferData.amount.toFixed(2)}
+                            </div>
+                            <div class="transfer-card-status">${statusText}</div>
+                        </div>
+                    `;
+                    bubble.classList.add('transfer-message');
                 } else if (msg.isPhotoDescription) {
                     // 图片描述消息 - 文字卡片形式
                     const photoDesc = escapeHtml(msg.photoDescription || msg.content || '');
@@ -6811,10 +6927,15 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             text = text.replace(/\[WAIT(?::[\d.]+)?\]/g, '');
             
             // 第二层：移除所有带【】标记的系统信息
-            // 包括心声、思维链、思考、系统、指令等
+            // 包括心声、思维链、思考、系统、指令等，但保留红包相关标记
             text = text.replace(/【[^】]{0,20}】[\s\S]*?(?=【|$|\n(?!【))/g, function(match) {
                 const content = match.match(/【([^】]*)】/);
                 if (!content) return '';
+                
+                // 保留红包相关标记
+                if (content[1].includes('红包') || content[1].includes('领取红包') || content[1].includes('退还红包')) {
+                    return match;
+                }
                 
                 const tags = ['心声', '思维链', '思考', '系统', '指令', '提示', '缓冲', '内部', '调试', '日志'];
                 if (tags.some(tag => content[1].includes(tag))) {
@@ -6908,6 +7029,99 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
         }
         
         function appendSingleAssistantMessage(convId, text, skipMindStateExtraction = false) {
+            // ========== 第0步：提前处理红包相关指令（在拆分消息之前） ==========
+            // 1. 处理AI发送红包：【红包】金额|留言【/红包】
+            const sendEnvelopeRegex = /【红包】([0-9.]+)\|([^【】]*)【\/红包】/g;
+            const sendEnvelopeMatches = [...text.matchAll(sendEnvelopeRegex)];
+            for (const match of sendEnvelopeMatches) {
+                const amount = parseFloat(match[1]);
+                const message = match[2] || '收下吧~';
+                
+                console.log('[RedEnvelope] AI发送红包:', { amount, message });
+                
+                if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.sendAIRedEnvelope === 'function') {
+                    window.RedEnvelopeModule.sendAIRedEnvelope(convId, amount, message);
+                }
+                
+                text = text.replace(match[0], '').trim();
+            }
+            
+            // 2. 处理AI领取红包：【领取红包】红包ID【/领取红包】
+            const receiveEnvelopeRegex = /【领取红包】([^【】]+)【\/领取红包】/g;
+            const receiveEnvelopeMatches = [...text.matchAll(receiveEnvelopeRegex)];
+            for (const match of receiveEnvelopeMatches) {
+                const envelopeId = match[1].trim();
+                
+                console.log('[RedEnvelope] AI领取红包:', envelopeId);
+                
+                if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.handleAIReceive === 'function') {
+                    window.RedEnvelopeModule.handleAIReceive(envelopeId);
+                }
+                
+                text = text.replace(match[0], '').trim();
+            }
+            
+            // 3. 处理AI退还红包：【退还红包】红包ID【/退还红包】
+            const returnEnvelopeRegex = /【退还红包】([^【】]+)【\/退还红包】/g;
+            const returnEnvelopeMatches = [...text.matchAll(returnEnvelopeRegex)];
+            for (const match of returnEnvelopeMatches) {
+                const envelopeId = match[1].trim();
+                
+                console.log('[RedEnvelope] AI退还红包:', envelopeId);
+                
+                if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.handleAIReturn === 'function') {
+                    window.RedEnvelopeModule.handleAIReturn(envelopeId);
+                }
+                
+                text = text.replace(match[0], '').trim();
+            }
+            
+            // 4. 处理AI发送转账：【转账】金额|说明【/转账】
+            const sendTransferRegex = /【转账】([0-9.]+)\|([^【】]*)【\/转账】/g;
+            const sendTransferMatches = [...text.matchAll(sendTransferRegex)];
+            for (const match of sendTransferMatches) {
+                const amount = parseFloat(match[1]);
+                const message = match[2] || '转账给你';
+                
+                console.log('[Transfer] AI发送转账:', { amount, message });
+                
+                if (window.TransferModule && typeof window.TransferModule.sendAITransfer === 'function') {
+                    window.TransferModule.sendAITransfer(convId, amount, message);
+                }
+                
+                text = text.replace(match[0], '').trim();
+            }
+            
+            // 5. 处理AI确认收款：【确认收款】转账ID【/确认收款】
+            const receiveTransferRegex = /【确认收款】([^【】]+)【\/确认收款】/g;
+            const receiveTransferMatches = [...text.matchAll(receiveTransferRegex)];
+            for (const match of receiveTransferMatches) {
+                const transferId = match[1].trim();
+                
+                console.log('[Transfer] AI确认收款:', transferId);
+                
+                if (window.TransferModule && typeof window.TransferModule.handleAIReceive === 'function') {
+                    window.TransferModule.handleAIReceive(transferId);
+                }
+                
+                text = text.replace(match[0], '').trim();
+            }
+            
+            // 6. 处理AI退还转账：【退还转账】转账ID【/退还转账】
+            const returnTransferRegex = /【退还转账】([^【】]+)【\/退还转账】/g;
+            const returnTransferMatches = [...text.matchAll(returnTransferRegex)];
+            for (const match of returnTransferMatches) {
+                const transferId = match[1].trim();
+                
+                console.log('[Transfer] AI退还转账:', transferId);
+                
+                if (window.TransferModule && typeof window.TransferModule.handleAIReturn === 'function') {
+                    window.TransferModule.handleAIReturn(transferId);
+                }
+                
+                text = text.replace(match[0], '').trim();
+            }
+            
             // ========== 第一步：清理AI回复（移除心声标记） ==========
             // 首先应用强大的清理函数
             text = cleanAIResponse(text);
@@ -7122,8 +7336,11 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 }, 800);
             }
             
-            // 第二次清理：确保没有遗漏
-            text = cleanAIResponse(text);
+            // ========== 第5.7步：红包指令已在函数开头处理，此处已移除重复代码 ==========
+            
+            // 最终清理：移除所有剩余的【】标记对
+            text = text.replace(/【[^】]*】[^【】]*【\/[^】]*】/g, '').trim();
+            text = text.replace(/\n{3,}/g, '\n\n').trim();
             
             // ========== 第六步：创建并添加AI消息 ==========
             if (!AppState.messages[convId]) {
@@ -7253,6 +7470,70 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     let content = msgData.content.trim();
                     
                     if (!content) return;
+                    
+                    // 先处理红包指令（在清理之前）
+                    // 1. 处理AI发送红包
+                    const sendEnvelopeRegex = /【红包】([0-9.]+)\|([^【】]*)【\/红包】/g;
+                    let match;
+                    while ((match = sendEnvelopeRegex.exec(content)) !== null) {
+                        const amount = parseFloat(match[1]);
+                        const message = match[2] || '收下吧~';
+                        if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.sendAIRedEnvelope === 'function') {
+                            window.RedEnvelopeModule.sendAIRedEnvelope(convId, amount, message);
+                        }
+                        content = content.replace(match[0], '').trim();
+                    }
+                    
+                    // 2. 处理AI领取红包
+                    const receiveEnvelopeRegex = /【领取红包】([^【】]+)【\/领取红包】/g;
+                    while ((match = receiveEnvelopeRegex.exec(content)) !== null) {
+                        const envelopeId = match[1].trim();
+                        if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.handleAIReceive === 'function') {
+                            window.RedEnvelopeModule.handleAIReceive(envelopeId);
+                        }
+                        content = content.replace(match[0], '').trim();
+                    }
+                    
+                    // 3. 处理AI退还红包
+                    const returnEnvelopeRegex = /【退还红包】([^【】]+)【\/退还红包】/g;
+                    while ((match = returnEnvelopeRegex.exec(content)) !== null) {
+                        const envelopeId = match[1].trim();
+                        if (window.RedEnvelopeModule && typeof window.RedEnvelopeModule.handleAIReturn === 'function') {
+                            window.RedEnvelopeModule.handleAIReturn(envelopeId);
+                        }
+                        content = content.replace(match[0], '').trim();
+                    }
+                    
+                    // 4. 处理AI发送转账
+                    const sendTransferRegex = /【转账】([0-9.]+)\|([^【】]*)【\/转账】/g;
+                    while ((match = sendTransferRegex.exec(content)) !== null) {
+                        const amount = parseFloat(match[1]);
+                        const message = match[2] || '转账给你';
+                        if (window.TransferModule && typeof window.TransferModule.sendAITransfer === 'function') {
+                            window.TransferModule.sendAITransfer(convId, amount, message);
+                        }
+                        content = content.replace(match[0], '').trim();
+                    }
+                    
+                    // 5. 处理AI确认收款
+                    const receiveTransferRegex = /【确认收款】([^【】]+)【\/确认收款】/g;
+                    while ((match = receiveTransferRegex.exec(content)) !== null) {
+                        const transferId = match[1].trim();
+                        if (window.TransferModule && typeof window.TransferModule.handleAIReceive === 'function') {
+                            window.TransferModule.handleAIReceive(transferId);
+                        }
+                        content = content.replace(match[0], '').trim();
+                    }
+                    
+                    // 6. 处理AI退还转账
+                    const returnTransferRegex = /【退还转账】([^【】]+)【\/退还转账】/g;
+                    while ((match = returnTransferRegex.exec(content)) !== null) {
+                        const transferId = match[1].trim();
+                        if (window.TransferModule && typeof window.TransferModule.handleAIReturn === 'function') {
+                            window.TransferModule.handleAIReturn(transferId);
+                        }
+                        content = content.replace(match[0], '').trim();
+                    }
                     
                     // 清理内容
                     content = cleanAIResponse(content);
@@ -9261,6 +9542,8 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 messagePreview = '[语音消息]';
             } else if (lastMessage.type === 'location') {
                 messagePreview = '[位置]';
+            } else if (lastMessage.type === 'redenvelope') {
+                messagePreview = '[红包]';
             } else if (lastMessage.isImage) {
                 messagePreview = '[图片]';
             } else if (lastMessage.content) {
