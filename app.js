@@ -2786,15 +2786,44 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             }
             
             // 应用聊天背景图片（从conversation中读取）
+            console.log('📱 openChat - 准备应用背景图:', {
+                convId: conv?.id,
+                convName: conv?.name,
+                hasBgImage: !!(conv && conv.chatBgImage),
+                bgImagePreview: conv?.chatBgImage ? conv.chatBgImage.substring(0, 100) : 'none'
+            });
+            
             if (chatPage) {
                 if (conv && conv.chatBgImage) {
                     chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
                     chatPage.style.backgroundSize = 'cover';
                     chatPage.style.backgroundPosition = 'center';
                     chatPage.style.backgroundAttachment = 'fixed';
+                    console.log('✅ openChat - 背景图已应用到聊天页面');
+                    
+                    // 将chat-messages容器背景设为透明，以显示背景图
+                    const chatMessages = document.getElementById('chat-messages');
+                    if (chatMessages) {
+                        chatMessages.style.backgroundColor = 'transparent';
+                        console.log('✅ openChat - chat-messages背景已设为透明');
+                    }
+                    
+                    // 验证是否真的应用了
+                    setTimeout(() => {
+                        const appliedBg = chatPage.style.backgroundImage;
+                        console.log('🔍 openChat - 验证背景图应用结果:', appliedBg ? appliedBg.substring(0, 100) : 'none');
+                    }, 100);
                 } else {
                     chatPage.style.backgroundImage = 'none';
+                    // 恢复chat-messages的默认背景色
+                    const chatMessages = document.getElementById('chat-messages');
+                    if (chatMessages) {
+                        chatMessages.style.backgroundColor = '';
+                    }
+                    console.log('ℹ️ openChat - 清除背景图（conv中没有chatBgImage）');
                 }
+            } else {
+                console.warn('⚠️ openChat - 未找到chat-page元素');
             }
             
             // 应用消息气泡颜色

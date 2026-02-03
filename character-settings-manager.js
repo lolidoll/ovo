@@ -78,9 +78,14 @@
                     }
                 }
 
-                // 获取总结列表
+                // 获取总结列表 - 重新从conversations中查找以确保获取最新数据
                 const conv = window.AppState.conversations.find(c => c.id === chat.id);
                 const hasSummaries = conv && conv.summaries && conv.summaries.length > 0;
+                
+                // 使用最新的conv数据替换chat，确保所有数据都是最新的
+                if (conv) {
+                    chat = conv;
+                }
             
             page.innerHTML = `
                 <div class="sub-nav char-settings-nav">
@@ -646,6 +651,64 @@
                     console.log('char-settings-back-btn clicked');
                     e.preventDefault();
                     e.stopPropagation();
+                    
+                    // 关闭前，如果当前正在聊天，刷新聊天页面的背景图
+                    console.log('🔙 返回按钮被点击，准备刷新背景');
+                    if (window.AppState.currentChat && window.AppState.currentChat.id === chat.id) {
+                        console.log('ℹ️ 当前正在该聊天中，开始刷新');
+                        // 从conversations重新获取最新数据
+                        const conv = window.AppState.conversations.find(c => c.id === chat.id);
+                        if (conv) {
+                            console.log('✅ 找到conv对象:', {
+                                convId: conv.id,
+                                hasBgImage: !!conv.chatBgImage,
+                                bgImagePreview: conv.chatBgImage ? conv.chatBgImage.substring(0, 100) : 'none'
+                            });
+                            
+                            // 更新currentChat引用
+                            window.AppState.currentChat = conv;
+                            console.log('✅ currentChat引用已更新');
+                            
+                            // 更新聊天页面背景
+                            const chatPage = document.getElementById('chat-page');
+                            if (chatPage) {
+                                if (conv.chatBgImage) {
+                                    chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
+                                    chatPage.style.backgroundSize = 'cover';
+                                    chatPage.style.backgroundPosition = 'center';
+                                    chatPage.style.backgroundAttachment = 'fixed';
+                                    console.log('✅ 背景图已应用到聊天页面');
+                                    
+                                    // 将chat-messages容器背景设为透明，以显示背景图
+                                    const chatMessages = document.getElementById('chat-messages');
+                                    if (chatMessages) {
+                                        chatMessages.style.backgroundColor = 'transparent';
+                                        console.log('✅ 返回按钮 - chat-messages背景已设为透明');
+                                    }
+                                } else {
+                                    chatPage.style.backgroundImage = 'none';
+                                    // 恢复chat-messages的默认背景色
+                                    const chatMessages = document.getElementById('chat-messages');
+                                    if (chatMessages) {
+                                        chatMessages.style.backgroundColor = '';
+                                    }
+                                    console.log('ℹ️ 清除了背景图（conv中没有chatBgImage）');
+                                }
+                            } else {
+                                console.warn('⚠️ 未找到chat-page元素');
+                            }
+                            
+                            // 应用消息气泡颜色
+                            if (window.CharacterSettingsManager) {
+                                window.CharacterSettingsManager.applyBubbleColors(conv);
+                            }
+                        } else {
+                            console.warn('⚠️ 在conversations中未找到对话');
+                        }
+                    } else {
+                        console.log('ℹ️ 当前未在该聊天中或currentChat为空');
+                    }
+                    
                     const page = document.getElementById('character-settings-page');
                     if (page) {
                         console.log('Closing character-settings-page');
@@ -1175,10 +1238,17 @@
                     const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
                     if (conv) {
                         conv.chatBgImage = compressedDataUrl;
+                        console.log('✅ 背景图已设置到conv对象:', {
+                            convId: conv.id,
+                            convName: conv.name,
+                            bgImageLength: compressedDataUrl.length,
+                            bgImagePreview: compressedDataUrl.substring(0, 100)
+                        });
                         
                         // 如果当前正在聊天，同步更新 currentChat 引用和聊天页面背景
                         if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
                             window.AppState.currentChat = conv;
+                            console.log('✅ currentChat引用已更新');
                             
                             const chatPage = document.getElementById('chat-page');
                             if (chatPage) {
@@ -1186,10 +1256,16 @@
                                 chatPage.style.backgroundSize = 'cover';
                                 chatPage.style.backgroundPosition = 'center';
                                 chatPage.style.backgroundAttachment = 'fixed';
+                                console.log('✅ 聊天页面背景已应用');
+                            } else {
+                                console.warn('⚠️ 未找到chat-page元素');
                             }
+                        } else {
+                            console.log('ℹ️ 当前未在该聊天中，跳过实时更新');
                         }
                         
                         saveToStorage();
+                        console.log('✅ 数据已保存到localStorage');
                         
                         // 关闭设置页面并重新打开以刷新界面
                         const settingsPage = document.getElementById('character-settings-page');
@@ -1554,23 +1630,63 @@
                 };
             }
 
+            // 如果当前正在聊天，必须先更新 currentChat 引用，确保数据同步
+            if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
+                window.AppState.currentChat = conv;
+            }
+            
             saveToStorage();
             renderConversations();
 
             // 如果当前正在聊天，更新聊天页面的显示
+            console.log('💾 saveCharacterSettings - 检查是否需要更新聊天页面:', {
+                hasCurrentChat: !!window.AppState.currentChat,
+                currentChatId: window.AppState.currentChat?.id,
+                charId: charId,
+                match: window.AppState.currentChat?.id === charId
+            });
+            
             if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
-                window.AppState.currentChat = conv;
-                
+                console.log('✅ saveCharacterSettings - 开始更新聊天页面');
                 const chatPage = document.getElementById('chat-page');
+                console.log('📄 chatPage元素:', chatPage ? '找到' : '未找到');
+                
                 if (chatPage) {
+                    console.log('🖼️ conv.chatBgImage:', {
+                        exists: !!conv.chatBgImage,
+                        preview: conv.chatBgImage ? conv.chatBgImage.substring(0, 100) : 'none'
+                    });
+                    
                     if (conv.chatBgImage) {
                         chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
                         chatPage.style.backgroundSize = 'cover';
                         chatPage.style.backgroundPosition = 'center';
                         chatPage.style.backgroundAttachment = 'fixed';
+                        console.log('✅ saveCharacterSettings - 背景图已应用');
+                        
+                        // 将chat-messages容器背景设为透明，以显示背景图
+                        const chatMessages = window.opener ? window.opener.document.getElementById('chat-messages') : document.getElementById('chat-messages');
+                        if (chatMessages) {
+                            chatMessages.style.backgroundColor = 'transparent';
+                            console.log('✅ saveCharacterSettings - chat-messages背景已设为透明');
+                        }
+                        
+                        // 验证是否真的应用了
+                        setTimeout(() => {
+                            const appliedBg = chatPage.style.backgroundImage;
+                            console.log('🔍 saveCharacterSettings - 验证背景图:', appliedBg ? appliedBg.substring(0, 100) : 'none');
+                        }, 100);
                     } else {
                         chatPage.style.backgroundImage = 'none';
+                        // 恢复chat-messages的默认背景色
+                        const chatMessages = window.opener ? window.opener.document.getElementById('chat-messages') : document.getElementById('chat-messages');
+                        if (chatMessages) {
+                            chatMessages.style.backgroundColor = '';
+                        }
+                        console.log('ℹ️ saveCharacterSettings - 清除背景图');
                     }
+                } else {
+                    console.warn('⚠️ saveCharacterSettings - 未找到chat-page元素');
                 }
                 
                 // 应用消息气泡颜色
@@ -1579,6 +1695,8 @@
                 renderChatMessages(charId);
                 const displayName = conv.remark || conv.name;
                 document.getElementById('chat-title').textContent = displayName;
+            } else {
+                console.log('ℹ️ saveCharacterSettings - 当前未在该聊天中，跳过UI更新');
             }
 
             document.getElementById('character-settings-page').classList.remove('open');
