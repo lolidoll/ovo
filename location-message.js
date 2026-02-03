@@ -99,7 +99,8 @@ window.LocationMessageModule = (function() {
                     </div>
                     <div class="location-form-group">
                         <label class="location-label">距离范围 (米)</label>
-                        <input class="location-input" id="location-distance-input" type="number" placeholder="例如：5" value="5" min="1" max="9999" />
+                        <input class="location-input" id="location-distance-input" type="number" placeholder="例如：10" value="10" min="1" max="99999" />
+                        <div style="font-size:11px;color:#666;margin-top:4px;">提示：表示你距离该位置的大概距离</div>
                     </div>
                     <div class="location-tips">
                         <div class="location-tip-item">按 Ctrl+Enter 快速发送</div>
@@ -128,7 +129,7 @@ window.LocationMessageModule = (function() {
         const locationDistanceInput = document.getElementById('location-distance-input');
         const locationName = locationNameInput.value.trim();
         const locationAddress = locationAddressInput.value.trim();
-        const locationDistance = parseInt(locationDistanceInput.value) || 5;
+        const locationDistance = parseInt(locationDistanceInput.value) || 10;
 
         if (!locationName) {
             alert('请输入位置名称');
@@ -188,7 +189,7 @@ window.LocationMessageModule = (function() {
 
 
     // AI回复地理位置消息
-    function sendAILocationMessage(conversationId, locationName, locationAddress = '', locationDistance = 5) {
+    function sendAILocationMessage(conversationId, locationName, locationAddress = '', locationDistance = 10) {
         const locationMsg = {
             id: generateMessageId(),
             conversationId: conversationId,

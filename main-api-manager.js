@@ -701,10 +701,11 @@ This mindset beats memorizing 100 rules.`);
 2. 【地理位置】使用格式：【地理位置】位置名称|详细地址|距离【/地理位置】
    - 位置名称：地点的名字（必填）
    - 详细地址：具体地址（选填,可以为空）
-   - 距离：距离范围,单位米（选填,默认5米）
-   - 示例：【地理位置】星巴克咖啡|北京市朝阳区建国路1号|10【/地理位置】
-   - 示例：【地理位置】天安门广场||【/地理位置】
-   - 注意：分享位置时适合约见面、推荐地点、告诉对方你在哪里
+   - 距离：距离范围,单位米（必填,根据实际情况设置合理的距离值）
+   - **重要**：当用户发送地理位置给你时,你会收到用户设置的距离值。如果你要回复地理位置,应该根据实际情况设置一个合理的距离值（例如：在同一个咖啡馆可能是5-20米,在同一个商场可能是50-200米,在同一个城市不同区域可能是1000-5000米）
+   - 示例：【地理位置】星巴克咖啡|北京市朝阳区建国路1号|15【/地理位置】（表示距离约15米）
+   - 示例：【地理位置】天安门广场|北京市东城区|3000【/地理位置】（表示距离约3公里）
+   - 注意：分享位置时适合约见面、推荐地点、告诉对方你在哪里。距离值要符合实际情况,不要总是使用默认值
 
 3. 【撤回消息】使用格式：【撤回】消息ID【/撤回】
    - 消息ID：你要撤回的之前发送的消息的ID（从上下文中获取）
@@ -916,7 +917,15 @@ This mindset beats memorizing 100 rules.`);
                 const locationAddress = m.locationAddress || '';
                 const locationDistance = m.locationDistance || 5;
                 const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
-                messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离范围：约${locationDistance}米`;
+                
+                // 根据发送者提供不同的提示
+                if (m.sender === 'sent') {
+                    // 用户发送的地理位置 - 强调距离信息
+                    messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离：${senderName}距离这个位置约${locationDistance}米\n\n**重要提示**：如果你要回复地理位置，请根据你与用户的实际距离关系设置合理的距离值。例如：如果你们在同一个地方，距离可能是5-50米；如果在附近但不同位置，可能是100-500米；如果在同城不同区域，可能是1000-10000米。`;
+                } else {
+                    // AI发送的地理位置
+                    messageContent = `[${senderName}发送了地理位置]\n位置名称：${locationName}\n详细地址：${locationAddress}\n距离范围：约${locationDistance}米`;
+                }
             }
             
             // 如果消息是语音通话，提供通话状态信息

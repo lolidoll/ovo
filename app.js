@@ -6794,7 +6794,7 @@
             const locationMatch = text.match(locationRegex);
             let locationName = null;
             let locationAddress = null;
-            let locationDistance = 5;
+            let locationDistance = 10; // 默认10米，但AI应该根据实际情况设置
             let isLocation = false;
             
             if (locationMatch && locationMatch[1]) {
@@ -6810,6 +6810,11 @@
                 }
                 // 从文本中移除地理位置标记
                 text = text.replace(locationRegex, '').trim();
+                
+                // 如果AI没有提供距离值（使用默认值），记录警告
+                if (!locationMatch[3] || !locationMatch[3].trim()) {
+                    console.warn('⚠️ AI发送地理位置时未指定距离值，使用默认值:', locationDistance, '米');
+                }
             }
             
             // ========== 第5.5步：处理语音通话信息 ==========
@@ -9781,3 +9786,5 @@
         window.replaceNamePlaceholders = replaceNamePlaceholders;
         window.extractGenderInfo = extractGenderInfo;
         window.getEmojiInstructions = getEmojiInstructions;
+        window.renderChatMessages = renderChatMessages;
+        window.renderConversations = renderConversations;

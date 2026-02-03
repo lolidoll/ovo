@@ -405,10 +405,14 @@ const AIImageGenerator = {
         
         // 如果当前正在查看这个对话，刷新消息列表
         if (this.AppState.currentChat && this.AppState.currentChat.id === convId) {
-            renderChatMessages();
+            if (typeof window.renderChatMessages === 'function') {
+                window.renderChatMessages();
+            }
         }
         
-        renderConversations();
+        if (typeof window.renderConversations === 'function') {
+            window.renderConversations();
+        }
     },
 
     /**

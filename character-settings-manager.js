@@ -692,6 +692,17 @@
                     const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === chat.id);
                     if (conv) {
                         conv.chatBgImage = null;
+                        
+                        // 如果当前正在聊天，同步更新 currentChat 引用和聊天页面背景
+                        if (window.AppState.currentChat && window.AppState.currentChat.id === chat.id) {
+                            window.AppState.currentChat = conv;
+                            
+                            const chatPage = document.getElementById('chat-page');
+                            if (chatPage) {
+                                chatPage.style.backgroundImage = 'none';
+                            }
+                        }
+                        
                         saveToStorage();
                         document.getElementById('character-settings-page').classList.remove('open');
                         setTimeout(() => this.openCharacterSettings(conv), 100);
@@ -1164,6 +1175,20 @@
                     const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
                     if (conv) {
                         conv.chatBgImage = compressedDataUrl;
+                        
+                        // 如果当前正在聊天，同步更新 currentChat 引用和聊天页面背景
+                        if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
+                            window.AppState.currentChat = conv;
+                            
+                            const chatPage = document.getElementById('chat-page');
+                            if (chatPage) {
+                                chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
+                                chatPage.style.backgroundSize = 'cover';
+                                chatPage.style.backgroundPosition = 'center';
+                                chatPage.style.backgroundAttachment = 'fixed';
+                            }
+                        }
+                        
                         saveToStorage();
                         
                         // 关闭设置页面并重新打开以刷新界面
