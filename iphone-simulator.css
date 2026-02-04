@@ -18,11 +18,11 @@
     display: flex;
 }
 
-/* 手机端模式 - 保留边距 */
+/* 手机端模式 - 不使用padding，通过JavaScript缩放来保留边距 */
 @media (max-width: 768px) {
     .iphone-simulator-overlay {
         background: rgba(0, 0, 0, 0.95);
-        padding: 20px;
+        padding: 0;
     }
     
     .iphone-simulator-overlay.show {
