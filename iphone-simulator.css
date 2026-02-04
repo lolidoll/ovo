@@ -58,19 +58,43 @@
     animation: deviceAppear 0.4s ease;
 }
 
-/* 手机端 - 保留外壳和边距 */
+/* 手机端 - 保留外壳和边距，自动缩放适配 */
 @media (max-width: 768px) {
     .iphone-device {
-        width: calc(100vw - 40px);
-        height: calc(100vh - 40px);
-        height: calc(100dvh - 40px);
-        max-width: 390px;
-        max-height: 844px;
-        border-radius: 45px;
-        padding: 10px;
-        transform: scale(1);
+        width: 390px;
+        height: 844px;
+        max-width: calc(100vw - 40px);
+        max-height: calc(100vh - 40px);
+        max-height: calc(100dvh - 40px);
+        border-radius: 55px;
+        padding: 12px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6),
                     inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+    
+    /* 根据屏幕大小自动缩放 */
+    .iphone-device {
+        transform: scale(1);
+    }
+    
+    /* 小屏幕设备缩放 */
+    @supports (height: 100dvh) {
+        .iphone-device {
+            --scale-x: calc((100vw - 40px) / 390);
+            --scale-y: calc((100dvh - 40px) / 844);
+            --scale: min(var(--scale-x), var(--scale-y));
+            transform: scale(var(--scale));
+        }
+    }
+    
+    /* 不支持dvh的设备 */
+    @supports not (height: 100dvh) {
+        .iphone-device {
+            --scale-x: calc((100vw - 40px) / 390);
+            --scale-y: calc((100vh - 40px) / 844);
+            --scale: min(var(--scale-x), var(--scale-y));
+            transform: scale(var(--scale));
+        }
     }
 }
 
@@ -131,7 +155,7 @@
 
 @media (max-width: 768px) {
     .iphone-screen {
-        border-radius: 38px;
+        border-radius: 47px;
     }
 }
 
@@ -561,6 +585,14 @@
     margin-top: 12px;
 }
 
+/* 手机端应用图标网格优化 */
+@media (max-width: 768px) {
+    .app-grid {
+        gap: 16px 14px;
+        margin-top: 10px;
+    }
+}
+
 .app-icon {
     display: flex;
     flex-direction: column;
@@ -588,6 +620,15 @@
     overflow: hidden;
 }
 
+/* 手机端应用图标大小优化 */
+@media (max-width: 768px) {
+    .app-icon-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 13px;
+    }
+}
+
 .app-icon-image::before {
     content: '';
     position: absolute;
@@ -604,6 +645,14 @@
     fill: #fff;
     position: relative;
     z-index: 1;
+}
+
+/* 手机端应用图标SVG大小 */
+@media (max-width: 768px) {
+    .app-icon-image svg {
+        width: 32px;
+        height: 32px;
+    }
 }
 
 .app-name {
@@ -669,6 +718,15 @@
     overflow: hidden;
 }
 
+/* 手机端Dock图标大小 */
+@media (max-width: 768px) {
+    .dock-icon-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 13px;
+    }
+}
+
 .dock-icon-image::before {
     content: '';
     position: absolute;
@@ -685,6 +743,14 @@
     fill: #fff;
     position: relative;
     z-index: 1;
+}
+
+/* 手机端Dock图标SVG大小 */
+@media (max-width: 768px) {
+    .dock-icon-image svg {
+        width: 32px;
+        height: 32px;
+    }
 }
 
 /* 底部指示器 */
