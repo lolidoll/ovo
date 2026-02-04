@@ -214,9 +214,9 @@
             return;
         }
         
-        // 手机端：计算最佳缩放比例（优化视觉比例，2:1）
+        // 手机端：计算最佳缩放比例
         const deviceWidth = 390;
-        const deviceHeight = 780;
+        const deviceHeight = 844;
         const padding = 16; // 左右各8px，接近全屏
         
         const availableWidth = window.innerWidth - padding;

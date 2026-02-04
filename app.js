@@ -851,6 +851,11 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 closeCardEditPage();
             });
 
+            // 情侣空间返回按钮
+            document.getElementById('couples-space-back-btn').addEventListener('click', function() {
+                closeSubPage('couples-space-page');
+            });
+
             document.getElementById('edit-avatar-btn').addEventListener('click', function() {
                 openImagePicker('avatar');
             });
@@ -1733,7 +1738,10 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
         // 打开情侣空间
         function openCouplespaceArea() {
             openSubPage('couples-space-page');
-            // couples-space.js 会自动初始化和渲染内容
+            // 初始化情侣空间
+            if (typeof CouplesSpace !== 'undefined' && typeof CouplesSpace.init === 'function') {
+                CouplesSpace.init();
+            }
         }
 
 

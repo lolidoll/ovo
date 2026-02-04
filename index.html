@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="font-manager.css">
     <link rel="stylesheet" href="theme-manager.css">
     <link rel="stylesheet" href="iphone-simulator.css">
+    <link rel="stylesheet" href="shopping.css">
     <style>
     </style>
     <script>
@@ -1907,8 +1908,379 @@
         <div class="sub-title">购物</div>
     </div>
     <div class="sub-content">
-        <div class="placeholder-text">
-            【购物功能开发中】
+        <!-- 主购物页面 -->
+        <div class="shopping-main-content active">
+            <!-- 顶部搜索栏 -->
+            <div class="shopping-header">
+                <div class="shopping-search-box">
+                    <i class="fa fa-search"></i>
+                    <input type="text" placeholder="淘宝热搜 年货节特惠">
+                </div>
+                <div class="shopping-header-icon">
+                    <i class="fa fa-shopping-cart"></i>
+                </div>
+            </div>
+
+            <!-- 分类导航：8入口全显，4列换行 -->
+            <div class="category-nav">
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-utensils"></i></div>
+                    <div class="text">外卖</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-cat"></i></div>
+                    <div class="text">天猫</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-fire"></i></div>
+                    <div class="text">聚划算</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-store"></i></div>
+                    <div class="text">超市</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-video"></i></div>
+                    <div class="text">直播</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-gift"></i></div>
+                    <div class="text">红包</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-user"></i></div>
+                    <div class="text">我的</div>
+                </div>
+                <div class="category-item">
+                    <div class="icon"><i class="fa fa-th"></i></div>
+                    <div class="text">分类</div>
+                </div>
+            </div>
+
+            <!-- 外卖闪购 -->
+            <div class="flash-buy">
+                <div class="title">
+                    <div class="left">
+                        <i class="fa fa-bolt"></i>
+                        <span>外卖闪购</span>
+                        <span class="time">30分钟达</span>
+                    </div>
+                    <div class="more">查看更多 ></div>
+                </div>
+                <div class="content">
+                    <div class="flash-item">
+                        <img src="https://picsum.photos/100/70?random=1" alt="闪购商品">
+                        <div class="name">水果生鲜组合</div>
+                        <div class="price">¥29.9</div>
+                    </div>
+                    <div class="flash-item">
+                        <img src="https://picsum.photos/100/70?random=2" alt="闪购商品">
+                        <div class="name">网红零食大礼包</div>
+                        <div class="price">¥19.9</div>
+                    </div>
+                    <div class="flash-item">
+                        <img src="https://picsum.photos/100/70?random=3" alt="闪购商品">
+                        <div class="name">日用百货</div>
+                        <div class="price">¥9.9</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商品列表 -->
+            <div class="goods-list">
+                <div class="goods-card">
+                    <img src="https://picsum.photos/300/300?random=10" alt="商品">
+                    <div class="desc">
+                        <div class="name">新款纯棉短袖t恤女夏季宽松百搭显瘦圆领上衣ins潮</div>
+                        <div class="price">¥39.9 <span class="sales">月销10w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://picsum.photos/300/300?random=11" alt="商品">
+                    <div class="desc">
+                        <div class="name">无线蓝牙耳机半入耳式高音质降噪适用于苹果华为小米</div>
+                        <div class="price">¥89 <span class="sales">月销5w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://picsum.photos/300/300?random=12" alt="商品">
+                    <div class="desc">
+                        <div class="name">家用保温杯316不锈钢大容量便携男女学生水杯刻字</div>
+                        <div class="price">¥29.9 <span class="sales">月销8w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://picsum.photos/300/300?random=13" alt="商品">
+                    <div class="desc">
+                        <div class="name">网红ins风餐具套装陶瓷碗盘筷家用高颜值乔迁新居送礼</div>
+                        <div class="price">¥59 <span class="sales">月销3w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://picsum.photos/300/300?random=14" alt="商品">
+                    <div class="desc">
+                        <div class="name">夏季冰丝阔腿裤女高腰垂感显瘦直筒宽松休闲拖地裤</div>
+                        <div class="price">¥49.9 <span class="sales">月销15w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://picsum.photos/300/300?random=15" alt="商品">
+                    <div class="desc">
+                        <div class="name">迷你小风扇便携式手持usb充电静音桌面宿舍随身电风扇</div>
+                        <div class="price">¥19.9 <span class="sales">月销20w+</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分类页面 -->
+        <div class="category-page">
+            <div class="category-top">
+                <div class="category-top-item active">全部分类</div>
+                <div class="category-top-item">热销推荐</div>
+                <div class="category-top-item">新品上市</div>
+            </div>
+            <div class="category-content">
+                <div class="category-left">
+                    <div class="category-left-item active">女装</div>
+                    <div class="category-left-item">男装</div>
+                    <div class="category-left-item">鞋包</div>
+                    <div class="category-left-item">美妆</div>
+                    <div class="category-left-item">数码</div>
+                    <div class="category-left-item">家电</div>
+                    <div class="category-left-item">食品</div>
+                    <div class="category-left-item">家居</div>
+                    <div class="category-left-item">母婴</div>
+                    <div class="category-left-item">运动</div>
+                </div>
+                <div class="category-right">
+                    <div class="category-right-title">热门推荐</div>
+                    <div class="category-right-list">
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=20" alt="分类">
+                            <div class="text">连衣裙</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=21" alt="分类">
+                            <div class="text">T恤</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=22" alt="分类">
+                            <div class="text">短裤</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=23" alt="分类">
+                            <div class="text">牛仔裤</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=24" alt="分类">
+                            <div class="text">衬衫</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=25" alt="分类">
+                            <div class="text">卫衣</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=26" alt="分类">
+                            <div class="text">裙子</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=27" alt="分类">
+                            <div class="text">外套</div>
+                        </div>
+                    </div>
+                    <div class="category-right-title">品牌专区</div>
+                    <div class="category-right-list">
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=30" alt="品牌">
+                            <div class="text">优衣库</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=31" alt="品牌">
+                            <div class="text">ZARA</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=32" alt="品牌">
+                            <div class="text">Nike</div>
+                        </div>
+                        <div class="category-right-item">
+                            <img src="https://picsum.photos/60/60?random=33" alt="品牌">
+                            <div class="text">Adidas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 购物车页面 -->
+        <div class="cart-page">
+            <div class="cart-empty active" id="cart-empty">
+                <div class="text">你的购物车还是空的~</div>
+                <div class="btn" id="cart-go-shop">去逛逛</div>
+            </div>
+            <div class="cart-list" id="cart-list">
+                <div class="cart-item">
+                    <div class="cart-check"></div>
+                    <img src="https://picsum.photos/70/70?random=41" alt="购物车商品" class="cart-img">
+                    <div class="cart-info">
+                        <div class="cart-name">新款纯棉短袖t恤女夏季宽松百搭显瘦圆领上衣ins潮</div>
+                        <div class="cart-spec">颜色：白色 | 尺码：M</div>
+                        <div class="cart-price-num">
+                            <div class="cart-price">¥39.9</div>
+                            <div class="cart-num">
+                                <div class="cart-num-btn">-</div>
+                                <input type="text" value="1" class="cart-num-input">
+                                <div class="cart-num-btn">+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cart-item">
+                    <div class="cart-check"></div>
+                    <img src="https://picsum.photos/70/70?random=42" alt="购物车商品" class="cart-img">
+                    <div class="cart-info">
+                        <div class="cart-name">无线蓝牙耳机半入耳式高音质降噪适用于苹果华为小米</div>
+                        <div class="cart-spec">颜色：黑色 | 版本：标准版</div>
+                        <div class="cart-price-num">
+                            <div class="cart-price">¥89</div>
+                            <div class="cart-num">
+                                <div class="cart-num-btn">-</div>
+                                <input type="text" value="1" class="cart-num-input">
+                                <div class="cart-num-btn">+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的页面 -->
+        <div class="mine-page">
+            <div class="mine-top">
+                <div class="mine-user">
+                    <div class="mine-avatar">
+                        <img src="https://picsum.photos/55/55?random=50" alt="头像">
+                    </div>
+                    <div class="mine-info">
+                        <div class="mine-name">淘宝用户123456</div>
+                        <div class="mine-id">ID: 1234567890</div>
+                    </div>
+                    <div class="mine-set"><i class="fa fa-cog"></i></div>
+                </div>
+                <div class="mine-data">
+                    <div class="mine-data-item">
+                        <div class="mine-data-num">0</div>
+                        <div class="mine-data-text">关注</div>
+                    </div>
+                    <div class="mine-data-item">
+                        <div class="mine-data-num">12</div>
+                        <div class="mine-data-text">粉丝</div>
+                    </div>
+                    <div class="mine-data-item">
+                        <div class="mine-data-num">28</div>
+                        <div class="mine-data-text">收藏</div>
+                    </div>
+                    <div class="mine-data-item">
+                        <div class="mine-data-num">100</div>
+                        <div class="mine-data-text">积分</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mine-order">
+                <div class="mine-order-top">
+                    <div class="mine-order-title">我的订单</div>
+                    <div class="mine-order-more">查看全部 ></div>
+                </div>
+                <div class="mine-order-list">
+                    <div class="mine-order-item">
+                        <i class="fa fa-list"></i>
+                        <div class="text">全部</div>
+                    </div>
+                    <div class="mine-order-item">
+                        <i class="fa fa-credit-card"></i>
+                        <div class="text">待付款</div>
+                    </div>
+                    <div class="mine-order-item">
+                        <i class="fa fa-truck"></i>
+                        <div class="text">待发货</div>
+                    </div>
+                    <div class="mine-order-item">
+                        <i class="fa fa-box"></i>
+                        <div class="text">待收货</div>
+                    </div>
+                    <div class="mine-order-item">
+                        <i class="fa fa-star"></i>
+                        <div class="text">待评价</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mine-menu">
+                <div class="mine-menu-item">
+                    <div class="mine-menu-icon"><i class="fa fa-gift"></i></div>
+                    <div class="mine-menu-text">我的红包</div>
+                    <div class="mine-menu-arrow"><i class="fa fa-chevron-right"></i></div>
+                </div>
+                <div class="mine-menu-item">
+                    <div class="mine-menu-icon"><i class="fa fa-ticket-alt"></i></div>
+                    <div class="mine-menu-text">我的优惠券</div>
+                    <div class="mine-menu-arrow"><i class="fa fa-chevron-right"></i></div>
+                </div>
+                <div class="mine-menu-item">
+                    <div class="mine-menu-icon"><i class="fa fa-heart"></i></div>
+                    <div class="mine-menu-text">我的收藏</div>
+                    <div class="mine-menu-arrow"><i class="fa fa-chevron-right"></i></div>
+                </div>
+                <div class="mine-menu-item">
+                    <div class="mine-menu-icon"><i class="fa fa-map-marker-alt"></i></div>
+                    <div class="mine-menu-text">我的地址</div>
+                    <div class="mine-menu-arrow"><i class="fa fa-chevron-right"></i></div>
+                </div>
+            </div>
+            <div class="mine-menu">
+                <div class="mine-menu-item">
+                    <div class="mine-menu-icon"><i class="fa fa-headset"></i></div>
+                    <div class="mine-menu-text">客服中心</div>
+                    <div class="mine-menu-arrow"><i class="fa fa-chevron-right"></i></div>
+                </div>
+                <div class="mine-menu-item">
+                    <div class="mine-menu-icon"><i class="fa fa-cog"></i></div>
+                    <div class="mine-menu-text">设置</div>
+                    <div class="mine-menu-arrow"><i class="fa fa-chevron-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 购物车底部结算栏 -->
+        <div class="cart-footer" id="cart-footer">
+            <div class="cart-footer-check">
+                <div class="cart-check" id="cart-all-check"></div>
+                <div class="cart-footer-text">全选</div>
+            </div>
+            <div class="cart-footer-price">
+                <div class="cart-footer-total">合计：</div>
+                <div class="cart-footer-money">¥0.00</div>
+            </div>
+            <div class="cart-footer-pay">结算(0)</div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <div class="shopping-footer">
+            <div class="shopping-footer-item active" data-tab="home">
+                <i class="fa fa-home"></i>
+                <span>首页</span>
+            </div>
+            <div class="shopping-footer-item" data-tab="category">
+                <i class="fa fa-th"></i>
+                <span>分类</span>
+            </div>
+            <div class="shopping-footer-item" data-tab="cart">
+                <i class="fa fa-shopping-cart"></i>
+                <span>购物车</span>
+            </div>
+            <div class="shopping-footer-item" data-tab="mine">
+                <i class="fa fa-user"></i>
+                <span>我的</span>
+            </div>
         </div>
     </div>
 </div>
@@ -2252,15 +2624,20 @@
 
         <!-- 子页面 - 情侣空间 -->
         <div class="sub-page" id="couples-space-page">
-            <div class="sub-nav">
-                <div class="back-btn" id="couples-space-back-btn">
-                    <div class="back-arrow"></div>
-                    <span>返回</span>
+            <div class="couples-space-container">
+                <!-- 顶部导航 -->
+                <div class="cs-header">
+                    <button class="cs-back-btn" id="couples-space-back-btn">
+                        <span>返回</span>
+                    </button>
+                    <div class="cs-title">情侣空间</div>
+                    <button class="cs-selector-btn" onclick="CouplesSpace.openSelector()">
+                        <span>切换角色</span>
+                    </button>
                 </div>
-                <div class="sub-title">情侣空间</div>
-            </div>
-            <div class="sub-content" style="padding: 0; overflow-y: auto;">
-                <div id="couples-space-content"></div>
+                
+                <!-- 内容区域 -->
+                <div id="couplesSpaceContent"></div>
             </div>
         </div>
 
@@ -3137,6 +3514,7 @@
     <script src="video-call.js"></script>
     <script src="red-envelope.js"></script>
     <script src="transfer.js"></script>
+    <script src="shopping.js"></script>
 
 </body>
 </html>
