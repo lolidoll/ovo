@@ -257,13 +257,7 @@
             }
         });
         
-        // 绑定工具栏中的查手机按钮
-        const btnPhone = document.getElementById('btn-phone');
-        if (btnPhone) {
-            btnPhone.addEventListener('click', function() {
-                handlePhone();
-            });
-        }
+        // 注意：查手机按钮由iphone-simulator.js处理
         
         console.log('✅ 按钮映射已初始化');
     }
@@ -385,9 +379,7 @@
         showToast('一起听功能尚未实现');
     }
     
-    function handlePhone() {
-        showToast('查手机功能尚未实现');
-    }
+    // handlePhone 已移除，由iphone-simulator.js处理
     
     function handleDiary() {
         showToast('日记功能尚未实现');

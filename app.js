@@ -1078,8 +1078,7 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             const btnListen = document.getElementById('btn-listen');
             if (btnListen) btnListen.addEventListener('click', function() { showToast('一起听功能尚未实现'); });
 
-            const btnPhone = document.getElementById('btn-phone');
-            if (btnPhone) btnPhone.addEventListener('click', function() { showToast('查手机功能尚未实现'); });
+            // 注意：btn-phone 由 iphone-simulator.js 处理
 
             // 更多按钮 - 显示/隐藏更多功能弹出层
             const btnMore = document.getElementById('btn-more');

@@ -18,6 +18,22 @@
     display: flex;
 }
 
+/* 手机端全屏模式 */
+@media (max-width: 768px) {
+    .iphone-simulator-overlay {
+        background: #000;
+    }
+    
+    .iphone-simulator-overlay.show {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh; /* 动态视口高度 */
+    }
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -41,6 +57,23 @@
     animation: deviceAppear 0.4s ease;
 }
 
+/* 手机端全屏 - 移除外壳 */
+@media (max-width: 768px) {
+    .iphone-device {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        border-radius: 0;
+        padding: 0;
+        transform: scale(1);
+        box-shadow: none;
+    }
+    
+    .iphone-device::before {
+        display: none;
+    }
+}
+
 @keyframes deviceAppear {
     from {
         transform: scale(0.8);
@@ -49,6 +82,19 @@
     to {
         transform: scale(0.95);
         opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    @keyframes deviceAppear {
+        from {
+            transform: scale(1);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
     }
 }
 
@@ -83,7 +129,13 @@
     position: relative;
 }
 
-/* 灵动岛容器 - 固定在顶部 */
+@media (max-width: 768px) {
+    .iphone-screen {
+        border-radius: 0;
+    }
+}
+
+/* 灵动岛容器 - 固定在顶部，避开状态栏 */
 .dynamic-island {
     position: absolute;
     top: 11px;
@@ -118,12 +170,6 @@
     transform: translateX(-50%) scale(0.98);
 }
 
-.dynamic-island.expanded {
-    width: 200px;
-    height: 80px;
-    border-radius: 25px;
-}
-
 /* 灵动岛内容 */
 .dynamic-island-content {
     position: relative;
@@ -132,10 +178,6 @@
     gap: 11px;
     z-index: 2;
     transition: all 0.4s ease;
-}
-
-.dynamic-island.expanded .dynamic-island-content {
-    opacity: 0;
 }
 
 /* 摄像头 */
@@ -179,29 +221,134 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
 }
 
-/* 灵动岛展开内容 */
-.dynamic-island-expanded-content {
+/* 关机界面覆盖层 */
+.shutdown-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 2000;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.3s ease 0.2s;
-    z-index: 3;
-    color: #fff;
-    font-size: 13px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.dynamic-island.expanded .dynamic-island-expanded-content {
+.shutdown-overlay.show {
     opacity: 1;
+    visibility: visible;
 }
 
-/* 状态栏 - 不与灵动岛重叠 */
+/* 关机面板 */
+.shutdown-panel {
+    width: 90%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
+}
+
+/* 滑动关机容器 */
+.shutdown-slider-container {
+    width: 100%;
+    padding: 20px 0;
+}
+
+/* 滑动轨道 */
+.shutdown-slider-track {
+    position: relative;
+    width: 100%;
+    height: 58px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 29px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 滑动文字 */
+.shutdown-slider-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    user-select: none;
+}
+
+/* 滑动按钮 */
+.shutdown-slider-thumb {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border-radius: 25px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: -8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
+                0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+.shutdown-slider-thumb:active {
+    cursor: grabbing;
+}
+
+.shutdown-slider-thumb svg {
+    width: 16px;
+    height: 16px;
+    color: #000;
+    opacity: 0.4;
+}
+
+.shutdown-slider-thumb svg:first-child {
+    margin-right: -6px;
+}
+
+/* 取消按钮 */
+.shutdown-cancel-btn {
+    width: 100%;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: -0.4px;
+}
+
+.shutdown-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.shutdown-cancel-btn:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* 状态栏 - 左右分开，避开灵动岛 */
 .status-bar {
     position: absolute;
     top: 0;
@@ -211,7 +358,6 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 14px 33px 0 33px;
     color: #fff;
     font-size: 15px;
     font-weight: 600;
@@ -224,7 +370,9 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    flex: 1;
+    padding: 14px 0 0 24px;
+    flex: 0 0 auto;
+    max-width: 100px; /* 限制宽度，避免与灵动岛重叠 */
 }
 
 .status-time {
@@ -237,7 +385,9 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    flex: 1;
+    padding: 14px 24px 0 0;
+    flex: 0 0 auto;
+    max-width: 140px; /* 限制宽度，避免与灵动岛重叠 */
     justify-content: flex-end;
 }
 
@@ -528,55 +678,20 @@
     border-radius: 3px;
 }
 
-/* 关闭按钮 */
-.iphone-close-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    background: rgba(255, 255, 255, 0.12);
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    z-index: 10001;
-}
-
-.iphone-close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-}
-
-.iphone-close-btn:active {
-    transform: scale(0.95);
-}
-
-.iphone-close-btn svg {
-    width: 20px;
-    height: 20px;
-    stroke: #fff;
-    stroke-width: 2.5;
-}
-
 /* 响应式调整 */
-@media (max-width: 480px) {
+@media (max-width: 480px) and (min-width: 769px) {
     .iphone-device {
         transform: scale(0.75);
     }
 }
 
-@media (max-height: 900px) {
+@media (max-height: 900px) and (min-width: 769px) {
     .iphone-device {
         transform: scale(0.85);
     }
 }
 
-@media (max-height: 800px) {
+@media (max-height: 800px) and (min-width: 769px) {
     .iphone-device {
         transform: scale(0.75);
     }
@@ -643,4 +758,24 @@
 
 .dynamic-island.active {
     animation: islandPulse 2s ease-in-out infinite;
+}
+
+/* 关机动画 */
+@keyframes shutdownAnimation {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.98);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+.iphone-screen.shutting-down {
+    animation: shutdownAnimation 0.8s ease forwards;
 }
