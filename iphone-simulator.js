@@ -237,6 +237,8 @@
     function showShutdownOverlay() {
         const shutdownOverlay = document.getElementById('shutdown-overlay');
         if (shutdownOverlay) {
+            // 重置滑块状态
+            resetSlider();
             shutdownOverlay.classList.add('show');
         }
     }
@@ -246,20 +248,65 @@
         const shutdownOverlay = document.getElementById('shutdown-overlay');
         if (shutdownOverlay) {
             shutdownOverlay.classList.remove('show');
+            // 隐藏时也重置，确保下次打开时状态正确
+            setTimeout(() => {
+                resetSlider();
+            }, 300);
+        }
+    }
+    
+    // 重置滑块状态
+    function resetSlider() {
+        const thumb = document.getElementById('shutdown-slider-thumb');
+        const track = document.querySelector('.shutdown-slider-track');
+        const textElement = document.querySelector('.shutdown-slider-text');
+        
+        if (thumb) {
+            thumb.style.transition = '';
+            thumb.style.transform = 'translateX(0)';
+        }
+        
+        if (track) {
+            track.classList.remove('sliding');
+            track.style.setProperty('--slide-progress', '0%');
+        }
+        
+        if (textElement) {
+            textElement.style.opacity = '1';
         }
     }
 
     // 关机动画
     function shutdownAnimation() {
         const screen = document.querySelector('.iphone-screen');
+        const shutdownOverlay = document.getElementById('shutdown-overlay');
+        
         if (screen) {
-            screen.classList.add('shutting-down');
+            // 先隐藏关机界面
+            if (shutdownOverlay) {
+                shutdownOverlay.style.transition = 'opacity 0.3s ease';
+                shutdownOverlay.style.opacity = '0';
+            }
             
+            // 延迟后开始关机动画
+            setTimeout(() => {
+                screen.classList.add('shutting-down');
+            }, 300);
+            
+            // 关机动画完成后清理
             setTimeout(() => {
                 hideiPhoneSimulator();
                 screen.classList.remove('shutting-down');
                 hideShutdownOverlay();
-            }, 800);
+                
+                // 重置关机界面
+                if (shutdownOverlay) {
+                    shutdownOverlay.style.transition = '';
+                    shutdownOverlay.style.opacity = '';
+                }
+                
+                // 重置滑块（通过hideShutdownOverlay中的resetSlider处理）
+            }, 1500);
         }
     }
 
@@ -273,48 +320,82 @@
         let isDragging = false;
         let startX = 0;
         let currentX = 0;
-        const maxSlide = track.offsetWidth - thumb.offsetWidth - 8;
+        let thumbStartX = 0;
+        
+        function getMaxSlide() {
+            return track.offsetWidth - thumb.offsetWidth - 8;
+        }
         
         function handleStart(e) {
             isDragging = true;
-            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            startX = clientX;
+            
+            // 获取当前thumb的位置
+            const transform = window.getComputedStyle(thumb).transform;
+            if (transform && transform !== 'none') {
+                const matrix = new DOMMatrix(transform);
+                thumbStartX = matrix.m41;
+            } else {
+                thumbStartX = 0;
+            }
+            
             thumb.style.transition = 'none';
+            e.preventDefault();
         }
         
         function handleMove(e) {
             if (!isDragging) return;
             
             e.preventDefault();
-            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            currentX = clientX - startX;
+            e.stopPropagation();
             
+            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const deltaX = clientX - startX;
+            currentX = thumbStartX + deltaX;
+            
+            const maxSlide = getMaxSlide();
             if (currentX < 0) currentX = 0;
             if (currentX > maxSlide) currentX = maxSlide;
             
             thumb.style.transform = `translateX(${currentX}px)`;
             
-            // 计算透明度
+            // 计算进度百分比
             const progress = currentX / maxSlide;
+            
+            // 更新红色轨道填充
+            track.classList.add('sliding');
+            track.style.setProperty('--slide-progress', `${progress * 100}%`);
+            
+            // 计算文字透明度
             const textElement = document.querySelector('.shutdown-slider-text');
             if (textElement) {
                 textElement.style.opacity = 1 - progress;
             }
             
             // 如果滑到底部，触发关机
-            if (currentX >= maxSlide * 0.95) {
-                handleEnd();
+            if (currentX >= maxSlide * 0.9) {
+                isDragging = false;
                 shutdownAnimation();
             }
         }
         
-        function handleEnd() {
+        function handleEnd(e) {
             if (!isDragging) return;
             isDragging = false;
             
+            const maxSlide = getMaxSlide();
+            
             // 如果没有滑到底，回弹
-            if (currentX < maxSlide * 0.95) {
+            if (currentX < maxSlide * 0.9) {
                 thumb.style.transition = 'transform 0.3s ease';
                 thumb.style.transform = 'translateX(0)';
+                
+                // 重置红色轨道
+                track.style.setProperty('--slide-progress', '0%');
+                setTimeout(() => {
+                    track.classList.remove('sliding');
+                }, 300);
                 
                 const textElement = document.querySelector('.shutdown-slider-text');
                 if (textElement) {
@@ -323,6 +404,7 @@
             }
             
             currentX = 0;
+            thumbStartX = 0;
         }
         
         // 鼠标事件
@@ -334,6 +416,7 @@
         thumb.addEventListener('touchstart', handleStart, { passive: false });
         document.addEventListener('touchmove', handleMove, { passive: false });
         document.addEventListener('touchend', handleEnd);
+        document.addEventListener('touchcancel', handleEnd);
     }
 
     // 初始化事件监听器

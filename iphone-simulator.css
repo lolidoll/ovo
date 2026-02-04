@@ -18,10 +18,11 @@
     display: flex;
 }
 
-/* 手机端全屏模式 */
+/* 手机端模式 - 保留边距 */
 @media (max-width: 768px) {
     .iphone-simulator-overlay {
-        background: #000;
+        background: rgba(0, 0, 0, 0.95);
+        padding: 20px;
     }
     
     .iphone-simulator-overlay.show {
@@ -57,20 +58,19 @@
     animation: deviceAppear 0.4s ease;
 }
 
-/* 手机端全屏 - 移除外壳 */
+/* 手机端 - 保留外壳和边距 */
 @media (max-width: 768px) {
     .iphone-device {
-        width: 100vw;
-        height: 100vh;
-        height: 100dvh;
-        border-radius: 0;
-        padding: 0;
+        width: calc(100vw - 40px);
+        height: calc(100vh - 40px);
+        height: calc(100dvh - 40px);
+        max-width: 390px;
+        max-height: 844px;
+        border-radius: 45px;
+        padding: 10px;
         transform: scale(1);
-        box-shadow: none;
-    }
-    
-    .iphone-device::before {
-        display: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6),
+                    inset 0 0 0 2px rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -88,7 +88,7 @@
 @media (max-width: 768px) {
     @keyframes deviceAppear {
         from {
-            transform: scale(1);
+            transform: scale(0.9);
             opacity: 0;
         }
         to {
@@ -131,7 +131,7 @@
 
 @media (max-width: 768px) {
     .iphone-screen {
-        border-radius: 0;
+        border-radius: 38px;
     }
 }
 
@@ -270,6 +270,25 @@
     border-radius: 29px;
     overflow: hidden;
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease;
+}
+
+/* 滑动轨道背景填充 - 红色渐变 */
+.shutdown-slider-track::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #ff3b30 0%, #ff453a 100%);
+    border-radius: 29px;
+    transition: width 0.1s linear;
+    z-index: 1;
+}
+
+.shutdown-slider-track.sliding::before {
+    width: var(--slide-progress, 0%);
 }
 
 /* 滑动文字 */
@@ -286,6 +305,7 @@
     pointer-events: none;
     transition: opacity 0.2s ease;
     user-select: none;
+    z-index: 2;
 }
 
 /* 滑动按钮 */
@@ -306,6 +326,7 @@
                 0 4px 16px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease;
     z-index: 10;
+    position: relative;
 }
 
 .shutdown-slider-thumb:active {
@@ -760,22 +781,54 @@
     animation: islandPulse 2s ease-in-out infinite;
 }
 
-/* 关机动画 */
+/* 关机动画 - 模拟真实iPhone */
 @keyframes shutdownAnimation {
     0% {
         opacity: 1;
-        transform: scale(1);
+        filter: brightness(1);
     }
-    50% {
-        opacity: 0.5;
-        transform: scale(0.98);
+    30% {
+        opacity: 1;
+        filter: brightness(0.8);
+    }
+    60% {
+        opacity: 0.3;
+        filter: brightness(0.3);
     }
     100% {
         opacity: 0;
-        transform: scale(0.95);
+        filter: brightness(0);
     }
 }
 
 .iphone-screen.shutting-down {
-    animation: shutdownAnimation 0.8s ease forwards;
+    animation: shutdownAnimation 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.iphone-screen.shutting-down::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    animation: shutdownLine 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    z-index: 9999;
+}
+
+@keyframes shutdownLine {
+    0% {
+        width: 100%;
+        opacity: 1;
+    }
+    50% {
+        width: 100%;
+        opacity: 1;
+    }
+    100% {
+        width: 0%;
+        opacity: 0;
+    }
 }
