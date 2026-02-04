@@ -203,6 +203,42 @@
         }
     }
 
+    // 计算并应用缩放
+    function applyDeviceScale() {
+        const device = document.querySelector('.iphone-device');
+        if (!device) return;
+        
+        // 如果是桌面端，使用默认缩放
+        if (window.innerWidth > 768) {
+            device.style.transform = 'scale(0.95)';
+            return;
+        }
+        
+        // 手机端：计算最佳缩放比例
+        const deviceWidth = 390;
+        const deviceHeight = 844;
+        const padding = 40; // 左右各20px
+        
+        const availableWidth = window.innerWidth - padding;
+        const availableHeight = window.innerHeight - padding;
+        
+        const scaleX = availableWidth / deviceWidth;
+        const scaleY = availableHeight / deviceHeight;
+        
+        // 取较小值，确保完整显示，最大不超过1
+        const scale = Math.min(scaleX, scaleY, 1);
+        
+        device.style.transform = `scale(${scale})`;
+        
+        console.log('Device scale applied:', {
+            windowSize: `${window.innerWidth}x${window.innerHeight}`,
+            availableSize: `${availableWidth}x${availableHeight}`,
+            scaleX: scaleX.toFixed(3),
+            scaleY: scaleY.toFixed(3),
+            finalScale: scale.toFixed(3)
+        });
+    }
+
     // 显示iPhone模拟器
     function showiPhoneSimulator() {
         let overlay = document.getElementById('iphone-simulator-overlay');
@@ -215,12 +251,28 @@
         overlay.classList.add('show');
         updateTime();
         
+        // 应用缩放
+        setTimeout(() => {
+            applyDeviceScale();
+        }, 50);
+        
+        // 监听窗口大小变化
+        const resizeHandler = () => {
+            if (overlay.classList.contains('show')) {
+                applyDeviceScale();
+            }
+        };
+        window.addEventListener('resize', resizeHandler);
+        window.addEventListener('orientationchange', resizeHandler);
+        
         // 每分钟更新一次时间
         const timeInterval = setInterval(() => {
             if (overlay.classList.contains('show')) {
                 updateTime();
             } else {
                 clearInterval(timeInterval);
+                window.removeEventListener('resize', resizeHandler);
+                window.removeEventListener('orientationchange', resizeHandler);
             }
         }, 60000);
     }

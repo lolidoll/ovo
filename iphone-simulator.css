@@ -58,7 +58,7 @@
     animation: deviceAppear 0.4s ease;
 }
 
-/* 手机端 - 整体缩放适配 */
+/* 手机端 - JavaScript动态缩放 */
 @media (max-width: 768px) {
     .iphone-device {
         width: 390px;
@@ -68,29 +68,7 @@
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6),
                     inset 0 0 0 2px rgba(255, 255, 255, 0.1);
         transform-origin: center center;
-    }
-    
-    /* 计算缩放比例 */
-    @supports (height: 100dvh) {
-        .iphone-device {
-            --available-width: calc(100vw - 40px);
-            --available-height: calc(100dvh - 40px);
-            --scale-x: calc(var(--available-width) / 390);
-            --scale-y: calc(var(--available-height) / 844);
-            --scale: min(var(--scale-x), var(--scale-y), 1);
-            transform: scale(var(--scale));
-        }
-    }
-    
-    @supports not (height: 100dvh) {
-        .iphone-device {
-            --available-width: calc(100vw - 40px);
-            --available-height: calc(100vh - 40px);
-            --scale-x: calc(var(--available-width) / 390);
-            --scale-y: calc(var(--available-height) / 844);
-            --scale: min(var(--scale-x), var(--scale-y), 1);
-            transform: scale(var(--scale));
-        }
+        /* transform由JavaScript动态设置 */
     }
 }
 
