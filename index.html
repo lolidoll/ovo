@@ -1900,24 +1900,21 @@
 
         <!-- 购物页面 -->
 <div class="sub-page" id="shopping-page">
-    <div class="sub-nav">
-        <div class="back-btn" data-back="shopping-page">
-            <div class="back-arrow"></div>
-            <span>返回</span>
-        </div>
-        <div class="sub-title">购物</div>
-    </div>
     <div class="sub-content">
         <!-- 主购物页面 -->
         <div class="shopping-main-content active">
             <!-- 顶部搜索栏 -->
             <div class="shopping-header">
+                <div class="shopping-back-btn" data-back="shopping-page">
+                    <i class="fa fa-arrow-left"></i>
+                </div>
                 <div class="shopping-search-box">
                     <i class="fa fa-search"></i>
-                    <input type="text" placeholder="淘宝热搜 年货节特惠">
+                    <input type="text" placeholder="淘宝热搜 年货节特惠" id="shopping-search-input" readonly>
                 </div>
-                <div class="shopping-header-icon">
-                    <i class="fa fa-shopping-cart"></i>
+                <div class="shopping-generate-btn" id="shopping-generate-btn">
+                    <i class="fa fa-magic"></i>
+                    <span>生成</span>
                 </div>
             </div>
 
@@ -1969,17 +1966,17 @@
                 </div>
                 <div class="content">
                     <div class="flash-item">
-                        <img src="https://picsum.photos/100/70?random=1" alt="闪购商品">
+                        <img src="https://image.uglycat.cc/bohbfr.jpg" alt="闪购商品">
                         <div class="name">水果生鲜组合</div>
                         <div class="price">¥29.9</div>
                     </div>
                     <div class="flash-item">
-                        <img src="https://picsum.photos/100/70?random=2" alt="闪购商品">
+                        <img src="https://image.uglycat.cc/z8slpz.jpg" alt="闪购商品">
                         <div class="name">网红零食大礼包</div>
                         <div class="price">¥19.9</div>
                     </div>
                     <div class="flash-item">
-                        <img src="https://picsum.photos/100/70?random=3" alt="闪购商品">
+                        <img src="https://image.uglycat.cc/ifsblu.jpg" alt="闪购商品">
                         <div class="name">日用百货</div>
                         <div class="price">¥9.9</div>
                     </div>
@@ -1989,45 +1986,87 @@
             <!-- 商品列表 -->
             <div class="goods-list">
                 <div class="goods-card">
-                    <img src="https://picsum.photos/300/300?random=10" alt="商品">
+                    <img src="https://image.uglycat.cc/zf3m8m.jpg" alt="商品">
                     <div class="desc">
                         <div class="name">新款纯棉短袖t恤女夏季宽松百搭显瘦圆领上衣ins潮</div>
                         <div class="price">¥39.9 <span class="sales">月销10w+</span></div>
                     </div>
                 </div>
                 <div class="goods-card">
-                    <img src="https://picsum.photos/300/300?random=11" alt="商品">
+                    <img src="https://image.uglycat.cc/17h4rj.jpg" alt="商品">
                     <div class="desc">
                         <div class="name">无线蓝牙耳机半入耳式高音质降噪适用于苹果华为小米</div>
                         <div class="price">¥89 <span class="sales">月销5w+</span></div>
                     </div>
                 </div>
                 <div class="goods-card">
-                    <img src="https://picsum.photos/300/300?random=12" alt="商品">
+                    <img src="https://image.uglycat.cc/2zwfed.jpg" alt="商品">
                     <div class="desc">
                         <div class="name">家用保温杯316不锈钢大容量便携男女学生水杯刻字</div>
                         <div class="price">¥29.9 <span class="sales">月销8w+</span></div>
                     </div>
                 </div>
                 <div class="goods-card">
-                    <img src="https://picsum.photos/300/300?random=13" alt="商品">
+                    <img src="https://image.uglycat.cc/nyq7xs.jpg" alt="商品">
                     <div class="desc">
                         <div class="name">网红ins风餐具套装陶瓷碗盘筷家用高颜值乔迁新居送礼</div>
                         <div class="price">¥59 <span class="sales">月销3w+</span></div>
                     </div>
                 </div>
                 <div class="goods-card">
-                    <img src="https://picsum.photos/300/300?random=14" alt="商品">
+                    <img src="https://image.uglycat.cc/z9473r.jpg" alt="商品">
                     <div class="desc">
                         <div class="name">夏季冰丝阔腿裤女高腰垂感显瘦直筒宽松休闲拖地裤</div>
                         <div class="price">¥49.9 <span class="sales">月销15w+</span></div>
                     </div>
                 </div>
                 <div class="goods-card">
-                    <img src="https://picsum.photos/300/300?random=15" alt="商品">
+                    <img src="https://image.uglycat.cc/otacqh.jpg" alt="商品">
                     <div class="desc">
                         <div class="name">迷你小风扇便携式手持usb充电静音桌面宿舍随身电风扇</div>
                         <div class="price">¥19.9 <span class="sales">月销20w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://image.uglycat.cc/3uw23x.jpg" alt="商品">
+                    <div class="desc">
+                        <div class="name">智能手环运动手表多功能计步心率监测防水男女通用</div>
+                        <div class="price">¥79 <span class="sales">月销12w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://image.uglycat.cc/9vjkk9.jpg" alt="商品">
+                    <div class="desc">
+                        <div class="name">北欧风格简约现代客厅装饰画沙发背景墙挂画三联画</div>
+                        <div class="price">¥99 <span class="sales">月销6w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://image.uglycat.cc/pwg6qp.jpg" alt="商品">
+                    <div class="desc">
+                        <div class="name">儿童益智玩具积木拼装男孩女孩早教启蒙礼物3-6岁</div>
+                        <div class="price">¥45.9 <span class="sales">月销18w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://image.uglycat.cc/tsgtxx.jpg" alt="商品">
+                    <div class="desc">
+                        <div class="name">真皮钱包男士短款头层牛皮横款多卡位驾驶证一体包</div>
+                        <div class="price">¥68 <span class="sales">月销9w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://image.uglycat.cc/e9skct.jpg" alt="商品">
+                    <div class="desc">
+                        <div class="name">办公室桌面收纳盒塑料化妆品整理盒抽屉式储物盒</div>
+                        <div class="price">¥25.9 <span class="sales">月销25w+</span></div>
+                    </div>
+                </div>
+                <div class="goods-card">
+                    <img src="https://image.uglycat.cc/hm9xpd.jpg" alt="商品">
+                    <div class="desc">
+                        <div class="name">高清投影仪家用小型便携式手机同屏无线wifi智能</div>
+                        <div class="price">¥299 <span class="sales">月销4w+</span></div>
                     </div>
                 </div>
             </div>

@@ -10,10 +10,11 @@
 
 #shopping-page .sub-content {
     padding: 0;
-    height: calc(100vh - 44px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    padding-top: env(safe-area-inset-top);
     padding-bottom: calc(60px + env(safe-area-inset-bottom));
     position: relative;
 }
@@ -42,6 +43,26 @@
     z-index: 100;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     box-sizing: border-box;
+    gap: 8px;
+}
+
+/* 返回按钮 */
+#shopping-page .shopping-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+#shopping-page .shopping-back-btn:active {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
 }
 
 #shopping-page .shopping-search-box {
@@ -70,14 +91,46 @@
     background: transparent;
 }
 
-#shopping-page .shopping-header-icon {
-    width: 28px;
-    height: 28px;
+/* 生成按钮 */
+#shopping-page .shopping-generate-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background-color: rgba(255, 255, 255, 0.2);
     color: #fff;
-    font-size: 19px;
-    text-align: center;
-    line-height: 28px;
+    border-radius: 15px;
+    font-size: 13px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+#shopping-page .shopping-generate-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+#shopping-page .shopping-generate-btn:active {
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: scale(0.95);
+}
+
+#shopping-page .shopping-generate-btn i {
+    font-size: 14px;
+}
+
+#shopping-page .shopping-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+#shopping-page .shopping-generate-btn.generating i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* 分类导航：8入口全显，4列换行 */
@@ -184,6 +237,38 @@
     margin-bottom: 4px;
     height: 100px;
     object-fit: cover;
+}
+
+/* 黑白文字卡片样式 */
+#shopping-page .flash-item .text-card,
+#shopping-page .goods-card .text-card {
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    margin-bottom: 4px;
+    border: 1px solid #d0d0d0;
+}
+
+#shopping-page .goods-card .text-card {
+    height: 100%;
+    aspect-ratio: 1/1;
+}
+
+#shopping-page .text-card .card-text {
+    font-size: 11px;
+    color: #333;
+    text-align: center;
+    line-height: 1.4;
+    word-break: break-all;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
 }
 
 #shopping-page .flash-item .name {
