@@ -239,7 +239,7 @@
             'more-transfer': handleTransfer,
             'more-takeout': handleTakeout,
             'more-offline': handleOffline,
-            'more-phone': handlePhone,
+            'more-listen': handleListen,
             'more-diary': handleDiary,
             'more-memo': handleMemo,
             'more-frog': handleFrog,
@@ -256,6 +256,14 @@
                 });
             }
         });
+        
+        // 绑定工具栏中的查手机按钮
+        const btnPhone = document.getElementById('btn-phone');
+        if (btnPhone) {
+            btnPhone.addEventListener('click', function() {
+                handlePhone();
+            });
+        }
         
         console.log('✅ 按钮映射已初始化');
     }
@@ -371,6 +379,10 @@
     
     function handleOffline() {
         showToast('线下功能尚未实现');
+    }
+    
+    function handleListen() {
+        showToast('一起听功能尚未实现');
     }
     
     function handlePhone() {

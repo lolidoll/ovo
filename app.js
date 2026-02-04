@@ -3418,17 +3418,11 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
                         <div class="red-envelope-card ${statusClass}" onclick="RedEnvelopeModule.openDetailModal('${msg.id}')">
-                            <div class="red-envelope-card-header">
-                                <div class="red-envelope-card-icon">🧧</div>
-                                <div class="red-envelope-card-info">
-                                    <div class="red-envelope-card-sender">${escapeHtml(senderName)}</div>
-                                    <div class="red-envelope-card-message">${escapeHtml(envelopeData.message || '恭喜发财，大吉大利')}</div>
-                                </div>
+                            <div class="red-envelope-card-icon"></div>
+                            <div class="red-envelope-card-text">
+                                <div class="red-envelope-card-title">${escapeHtml(envelopeData.message || '恭喜发财，大吉大利')}</div>
+                                <div class="red-envelope-card-subtitle">微信红包</div>
                             </div>
-                            <div class="red-envelope-card-amount">
-                                <span class="red-envelope-card-amount-unit">¥</span>${envelopeData.amount.toFixed(2)}
-                            </div>
-                            <div class="red-envelope-card-status">${statusText}</div>
                         </div>
                     `;
                     bubble.classList.add('redenvelope-message');
@@ -3464,29 +3458,31 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     
                     let statusClass = status;
                     let statusText = '';
+                    let descText = '';
                     
                     if (status === 'pending') {
                         statusText = isSent ? '待确认' : '待收款';
+                        descText = isSent ? '你发起了一笔转账' : '收到一笔转账';
                     } else if (status === 'received') {
                         statusText = '已收款';
+                        descText = '已被对方领取';
                     } else if (status === 'returned') {
                         statusText = '已退还';
+                        descText = '转账已退还';
                     }
                     
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
                         <div class="transfer-card ${statusClass}" onclick="TransferModule.openDetailModal('${msg.id}')">
                             <div class="transfer-card-header">
-                                <div class="transfer-card-icon">💰</div>
+                                <div class="transfer-card-icon"></div>
                                 <div class="transfer-card-info">
-                                    <div class="transfer-card-title">转账</div>
-                                    <div class="transfer-card-note">${escapeHtml(transferData.note || '转账')}</div>
+                                    <div class="transfer-card-title">¥${transferData.amount.toFixed(2)}</div>
+                                    <div class="transfer-card-note">${descText}</div>
                                 </div>
                             </div>
-                            <div class="transfer-card-amount">
-                                <span class="transfer-card-amount-unit">¥</span>${transferData.amount.toFixed(2)}
-                            </div>
-                            <div class="transfer-card-status">${statusText}</div>
+                            <div class="transfer-card-divider"></div>
+                            <div class="transfer-card-status">转账</div>
                         </div>
                     `;
                     bubble.classList.add('transfer-message');

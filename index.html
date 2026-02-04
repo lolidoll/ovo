@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="transfer.css">
     <link rel="stylesheet" href="font-manager.css">
     <link rel="stylesheet" href="theme-manager.css">
+    <link rel="stylesheet" href="iphone-simulator.css">
     <style>
     </style>
     <script>
@@ -39,6 +40,16 @@
             // 检测是否为iOS设备
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const isIOSStandalone = isIOS && (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
+            
+            // 检测是否为Edge浏览器
+            const isEdge = /Edg/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            const isEdgeAndroid = isEdge && isAndroid;
+            
+            // 检测是否为全屏模式（PWA模式）
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                                 window.matchMedia('(display-mode: fullscreen)').matches ||
+                                 window.navigator.standalone;
             
             function setViewportHeight() {
                 // 获取真实的视口高度
@@ -79,6 +90,17 @@
                     if (isIOSStandalone) {
                         document.documentElement.classList.add('ios-standalone');
                     }
+                }
+                
+                // 标记Edge浏览器全屏模式
+                if (isEdgeAndroid && isStandalone) {
+                    document.documentElement.classList.add('edge-standalone');
+                    document.documentElement.classList.add('is-android');
+                }
+                
+                // 标记通用全屏模式
+                if (isStandalone) {
+                    document.documentElement.classList.add('is-standalone');
                 }
             }
             
@@ -144,6 +166,7 @@
     <script src="ios-paste-fix.js" defer></script>
     <script src="font-manager.js" defer></script>
     <script src="theme-manager.js" defer></script>
+    <script src="iphone-simulator.js" defer></script>
     <script src="app.js" defer></script>
   
 </head>
@@ -2519,9 +2542,9 @@
                     <svg viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"></path><path d="M8 19a6 6 0 0 0 8 0"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>
                     <span class="tb-btn-label">语音</span>
                 </button>
-                <button class="tb-btn" id="btn-listen" title="一起听">
-                    <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 0 0-9 9v3a9 9 0 0 0 18 0v-3a9 9 0 0 0-9-9z"></path><path d="M6 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path><path d="M16 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path></svg>
-                    <span class="tb-btn-label">一起听</span>
+                <button class="tb-btn" id="btn-phone" title="查手机">
+                    <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2.5" ry="2.5"></rect><path d="M12 21h0"></path></svg>
+                    <span class="tb-btn-label">查手机</span>
                 </button>
                 <button class="tb-btn" id="btn-more" title="更多">
                     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -2598,11 +2621,11 @@
                                 </div>
                                 <span>线下功能</span>
                             </button>
-                            <button class="more-item" id="more-phone" title="查手机">
+                            <button class="more-item" id="more-listen" title="一起听">
                                 <div class="more-item-icon">
-                                    <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2.5" ry="2.5"></rect><path d="M12 21h0"></path></svg>
+                                    <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 0 0-9 9v3a9 9 0 0 0 18 0v-3a9 9 0 0 0-9-9z"></path><path d="M6 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path><path d="M16 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path></svg>
                                 </div>
-                                <span>查手机</span>
+                                <span>一起听</span>
                             </button>
                             <button class="more-item" id="more-diary" title="日记">
                                 <div class="more-item-icon">

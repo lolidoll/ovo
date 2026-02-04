@@ -85,7 +85,6 @@ const RedEnvelopeModule = (function() {
             <div class="red-envelope-backdrop"></div>
             <div class="red-envelope-content">
                 <div class="red-envelope-header">
-                    <div class="red-envelope-icon">🧧</div>
                     <h3 class="red-envelope-title">发红包</h3>
                     <p class="red-envelope-subtitle">给 ${escapeHtml(AppState.currentChat?.name || 'TA')} 发个红包吧</p>
                 </div>
@@ -308,8 +307,8 @@ const RedEnvelopeModule = (function() {
         saveToStorage();
 
         // 重新渲染消息
-        if (typeof renderChatMessages === 'function') {
-            renderChatMessages();
+        if (typeof window.renderChatMessages === 'function') {
+            window.renderChatMessages();
         }
 
         return envelope;
@@ -424,7 +423,6 @@ const RedEnvelopeModule = (function() {
             <div class="red-envelope-detail-content">
                 <div class="red-envelope-detail-header">
                     <button class="red-envelope-detail-close">×</button>
-                    <div class="red-envelope-detail-icon">🧧</div>
                     <div class="red-envelope-detail-sender">${escapeHtml(senderName)}的红包</div>
                     <div class="red-envelope-detail-message">${escapeHtml(envelope.message)}</div>
                 </div>

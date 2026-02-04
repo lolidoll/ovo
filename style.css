@@ -133,6 +133,39 @@
             }
         }
         
+        /* Edge浏览器全屏模式（Android设备）的顶部安全区域 */
+        .edge-standalone .top-nav,
+        .is-standalone .top-nav {
+            padding-top: max(var(--safe-area-inset-top), 24px);
+        }
+        
+        /* 使用env()函数的浏览器支持 */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .edge-standalone .top-nav,
+            .is-standalone .top-nav {
+                padding-top: max(env(safe-area-inset-top), 24px);
+            }
+        }
+        
+        /* 使用constant()函数的旧版浏览器支持 */
+        @supports (padding-top: constant(safe-area-inset-top)) {
+            .edge-standalone .top-nav,
+            .is-standalone .top-nav {
+                padding-top: max(constant(safe-area-inset-top), 24px);
+            }
+        }
+        
+        /* Android设备在全屏模式下可能需要更多顶部间距 */
+        .is-android.is-standalone .top-nav {
+            padding-top: max(var(--safe-area-inset-top), 28px);
+        }
+        
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .is-android.is-standalone .top-nav {
+                padding-top: max(env(safe-area-inset-top), 28px);
+            }
+        }
+        
         .user-info {
             display: flex;
             align-items: center;
@@ -214,6 +247,31 @@
             flex-direction: column;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12), 2px 0 8px rgba(0, 0, 0, 0.08);
             visibility: hidden;
+            /* 为全屏模式添加顶部安全区域支持 */
+            padding-top: var(--safe-area-inset-top);
+        }
+        
+        /* 全屏模式下侧边栏的顶部安全区域 */
+        .is-standalone .side-menu,
+        .edge-standalone .side-menu {
+            padding-top: max(var(--safe-area-inset-top), 24px);
+        }
+        
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .is-standalone .side-menu,
+            .edge-standalone .side-menu {
+                padding-top: max(env(safe-area-inset-top), 24px);
+            }
+        }
+        
+        .is-android.is-standalone .side-menu {
+            padding-top: max(var(--safe-area-inset-top), 28px);
+        }
+        
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .is-android.is-standalone .side-menu {
+                padding-top: max(env(safe-area-inset-top), 28px);
+            }
         }
         .side-menu.open {
             transform: translateX(0);

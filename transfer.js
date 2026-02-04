@@ -68,7 +68,6 @@ const TransferModule = (function() {
             <div class="transfer-backdrop"></div>
             <div class="transfer-content">
                 <div class="transfer-header">
-                    <div class="transfer-icon">💰</div>
                     <div class="transfer-title">转账给 ${escapeHtml(AppState.currentChat.name)}</div>
                     <div class="transfer-subtitle">最高可转 ${MAX_AMOUNT} 元</div>
                 </div>
