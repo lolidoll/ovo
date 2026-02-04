@@ -44,10 +44,10 @@
     }
 }
 
-/* iPhone 17 设备外壳 */
+/* iPhone 17 设备外壳 - 优化视觉比例 */
 .iphone-device {
     width: 390px;
-    height: 844px;
+    height: 780px;
     background: #1c1c1e;
     border-radius: 55px;
     padding: 12px;
