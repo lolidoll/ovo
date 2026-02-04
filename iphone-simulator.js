@@ -217,7 +217,7 @@
         // 手机端：计算最佳缩放比例
         const deviceWidth = 390;
         const deviceHeight = 844;
-        const padding = 40; // 左右各20px
+        const padding = 16; // 左右各8px，接近全屏
         
         const availableWidth = window.innerWidth - padding;
         const availableHeight = window.innerHeight - padding;

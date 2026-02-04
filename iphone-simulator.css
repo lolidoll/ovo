@@ -287,7 +287,8 @@
 }
 
 .shutdown-slider-track.sliding::before {
-    width: var(--slide-progress, 0%);
+    /* 红色填充宽度 = 滑动进度 + 按钮宽度的一半，确保完全覆盖到按钮中心 */
+    width: calc(var(--slide-progress, 0%) + 29px);
 }
 
 /* 滑动文字 */
@@ -325,7 +326,6 @@
                 0 4px 16px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease;
     z-index: 10;
-    position: relative;
 }
 
 .shutdown-slider-thumb:active {
