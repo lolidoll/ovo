@@ -1,4 +1,4 @@
-/* iPhone 17 模拟器样式 - 完全真实还原 */
+/* iPhone 17 模拟器样式 - 9:16竖屏模态框 */
 
 .iphone-simulator-overlay {
     position: fixed;
@@ -12,41 +12,13 @@
     justify-content: center;
     align-items: center;
     animation: fadeIn 0.3s ease;
-    /* 确保在所有浏览器中正确覆盖 */
     overflow: hidden;
-    -webkit-overflow-scrolling: touch;
+    pointer-events: none;
 }
 
 .iphone-simulator-overlay.show {
     display: flex;
-}
-
-/* 手机端模式 - 不使用padding，通过JavaScript缩放来保留边距 */
-@media (max-width: 768px) {
-    .iphone-simulator-overlay {
-        background: transparent;
-        padding: 0;
-        /* 禁用滚动，避免意外的滚动行为 */
-        overflow: hidden;
-        touch-action: none;
-    }
-    
-    .iphone-simulator-overlay.show {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        /* 支持多种视口高度单位，确保兼容性 */
-        height: 100dvh; /* 动态视口高度 - 现代浏览器 */
-        height: -webkit-fill-available; /* Safari支持 */
-        min-height: 100vh; /* 回退方案 */
-        min-height: -webkit-fill-available; /* Safari回退 */
-        /* 确保在所有浏览器中都能正确显示 */
-        max-width: 100vw;
-        max-height: 100vh;
-        max-height: 100dvh;
-    }
+    pointer-events: auto;
 }
 
 @keyframes fadeIn {
@@ -58,60 +30,30 @@
     }
 }
 
-/* iPhone 17 设备外壳 */
+/* iPhone 17 设备外壳 - 9:16竖屏模态框 */
 .iphone-device {
     width: 390px;
-    height: 844px;
+    aspect-ratio: 9 / 16;
     background: #1c1c1e;
     border-radius: 55px;
     padding: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8),
                 inset 0 0 0 2px rgba(255, 255, 255, 0.1);
-    position: relative;
-    transform: scale(0.95);
+    position: absolute;
     animation: deviceAppear 0.4s ease;
-}
-
-/* 手机端 - JavaScript动态缩放 */
-@media (max-width: 768px) {
-    .iphone-device {
-        width: 390px;
-        height: 844px;
-        border-radius: 55px;
-        padding: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6),
-                    inset 0 0 0 2px rgba(255, 255, 255, 0.1);
-        transform-origin: center center;
-        /* transform由JavaScript动态设置 */
-        /* 确保在所有浏览器中正确渲染 */
-        -webkit-transform-origin: center center;
-        will-change: transform;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-    }
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
 }
 
 @keyframes deviceAppear {
     from {
-        transform: scale(0.8);
+        transform: scale(0.9);
         opacity: 0;
     }
     to {
-        transform: scale(0.95);
+        transform: scale(1);
         opacity: 1;
-    }
-}
-
-@media (max-width: 768px) {
-    @keyframes deviceAppear {
-        from {
-            transform: scale(0.9);
-            opacity: 0;
-        }
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
     }
 }
 
@@ -426,6 +368,14 @@
     justify-content: center;
 }
 
+/* 网络类型 (5G) */
+.network-type {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin-right: 2px;
+}
+
 /* 信号强度 - 真实iOS样式 */
 .signal-bars {
     display: flex;
@@ -433,6 +383,7 @@
     align-items: flex-end;
     height: 11px;
     width: 17px;
+    margin-right: 2px;
 }
 
 .signal-bar {
@@ -446,59 +397,33 @@
 .signal-bar:nth-child(3) { height: 8.5px; }
 .signal-bar:nth-child(4) { height: 11px; }
 
-/* WiFi图标 - 真实iOS样式 */
+/* WiFi图标 - 更简洁的iOS样式 */
 .wifi-icon {
-    width: 15.5px;
-    height: 11px;
+    width: 16px;
+    height: 12px;
     position: relative;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
+    margin-right: 2px;
 }
 
-.wifi-arc {
-    position: absolute;
-    border: 1.8px solid #000;
-    border-radius: 50%;
-    border-bottom: none;
-    border-left: none;
-    border-right: none;
-}
-
-.wifi-arc:nth-child(1) {
-    width: 15.5px;
-    height: 15.5px;
-    bottom: -0.5px;
-    left: 0;
-}
-
-.wifi-arc:nth-child(2) {
-    width: 11px;
-    height: 11px;
-    bottom: -0.5px;
-    left: 2.25px;
-}
-
-.wifi-arc:nth-child(3) {
-    width: 6.5px;
-    height: 6.5px;
-    bottom: -0.5px;
-    left: 4.5px;
-}
-
-.wifi-dot {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: #000;
-    border-radius: 50%;
-    bottom: 0.5px;
-    left: 6.75px;
+.wifi-icon svg {
+    width: 16px;
+    height: 12px;
+    color: #000;
 }
 
 /* 电池图标 - 真实iOS样式 */
 .battery-icon {
-    width: 24.5px;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    height: 11.5px;
+}
+
+.battery-body {
+    width: 22px;
     height: 11.5px;
     border: 1.5px solid #000;
     border-radius: 3.5px;
@@ -506,15 +431,9 @@
     display: flex;
     align-items: center;
     padding: 1.5px;
-    opacity: 1;
 }
 
-.battery-icon::after {
-    content: '';
-    position: absolute;
-    right: -3.5px;
-    top: 50%;
-    transform: translateY(-50%);
+.battery-tip {
     width: 1.5px;
     height: 5.5px;
     background: #000;
@@ -1005,5 +924,53 @@
     100% {
         width: 0%;
         opacity: 0;
+    }
+}
+
+/* 移动端适配 - 16:9模态框 */
+@media (max-width: 768px) {
+    .iphone-device {
+        width: 90vw;
+        max-width: 600px;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    .resize-handle {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .resize-handle.top-left {
+        top: -15px;
+        left: -15px;
+    }
+    
+    .resize-handle.top-right {
+        top: -15px;
+        right: -15px;
+    }
+    
+    .resize-handle.bottom-left {
+        bottom: -15px;
+        left: -15px;
+    }
+    
+    .resize-handle.bottom-right {
+        bottom: -15px;
+        right: -15px;
+    }
+    
+    .drag-handle {
+        height: 44px;
+    }
+}
+
+/* 小屏幕手机优化 */
+@media (max-width: 480px) {
+    .iphone-device {
+        width: 95vw;
     }
 }
