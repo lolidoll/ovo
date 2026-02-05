@@ -223,6 +223,56 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* 为全屏模式添加顶部安全区域支持 */
+    padding-top: var(--safe-area-inset-top);
+}
+
+/* iOS设备在全屏模式下的顶部间距 */
+.is-ios.ios-standalone .chat-page {
+    padding-top: max(var(--safe-area-inset-top), 20px);
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+    .is-ios.ios-standalone .chat-page {
+        padding-top: max(env(safe-area-inset-top), 44px);
+    }
+}
+
+@supports (padding-top: constant(safe-area-inset-top)) {
+    .is-ios.ios-standalone .chat-page {
+        padding-top: max(constant(safe-area-inset-top), 44px);
+    }
+}
+
+/* Edge浏览器全屏模式的顶部间距 */
+.edge-standalone .chat-page,
+.is-standalone .chat-page {
+    padding-top: max(var(--safe-area-inset-top), 24px);
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+    .edge-standalone .chat-page,
+    .is-standalone .chat-page {
+        padding-top: max(env(safe-area-inset-top), 24px);
+    }
+}
+
+@supports (padding-top: constant(safe-area-inset-top)) {
+    .edge-standalone .chat-page,
+    .is-standalone .chat-page {
+        padding-top: max(constant(safe-area-inset-top), 24px);
+    }
+}
+
+/* Android设备在全屏模式下的顶部间距 */
+.is-android.is-standalone .chat-page {
+    padding-top: max(var(--safe-area-inset-top), 28px);
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+    .is-android.is-standalone .chat-page {
+        padding-top: max(env(safe-area-inset-top), 28px);
+    }
 }
 
 .chat-page.open {
