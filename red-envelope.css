@@ -214,12 +214,19 @@
     transition: all 0.3s ease;
     overflow: hidden;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    min-height: 74px;
 }
 
 .red-envelope-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.red-envelope-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
 .red-envelope-card-icon {
@@ -230,7 +237,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 8px;
+    margin-right: 9px;
     flex-shrink: 0;
     font-size: 13px;
     font-weight: bold;
@@ -255,9 +262,15 @@
     margin-bottom: 4px;
 }
 
+.red-envelope-card-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 8px 0;
+}
+
 .red-envelope-card-subtitle {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 10px;
+    font-size: 8px;
 }
 
 /* 红包状态样式 */
@@ -283,8 +296,12 @@
     color: #999;
 }
 
+.red-envelope-card.received .red-envelope-card-divider {
+    background: rgba(0, 0, 0, 0.1);
+}
+
 .red-envelope-card.received .red-envelope-card-subtitle {
-    color: #B2B2B2;
+    color: #666;
 }
 
 .red-envelope-card.received:hover {
@@ -304,8 +321,12 @@
     color: #999;
 }
 
+.red-envelope-card.returned .red-envelope-card-divider {
+    background: rgba(0, 0, 0, 0.1);
+}
+
 .red-envelope-card.returned .red-envelope-card-subtitle {
-    color: #B2B2B2;
+    color: #666;
 }
 
 .red-envelope-card.returned:hover {

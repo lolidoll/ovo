@@ -31,18 +31,13 @@
             --safe-area-inset-right: env(safe-area-inset-right);
         }
         
-        /* 页面缩放 - 只缩放内容，不影响布局 */
-        html.page-scaled body {
+        /* 等比缩放 - 应用到html元素，影响所有内容包括fixed元素 */
+        html.page-scaled {
             transform: scale(var(--page-scale));
-            transform-origin: top center;
-            width: calc(100% / var(--page-scale));
-            height: calc(100% / var(--page-scale));
-        }
-        
-        /* 确保缩放后容器仍然居中 */
-        html.page-scaled #app-container {
-            width: 100%;
-            height: 100%;
+            transform-origin: 0 0;
+            width: calc(100vw / var(--page-scale));
+            height: calc(100vh / var(--page-scale));
+            overflow: hidden;
         }
         
         @supports (padding: max(0px)) {
@@ -1015,6 +1010,26 @@
             visibility: hidden !important;
             /* 确保在最顶层 */
             isolation: isolate !important;
+        }
+        
+        /* 缩放模式下，所有fixed定位元素都需要反向调整尺寸以正确铺满全屏 */
+        html.page-scaled .sub-page {
+            width: calc(100vw / var(--page-scale)) !important;
+            height: calc(100vh / var(--page-scale)) !important;
+        }
+        
+        html.page-scaled .side-menu {
+            height: calc(100vh / var(--page-scale)) !important;
+        }
+        
+        html.page-scaled .chat-page {
+            width: calc(100vw / var(--page-scale)) !important;
+            height: calc(100vh / var(--page-scale)) !important;
+        }
+        
+        html.page-scaled .mask {
+            width: calc(100vw / var(--page-scale)) !important;
+            height: calc(100vh / var(--page-scale)) !important;
         }
         
         /* 用户设定管理页面需要显示在角色设置页面之上 */

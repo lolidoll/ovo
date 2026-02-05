@@ -3425,11 +3425,14 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
                         <div class="red-envelope-card ${statusClass}" onclick="RedEnvelopeModule.openDetailModal('${msg.id}')">
-                            <div class="red-envelope-card-icon"></div>
-                            <div class="red-envelope-card-text">
-                                <div class="red-envelope-card-title">${escapeHtml(envelopeData.message || '恭喜发财，大吉大利')}</div>
-                                <div class="red-envelope-card-subtitle">微信红包</div>
+                            <div class="red-envelope-card-header">
+                                <div class="red-envelope-card-icon"></div>
+                                <div class="red-envelope-card-text">
+                                    <div class="red-envelope-card-title">${escapeHtml(envelopeData.message || '恭喜发财，大吉大利')}</div>
+                                </div>
                             </div>
+                            <div class="red-envelope-card-divider"></div>
+                            <div class="red-envelope-card-subtitle">${statusText}</div>
                         </div>
                     `;
                     bubble.classList.add('redenvelope-message');
@@ -10540,7 +10543,7 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             applyBtn.onclick = function() {
                 const scale = slider.value / 100;
                 localStorage.setItem('pageZoomScale', scale);
-                // 使用CSS变量和transform scale来实现缩放
+                // 使用CSS transform scale实现等比缩放
                 document.documentElement.style.setProperty('--page-scale', scale);
                 document.documentElement.classList.add('page-scaled');
                 showToast('页面缩放已应用');
