@@ -6,12 +6,15 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);
+    background: transparent;
     z-index: 10000;
     display: none;
     justify-content: center;
     align-items: center;
     animation: fadeIn 0.3s ease;
+    /* 确保在所有浏览器中正确覆盖 */
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 .iphone-simulator-overlay.show {
@@ -21,8 +24,11 @@
 /* 手机端模式 - 不使用padding，通过JavaScript缩放来保留边距 */
 @media (max-width: 768px) {
     .iphone-simulator-overlay {
-        background: rgba(0, 0, 0, 0.95);
+        background: transparent;
         padding: 0;
+        /* 禁用滚动，避免意外的滚动行为 */
+        overflow: hidden;
+        touch-action: none;
     }
     
     .iphone-simulator-overlay.show {
@@ -31,7 +37,15 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        height: 100dvh; /* 动态视口高度 */
+        /* 支持多种视口高度单位，确保兼容性 */
+        height: 100dvh; /* 动态视口高度 - 现代浏览器 */
+        height: -webkit-fill-available; /* Safari支持 */
+        min-height: 100vh; /* 回退方案 */
+        min-height: -webkit-fill-available; /* Safari回退 */
+        /* 确保在所有浏览器中都能正确显示 */
+        max-width: 100vw;
+        max-height: 100vh;
+        max-height: 100dvh;
     }
 }
 
@@ -69,6 +83,11 @@
                     inset 0 0 0 2px rgba(255, 255, 255, 0.1);
         transform-origin: center center;
         /* transform由JavaScript动态设置 */
+        /* 确保在所有浏览器中正确渲染 */
+        -webkit-transform-origin: center center;
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
 }
 
@@ -121,7 +140,7 @@
 .iphone-screen {
     width: 100%;
     height: 100%;
-    background: #000;
+    background: #ffffff;
     border-radius: 47px;
     overflow: hidden;
     position: relative;
@@ -134,39 +153,29 @@
     }
 }
 
-/* 灵动岛容器 - 固定在顶部，避开状态栏 */
+/* 灵动岛 - 真实iOS样式 */
 .dynamic-island {
     position: absolute;
     top: 11px;
     left: 50%;
     transform: translateX(-50%);
-    width: 126px;
-    height: 37px;
-    background: #000;
-    border-radius: 19px;
+    width: 125px;
+    height: 37.33px;
+    background: #000000;
+    border-radius: 23px;
     z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     overflow: hidden;
-}
-
-/* 灵动岛背景渐变 */
-.dynamic-island::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 19px;
-    background: linear-gradient(180deg, #1a1a1a 0%, #000 100%);
-    z-index: 1;
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.05);
 }
 
 /* 灵动岛点击效果 */
 .dynamic-island:active {
-    transform: translateX(-50%) scale(0.98);
+    transform: translateX(-50%) scale(0.96);
 }
 
 /* 灵动岛内容 */
@@ -174,38 +183,37 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 10px;
     z-index: 2;
-    transition: all 0.4s ease;
 }
 
-/* 摄像头 */
+/* 前置摄像头 */
 .camera-dot {
-    width: 9px;
-    height: 9px;
-    background: radial-gradient(circle, #0a0a1a 0%, #000 70%);
+    width: 8.5px;
+    height: 8.5px;
+    background: #0d0d0d;
     border-radius: 50%;
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
     position: relative;
+    box-shadow: inset 0 0.5px 1px rgba(255, 255, 255, 0.03);
 }
 
 .camera-dot::after {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 3px;
-    height: 3px;
-    background: rgba(100, 100, 150, 0.3);
+    top: 1.5px;
+    left: 1.5px;
+    width: 2.5px;
+    height: 2.5px;
+    background: rgba(80, 80, 100, 0.25);
     border-radius: 50%;
 }
 
-/* 传感器条 */
+/* Face ID传感器 */
 .sensor-line {
-    width: 65px;
-    height: 7px;
-    background: #050505;
-    border-radius: 3.5px;
+    width: 62px;
+    height: 6px;
+    background: #0a0a0a;
+    border-radius: 3px;
     position: relative;
     overflow: hidden;
 }
@@ -216,8 +224,8 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 50%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+    height: 40%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, transparent 100%);
 }
 
 /* 关机界面覆盖层 */
@@ -368,7 +376,7 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* 状态栏 - 左右分开，避开灵动岛 */
+/* 状态栏 - 真实iOS样式 */
 .status-bar {
     position: absolute;
     top: 0;
@@ -378,7 +386,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    color: #fff;
+    color: #000000;
     font-size: 15px;
     font-weight: 600;
     z-index: 999;
@@ -390,59 +398,58 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 14px 0 0 24px;
+    padding: 17px 0 0 21px;
     flex: 0 0 auto;
-    max-width: 100px; /* 限制宽度，避免与灵动岛重叠 */
+    max-width: 95px;
 }
 
 .status-time {
     font-size: 15px;
-    letter-spacing: -0.3px;
-    font-weight: 590;
+    letter-spacing: -0.4px;
+    font-weight: 600;
 }
 
 .status-right {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 14px 24px 0 0;
+    gap: 4px;
+    padding: 17px 21px 0 0;
     flex: 0 0 auto;
-    max-width: 140px; /* 限制宽度，避免与灵动岛重叠 */
+    max-width: 95px;
     justify-content: flex-end;
 }
 
 /* 状态栏图标 */
 .status-icon {
-    width: 17px;
-    height: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* 信号强度 */
+/* 信号强度 - 真实iOS样式 */
 .signal-bars {
     display: flex;
-    gap: 2.5px;
+    gap: 2px;
     align-items: flex-end;
-    height: 12px;
+    height: 11px;
+    width: 17px;
 }
 
 .signal-bar {
-    width: 3.5px;
-    background: #fff;
-    border-radius: 1.5px;
+    width: 3px;
+    background: #000000;
+    border-radius: 1px;
 }
 
-.signal-bar:nth-child(1) { height: 4px; }
-.signal-bar:nth-child(2) { height: 7px; }
-.signal-bar:nth-child(3) { height: 10px; }
-.signal-bar:nth-child(4) { height: 12px; }
+.signal-bar:nth-child(1) { height: 3.5px; }
+.signal-bar:nth-child(2) { height: 6px; }
+.signal-bar:nth-child(3) { height: 8.5px; }
+.signal-bar:nth-child(4) { height: 11px; }
 
-/* WiFi图标 */
+/* WiFi图标 - 真实iOS样式 */
 .wifi-icon {
-    width: 17px;
-    height: 12px;
+    width: 15.5px;
+    height: 11px;
     position: relative;
     display: flex;
     align-items: flex-end;
@@ -451,7 +458,7 @@
 
 .wifi-arc {
     position: absolute;
-    border: 2px solid #fff;
+    border: 1.8px solid #000;
     border-radius: 50%;
     border-bottom: none;
     border-left: none;
@@ -459,69 +466,66 @@
 }
 
 .wifi-arc:nth-child(1) {
-    width: 17px;
-    height: 17px;
-    bottom: -1px;
+    width: 15.5px;
+    height: 15.5px;
+    bottom: -0.5px;
     left: 0;
-    opacity: 1;
 }
 
 .wifi-arc:nth-child(2) {
-    width: 12px;
-    height: 12px;
-    bottom: -1px;
-    left: 2.5px;
-    opacity: 0.9;
+    width: 11px;
+    height: 11px;
+    bottom: -0.5px;
+    left: 2.25px;
 }
 
 .wifi-arc:nth-child(3) {
-    width: 7px;
-    height: 7px;
-    bottom: -1px;
-    left: 5px;
-    opacity: 0.8;
+    width: 6.5px;
+    height: 6.5px;
+    bottom: -0.5px;
+    left: 4.5px;
 }
 
 .wifi-dot {
     position: absolute;
-    width: 2.5px;
-    height: 2.5px;
-    background: #fff;
+    width: 2px;
+    height: 2px;
+    background: #000;
     border-radius: 50%;
-    bottom: 0;
-    left: 7.25px;
+    bottom: 0.5px;
+    left: 6.75px;
 }
 
-/* 电池图标 */
+/* 电池图标 - 真实iOS样式 */
 .battery-icon {
-    width: 27px;
-    height: 13px;
-    border: 2px solid #fff;
-    border-radius: 4px;
+    width: 24.5px;
+    height: 11.5px;
+    border: 1.5px solid #000;
+    border-radius: 3.5px;
     position: relative;
     display: flex;
     align-items: center;
-    padding: 2px;
-    opacity: 0.95;
+    padding: 1.5px;
+    opacity: 1;
 }
 
 .battery-icon::after {
     content: '';
     position: absolute;
-    right: -4px;
+    right: -3.5px;
     top: 50%;
     transform: translateY(-50%);
-    width: 2px;
-    height: 7px;
-    background: #fff;
-    border-radius: 0 1.5px 1.5px 0;
-    opacity: 0.6;
+    width: 1.5px;
+    height: 5.5px;
+    background: #000;
+    border-radius: 0 1px 1px 0;
+    opacity: 0.4;
 }
 
 .battery-level {
     height: 100%;
-    background: #fff;
-    border-radius: 1.5px;
+    background: #000;
+    border-radius: 1px;
     transition: width 0.3s ease;
 }
 
@@ -540,7 +544,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(180deg, #000 0%, #000 100%);
+    background: transparent;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -548,8 +552,172 @@
 /* 主屏幕 */
 .home-screen {
     padding: 8px 24px 0;
-    min-height: calc(100% - 100px);
+    min-height: 100%;
     position: relative;
+    height: 100%;
+}
+
+/* iOS 锁屏界面 */
+.lockscreen {
+    position: absolute;
+    top: -59px;
+    left: 0;
+    right: 0;
+    height: calc(100% + 59px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 140px 24px 60px;
+    z-index: 1000;
+    background: #ffffff;
+    pointer-events: auto;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.lockscreen.unlocked {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/* 锁屏时间 */
+.lockscreen-time {
+    text-align: center;
+    color: #000;
+}
+
+.lockscreen-hour {
+    font-size: 76px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -2px;
+}
+
+.lockscreen-date {
+    font-size: 18px;
+    font-weight: 500;
+    opacity: 0.9;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+}
+
+/* 锁屏通知区域 */
+.lockscreen-notifications {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+/* 锁屏底部 */
+.lockscreen-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+}
+
+/* 锁屏快捷方式 */
+.lockscreen-shortcuts {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 20px;
+}
+
+.lockscreen-shortcut {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(60, 60, 67, 0.36);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+    pointer-events: auto;
+}
+
+.lockscreen-shortcut:active {
+    transform: scale(0.86);
+    background: rgba(60, 60, 67, 0.5);
+}
+
+.lockscreen-shortcut i {
+    font-size: 20px;
+    color: white;
+}
+
+.lockscreen-shortcut svg {
+    width: 23px;
+    height: 23px;
+    fill: white;
+}
+
+/* 锁屏指示器 */
+.lockscreen-indicator {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.lockscreen-swipe-bar {
+    width: 134px;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2.5px;
+    animation: swipeBarPulse 2s ease-in-out infinite;
+}
+
+@keyframes swipeBarPulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-2px);
+    }
+}
+
+/* 手机端锁屏优化 */
+@media (max-width: 768px) {
+    .lockscreen {
+        padding: 60px 20px 50px;
+    }
+    
+    .lockscreen-hour {
+        font-size: 64px;
+    }
+    
+    .lockscreen-date {
+        font-size: 16px;
+    }
+    
+    .lockscreen-shortcut {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .lockscreen-shortcut i {
+        font-size: 19px;
+    }
+    
+    .lockscreen-shortcut svg {
+        width: 22px;
+        height: 22px;
+    }
 }
 
 /* 应用图标网格 */
@@ -615,7 +783,7 @@
 
 .app-name {
     font-size: 12px;
-    color: #fff;
+    color: #000;
     text-align: center;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
     max-width: 70px;

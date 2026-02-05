@@ -368,7 +368,20 @@
     }
     
     function handleTakeout() {
-        showToast('交易功能尚未实现');
+        console.log('[Toolbar] 触发购物功能');
+        
+        // 关闭更多面板
+        closeMorePanel();
+        
+        // 打开购物页面 - 使用 open 类而不是 active 类
+        const shoppingPage = document.getElementById('shopping-page');
+        if (shoppingPage) {
+            shoppingPage.classList.add('open');
+            console.log('✅ 购物页面已打开');
+        } else {
+            console.warn('⚠️ 购物页面未找到');
+            showToast('购物功能加载中，请稍后再试');
+        }
     }
     
     function handleOffline() {

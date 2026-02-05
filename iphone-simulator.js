@@ -8,8 +8,24 @@
 
     // 检测是否为移动设备
     function isMobileDevice() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
             || window.innerWidth <= 768;
+    }
+    
+    // 检测浏览器类型
+    function detectBrowser() {
+        const ua = navigator.userAgent.toLowerCase();
+        return {
+            isOpera: /opera|opr/i.test(ua),
+            isEdge: /edg/i.test(ua),
+            isChrome: /chrome/i.test(ua) && !/edg/i.test(ua),
+            isSafari: /safari/i.test(ua) && !/chrome/i.test(ua),
+            isFirefox: /firefox/i.test(ua),
+            isUC: /ucbrowser/i.test(ua),
+            isQQ: /qqbrowser/i.test(ua),
+            // 雨见浏览器等可能使用的标识
+            isOther: !/chrome|safari|firefox|opera|edg/i.test(ua)
+        };
     }
 
     // 创建iPhone模拟器HTML结构
@@ -78,6 +94,32 @@
                     <!-- 屏幕内容 -->
                     <div class="screen-content">
                         <div class="home-screen">
+                            <!-- iOS 锁屏界面 -->
+                            <div class="lockscreen">
+                                <div class="lockscreen-time">
+                                    <div class="lockscreen-hour" id="lockscreen-hour">9:41</div>
+                                    <div class="lockscreen-date" id="lockscreen-date">2月5日 星期三</div>
+                                </div>
+                                <div class="lockscreen-notifications">
+                                    <!-- 可以添加通知卡片 -->
+                                </div>
+                                <div class="lockscreen-bottom">
+                                    <div class="lockscreen-shortcuts">
+                                        <div class="lockscreen-shortcut lockscreen-flashlight">
+                                            <svg viewBox="0 0 24 24" fill="white">
+                                                <path d="M9 2L7 6h10l-2-4H9zm-1 6v2h8V8H8zm0 4v8c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-8H8z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="lockscreen-shortcut lockscreen-camera">
+                                            <i class="fas fa-camera"></i>
+                                        </div>
+                                    </div>
+                                    <div class="lockscreen-indicator">
+                                        <div class="lockscreen-swipe-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- 应用图标网格 -->
                             <div class="app-grid">
                                 <div class="app-icon">
@@ -194,12 +236,31 @@
 
     // 更新时间显示
     function updateTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        
+        // 更新状态栏时间
         const timeElement = document.getElementById('status-time');
         if (timeElement) {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
             timeElement.textContent = `${hours}:${minutes}`;
+        }
+        
+        // 更新锁屏时间
+        const lockscreenHour = document.getElementById('lockscreen-hour');
+        if (lockscreenHour) {
+            lockscreenHour.textContent = `${hours}:${minutes}`;
+        }
+        
+        // 更新锁屏日期
+        const lockscreenDate = document.getElementById('lockscreen-date');
+        if (lockscreenDate) {
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const month = months[now.getMonth()];
+            const date = now.getDate();
+            const weekday = weekdays[now.getDay()];
+            lockscreenDate.textContent = `${month}${date}日 ${weekday}`;
         }
     }
 
@@ -214,27 +275,69 @@
             return;
         }
         
+        // 检测浏览器类型
+        const browser = detectBrowser();
+        
         // 手机端：计算最佳缩放比例
         const deviceWidth = 390;
         const deviceHeight = 844;
-        const padding = 16; // 左右各8px，接近全屏
         
-        const availableWidth = window.innerWidth - padding;
-        const availableHeight = window.innerHeight - padding;
+        // 使用更安全的视口尺寸获取方法
+        // 优先使用visualViewport API（更准确），回退到window.innerWidth/Height
+        let viewportWidth, viewportHeight;
+        
+        if (window.visualViewport) {
+            viewportWidth = window.visualViewport.width;
+            viewportHeight = window.visualViewport.height;
+        } else {
+            // 对于不支持visualViewport的浏览器，使用document.documentElement
+            viewportWidth = Math.min(
+                window.innerWidth,
+                document.documentElement.clientWidth,
+                document.body?.clientWidth || window.innerWidth
+            );
+            viewportHeight = Math.min(
+                window.innerHeight,
+                document.documentElement.clientHeight,
+                document.body?.clientHeight || window.innerHeight
+            );
+        }
+        
+        // 动态计算padding，确保在不同浏览器中都有合适的边距
+        // 使用视口宽度的2%作为padding，最小8px，最大20px
+        const paddingPercent = Math.max(8, Math.min(viewportWidth * 0.02, 20));
+        const padding = paddingPercent * 2; // 左右两边
+        
+        const availableWidth = viewportWidth - padding;
+        const availableHeight = viewportHeight - padding;
         
         const scaleX = availableWidth / deviceWidth;
         const scaleY = availableHeight / deviceHeight;
         
         // 取较小值，确保完整显示，最大不超过1
-        const scale = Math.min(scaleX, scaleY, 1);
+        // 根据浏览器类型调整安全系数
+        let safetyFactor = 0.98;
+        if (browser.isOther || browser.isUC || browser.isQQ) {
+            // 对于不常见的浏览器，使用更保守的缩放
+            safetyFactor = 0.95;
+        }
         
+        const scale = Math.min(scaleX, scaleY, 1) * safetyFactor;
+        
+        // 应用transform，同时设置webkit前缀以确保兼容性
         device.style.transform = `scale(${scale})`;
+        device.style.webkitTransform = `scale(${scale})`;
         
         console.log('Device scale applied:', {
-            windowSize: `${window.innerWidth}x${window.innerHeight}`,
-            availableSize: `${availableWidth}x${availableHeight}`,
+            browser: navigator.userAgent.match(/\w+\/[\d.]+/)?.[0] || 'Unknown',
+            browserType: Object.keys(browser).find(key => browser[key]) || 'unknown',
+            viewportMethod: window.visualViewport ? 'visualViewport' : 'fallback',
+            viewportSize: `${viewportWidth}x${viewportHeight}`,
+            padding: padding.toFixed(1),
+            availableSize: `${availableWidth.toFixed(1)}x${availableHeight.toFixed(1)}`,
             scaleX: scaleX.toFixed(3),
             scaleY: scaleY.toFixed(3),
+            safetyFactor: safetyFactor,
             finalScale: scale.toFixed(3)
         });
     }
@@ -248,33 +351,86 @@
             initializeEventListeners();
         }
         
+        // 重置锁屏状态（每次打开都显示锁屏）
+        const lockscreen = overlay.querySelector('.lockscreen');
+        if (lockscreen) {
+            lockscreen.classList.remove('unlocked');
+            lockscreen.style.transform = 'translateY(0)';
+            lockscreen.style.opacity = '1';
+            lockscreen.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease';
+        }
+        
         overlay.classList.add('show');
         updateTime();
         
-        // 应用缩放
+        // 应用缩放 - 延迟确保DOM完全渲染
         setTimeout(() => {
             applyDeviceScale();
         }, 50);
         
+        // 再次确认缩放（某些浏览器需要）
+        setTimeout(() => {
+            applyDeviceScale();
+        }, 200);
+        
         // 监听窗口大小变化
         const resizeHandler = () => {
             if (overlay.classList.contains('show')) {
-                applyDeviceScale();
+                // 使用防抖，避免频繁计算
+                clearTimeout(resizeHandler.timer);
+                resizeHandler.timer = setTimeout(() => {
+                    applyDeviceScale();
+                }, 100);
             }
         };
+        
         window.addEventListener('resize', resizeHandler);
         window.addEventListener('orientationchange', resizeHandler);
         
-        // 每分钟更新一次时间
-        const timeInterval = setInterval(() => {
-            if (overlay.classList.contains('show')) {
-                updateTime();
-            } else {
-                clearInterval(timeInterval);
+        // 监听visualViewport变化（更精确的视口变化检测）
+        if (window.visualViewport) {
+            const visualViewportHandler = () => {
+                if (overlay.classList.contains('show')) {
+                    clearTimeout(visualViewportHandler.timer);
+                    visualViewportHandler.timer = setTimeout(() => {
+                        applyDeviceScale();
+                    }, 100);
+                }
+            };
+            window.visualViewport.addEventListener('resize', visualViewportHandler);
+            window.visualViewport.addEventListener('scroll', visualViewportHandler);
+            
+            // 清理函数中也要移除这些监听器
+            const originalCleanup = () => {
                 window.removeEventListener('resize', resizeHandler);
                 window.removeEventListener('orientationchange', resizeHandler);
-            }
-        }, 60000);
+                if (window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', visualViewportHandler);
+                    window.visualViewport.removeEventListener('scroll', visualViewportHandler);
+                }
+            };
+            
+            // 每分钟更新一次时间
+            const timeInterval = setInterval(() => {
+                if (overlay.classList.contains('show')) {
+                    updateTime();
+                } else {
+                    clearInterval(timeInterval);
+                    originalCleanup();
+                }
+            }, 60000);
+        } else {
+            // 每分钟更新一次时间（无visualViewport支持的浏览器）
+            const timeInterval = setInterval(() => {
+                if (overlay.classList.contains('show')) {
+                    updateTime();
+                } else {
+                    clearInterval(timeInterval);
+                    window.removeEventListener('resize', resizeHandler);
+                    window.removeEventListener('orientationchange', resizeHandler);
+                }
+            }, 60000);
+        }
     }
 
     // 隐藏iPhone模拟器
@@ -471,6 +627,90 @@
         document.addEventListener('touchcancel', handleEnd);
     }
 
+    // 初始化锁屏滑动解锁
+    function initializeLockscreenSwipe() {
+        const lockscreen = document.querySelector('.lockscreen');
+        if (!lockscreen) return;
+        
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let startTime = 0;
+        
+        function handleStart(e) {
+            const touch = e.touches ? e.touches[0] : e;
+            startY = touch.clientY;
+            currentY = startY;
+            startTime = Date.now();
+            isDragging = true;
+            
+            // 移除过渡效果，使拖动更流畅
+            lockscreen.style.transition = 'none';
+        }
+        
+        function handleMove(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            currentY = touch.clientY;
+            
+            // 计算移动距离（只允许向上滑动）
+            const deltaY = currentY - startY;
+            
+            if (deltaY < 0) {
+                // 向上滑动，应用阻尼效果
+                const damping = 0.6;
+                const translateY = deltaY * damping;
+                lockscreen.style.transform = `translateY(${translateY}px)`;
+                
+                // 根据滑动距离调整透明度
+                const opacity = 1 + (deltaY / 500);
+                lockscreen.style.opacity = Math.max(0, opacity);
+            }
+        }
+        
+        function handleEnd(e) {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            const deltaY = currentY - startY;
+            const deltaTime = Date.now() - startTime;
+            const velocity = Math.abs(deltaY) / deltaTime; // 像素/毫秒
+            
+            // 恢复过渡效果
+            lockscreen.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease';
+            
+            // 判断是否解锁：向上滑动超过150px 或 快速向上滑动（速度>0.5px/ms）
+            if (deltaY < -150 || (deltaY < -50 && velocity > 0.5)) {
+                // 解锁
+                lockscreen.classList.add('unlocked');
+                
+                // 添加震动反馈（如果支持）
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+                
+                console.log('锁屏已解锁');
+            } else {
+                // 回弹
+                lockscreen.style.transform = 'translateY(0)';
+                lockscreen.style.opacity = '1';
+            }
+        }
+        
+        // 鼠标事件（桌面端）
+        lockscreen.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        
+        // 触摸事件（移动端）
+        lockscreen.addEventListener('touchstart', handleStart, { passive: false });
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
+        document.addEventListener('touchcancel', handleEnd);
+    }
+
     // 初始化事件监听器
     function initializeEventListeners() {
         // 灵动岛长按事件 - 显示关机界面
@@ -512,6 +752,9 @@
         
         // 初始化滑动关机
         initializeSlider();
+        
+        // 初始化锁屏滑动解锁
+        initializeLockscreenSwipe();
 
         // 点击overlay背景关闭（仅桌面端）
         const overlay = document.getElementById('iphone-simulator-overlay');
@@ -558,9 +801,23 @@
                 showiPhoneSimulator();
             });
             
-            console.log('iPhone模拟器已初始化');
+            const browser = detectBrowser();
+            const browserName = Object.keys(browser).find(key => browser[key]) || 'unknown';
+            console.log('iPhone模拟器已初始化 - 浏览器:', browserName);
         }
     }
+    
+    // 页面可见性变化时重新计算（处理某些浏览器的特殊情况）
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            const overlay = document.getElementById('iphone-simulator-overlay');
+            if (overlay && overlay.classList.contains('show')) {
+                setTimeout(() => {
+                    applyDeviceScale();
+                }, 100);
+            }
+        }
+    });
 
     // 页面加载完成后初始化
     if (document.readyState === 'loading') {

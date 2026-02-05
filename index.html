@@ -57,24 +57,8 @@
                 let vh = window.innerHeight * 0.01;
                 let appHeight = window.innerHeight;
                 
-                // iOS设备特殊处理：在全屏模式下减去状态栏高度
-                if (isIOS) {
-                    // iOS状态栏标准高度
-                    const statusBarHeight = 20; // iPhone标准状态栏高度
-                    const statusBarHeightX = 44; // iPhone X及以上的状态栏高度（包含刘海）
-                    
-                    // 检测是否有刘海屏（通过安全区域判断）
-                    const hasNotch = window.CSS && window.CSS.supports &&
-                                   (window.CSS.supports('padding-top: env(safe-area-inset-top)') ||
-                                    window.CSS.supports('padding-top: constant(safe-area-inset-top)'));
-                    
-                    // 在iOS全屏模式下，减去状态栏高度
-                    if (isIOSStandalone || document.documentElement.classList.contains('ios-fullscreen')) {
-                        const adjustHeight = hasNotch ? statusBarHeightX : statusBarHeight;
-                        appHeight = appHeight - adjustHeight;
-                        vh = appHeight * 0.01;
-                    }
-                }
+                // 不再减去状态栏高度，让CSS的padding-top来处理
+                // 这样可以避免双重调整导致顶部栏位置错误
                 
                 // 设置CSS自定义属性
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -1905,7 +1889,7 @@
         <div class="shopping-main-content active">
             <!-- 顶部搜索栏 -->
             <div class="shopping-header">
-                <div class="shopping-back-btn" data-back="shopping-page">
+                <div class="shopping-back-btn back-btn" data-back="shopping-page">
                     <i class="fa fa-arrow-left"></i>
                 </div>
                 <div class="shopping-search-box">
@@ -3020,11 +3004,11 @@
                                 </div>
                                 <span>转账</span>
                             </button>
-                            <button class="more-item" id="more-takeout" title="交易">
+                            <button class="more-item" id="more-takeout" title="购物">
                                 <div class="more-item-icon">
                                     <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                                 </div>
-                                <span>交易</span>
+                                <span>购物</span>
                             </button>
                         </div>
                     </div>
