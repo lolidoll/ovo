@@ -38,6 +38,9 @@
     <script>
         // 移动端全屏适配 - 动态计算视口高度
         (function() {
+            // 获取用户选择的适配方案
+            const adaptMode = localStorage.getItem('viewportAdaptMode') || 'auto';
+            
             // 检测是否为iOS设备
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const isIOSStandalone = isIOS && (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
@@ -57,19 +60,52 @@
                 let vh = window.innerHeight * 0.01;
                 let appHeight = window.innerHeight;
                 
-                // 不再减去状态栏高度，让CSS的padding-top来处理
-                // 这样可以避免双重调整导致顶部栏位置错误
-                
                 // 设置CSS自定义属性
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
                 document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
+                
+                // 根据适配方案设置顶部padding
+                let topPadding = 45; // 默认标准模式
+                
+                switch(adaptMode) {
+                    case 'auto':
+                        // 自动模式：根据设备和浏览器自动选择
+                        if (isIOS && isIOSStandalone) {
+                            topPadding = 0; // iOS全屏模式使用safe-area
+                        } else if (isEdgeAndroid && isStandalone) {
+                            topPadding = 0; // Edge Android全屏模式
+                        } else if (isStandalone) {
+                            topPadding = 0; // 其他全屏模式
+                        } else {
+                            topPadding = 45; // 标准浏览器模式
+                        }
+                        break;
+                    case 'standard':
+                        topPadding = 45;
+                        break;
+                    case 'ios':
+                        topPadding = 0; // 使用safe-area-inset
+                        break;
+                    case 'fullscreen':
+                        topPadding = 0;
+                        break;
+                    case 'compact':
+                        topPadding = 35;
+                        break;
+                    case 'loose':
+                        topPadding = 55;
+                        break;
+                }
+                
+                // 设置顶部padding
+                document.documentElement.style.setProperty('--top-padding', `${topPadding}px`);
                 
                 // 针对iOS Safari的额外处理
                 if (CSS.supports && CSS.supports('-webkit-fill-available', '100vh')) {
                     document.documentElement.style.height = '-webkit-fill-available';
                 }
                 
-                // 标记iOS设备
+                // 标记设备类型
                 if (isIOS) {
                     document.documentElement.classList.add('is-ios');
                     if (isIOSStandalone) {
@@ -77,16 +113,17 @@
                     }
                 }
                 
-                // 标记Edge浏览器全屏模式
                 if (isEdgeAndroid && isStandalone) {
                     document.documentElement.classList.add('edge-standalone');
                     document.documentElement.classList.add('is-android');
                 }
                 
-                // 标记通用全屏模式
                 if (isStandalone) {
                     document.documentElement.classList.add('is-standalone');
                 }
+                
+                // 标记适配模式
+                document.documentElement.setAttribute('data-adapt-mode', adaptMode);
             }
             
             // 初始设置
@@ -122,6 +159,16 @@
             window.addEventListener('load', function() {
                 setTimeout(setViewportHeight, 300);
             });
+        })();
+        
+        // 应用保存的页面缩放设置
+        (function() {
+            const savedScale = localStorage.getItem('pageZoomScale');
+            if (savedScale) {
+                const scale = parseFloat(savedScale);
+                // 使用zoom属性来缩放整个页面（包括字体、图标、按钮等所有元素）
+                document.body.style.zoom = scale;
+            }
         })();
     </script>
     <script src="auth-modal.js" defer></script>
