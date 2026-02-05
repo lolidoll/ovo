@@ -81,7 +81,7 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            padding-top: 0;
+            padding-top: 45px;
             padding-bottom: var(--safe-area-inset-bottom);
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -108,26 +108,11 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 15px;
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 100;
-            /* 在全屏模式下添加顶部内边距 */
-            padding-top: 0;
-        }
-        
-        /* iOS设备在全屏模式下的额外顶部间距 */
-        .is-ios.ios-standalone .top-nav {
-            padding-top: max(env(safe-area-inset-top, 0px), 20px);
-        }
-        
-        /* Edge浏览器全屏模式（Android设备）的顶部安全区域 */
-        .edge-standalone .top-nav,
-        .is-standalone .top-nav {
-            padding-top: max(env(safe-area-inset-top, 0px), 24px);
-        }
-        
-        /* Android设备在全屏模式下可能需要更多顶部间距 */
-        .is-android.is-standalone .top-nav {
-            padding-top: max(env(safe-area-inset-top, 0px), 28px);
         }
         
         .user-info {
@@ -211,17 +196,6 @@
             flex-direction: column;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12), 2px 0 8px rgba(0, 0, 0, 0.08);
             visibility: hidden;
-            padding-top: 0;
-        }
-        
-        /* 全屏模式下侧边栏的顶部安全区域 */
-        .is-standalone .side-menu,
-        .edge-standalone .side-menu {
-            padding-top: max(env(safe-area-inset-top, 0px), 24px);
-        }
-        
-        .is-android.is-standalone .side-menu {
-            padding-top: max(env(safe-area-inset-top, 0px), 28px);
         }
         .side-menu.open {
             transform: translateX(0);
@@ -2436,17 +2410,6 @@ input[type="range"]::-ms-fill-upper {
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            padding-top: 0;
-        }
-        
-        /* 全屏模式下聊天页面的顶部间距 */
-        .is-standalone .chat-page,
-        .edge-standalone .chat-page {
-            padding-top: max(env(safe-area-inset-top, 0px), 24px);
-        }
-        
-        .is-android.is-standalone .chat-page {
-            padding-top: max(env(safe-area-inset-top, 0px), 28px);
         }
         .chat-page.open {
             transform: translateX(0);

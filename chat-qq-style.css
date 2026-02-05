@@ -223,17 +223,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding-top: 0;
-}
-
-/* 全屏模式下聊天页面的顶部间距 */
-.is-standalone .chat-page,
-.edge-standalone .chat-page {
-    padding-top: max(env(safe-area-inset-top, 0px), 24px);
-}
-
-.is-android.is-standalone .chat-page {
-    padding-top: max(env(safe-area-inset-top, 0px), 28px);
 }
 
 .chat-page.open {

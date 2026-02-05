@@ -303,18 +303,25 @@
             );
         }
         
-        // 动态计算padding，确保在不同浏览器中都有合适的边距
-        // 使用视口宽度的0.5%作为padding，最小2px，最大8px（进一步缩小间隔）
-        const paddingPercent = Math.max(2, Math.min(viewportWidth * 0.005, 8));
-        const padding = paddingPercent * 2; // 左右两边
+        // 动态计算padding，左右间隔小，上下间隔大
+        // 左右padding：使用视口宽度的0.5%，最小2px，最大8px
+        const paddingHorizontalPercent = Math.max(2, Math.min(viewportWidth * 0.005, 8));
+        const paddingHorizontal = paddingHorizontalPercent * 2; // 左右两边
         
-        const availableWidth = viewportWidth - padding;
-        const availableHeight = viewportHeight - padding;
+        // 上下padding：使用视口高度的2%，最小16px，最大32px（调大上下间隔）
+        const paddingVerticalPercent = Math.max(16, Math.min(viewportHeight * 0.02, 32));
+        const paddingVertical = paddingVerticalPercent * 2; // 上下两边
+        
+        const availableWidth = viewportWidth - paddingHorizontal;
+        const availableHeight = viewportHeight - paddingVertical;
         
         const scaleX = availableWidth / deviceWidth;
         const scaleY = availableHeight / deviceHeight;
         
-        // 取较小值，确保完整显示，最大不超过1
+        // 优先使用宽度缩放，让手机看起来更宽、比例更协调
+        // 如果宽度缩放后高度超出，则回退到高度缩放
+        let scale;
+        
         // 根据浏览器类型调整安全系数
         let safetyFactor = 0.98;
         if (browser.isOther || browser.isUC || browser.isQQ) {
@@ -322,7 +329,18 @@
             safetyFactor = 0.95;
         }
         
-        const scale = Math.min(scaleX, scaleY, 1) * safetyFactor;
+        // 优先使用宽度缩放（让手机更宽）
+        const preferredScale = scaleX * safetyFactor;
+        const scaledHeight = deviceHeight * preferredScale;
+        
+        // 检查使用宽度缩放后，高度是否超出可用空间
+        if (scaledHeight <= availableHeight) {
+            // 高度没有超出，使用宽度缩放
+            scale = Math.min(preferredScale, 1);
+        } else {
+            // 高度超出，使用高度缩放
+            scale = Math.min(scaleY * safetyFactor, 1);
+        }
         
         // 应用transform，同时设置webkit前缀以确保兼容性
         device.style.transform = `scale(${scale})`;
@@ -333,7 +351,8 @@
             browserType: Object.keys(browser).find(key => browser[key]) || 'unknown',
             viewportMethod: window.visualViewport ? 'visualViewport' : 'fallback',
             viewportSize: `${viewportWidth}x${viewportHeight}`,
-            padding: padding.toFixed(1),
+            paddingHorizontal: paddingHorizontal.toFixed(1),
+            paddingVertical: paddingVertical.toFixed(1),
             availableSize: `${availableWidth.toFixed(1)}x${availableHeight.toFixed(1)}`,
             scaleX: scaleX.toFixed(3),
             scaleY: scaleY.toFixed(3),
