@@ -81,59 +81,10 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            /* 为固定定位的顶部导航栏留出空间 */
-            padding-top: calc(45px + var(--safe-area-inset-top));
+            padding-top: 0;
             padding-bottom: var(--safe-area-inset-bottom);
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
-        }
-        
-        /* iOS设备在全屏模式下的顶部间距调整 */
-        .is-ios.ios-standalone #app-container {
-            padding-top: calc(45px + max(var(--safe-area-inset-top), 20px));
-        }
-        
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .is-ios.ios-standalone #app-container {
-                padding-top: calc(45px + max(env(safe-area-inset-top), 44px));
-            }
-        }
-        
-        @supports (padding-top: constant(safe-area-inset-top)) {
-            .is-ios.ios-standalone #app-container {
-                padding-top: calc(45px + max(constant(safe-area-inset-top), 44px));
-            }
-        }
-        
-        /* Edge浏览器全屏模式的顶部间距调整 */
-        .edge-standalone #app-container,
-        .is-standalone #app-container {
-            padding-top: calc(45px + max(var(--safe-area-inset-top), 24px));
-        }
-        
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .edge-standalone #app-container,
-            .is-standalone #app-container {
-                padding-top: calc(45px + max(env(safe-area-inset-top), 24px));
-            }
-        }
-        
-        @supports (padding-top: constant(safe-area-inset-top)) {
-            .edge-standalone #app-container,
-            .is-standalone #app-container {
-                padding-top: calc(45px + max(constant(safe-area-inset-top), 24px));
-            }
-        }
-        
-        /* Android设备在全屏模式下的顶部间距调整 */
-        .is-android.is-standalone #app-container {
-            padding-top: calc(45px + max(var(--safe-area-inset-top), 28px));
-        }
-        
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .is-android.is-standalone #app-container {
-                padding-top: calc(45px + max(env(safe-area-inset-top), 28px));
-            }
         }
 
         .icon-svg {
@@ -157,63 +108,26 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 15px;
-            position: fixed;
-            top: 0;
-            left: 0;
+            position: relative;
             z-index: 100;
-            /* 使用top而不是padding-top来处理安全区域 */
-            top: var(--safe-area-inset-top);
+            /* 在全屏模式下添加顶部内边距 */
+            padding-top: 0;
         }
         
         /* iOS设备在全屏模式下的额外顶部间距 */
         .is-ios.ios-standalone .top-nav {
-            top: max(var(--safe-area-inset-top), 20px);
-        }
-        
-        /* iPhone X及以上设备（有刘海）的额外处理 */
-        @supports (top: env(safe-area-inset-top)) {
-            .is-ios.ios-standalone .top-nav {
-                top: max(env(safe-area-inset-top), 44px);
-            }
-        }
-        
-        @supports (top: constant(safe-area-inset-top)) {
-            .is-ios.ios-standalone .top-nav {
-                top: max(constant(safe-area-inset-top), 44px);
-            }
+            padding-top: max(env(safe-area-inset-top, 0px), 20px);
         }
         
         /* Edge浏览器全屏模式（Android设备）的顶部安全区域 */
         .edge-standalone .top-nav,
         .is-standalone .top-nav {
-            top: max(var(--safe-area-inset-top), 24px);
-        }
-        
-        /* 使用env()函数的浏览器支持 */
-        @supports (top: env(safe-area-inset-top)) {
-            .edge-standalone .top-nav,
-            .is-standalone .top-nav {
-                top: max(env(safe-area-inset-top), 24px);
-            }
-        }
-        
-        /* 使用constant()函数的旧版浏览器支持 */
-        @supports (top: constant(safe-area-inset-top)) {
-            .edge-standalone .top-nav,
-            .is-standalone .top-nav {
-                top: max(constant(safe-area-inset-top), 24px);
-            }
+            padding-top: max(env(safe-area-inset-top, 0px), 24px);
         }
         
         /* Android设备在全屏模式下可能需要更多顶部间距 */
         .is-android.is-standalone .top-nav {
-            top: max(var(--safe-area-inset-top), 28px);
-        }
-        
-        @supports (top: env(safe-area-inset-top)) {
-            .is-android.is-standalone .top-nav {
-                top: max(env(safe-area-inset-top), 28px);
-            }
+            padding-top: max(env(safe-area-inset-top, 0px), 28px);
         }
         
         .user-info {
@@ -280,14 +194,14 @@
         /* 侧边功能栏 - 黑白灰简约设计 */
         .side-menu {
             position: fixed;
-            top: var(--safe-area-inset-top);
+            top: 0;
             left: 0;
             width: 75%;
             max-width: 280px;
-            height: calc(var(--app-height) - var(--safe-area-inset-top));
-            height: calc(calc(var(--vh, 1vh) * 100) - var(--safe-area-inset-top));
-            min-height: calc(100vh - var(--safe-area-inset-top));
-            min-height: calc(-webkit-fill-available - var(--safe-area-inset-top));
+            height: var(--app-height);
+            height: calc(var(--vh, 1vh) * 100);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
             background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
             z-index: 300;
             transform: translateX(-100%);
@@ -297,33 +211,17 @@
             flex-direction: column;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12), 2px 0 8px rgba(0, 0, 0, 0.08);
             visibility: hidden;
+            padding-top: 0;
         }
         
-        /* 全屏模式下侧边栏的顶部位置 */
+        /* 全屏模式下侧边栏的顶部安全区域 */
         .is-standalone .side-menu,
         .edge-standalone .side-menu {
-            top: max(var(--safe-area-inset-top), 24px);
-            height: calc(var(--app-height) - max(var(--safe-area-inset-top), 24px));
-        }
-        
-        @supports (top: env(safe-area-inset-top)) {
-            .is-standalone .side-menu,
-            .edge-standalone .side-menu {
-                top: max(env(safe-area-inset-top), 24px);
-                height: calc(var(--app-height) - max(env(safe-area-inset-top), 24px));
-            }
+            padding-top: max(env(safe-area-inset-top, 0px), 24px);
         }
         
         .is-android.is-standalone .side-menu {
-            top: max(var(--safe-area-inset-top), 28px);
-            height: calc(var(--app-height) - max(var(--safe-area-inset-top), 28px));
-        }
-        
-        @supports (top: env(safe-area-inset-top)) {
-            .is-android.is-standalone .side-menu {
-                top: max(env(safe-area-inset-top), 28px);
-                height: calc(var(--app-height) - max(env(safe-area-inset-top), 28px));
-            }
+            padding-top: max(env(safe-area-inset-top, 0px), 28px);
         }
         .side-menu.open {
             transform: translateX(0);
@@ -2537,58 +2435,18 @@ input[type="range"]::-ms-fill-upper {
             will-change: transform;
             display: flex;
             flex-direction: column;
-            /* 修复移动端滚动问题 */
             overflow: hidden;
-            /* 为全屏模式添加顶部安全区域支持 */
-            padding-top: var(--safe-area-inset-top);
+            padding-top: 0;
         }
         
-        /* iOS设备在全屏模式下的顶部间距 */
-        .is-ios.ios-standalone .chat-page {
-            padding-top: max(var(--safe-area-inset-top), 20px);
+        /* 全屏模式下聊天页面的顶部间距 */
+        .is-standalone .chat-page,
+        .edge-standalone .chat-page {
+            padding-top: max(env(safe-area-inset-top, 0px), 24px);
         }
         
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .is-ios.ios-standalone .chat-page {
-                padding-top: max(env(safe-area-inset-top), 44px);
-            }
-        }
-        
-        @supports (padding-top: constant(safe-area-inset-top)) {
-            .is-ios.ios-standalone .chat-page {
-                padding-top: max(constant(safe-area-inset-top), 44px);
-            }
-        }
-        
-        /* Edge浏览器全屏模式的顶部间距 */
-        .edge-standalone .chat-page,
-        .is-standalone .chat-page {
-            padding-top: max(var(--safe-area-inset-top), 24px);
-        }
-        
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .edge-standalone .chat-page,
-            .is-standalone .chat-page {
-                padding-top: max(env(safe-area-inset-top), 24px);
-            }
-        }
-        
-        @supports (padding-top: constant(safe-area-inset-top)) {
-            .edge-standalone .chat-page,
-            .is-standalone .chat-page {
-                padding-top: max(constant(safe-area-inset-top), 24px);
-            }
-        }
-        
-        /* Android设备在全屏模式下的顶部间距 */
         .is-android.is-standalone .chat-page {
-            padding-top: max(var(--safe-area-inset-top), 28px);
-        }
-        
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .is-android.is-standalone .chat-page {
-                padding-top: max(env(safe-area-inset-top), 28px);
-            }
+            padding-top: max(env(safe-area-inset-top, 0px), 28px);
         }
         .chat-page.open {
             transform: translateX(0);

@@ -304,8 +304,8 @@
         }
         
         // 动态计算padding，确保在不同浏览器中都有合适的边距
-        // 使用视口宽度的1%作为padding，最小4px，最大12px（缩小间隔）
-        const paddingPercent = Math.max(4, Math.min(viewportWidth * 0.01, 12));
+        // 使用视口宽度的0.5%作为padding，最小2px，最大8px（进一步缩小间隔）
+        const paddingPercent = Math.max(2, Math.min(viewportWidth * 0.005, 8));
         const padding = paddingPercent * 2; // 左右两边
         
         const availableWidth = viewportWidth - padding;
