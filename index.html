@@ -166,8 +166,12 @@
             const savedScale = localStorage.getItem('pageZoomScale');
             if (savedScale) {
                 const scale = parseFloat(savedScale);
-                // 使用zoom属性来缩放整个页面（包括字体、图标、按钮等所有元素）
-                document.body.style.zoom = scale;
+                // 使用CSS变量来控制字体大小，而不是zoom整个页面
+                // 这样可以避免布局被破坏
+                document.documentElement.style.setProperty('--font-scale', scale);
+                // 同时调整根元素字体大小
+                const baseFontSize = 16; // 基础字体大小
+                document.documentElement.style.fontSize = (baseFontSize * scale) + 'px';
             }
         })();
     </script>
