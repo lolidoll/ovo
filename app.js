@@ -10540,11 +10540,9 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             applyBtn.onclick = function() {
                 const scale = slider.value / 100;
                 localStorage.setItem('pageZoomScale', scale);
-                // 使用CSS变量和根元素字体大小来实现缩放
-                // 这样可以保持布局完整，只缩放内容
-                document.documentElement.style.setProperty('--font-scale', scale);
-                const baseFontSize = 16;
-                document.documentElement.style.fontSize = (baseFontSize * scale) + 'px';
+                // 使用CSS变量和transform scale来实现缩放
+                document.documentElement.style.setProperty('--page-scale', scale);
+                document.documentElement.classList.add('page-scaled');
                 showToast('页面缩放已应用');
                 page.classList.remove('open');
             };
