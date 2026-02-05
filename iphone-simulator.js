@@ -1,7 +1,6 @@
-
 /**
- * iPhone 17 模拟器 - 9:16竖屏可拖动缩放模态框
- * 支持四角缩放、拖动移动、自动保存位置和大小
+ * iPhone 17 模拟器 - 完全真实还原
+ * 包含灵动岛、状态栏、Dock栏等所有iOS 17特性
  */
 
 (function() {
@@ -13,36 +12,20 @@
             || window.innerWidth <= 768;
     }
     
-    // 存储配置的键名
-    const STORAGE_KEY = 'iphone-simulator-config';
-    
-    // 默认配置
-    const DEFAULT_CONFIG = {
-        width: 390,  // 9:16比例，默认iPhone宽度
-        left: null,  // null表示居中
-        top: null    // null表示居中
-    };
-    
-    // 加载保存的配置
-    function loadConfig() {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
-            }
-        } catch (e) {
-            console.warn('加载配置失败:', e);
-        }
-        return { ...DEFAULT_CONFIG };
-    }
-    
-    // 保存配置
-    function saveConfig(config) {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-        } catch (e) {
-            console.warn('保存配置失败:', e);
-        }
+    // 检测浏览器类型
+    function detectBrowser() {
+        const ua = navigator.userAgent.toLowerCase();
+        return {
+            isOpera: /opera|opr/i.test(ua),
+            isEdge: /edg/i.test(ua),
+            isChrome: /chrome/i.test(ua) && !/edg/i.test(ua),
+            isSafari: /safari/i.test(ua) && !/chrome/i.test(ua),
+            isFirefox: /firefox/i.test(ua),
+            isUC: /ucbrowser/i.test(ua),
+            isQQ: /qqbrowser/i.test(ua),
+            // 雨见浏览器等可能使用的标识
+            isOther: !/chrome|safari|firefox|opera|edg/i.test(ua)
+        };
     }
 
     // 创建iPhone模拟器HTML结构
@@ -51,17 +34,10 @@
         overlay.className = 'iphone-simulator-overlay';
         overlay.id = 'iphone-simulator-overlay';
         
+        const isMobile = isMobileDevice();
+        
         overlay.innerHTML = `
-            <div class="iphone-device" id="iphone-device">
-                <!-- 四角缩放手柄 -->
-                <div class="resize-handle top-left" data-direction="nw"></div>
-                <div class="resize-handle top-right" data-direction="ne"></div>
-                <div class="resize-handle bottom-left" data-direction="sw"></div>
-                <div class="resize-handle bottom-right" data-direction="se"></div>
-                
-                <!-- 拖动手柄（状态栏区域） -->
-                <div class="drag-handle" id="drag-handle"></div>
-                
+            <div class="iphone-device">
                 <div class="iphone-screen">
                     <!-- 灵动岛 -->
                     <div class="dynamic-island" id="dynamic-island">
@@ -94,30 +70,18 @@
                     <!-- 状态栏 -->
                     <div class="status-bar">
                         <div class="status-left">
-                            <span class="status-time" id="status-time">9:41</span>
+                            <span class="status-carrier">中国移动</span>
                         </div>
                         <div class="status-right">
-                            <!-- 5G网络 -->
-                            <div class="status-icon network-type">5G</div>
-                            <!-- 信号强度 -->
                             <div class="status-icon signal-bars">
                                 <div class="signal-bar"></div>
                                 <div class="signal-bar"></div>
                                 <div class="signal-bar"></div>
                                 <div class="signal-bar"></div>
                             </div>
-                            <!-- WiFi图标 -->
-                            <div class="status-icon wifi-icon">
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-4c-2.2 0-4 1.8-4 4h2c0-1.1.9-2 2-2s2 .9 2 2h2c0-2.2-1.8-4-4-4zm0-4c-3.3 0-6 2.7-6 6h2c0-2.2 1.8-4 4-4s4 1.8 4 4h2c0-3.3-2.7-6-6-6z"/>
-                                </svg>
-                            </div>
-                            <!-- 电池图标 -->
+                            <span class="status-5g">5G</span>
                             <div class="status-icon battery-icon">
-                                <div class="battery-body">
-                                    <div class="battery-level" style="width: 85%;"></div>
-                                </div>
-                                <div class="battery-tip"></div>
+                                <div class="battery-level" style="width: 85%;"></div>
                             </div>
                         </div>
                     </div>
@@ -137,14 +101,12 @@
                                 <div class="lockscreen-bottom">
                                     <div class="lockscreen-shortcuts">
                                         <div class="lockscreen-shortcut lockscreen-flashlight">
-                                            <svg viewBox="0 0 50 50" fill="white">
-                                                <path d="M25 2 L20 12 L30 12 Z M18 14 L18 18 L32 18 L32 14 Z M18 20 L18 42 C18 44.2 19.8 46 22 46 L28 46 C30.2 46 32 44.2 32 42 L32 20 Z"/>
+                                            <svg viewBox="0 0 24 24" fill="white">
+                                                <path d="M9 2L7 6h10l-2-4H9zm-1 6v2h8V8H8zm0 4v8c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-8H8z"/>
                                             </svg>
                                         </div>
                                         <div class="lockscreen-shortcut lockscreen-camera">
-                                            <svg viewBox="0 0 50 50" fill="white">
-                                                <path d="M18 8 L16 12 L10 12 C7.8 12 6 13.8 6 16 L6 38 C6 40.2 7.8 42 10 42 L40 42 C42.2 42 44 40.2 44 38 L44 16 C44 13.8 42.2 12 40 12 L34 12 L32 8 Z M25 18 C29.4 18 33 21.6 33 26 C33 30.4 29.4 34 25 34 C20.6 34 17 30.4 17 26 C17 21.6 20.6 18 25 18 Z M25 21 C22.2 21 20 23.2 20 26 C20 28.8 22.2 31 25 31 C27.8 31 30 28.8 30 26 C30 23.2 27.8 21 25 21 Z"/>
-                                            </svg>
+                                            <i class="fas fa-camera"></i>
                                         </div>
                                     </div>
                                     <div class="lockscreen-indicator">
@@ -297,206 +259,100 @@
         }
     }
 
-    // 应用设备位置和大小
-    function applyDeviceTransform(device, config) {
-        const isMobile = isMobileDevice();
+    // 计算并应用缩放
+    function applyDeviceScale() {
+        const device = document.querySelector('.iphone-device');
+        if (!device) return;
         
-        if (isMobile) {
-            // 移动端：居中显示，CSS已处理
+        // 如果是桌面端，使用默认缩放
+        if (window.innerWidth > 768) {
+            device.style.transform = 'scale(0.95)';
             return;
         }
         
-        // 桌面端：应用保存的位置和大小
-        device.style.width = `${config.width}px`;
+        // 检测浏览器类型
+        const browser = detectBrowser();
         
-        if (config.left !== null && config.top !== null) {
-            device.style.left = `${config.left}px`;
-            device.style.top = `${config.top}px`;
-            device.style.transform = 'none';
+        // 手机端：计算最佳缩放比例 - 9:18 比例
+        const deviceWidth = 390;
+        const deviceHeight = 780;
+        
+        // 使用更安全的视口尺寸获取方法
+        // 优先使用visualViewport API（更准确），回退到window.innerWidth/Height
+        let viewportWidth, viewportHeight;
+        
+        if (window.visualViewport) {
+            viewportWidth = window.visualViewport.width;
+            viewportHeight = window.visualViewport.height;
         } else {
-            // 居中显示
-            device.style.left = '50%';
-            device.style.top = '50%';
-            device.style.transform = 'translate(-50%, -50%)';
-        }
-    }
-
-    // 初始化拖动功能
-    function initializeDrag(device, dragHandle) {
-        if (isMobileDevice()) return; // 移动端不启用拖动
-        
-        let isDragging = false;
-        let startX, startY, startLeft, startTop;
-        
-        function handleDragStart(e) {
-            // 只在拖动手柄上触发
-            if (e.target !== dragHandle && !dragHandle.contains(e.target)) return;
-            
-            isDragging = true;
-            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-            
-            startX = clientX;
-            startY = clientY;
-            
-            const rect = device.getBoundingClientRect();
-            startLeft = rect.left;
-            startTop = rect.top;
-            
-            device.style.cursor = 'move';
-            e.preventDefault();
+            // 对于不支持visualViewport的浏览器，使用document.documentElement
+            viewportWidth = Math.min(
+                window.innerWidth,
+                document.documentElement.clientWidth,
+                document.body?.clientWidth || window.innerWidth
+            );
+            viewportHeight = Math.min(
+                window.innerHeight,
+                document.documentElement.clientHeight,
+                document.body?.clientHeight || window.innerHeight
+            );
         }
         
-        function handleDragMove(e) {
-            if (!isDragging) return;
-            
-            e.preventDefault();
-            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-            
-            const deltaX = clientX - startX;
-            const deltaY = clientY - startY;
-            
-            const newLeft = startLeft + deltaX;
-            const newTop = startTop + deltaY;
-            
-            device.style.left = `${newLeft}px`;
-            device.style.top = `${newTop}px`;
-            device.style.transform = 'none';
+        // 动态计算padding，左右间隔小，上下间隔大
+        // 左右padding：使用视口宽度的0.5%，最小2px，最大8px
+        const paddingHorizontalPercent = Math.max(2, Math.min(viewportWidth * 0.005, 8));
+        const paddingHorizontal = paddingHorizontalPercent * 2; // 左右两边
+        
+        // 上下padding：使用视口高度的2%，最小16px，最大32px（调大上下间隔）
+        const paddingVerticalPercent = Math.max(16, Math.min(viewportHeight * 0.02, 32));
+        const paddingVertical = paddingVerticalPercent * 2; // 上下两边
+        
+        const availableWidth = viewportWidth - paddingHorizontal;
+        const availableHeight = viewportHeight - paddingVertical;
+        
+        const scaleX = availableWidth / deviceWidth;
+        const scaleY = availableHeight / deviceHeight;
+        
+        // 优先使用宽度缩放，让手机看起来更宽、比例更协调
+        // 如果宽度缩放后高度超出，则回退到高度缩放
+        let scale;
+        
+        // 根据浏览器类型调整安全系数
+        let safetyFactor = 0.98;
+        if (browser.isOther || browser.isUC || browser.isQQ) {
+            // 对于不常见的浏览器，使用更保守的缩放
+            safetyFactor = 0.95;
         }
         
-        function handleDragEnd(e) {
-            if (!isDragging) return;
-            
-            isDragging = false;
-            device.style.cursor = '';
-            
-            // 保存位置
-            const rect = device.getBoundingClientRect();
-            const config = loadConfig();
-            config.left = rect.left;
-            config.top = rect.top;
-            saveConfig(config);
+        // 优先使用宽度缩放（让手机更宽）
+        const preferredScale = scaleX * safetyFactor;
+        const scaledHeight = deviceHeight * preferredScale;
+        
+        // 检查使用宽度缩放后，高度是否超出可用空间
+        if (scaledHeight <= availableHeight) {
+            // 高度没有超出，使用宽度缩放
+            scale = Math.min(preferredScale, 1);
+        } else {
+            // 高度超出，使用高度缩放
+            scale = Math.min(scaleY * safetyFactor, 1);
         }
         
-        dragHandle.addEventListener('mousedown', handleDragStart);
-        document.addEventListener('mousemove', handleDragMove);
-        document.addEventListener('mouseup', handleDragEnd);
+        // 应用transform，同时设置webkit前缀以确保兼容性
+        device.style.transform = `scale(${scale})`;
+        device.style.webkitTransform = `scale(${scale})`;
         
-        dragHandle.addEventListener('touchstart', handleDragStart, { passive: false });
-        document.addEventListener('touchmove', handleDragMove, { passive: false });
-        document.addEventListener('touchend', handleDragEnd);
-    }
-
-    // 初始化缩放功能
-    function initializeResize(device) {
-        const handles = device.querySelectorAll('.resize-handle');
-        
-        handles.forEach(handle => {
-            let isResizing = false;
-            let startX, startY, startWidth, startHeight, startLeft, startTop;
-            let direction;
-            
-            function handleResizeStart(e) {
-                isResizing = true;
-                direction = handle.dataset.direction;
-                
-                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                
-                startX = clientX;
-                startY = clientY;
-                
-                const rect = device.getBoundingClientRect();
-                startWidth = rect.width;
-                startHeight = rect.height;
-                startLeft = rect.left;
-                startTop = rect.top;
-                
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            function handleResizeMove(e) {
-                if (!isResizing) return;
-                
-                e.preventDefault();
-                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                
-                const deltaX = clientX - startX;
-                const deltaY = clientY - startY;
-                
-                let newWidth = startWidth;
-                let newLeft = startLeft;
-                let newTop = startTop;
-                
-                // 根据方向计算新尺寸
-                switch (direction) {
-                    case 'se': // 右下角
-                        newWidth = startWidth + deltaX;
-                        break;
-                    case 'sw': // 左下角
-                        newWidth = startWidth - deltaX;
-                        newLeft = startLeft + deltaX;
-                        break;
-                    case 'ne': // 右上角
-                        newWidth = startWidth + deltaX;
-                        newTop = startTop + deltaY;
-                        break;
-                    case 'nw': // 左上角
-                        newWidth = startWidth - deltaX;
-                        newLeft = startLeft + deltaX;
-                        newTop = startTop + deltaY;
-                        break;
-                }
-                
-                // 限制最小和最大宽度
-                const minWidth = 300;
-                const maxWidth = Math.min(window.innerWidth * 0.9, 500);
-                newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-                
-                // 保持9:16比例
-                const newHeight = newWidth * 16 / 9;
-                
-                // 应用新尺寸
-                device.style.width = `${newWidth}px`;
-                device.style.height = `${newHeight}px`;
-                
-                // 更新位置（对于左侧和顶部的手柄）
-                if (direction.includes('w')) {
-                    const actualDeltaX = startWidth - newWidth;
-                    device.style.left = `${startLeft + actualDeltaX}px`;
-                }
-                if (direction.includes('n')) {
-                    const actualDeltaY = startHeight - newHeight;
-                    device.style.top = `${startTop + actualDeltaY}px`;
-                }
-                
-                device.style.transform = 'none';
-            }
-            
-            function handleResizeEnd(e) {
-                if (!isResizing) return;
-                
-                isResizing = false;
-                
-                // 保存配置
-                const rect = device.getBoundingClientRect();
-                const config = loadConfig();
-                config.width = rect.width;
-                config.left = rect.left;
-                config.top = rect.top;
-                saveConfig(config);
-            }
-            
-            handle.addEventListener('mousedown', handleResizeStart);
-            document.addEventListener('mousemove', handleResizeMove);
-            document.addEventListener('mouseup', handleResizeEnd);
-            
-            handle.addEventListener('touchstart', handleResizeStart, { passive: false });
-            document.addEventListener('touchmove', handleResizeMove, { passive: false });
-            document.addEventListener('touchend', handleResizeEnd);
+        console.log('Device scale applied:', {
+            browser: navigator.userAgent.match(/\w+\/[\d.]+/)?.[0] || 'Unknown',
+            browserType: Object.keys(browser).find(key => browser[key]) || 'unknown',
+            viewportMethod: window.visualViewport ? 'visualViewport' : 'fallback',
+            viewportSize: `${viewportWidth}x${viewportHeight}`,
+            paddingHorizontal: paddingHorizontal.toFixed(1),
+            paddingVertical: paddingVertical.toFixed(1),
+            availableSize: `${availableWidth.toFixed(1)}x${availableHeight.toFixed(1)}`,
+            scaleX: scaleX.toFixed(3),
+            scaleY: scaleY.toFixed(3),
+            safetyFactor: safetyFactor,
+            finalScale: scale.toFixed(3)
         });
     }
 
@@ -509,38 +365,86 @@
             initializeEventListeners();
         }
         
-        const device = document.getElementById('iphone-device');
-        const dragHandle = document.getElementById('drag-handle');
-        
-        // 重置锁屏状态
+        // 重置锁屏状态（每次打开都显示锁屏）
         const lockscreen = overlay.querySelector('.lockscreen');
         if (lockscreen) {
             lockscreen.classList.remove('unlocked');
             lockscreen.style.transform = 'translateY(0)';
             lockscreen.style.opacity = '1';
+            lockscreen.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease';
         }
         
         overlay.classList.add('show');
         updateTime();
         
-        // 应用保存的配置
-        const config = loadConfig();
-        applyDeviceTransform(device, config);
+        // 应用缩放 - 延迟确保DOM完全渲染
+        setTimeout(() => {
+            applyDeviceScale();
+        }, 50);
         
-        // 初始化拖动和缩放
-        if (!isMobileDevice()) {
-            initializeDrag(device, dragHandle);
-            initializeResize(device);
-        }
+        // 再次确认缩放（某些浏览器需要）
+        setTimeout(() => {
+            applyDeviceScale();
+        }, 200);
         
-        // 每分钟更新一次时间
-        const timeInterval = setInterval(() => {
+        // 监听窗口大小变化
+        const resizeHandler = () => {
             if (overlay.classList.contains('show')) {
-                updateTime();
-            } else {
-                clearInterval(timeInterval);
+                // 使用防抖，避免频繁计算
+                clearTimeout(resizeHandler.timer);
+                resizeHandler.timer = setTimeout(() => {
+                    applyDeviceScale();
+                }, 100);
             }
-        }, 60000);
+        };
+        
+        window.addEventListener('resize', resizeHandler);
+        window.addEventListener('orientationchange', resizeHandler);
+        
+        // 监听visualViewport变化（更精确的视口变化检测）
+        if (window.visualViewport) {
+            const visualViewportHandler = () => {
+                if (overlay.classList.contains('show')) {
+                    clearTimeout(visualViewportHandler.timer);
+                    visualViewportHandler.timer = setTimeout(() => {
+                        applyDeviceScale();
+                    }, 100);
+                }
+            };
+            window.visualViewport.addEventListener('resize', visualViewportHandler);
+            window.visualViewport.addEventListener('scroll', visualViewportHandler);
+            
+            // 清理函数中也要移除这些监听器
+            const originalCleanup = () => {
+                window.removeEventListener('resize', resizeHandler);
+                window.removeEventListener('orientationchange', resizeHandler);
+                if (window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', visualViewportHandler);
+                    window.visualViewport.removeEventListener('scroll', visualViewportHandler);
+                }
+            };
+            
+            // 每分钟更新一次时间
+            const timeInterval = setInterval(() => {
+                if (overlay.classList.contains('show')) {
+                    updateTime();
+                } else {
+                    clearInterval(timeInterval);
+                    originalCleanup();
+                }
+            }, 60000);
+        } else {
+            // 每分钟更新一次时间（无visualViewport支持的浏览器）
+            const timeInterval = setInterval(() => {
+                if (overlay.classList.contains('show')) {
+                    updateTime();
+                } else {
+                    clearInterval(timeInterval);
+                    window.removeEventListener('resize', resizeHandler);
+                    window.removeEventListener('orientationchange', resizeHandler);
+                }
+            }, 60000);
+        }
     }
 
     // 隐藏iPhone模拟器
@@ -555,6 +459,7 @@
     function showShutdownOverlay() {
         const shutdownOverlay = document.getElementById('shutdown-overlay');
         if (shutdownOverlay) {
+            // 重置滑块状态
             resetSlider();
             shutdownOverlay.classList.add('show');
         }
@@ -565,6 +470,7 @@
         const shutdownOverlay = document.getElementById('shutdown-overlay');
         if (shutdownOverlay) {
             shutdownOverlay.classList.remove('show');
+            // 隐藏时也重置，确保下次打开时状态正确
             setTimeout(() => {
                 resetSlider();
             }, 300);
@@ -598,24 +504,30 @@
         const shutdownOverlay = document.getElementById('shutdown-overlay');
         
         if (screen) {
+            // 先隐藏关机界面
             if (shutdownOverlay) {
                 shutdownOverlay.style.transition = 'opacity 0.3s ease';
                 shutdownOverlay.style.opacity = '0';
             }
             
+            // 延迟后开始关机动画
             setTimeout(() => {
                 screen.classList.add('shutting-down');
             }, 300);
             
+            // 关机动画完成后清理
             setTimeout(() => {
                 hideiPhoneSimulator();
                 screen.classList.remove('shutting-down');
                 hideShutdownOverlay();
                 
+                // 重置关机界面
                 if (shutdownOverlay) {
                     shutdownOverlay.style.transition = '';
                     shutdownOverlay.style.opacity = '';
                 }
+                
+                // 重置滑块（通过hideShutdownOverlay中的resetSlider处理）
             }, 1500);
         }
     }
@@ -641,6 +553,7 @@
             const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
             startX = clientX;
             
+            // 获取当前thumb的位置
             const transform = window.getComputedStyle(thumb).transform;
             if (transform && transform !== 'none') {
                 const matrix = new DOMMatrix(transform);
@@ -669,16 +582,20 @@
             
             thumb.style.transform = `translateX(${currentX}px)`;
             
+            // 计算进度百分比
             const progress = currentX / maxSlide;
             
+            // 更新红色轨道填充
             track.classList.add('sliding');
             track.style.setProperty('--slide-progress', `${progress * 100}%`);
             
+            // 计算文字透明度
             const textElement = document.querySelector('.shutdown-slider-text');
             if (textElement) {
                 textElement.style.opacity = 1 - progress;
             }
             
+            // 如果滑到底部，触发关机
             if (currentX >= maxSlide * 0.9) {
                 isDragging = false;
                 shutdownAnimation();
@@ -691,10 +608,12 @@
             
             const maxSlide = getMaxSlide();
             
+            // 如果没有滑到底，回弹
             if (currentX < maxSlide * 0.9) {
                 thumb.style.transition = 'transform 0.3s ease';
                 thumb.style.transform = 'translateX(0)';
                 
+                // 重置红色轨道
                 track.style.setProperty('--slide-progress', '0%');
                 setTimeout(() => {
                     track.classList.remove('sliding');
@@ -710,10 +629,12 @@
             thumbStartX = 0;
         }
         
+        // 鼠标事件
         thumb.addEventListener('mousedown', handleStart);
         document.addEventListener('mousemove', handleMove);
         document.addEventListener('mouseup', handleEnd);
         
+        // 触摸事件
         thumb.addEventListener('touchstart', handleStart, { passive: false });
         document.addEventListener('touchmove', handleMove, { passive: false });
         document.addEventListener('touchend', handleEnd);
@@ -737,6 +658,7 @@
             startTime = Date.now();
             isDragging = true;
             
+            // 移除过渡效果，使拖动更流畅
             lockscreen.style.transition = 'none';
         }
         
@@ -747,13 +669,16 @@
             const touch = e.touches ? e.touches[0] : e;
             currentY = touch.clientY;
             
+            // 计算移动距离（只允许向上滑动）
             const deltaY = currentY - startY;
             
             if (deltaY < 0) {
+                // 向上滑动，应用阻尼效果
                 const damping = 0.6;
                 const translateY = deltaY * damping;
                 lockscreen.style.transform = `translateY(${translateY}px)`;
                 
+                // 根据滑动距离调整透明度
                 const opacity = 1 + (deltaY / 500);
                 lockscreen.style.opacity = Math.max(0, opacity);
             }
@@ -765,26 +690,35 @@
             isDragging = false;
             const deltaY = currentY - startY;
             const deltaTime = Date.now() - startTime;
-            const velocity = Math.abs(deltaY) / deltaTime;
+            const velocity = Math.abs(deltaY) / deltaTime; // 像素/毫秒
             
+            // 恢复过渡效果
             lockscreen.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease';
             
+            // 判断是否解锁：向上滑动超过150px 或 快速向上滑动（速度>0.5px/ms）
             if (deltaY < -150 || (deltaY < -50 && velocity > 0.5)) {
+                // 解锁
                 lockscreen.classList.add('unlocked');
                 
+                // 添加震动反馈（如果支持）
                 if (navigator.vibrate) {
                     navigator.vibrate(10);
                 }
+                
+                console.log('锁屏已解锁');
             } else {
+                // 回弹
                 lockscreen.style.transform = 'translateY(0)';
                 lockscreen.style.opacity = '1';
             }
         }
         
+        // 鼠标事件（桌面端）
         lockscreen.addEventListener('mousedown', handleStart);
         document.addEventListener('mousemove', handleMove);
         document.addEventListener('mouseup', handleEnd);
         
+        // 触摸事件（移动端）
         lockscreen.addEventListener('touchstart', handleStart, { passive: false });
         document.addEventListener('touchmove', handleMove, { passive: false });
         document.addEventListener('touchend', handleEnd);
@@ -793,7 +727,7 @@
 
     // 初始化事件监听器
     function initializeEventListeners() {
-        // 灵动岛长按事件
+        // 灵动岛长按事件 - 显示关机界面
         const dynamicIsland = document.getElementById('dynamic-island');
         if (dynamicIsland) {
             let pressTimer;
@@ -802,10 +736,11 @@
                 e.preventDefault();
                 pressTimer = setTimeout(() => {
                     showShutdownOverlay();
+                    // 添加震动反馈（如果支持）
                     if (navigator.vibrate) {
                         navigator.vibrate(50);
                     }
-                }, 500);
+                }, 500); // 长按500ms
             }
             
             function cancelPress() {
@@ -829,7 +764,10 @@
             });
         }
         
+        // 初始化滑动关机
         initializeSlider();
+        
+        // 初始化锁屏滑动解锁
         initializeLockscreenSwipe();
 
         // 点击overlay背景关闭（仅桌面端）
@@ -856,6 +794,7 @@
         const appIcons = document.querySelectorAll('.app-icon, .dock-icon');
         appIcons.forEach(icon => {
             icon.addEventListener('click', function() {
+                // 这里可以添加打开应用的逻辑
                 console.log('应用被点击:', this.querySelector('.app-name')?.textContent || 'Dock应用');
             });
         });
@@ -865,18 +804,34 @@
     function initPhoneButton() {
         const phoneBtn = document.getElementById('btn-phone');
         if (phoneBtn) {
+            // 移除可能存在的旧事件监听器
             const newPhoneBtn = phoneBtn.cloneNode(true);
             phoneBtn.parentNode.replaceChild(newPhoneBtn, phoneBtn);
             
+            // 添加新的事件监听器
             newPhoneBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 showiPhoneSimulator();
             });
             
-            console.log('iPhone模拟器已初始化 - 16:9可拖动缩放模态框');
+            const browser = detectBrowser();
+            const browserName = Object.keys(browser).find(key => browser[key]) || 'unknown';
+            console.log('iPhone模拟器已初始化 - 浏览器:', browserName);
         }
     }
+    
+    // 页面可见性变化时重新计算（处理某些浏览器的特殊情况）
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            const overlay = document.getElementById('iphone-simulator-overlay');
+            if (overlay && overlay.classList.contains('show')) {
+                setTimeout(() => {
+                    applyDeviceScale();
+                }, 100);
+            }
+        }
+    });
 
     // 页面加载完成后初始化
     if (document.readyState === 'loading') {
