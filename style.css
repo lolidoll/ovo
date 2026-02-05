@@ -142,6 +142,15 @@
             z-index: 100;
         }
         
+        /* Opera浏览器全屏模式下的顶部导航栏适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .top-nav {
+                position: fixed;
+                top: 0;
+                display: flex;
+            }
+        }
+        
         .user-info {
             display: flex;
             align-items: center;
@@ -566,6 +575,18 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            /* 确保在全屏模式下搜索栏可见 */
+            margin-top: 0;
+        }
+        
+        /* Opera浏览器全屏模式适配 */
+        @supports (-webkit-appearance: none) {
+            @media (display-mode: fullscreen), (display-mode: standalone) {
+                .search-bar {
+                    position: sticky;
+                    top: 0;
+                }
+            }
         }
         .search-input {
             width: 100%;
@@ -598,6 +619,20 @@
             padding: 0;
             margin-top: -45px;
             padding-top: 45px;
+        }
+        
+        /* Opera浏览器全屏模式下的消息页面适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .msg-page {
+                margin-top: 0;
+                padding-top: 0;
+            }
+            
+            .msg-page .search-bar {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
         }
         
         .msg-list {
@@ -772,6 +807,20 @@
             padding: 0;
             margin-top: -45px;
             padding-top: 45px;
+        }
+        
+        /* Opera浏览器全屏模式下的好友页面适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .friend-page {
+                margin-top: 0;
+                padding-top: 0;
+            }
+            
+            .friend-page .search-bar {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
         }
         
         .friend-content {

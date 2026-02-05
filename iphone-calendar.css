@@ -1,0 +1,474 @@
+/**
+ * iPhone 日历应用样式
+ * 完全参考iOS原生设计
+ */
+
+.iphone-calendar-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.iphone-calendar-page.show {
+    transform: translateX(0);
+}
+
+/* 头部 */
+.calendar-header {
+    position: relative;
+    height: 44px;
+    background: #1c1c1e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 0.5px solid #2c2c2e;
+    flex-shrink: 0;
+}
+
+.calendar-back-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.calendar-back-btn svg {
+    width: 13px;
+    height: 21px;
+}
+
+.calendar-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.calendar-generate-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 17px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+}
+
+.calendar-generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 内容区域 */
+.calendar-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 空状态 */
+.calendar-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.calendar-empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.calendar-empty-text {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.calendar-empty-hint {
+    font-size: 15px;
+    color: #8e8e93;
+    line-height: 1.4;
+}
+
+/* 加载状态 */
+.calendar-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+}
+
+.calendar-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #2c2c2e;
+    border-top-color: #ff3b30;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.calendar-loading-text {
+    margin-top: 16px;
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+/* 日历数据 */
+.calendar-data {
+    padding: 0;
+}
+
+/* 月份视图 */
+.calendar-month-view {
+    background: #1c1c1e;
+    padding: 16px;
+    margin-bottom: 8px;
+}
+
+.calendar-month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.calendar-month-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.calendar-today-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+/* 星期标题 */
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8e8e93;
+    padding: 4px 0;
+}
+
+/* 日期网格 */
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.calendar-day:hover {
+    background: #2c2c2e;
+}
+
+.calendar-day.other-month {
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    background: #ff3b30;
+}
+
+.calendar-day.today .calendar-day-number {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.calendar-day.has-event {
+    background: #2c2c2e;
+}
+
+.calendar-day-number {
+    font-size: 15px;
+    color: #ffffff;
+    font-weight: 400;
+}
+
+.calendar-day-dots {
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.calendar-day-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #ff3b30;
+}
+
+/* 事件列表 */
+.calendar-events-section {
+    background: #000000;
+    padding: 16px;
+}
+
+.calendar-events-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.calendar-event-item {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #ff3b30;
+}
+
+.calendar-event-item:last-child {
+    margin-bottom: 0;
+}
+
+.calendar-event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.calendar-event-time {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.calendar-event-date {
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+.calendar-event-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.calendar-event-description {
+    font-size: 15px;
+    color: #8e8e93;
+    line-height: 1.4;
+}
+
+.calendar-event-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+.calendar-event-location svg {
+    width: 14px;
+    height: 14px;
+    fill: #8e8e93;
+}
+
+/* 事件类型颜色 */
+.calendar-event-item.work {
+    border-left-color: #0a84ff;
+}
+
+.calendar-event-item.personal {
+    border-left-color: #ff3b30;
+}
+
+.calendar-event-item.holiday {
+    border-left-color: #ff9500;
+}
+
+.calendar-event-item.birthday {
+    border-left-color: #ff2d55;
+}
+
+.calendar-event-item.meeting {
+    border-left-color: #5e5ce6;
+}
+
+.calendar-event-item.reminder {
+    border-left-color: #30d158;
+}
+
+/* 节假日标记 */
+.calendar-holiday-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff9500;
+}
+
+/* 农历/节气显示 */
+.calendar-lunar {
+    font-size: 9px;
+    color: #8e8e93;
+    margin-top: 1px;
+}
+
+.calendar-lunar.festival {
+    color: #ff3b30;
+}
+
+/* 滚动条样式 */
+.calendar-content::-webkit-scrollbar {
+    width: 0;
+}
+
+/* 事件详情弹窗 */
+.calendar-event-detail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    z-index: 10;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-event-detail.show {
+    transform: translateY(0);
+}
+
+.calendar-event-detail-header {
+    height: 44px;
+    background: #1c1c1e;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 0.5px solid #2c2c2e;
+}
+
+.calendar-event-detail-back {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.calendar-event-detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+}
+
+.calendar-event-detail-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+.calendar-event-detail-info {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.calendar-event-detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 0.5px solid #2c2c2e;
+}
+
+.calendar-event-detail-row:last-child {
+    border-bottom: none;
+}
+
+.calendar-event-detail-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.calendar-event-detail-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: #8e8e93;
+}
+
+.calendar-event-detail-text {
+    flex: 1;
+}
+
+.calendar-event-detail-label {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 4px;
+}
+
+.calendar-event-detail-value {
+    font-size: 17px;
+    color: #ffffff;
+}

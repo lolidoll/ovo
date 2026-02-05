@@ -1,0 +1,403 @@
+/**
+ * iPhone 健康应用样式
+ * 完全参考iOS原生设计
+ */
+
+.iphone-health-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.iphone-health-page.show {
+    transform: translateX(0);
+}
+
+/* 头部 */
+.health-header {
+    position: relative;
+    height: 44px;
+    background: #1c1c1e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 0.5px solid #2c2c2e;
+    flex-shrink: 0;
+}
+
+.health-back-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.health-back-btn svg {
+    width: 13px;
+    height: 21px;
+}
+
+.health-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.health-generate-btn {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 17px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+}
+
+.health-generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 内容区域 */
+.health-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 空状态 */
+.health-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.health-empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.health-empty-text {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.health-empty-hint {
+    font-size: 15px;
+    color: #8e8e93;
+    line-height: 1.4;
+}
+
+/* 加载状态 */
+.health-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+}
+
+.health-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #2c2c2e;
+    border-top-color: #ff3b30;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.health-loading-text {
+    margin-top: 16px;
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+/* 健康数据 */
+.health-data {
+    padding: 20px 16px;
+}
+
+/* 主要指标卡片 */
+.health-main-card {
+    background: linear-gradient(135deg, #ff3b30 0%, #ff453a 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+}
+
+.health-main-title {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
+}
+
+.health-main-value {
+    font-size: 48px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.health-main-unit {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.health-main-subtitle {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 8px;
+}
+
+/* 指标网格 */
+.health-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.health-metric-card {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.health-metric-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.health-metric-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.health-metric-icon.heart {
+    background: linear-gradient(135deg, #ff2d55 0%, #ff375f 100%);
+}
+
+.health-metric-icon.sleep {
+    background: linear-gradient(135deg, #5e5ce6 0%, #7c7aff 100%);
+}
+
+.health-metric-icon.exercise {
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+}
+
+.health-metric-icon.mind {
+    background: linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%);
+}
+
+.health-metric-title {
+    font-size: 15px;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.health-metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.health-metric-subtitle {
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+/* 活动记录 */
+.health-activities {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.health-activities-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.health-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 0.5px solid #2c2c2e;
+}
+
+.health-activity-item:last-child {
+    border-bottom: none;
+}
+
+.health-activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.health-activity-info {
+    flex: 1;
+}
+
+.health-activity-name {
+    font-size: 17px;
+    color: #ffffff;
+    margin-bottom: 2px;
+}
+
+.health-activity-detail {
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+.health-activity-time {
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+/* 睡眠图表 */
+.health-sleep-chart {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.health-sleep-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.health-sleep-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 100px;
+    margin-bottom: 12px;
+}
+
+.health-sleep-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.health-sleep-bar-fill {
+    width: 20px;
+    background: linear-gradient(180deg, #5e5ce6 0%, #7c7aff 100%);
+    border-radius: 4px;
+    min-height: 4px;
+}
+
+.health-sleep-bar-label {
+    font-size: 11px;
+    color: #8e8e93;
+}
+
+/* 心理健康 */
+.health-mindfulness {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.health-mindfulness-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.health-mindfulness-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.health-mindfulness-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#0a84ff 0deg, #0a84ff calc(var(--score) * 3.6deg), #2c2c2e calc(var(--score) * 3.6deg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.health-mindfulness-circle::before {
+    content: '';
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #1c1c1e;
+    position: absolute;
+}
+
+.health-mindfulness-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    z-index: 1;
+}
+
+.health-mindfulness-desc {
+    font-size: 15px;
+    color: #8e8e93;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* 滚动条样式 */
+.health-content::-webkit-scrollbar {
+    width: 0;
+}

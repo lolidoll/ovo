@@ -1,0 +1,485 @@
+/**
+ * iPhone 电话应用 - iOS 17 风格
+ * 完全还原iOS电话的高级感和原生app体验
+ */
+
+.iphone-phone-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #000 0%, #1c1c1e 100%);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.iphone-phone-page.show {
+    display: flex;
+}
+
+/* 电话头部 */
+.phone-header {
+    position: relative;
+    padding: 60px 20px 20px;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+    z-index: 10;
+}
+
+.phone-back-btn {
+    position: absolute;
+    top: 50px;
+    left: 16px;
+    background: none;
+    border: none;
+    color: #0a84ff;
+    font-size: 17px;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 8px;
+    z-index: 11;
+    transition: opacity 0.2s;
+}
+
+.phone-back-btn:active {
+    opacity: 0.6;
+}
+
+.phone-back-btn svg {
+    width: 13px;
+    height: 21px;
+}
+
+.phone-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.phone-generate-btn {
+    position: absolute;
+    top: 56px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #0a84ff;
+    font-size: 17px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: opacity 0.2s;
+    z-index: 11;
+}
+
+.phone-generate-btn:active {
+    opacity: 0.6;
+}
+
+.phone-generate-btn.generating {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 电话内容区域 */
+.phone-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 0 20px;
+    background: #000;
+    -webkit-overflow-scrolling: touch;
+}
+
+.phone-content::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}
+
+/* 空状态 */
+.phone-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px;
+    text-align: center;
+}
+
+.phone-empty-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.phone-empty-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #8e8e93;
+    margin-bottom: 12px;
+}
+
+.phone-empty-hint {
+    font-size: 15px;
+    color: #636366;
+    line-height: 1.5;
+}
+
+/* 加载状态 */
+.phone-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px;
+    text-align: center;
+}
+
+.phone-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #0a84ff;
+    border-radius: 50%;
+    animation: phone-spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes phone-spin {
+    to { transform: rotate(360deg); }
+}
+
+.phone-loading-text {
+    font-size: 17px;
+    color: #8e8e93;
+}
+
+/* 联系人列表 */
+.phone-contacts {
+    padding: 20px 0;
+}
+
+.contact-section {
+    margin-bottom: 20px;
+}
+
+.contact-section-header {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: rgba(28, 28, 30, 0.8);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.contact-item:active {
+    background: rgba(58, 58, 60, 1);
+}
+
+.contact-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    overflow: hidden;
+}
+
+.contact-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-subtitle {
+    font-size: 15px;
+    color: #8e8e93;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-meta {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.contact-time {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 4px;
+}
+
+.contact-type {
+    font-size: 11px;
+    color: #8e8e93;
+    padding: 2px 8px;
+    background: rgba(142, 142, 147, 0.2);
+    border-radius: 4px;
+}
+
+.contact-type.incoming {
+    color: #30d158;
+    background: rgba(48, 209, 88, 0.15);
+}
+
+.contact-type.outgoing {
+    color: #0a84ff;
+    background: rgba(10, 132, 255, 0.15);
+}
+
+.contact-type.missed {
+    color: #ff453a;
+    background: rgba(255, 69, 58, 0.15);
+}
+
+/* 最近通话记录 */
+.phone-recent-calls {
+    margin-top: 20px;
+}
+
+.recent-call-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: rgba(28, 28, 30, 0.8);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.recent-call-item:active {
+    background: rgba(58, 58, 60, 1);
+}
+
+.call-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.call-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.call-icon.incoming {
+    color: #30d158;
+}
+
+.call-icon.outgoing {
+    color: #0a84ff;
+}
+
+.call-icon.missed {
+    color: #ff453a;
+}
+
+.call-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.call-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.call-detail {
+    font-size: 15px;
+    color: #8e8e93;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.call-duration {
+    color: #636366;
+}
+
+.call-time {
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+/* 统计卡片 */
+.phone-stats {
+    padding: 20px;
+    margin: 20px;
+    background: rgba(28, 28, 30, 0.8);
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-row:last-child {
+    border-bottom: none;
+}
+
+.stats-label {
+    font-size: 17px;
+    color: #fff;
+}
+
+.stats-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: #0a84ff;
+}
+
+.stats-value.total-calls {
+    color: #30d158;
+}
+
+.stats-value.missed-calls {
+    color: #ff453a;
+}
+
+/* 快速拨号 */
+.phone-keypad {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px;
+    background: rgba(28, 28, 30, 0.8);
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.keypad-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 28px;
+    font-weight: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin: 0 auto;
+}
+
+.keypad-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.95);
+}
+
+.keypad-sub {
+    font-size: 9px;
+    color: #8e8e93;
+    font-weight: 400;
+    margin-top: 2px;
+    letter-spacing: 1px;
+}
+
+/* 底部通话按钮 */
+.phone-call-actions {
+    padding: 0 20px 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.call-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: none;
+    background: #30d158;
+    color: #fff;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 20px rgba(48, 209, 88, 0.3);
+}
+
+.call-btn:active {
+    transform: scale(0.95);
+    background: #28c03d;
+}
+
+.call-btn svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* 分隔线 */
+.phone-divider {
+    height: 0.5px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+}

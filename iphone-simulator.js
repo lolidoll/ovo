@@ -118,34 +118,10 @@
                             <!-- 应用图标网格 -->
                             <div class="app-grid">
                                 <div class="app-icon">
-                                    <div class="app-icon-image app-messages">
-                                        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                                    <div class="app-icon-image app-notes">
+                                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                                     </div>
-                                    <span class="app-name">信息</span>
-                                </div>
-                                <div class="app-icon">
-                                    <div class="app-icon-image app-phone">
-                                        <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                                    </div>
-                                    <span class="app-name">电话</span>
-                                </div>
-                                <div class="app-icon">
-                                    <div class="app-icon-image app-safari">
-                                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                                    </div>
-                                    <span class="app-name">Safari</span>
-                                </div>
-                                <div class="app-icon">
-                                    <div class="app-icon-image app-music">
-                                        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                                    </div>
-                                    <span class="app-name">音乐</span>
-                                </div>
-                                <div class="app-icon">
-                                    <div class="app-icon-image app-photos">
-                                        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                                    </div>
-                                    <span class="app-name">照片</span>
+                                    <span class="app-name">备忘录</span>
                                 </div>
                                 <div class="app-icon">
                                     <div class="app-icon-image app-camera">
@@ -154,10 +130,21 @@
                                     <span class="app-name">相机</span>
                                 </div>
                                 <div class="app-icon">
-                                    <div class="app-icon-image app-mail">
-                                        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                                    <div class="app-icon-image app-screentime">
+                                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                                     </div>
-                                    <span class="app-name">邮件</span>
+                                    <span class="app-name">屏幕使用</span>
+                                </div>
+                                <div class="app-icon">
+                                    <div class="app-icon-image app-calendar">
+                                        <svg viewBox="0 0 24 24">
+                                            <rect x="4" y="5" width="16" height="16" rx="2" fill="white"/>
+                                            <rect x="4" y="5" width="16" height="5" rx="2" fill="#ff3b30"/>
+                                            <text x="12" y="17" font-size="8" font-weight="bold" text-anchor="middle" fill="#ff3b30">28</text>
+                                            <text x="12" y="8.5" font-size="3" font-weight="600" text-anchor="middle" fill="white">星期三</text>
+                                        </svg>
+                                    </div>
+                                    <span class="app-name">日历</span>
                                 </div>
                                 <div class="app-icon">
                                     <div class="app-icon-image app-maps">
@@ -166,28 +153,34 @@
                                     <span class="app-name">地图</span>
                                 </div>
                                 <div class="app-icon">
-                                    <div class="app-icon-image app-weather">
-                                        <svg viewBox="0 0 24 24"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+                                    <div class="app-icon-image app-health">
+                                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
                                     </div>
-                                    <span class="app-name">天气</span>
+                                    <span class="app-name">健康</span>
                                 </div>
                                 <div class="app-icon">
-                                    <div class="app-icon-image app-clock">
-                                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                                    <div class="app-icon-image app-wallet">
+                                        <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
                                     </div>
-                                    <span class="app-name">时钟</span>
+                                    <span class="app-name">钱包</span>
                                 </div>
                                 <div class="app-icon">
-                                    <div class="app-icon-image app-settings">
-                                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                                    <div class="app-icon-image app-mail">
+                                        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
                                     </div>
-                                    <span class="app-name">设置</span>
+                                    <span class="app-name">邮件</span>
                                 </div>
                                 <div class="app-icon">
-                                    <div class="app-icon-image app-appstore">
-                                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                                    <div class="app-icon-image app-douyin">
+                                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
                                     </div>
-                                    <span class="app-name">App Store</span>
+                                    <span class="app-name">抖音</span>
+                                </div>
+                                <div class="app-icon">
+                                    <div class="app-icon-image app-xiaohongshu">
+                                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                                    </div>
+                                    <span class="app-name">小红书</span>
                                 </div>
                             </div>
                         </div>
@@ -201,18 +194,21 @@
                                     </div>
                                 </div>
                                 <div class="dock-icon">
-                                    <div class="dock-icon-image dock-safari">
-                                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                                    </div>
-                                </div>
-                                <div class="dock-icon">
                                     <div class="dock-icon-image dock-messages">
                                         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
                                     </div>
                                 </div>
                                 <div class="dock-icon">
-                                    <div class="dock-icon-image dock-music">
-                                        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                                    <div class="dock-icon-image dock-safari">
+                                        <svg viewBox="0 0 24 24">
+                                            <circle cx="10" cy="10" r="6" fill="none" stroke="white" stroke-width="2"/>
+                                            <line x1="14.5" y1="14.5" x2="19" y2="19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="dock-icon">
+                                    <div class="dock-icon-image dock-settings">
+                                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                                     </div>
                                 </div>
                             </div>
@@ -794,8 +790,73 @@
         const appIcons = document.querySelectorAll('.app-icon, .dock-icon');
         appIcons.forEach(icon => {
             icon.addEventListener('click', function() {
-                // 这里可以添加打开应用的逻辑
-                console.log('应用被点击:', this.querySelector('.app-name')?.textContent || 'Dock应用');
+                const appName = this.querySelector('.app-name')?.textContent;
+                const iconImage = this.querySelector('.dock-icon-image');
+                const iconClass = iconImage ? iconImage.className : '';
+                console.log('应用被点击:', appName || 'Dock应用', iconClass);
+                
+                // 检查是否是Dock栏的电话图标
+                if (iconClass.includes('dock-phone')) {
+                    if (window.iPhonePhone) {
+                        window.iPhonePhone.show();
+                    }
+                    return;
+                }
+                
+                // 检查是否是Dock栏的短信图标（第二个）
+                if (iconClass.includes('dock-messages')) {
+                    if (window.iPhoneMessages) {
+                        window.iPhoneMessages.show();
+                    }
+                    return;
+                }
+                
+                // 检查是否是Dock栏的Safari浏览器图标（第三个）
+                if (iconClass.includes('dock-safari')) {
+                    if (window.iPhoneBrowser) {
+                        window.iPhoneBrowser.show();
+                    }
+                    return;
+                }
+                
+                // 根据应用名称打开对应页面
+                if (appName === '钱包') {
+                    if (window.iPhoneWallet) {
+                        window.iPhoneWallet.show();
+                    }
+                } else if (appName === '备忘录') {
+                    if (window.iPhoneNotes) {
+                        window.iPhoneNotes.show();
+                    }
+                } else if (appName === '相机') {
+                    if (window.iPhoneCamera) {
+                        window.iPhoneCamera.show();
+                    }
+                } else if (appName === '屏幕使用') {
+                    if (window.iPhoneScreenTime) {
+                        window.iPhoneScreenTime.show();
+                    }
+                } else if (appName === '日历') {
+                    if (window.iPhoneCalendar) {
+                        window.iPhoneCalendar.show();
+                    }
+                } else if (appName === '地图') {
+                    if (window.iPhoneMaps) {
+                        window.iPhoneMaps.show();
+                    }
+                } else if (appName === '健康') {
+                    if (window.iPhoneHealth) {
+                        window.iPhoneHealth.show();
+                    }
+                } else if (appName === '相册') {
+                    if (window.iPhonePhotos) {
+                        window.iPhonePhotos.show();
+                    }
+                } else if (appName === '邮件') {
+                    if (window.iPhoneMail) {
+                        window.iPhoneMail.show();
+                    }
+                }
             });
         });
     }

@@ -866,35 +866,22 @@
 }
 
 /* 应用特定颜色 - 真实iOS配色 */
-.app-messages { background: linear-gradient(135deg, #00d856 0%, #00b347 100%); }
-.app-phone { background: linear-gradient(135deg, #00d856 0%, #00b347 100%); }
-.app-safari { background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%); }
-.app-music { background: linear-gradient(135deg, #fa233b 0%, #fb5c74 100%); }
-.app-photos { 
-    background: linear-gradient(135deg, 
-        #ff3b30 0%, 
-        #ff9500 25%, 
-        #ffcc00 50%, 
-        #34c759 75%, 
-        #5ac8fa 100%
-    ); 
-}
+.app-notes { background: linear-gradient(135deg, #ffcc00 0%, #ff9500 100%); }
 .app-camera { background: linear-gradient(135deg, #8e8e93 0%, #636366 100%); }
-.app-mail { background: linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%); }
+.app-screentime { background: linear-gradient(135deg, #5e5ce6 0%, #7c7aff 100%); }
+.app-calendar { background: transparent; }
 .app-maps { background: linear-gradient(135deg, #34c759 0%, #30d158 100%); }
-.app-weather { background: linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%); }
-.app-clock { 
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.app-settings { background: linear-gradient(135deg, #8e8e93 0%, #636366 100%); }
-.app-appstore { background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%); }
+.app-health { background: linear-gradient(135deg, #ff3b30 0%, #ff453a 100%); }
+.app-wallet { background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%); }
+.app-mail { background: linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%); }
+.app-douyin { background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%); }
+.app-xiaohongshu { background: linear-gradient(135deg, #ff2442 0%, #ff6b6b 100%); }
 
 /* Dock应用配色 */
 .dock-phone { background: linear-gradient(135deg, #00d856 0%, #00b347 100%); }
-.dock-safari { background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%); }
 .dock-messages { background: linear-gradient(135deg, #00d856 0%, #00b347 100%); }
-.dock-music { background: linear-gradient(135deg, #fa233b 0%, #fb5c74 100%); }
+.dock-safari { background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%); }
+.dock-settings { background: linear-gradient(135deg, #8e8e93 0%, #636366 100%); }
 
 /* 滚动条样式 */
 .screen-content::-webkit-scrollbar {

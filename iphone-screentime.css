@@ -1,0 +1,438 @@
+/**
+ * iPhone 屏幕使用时间页面样式
+ * 完全参考iOS原生设计
+ */
+
+.iphone-screentime-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.iphone-screentime-page.show {
+    transform: translateX(0);
+}
+
+/* 头部 */
+.screentime-header {
+    position: relative;
+    height: 44px;
+    background: #1c1c1e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 0.5px solid #2c2c2e;
+    flex-shrink: 0;
+}
+
+.screentime-back-btn {
+    background: none;
+    border: none;
+    color: #0a84ff;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.screentime-back-btn svg {
+    width: 13px;
+    height: 21px;
+}
+
+.screentime-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.screentime-generate-btn {
+    background: none;
+    border: none;
+    color: #0a84ff;
+    font-size: 17px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+}
+
+.screentime-generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 内容区域 */
+.screentime-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 空状态 */
+.screentime-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.screentime-empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.screentime-empty-text {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.screentime-empty-hint {
+    font-size: 15px;
+    color: #8e8e93;
+    line-height: 1.4;
+}
+
+/* 加载状态 */
+.screentime-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+}
+
+.screentime-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #2c2c2e;
+    border-top-color: #0a84ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.screentime-loading-text {
+    margin-top: 16px;
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 屏幕使用时间内容 */
+.screentime-data {
+    padding: 20px 16px;
+}
+
+/* 总览卡片 */
+.screentime-overview {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.screentime-overview-title {
+    font-size: 13px;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.screentime-total-time {
+    font-size: 40px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.screentime-comparison {
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+.screentime-comparison.up {
+    color: #ff453a;
+}
+
+.screentime-comparison.down {
+    color: #30d158;
+}
+
+/* 图表区域 */
+.screentime-chart {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.screentime-chart-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.screentime-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    margin-bottom: 12px;
+}
+
+.screentime-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.screentime-bar-fill {
+    width: 24px;
+    background: linear-gradient(180deg, #0a84ff 0%, #0066cc 100%);
+    border-radius: 4px;
+    min-height: 4px;
+    transition: height 0.3s ease;
+}
+
+.screentime-bar-label {
+    font-size: 11px;
+    color: #8e8e93;
+}
+
+/* 应用列表 */
+.screentime-apps {
+    background: #1c1c1e;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.screentime-apps-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    padding: 16px 16px 12px;
+}
+
+.screentime-app-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 0.5px solid #2c2c2e;
+}
+
+.screentime-app-item:first-of-type {
+    border-top: none;
+}
+
+.screentime-app-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.screentime-app-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.screentime-app-name {
+    font-size: 17px;
+    color: #ffffff;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.screentime-app-category {
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+.screentime-app-time {
+    font-size: 17px;
+    color: #8e8e93;
+    font-weight: 500;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+/* 类别统计 */
+.screentime-categories {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.screentime-categories-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.screentime-category-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.screentime-category-item:last-child {
+    margin-bottom: 0;
+}
+
+.screentime-category-color {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.screentime-category-name {
+    flex: 1;
+    font-size: 15px;
+    color: #ffffff;
+}
+
+.screentime-category-time {
+    font-size: 15px;
+    color: #8e8e93;
+    margin-left: 12px;
+}
+
+.screentime-category-bar {
+    width: 100%;
+    height: 4px;
+    background: #2c2c2e;
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.screentime-category-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* 提取次数统计 */
+.screentime-pickups {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.screentime-pickups-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.screentime-pickups-count {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.screentime-pickups-label {
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+/* 通知统计 */
+.screentime-notifications {
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.screentime-notifications-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.screentime-notifications-count {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.screentime-notifications-label {
+    font-size: 15px;
+    color: #8e8e93;
+}
+
+/* 应用图标颜色变体 */
+.screentime-app-icon.social {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.screentime-app-icon.entertainment {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.screentime-app-icon.productivity {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.screentime-app-icon.reading {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.screentime-app-icon.creativity {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.screentime-app-icon.other {
+    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+}
+
+/* 滚动条样式 */
+.screentime-content::-webkit-scrollbar {
+    width: 0;
+}

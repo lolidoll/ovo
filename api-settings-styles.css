@@ -122,6 +122,12 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     font-weight: 400;
+    /* iOS Safari粘贴修复 - 允许文本选择和长按菜单 */
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+    touch-callout: default !important;
+    -webkit-user-drag: text;
 }
 
 #api-settings-page .modern-input:focus {
@@ -287,6 +293,12 @@
     background-repeat: no-repeat;
     background-position: right 16px center;
     padding-right: 40px;
+    /* iOS Safari粘贴修复 - 允许文本选择和长按菜单 */
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+    touch-callout: default !important;
+    -webkit-user-drag: text;
 }
 
 #api-settings-page .modern-select:focus {
@@ -294,6 +306,9 @@
     background: #ffffff;
     box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08),
                 0 2px 8px rgba(0, 0, 0, 0.04);
+    /* iOS Safari粘贴修复 - 聚焦时保持选择能力 */
+    -webkit-user-select: text !important;
+    user-select: text !important;
 }
 
 /* 主按钮样�?- 高级质感 */
