@@ -611,7 +611,7 @@
             /* 消息页面和好友页面为顶部导航栏和搜索栏预留空间 */
             .msg-page,
             .friend-page {
-                padding-top: 101px !important; /* 45px(导航栏) + 56px(搜索栏) */
+                padding-top: 110px !important; /* 45px(导航栏) + 65px(搜索栏包含padding) */
             }
             
             .msg-page .search-bar,
