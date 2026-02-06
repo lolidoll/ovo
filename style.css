@@ -589,25 +589,35 @@
         
         /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .search-bar {
+            /* 顶部导航栏保持固定在最顶部 */
+            .top-nav {
                 position: fixed !important;
                 top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 101 !important;
+            }
+            
+            /* 搜索栏固定在顶部导航栏下方 */
+            .search-bar {
+                position: fixed !important;
+                top: 45px !important; /* 顶部导航栏高度 */
                 left: 0 !important;
                 right: 0 !important;
                 width: 100% !important;
                 z-index: 100 !important;
             }
             
-            /* 消息页面和好友页面在搜索栏下添加padding */
+            /* 消息页面和好友页面为顶部导航栏和搜索栏预留空间 */
             .msg-page,
             .friend-page {
-                padding-top: 56px !important; /* 搜索栏高度 */
+                padding-top: 101px !important; /* 45px(导航栏) + 56px(搜索栏) */
             }
             
             .msg-page .search-bar,
             .friend-page .search-bar {
                 position: fixed !important;
-                top: 0 !important;
+                top: 45px !important; /* 顶部导航栏高度 */
                 left: 0 !important;
                 right: 0 !important;
                 width: 100% !important;
