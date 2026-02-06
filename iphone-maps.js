@@ -1,6 +1,7 @@
 /**
  * iPhone 地图应用
  * 调用主API生成角色的今日行程轨迹
+ * 完全参考备忘录实现
  */
 
 (function() {
@@ -54,25 +55,79 @@
         }
     }
 
-    // 获取当前角色信息
+    // 获取当前角色信息（从当前聊天页面获取，与备忘录完全一致）
     function getCurrentCharacter() {
-        const characterName = localStorage.getItem('currentCharacterName') || '角色';
-        const characterCard = localStorage.getItem('currentCharacterCard');
-        const userName = localStorage.getItem('userName') || '用户';
-        const userPersona = localStorage.getItem('userPersona') || '';
+        console.log('=== 地图 - 获取当前聊天角色信息 ===');
         
-        return {
-            name: characterName,
-            card: characterCard ? JSON.parse(characterCard) : null,
+        // 获取当前聊天的ID
+        const currentChatId = window.AppState?.currentChat?.id;
+        console.log('当前聊天ID:', currentChatId);
+        
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，使用默认值');
+            return {
+                name: '角色',
+                card: null,
+                userName: '用户',
+                userPersona: '',
+                summaries: []
+            };
+        }
+        
+        // 从conversations中找到对应的conversation
+        const conversation = window.AppState?.conversations?.find(c => c.id === currentChatId);
+        console.log('找到的conversation:', conversation);
+        
+        if (!conversation) {
+            console.warn('⚠️ 未找到对应的conversation，使用默认值');
+            return {
+                name: '角色',
+                card: null,
+                userName: '用户',
+                userPersona: '',
+                summaries: []
+            };
+        }
+        
+        // 从角色设置中获取用户名和人设
+        let userName = conversation.userNameForChar || window.AppState?.user?.name || '用户';
+        let userPersona = conversation.userPersonality || window.AppState?.user?.personality || '';
+        
+        console.log('----- 地图 - 角色设置信息 -----');
+        console.log('1. conversation.userNameForChar:', conversation.userNameForChar);
+        console.log('2. conversation.userPersonality:', conversation.userPersonality);
+        console.log('3. window.AppState?.user?.name:', window.AppState?.user?.name);
+        console.log('4. window.AppState?.user?.personality:', window.AppState?.user?.personality);
+        console.log('最终使用的用户名:', userName);
+        console.log('最终使用的人设:', userPersona ? userPersona.substring(0, 50) + '...' : '无');
+        console.log('=======================');
+        
+        // 提取角色信息
+        const characterInfo = {
+            name: conversation.name || '角色',
+            card: conversation.characterSetting || null,
             userName: userName,
-            userPersona: userPersona
+            userPersona: userPersona,
+            summaries: conversation.summaries || [],
+            id: currentChatId
         };
+        
+        console.log('✅ 地图 - 获取到的角色信息:', {
+            name: characterInfo.name,
+            userName: characterInfo.userName,
+            userPersona: characterInfo.userPersona ? '有' : '无',
+            hasCard: !!characterInfo.card,
+            summariesCount: characterInfo.summaries.length
+        });
+        console.log('========================');
+        
+        return characterInfo;
     }
 
-    // 获取最近对话
+    // 获取最近对话（与备忘录完全一致）
     function getRecentMessages() {
         const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
-        return messages.slice(-50);
+        return messages.slice(-50); // 最近50条
     }
 
     // 生成地图数据
@@ -84,6 +139,7 @@
         
         generateBtn.disabled = true;
         
+        // 显示加载状态
         content.innerHTML = `
             <div class="maps-loading">
                 <div class="maps-loading-spinner"></div>
@@ -95,20 +151,42 @@
             currentCharacter = getCurrentCharacter();
             const recentMessages = getRecentMessages();
             
-            const prompt = `你是${currentCharacter.name}，现在需要生成你今天的行程轨迹。
+            console.log('===== 地图 - 调试提示词构建 =====');
+            console.log('角色名:', currentCharacter.name);
+            console.log('用户名:', currentCharacter.userName);
+            console.log('是否有角色设定:', !!currentCharacter.card);
+            console.log('历史总结数:', currentCharacter.summaries?.length || 0);
+            console.log('最近消息数:', recentMessages.length);
+            
+            // 构建历史总结文本
+            let summariesText = '';
+            if (currentCharacter.summaries && currentCharacter.summaries.length > 0) {
+                summariesText = '\n历史总结：\n' + currentCharacter.summaries.join('\n');
+            }
+            
+            // 构建最近对话文本
+            let messagesText = '';
+            if (recentMessages.length > 0) {
+                messagesText = '\n最近对话（最近50条）：\n' +
+                    recentMessages.slice(-20).map(m => {
+                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        return `${role}: ${m.content}`;
+                    }).join('\n');
+            }
+            
+            // 构建提示词 - 要求返回纯JSON，不要任何其他内容
+            const prompt = `你是${currentCharacter.name}，请生成今日的行程轨迹数据。
 
 角色信息：
 - 角色名：${currentCharacter.name}
 - 用户名：${currentCharacter.userName}
-${currentCharacter.card ? `- 角色设定：${JSON.stringify(currentCharacter.card)}` : ''}
+${currentCharacter.card ? `- 角色设定：${currentCharacter.card}` : ''}
 ${currentCharacter.userPersona ? `- 用户设定：${currentCharacter.userPersona}` : ''}
+${summariesText}
+${messagesText}
 
-最近对话：
-${recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')}
-
-请根据角色性格、生活习惯、兴趣爱好，生成真实的今日行程轨迹。要求：
-
-1. 生成5-8个地点
+要求：
+1. 生成5-8个真实的行程地点
 2. 每个地点包含：
    - 地点名称（具体的地点，如"星巴克(中山路店)"、"公司"、"健身房"等）
    - 详细地址
@@ -123,7 +201,7 @@ ${recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')}
 4. 要有真实感和活人感，符合角色人设
 5. 总行程时间、总距离、访问地点数
 
-请以JSON格式返回，格式如下：
+直接返回JSON，不要任何说明文字或markdown标记：
 {
   "summary": {
     "totalTime": "8小时30分钟",
@@ -137,20 +215,23 @@ ${recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')}
       "address": "XX市XX区XX路XX号",
       "duration": 30,
       "type": "home"
-    },
-    {
-      "time": "09:00",
-      "location": "星巴克(中山路店)",
-      "address": "XX市XX区中山路123号",
-      "duration": 45,
-      "type": "food"
     }
   ]
 }`;
+            
+            console.log('完整提示词:', prompt);
+            console.log('========================');
 
+            // 调用主API
             const response = await callMainAPI(prompt);
+            
+            // 解析响应
             currentMapsData = parseMapsResponse(response);
             
+            // 保存到localStorage
+            saveMapsToStorage();
+            
+            // 渲染地图
             renderMaps();
             
         } catch (error) {
@@ -167,47 +248,140 @@ ${recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')}
         }
     }
 
-    // 调用主API
+    // 保存地图数据到localStorage
+    function saveMapsToStorage() {
+        try {
+            localStorage.setItem('iphoneMapsData', JSON.stringify({
+                mapsData: currentMapsData,
+                character: currentCharacter,
+                savedAt: Date.now()
+            }));
+        } catch (e) {
+            console.error('保存地图数据失败:', e);
+        }
+    }
+    
+    // 从localStorage加载地图数据
+    function loadMapsFromStorage() {
+        try {
+            const saved = localStorage.getItem('iphoneMapsData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // 检查是否是同一角色
+                if (data.character && data.character.name === getCurrentCharacter().name) {
+                    currentMapsData = data.mapsData || null;
+                    currentCharacter = data.character;
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.error('加载地图数据失败:', e);
+        }
+        return false;
+    }
+
+    // 调用主API（与备忘录完全一致）
     async function callMainAPI(prompt) {
-        const apiConfig = JSON.parse(localStorage.getItem('apiConfig') || '{}');
-        const apiUrl = apiConfig.url || '';
-        const apiKey = apiConfig.key || '';
-        const model = apiConfig.model || 'gpt-3.5-turbo';
-        
-        if (!apiUrl || !apiKey) {
-            throw new Error('请先配置API设置');
+        // 获取API配置
+        const api = window.AppState?.apiSettings;
+        if (!api || !api.endpoint || !api.selectedModel) {
+            throw new Error('请先在设置中配置API信息');
         }
         
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.8,
-                max_tokens: 2000
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API请求失败: ${response.status}`);
+        const apiKey = api.apiKey || '';
+        if (!apiKey) {
+            throw new Error('请先在设置中配置API密钥');
         }
         
-        const data = await response.json();
-        return data.choices[0].message.content;
+        // 规范化endpoint（与其他文件保持一致）
+        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
+        const endpoint = baseEndpoint + '/v1/chat/completions';
+        
+        const body = {
+            model: api.selectedModel,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 10000
+        };
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+        
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                throw new Error('API响应格式错误');
+            }
+            
+            return data.choices[0].message.content;
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('API请求超时（5分钟）');
+            }
+            throw error;
+        }
     }
 
     // 解析地图响应
     function parseMapsResponse(response) {
+        console.log('原始API响应:', response);
+        console.log('响应长度:', response.length);
+        
         try {
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            // 清理响应内容，移除markdown代码块标记
+            let cleanedResponse = response
+                .replace(/```json\s*/gi, '')
+                .replace(/```\s*/gi, '')
+                .trim();
+            
+            console.log('清理后的响应:', cleanedResponse);
+            console.log('清理后长度:', cleanedResponse.length);
+            
+            // 尝试提取JSON对象
+            let jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/s);
             if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+                try {
+                    const jsonStr = jsonMatch[0];
+                    console.log('找到JSON对象，长度:', jsonStr.length);
+                    
+                    // 修复可能的JSON格式问题
+                    const fixedJson = jsonStr
+                        .replace(/,\s*\]/g, ']')  // 移除尾随逗号
+                        .replace(/,\s*\}/g, '}');   // 移除尾随逗号
+                    
+                    const parsed = JSON.parse(fixedJson);
+                    console.log('成功解析JSON:', parsed);
+                    
+                    // 验证数据结构
+                    if (parsed.summary && parsed.timeline && Array.isArray(parsed.timeline)) {
+                        return parsed;
+                    }
+                } catch (jsonError) {
+                    console.log('JSON解析失败:', jsonError);
+                }
             }
+            
+            console.warn('使用默认地图数据');
             return getDefaultMapsData();
+            
         } catch (error) {
             console.error('解析响应失败:', error);
             return getDefaultMapsData();
@@ -367,6 +541,13 @@ ${recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')}
         const mapsPage = document.getElementById('iphone-maps-page');
         if (mapsPage) {
             mapsPage.classList.add('show');
+            
+            // 尝试加载已保存的地图数据
+            if (!currentMapsData) {
+                if (loadMapsFromStorage() && currentMapsData) {
+                    renderMaps();
+                }
+            }
         }
     }
 

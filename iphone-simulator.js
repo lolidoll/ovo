@@ -100,11 +100,6 @@
                                         <!-- 可以添加通知卡片 -->
                                     </div>
                                     <div class="lockscreen-bottom">
-                                        <div class="lockscreen-shortcuts">
-                                            <div class="lockscreen-shortcut lockscreen-camera">
-                                                <i class="fas fa-camera"></i>
-                                            </div>
-                                        </div>
                                         <div class="lockscreen-indicator">
                                             <div class="lockscreen-swipe-bar"></div>
                                         </div>

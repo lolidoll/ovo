@@ -117,13 +117,43 @@ const MindStateManager = (function() {
         
         let mindState = {};
         
-        // 字段定义 - 按照AI可能输出的顺序
+        // 字段定义 - 必须与AI实际输出的标签完全一致
         const fieldDefinitions = [
+            { key: 'location', labels: ['位置', 'Location'] },
             { key: 'outfit', labels: ['穿搭', 'Outfit'] },
-            { key: 'mood', labels: ['心情', 'Mood'] },
-            { key: 'action', labels: ['动作', 'Action'] },
-            { key: 'thought', labels: ['心声', 'Thought'] },
-            { key: 'badThought', labels: ['坏心思', 'Bad Thought'] },
+            // 基础指标
+            { key: 'stamina', labels: ['体力', 'Stamina'] },
+            { key: 'staminaDesc', labels: ['状态', 'Status'] },
+            { key: 'sanity', labels: ['理智', 'Sanity'] },
+            { key: 'sanityDesc', labels: ['理智线', 'Mental Line'] },
+            { key: 'stress', labels: ['压力', 'Stress'] },
+            { key: 'stressSource', labels: ['压力源', 'Stress Source'] },
+            // 情感羁绊 - 注意：主标签（百分比）和子标签（描述）是相同的
+            { key: 'possessiveness', labels: ['占有欲', 'Possessiveness'] },
+            { key: 'possessivenessAction', labels: ['占有欲行为', 'Possessiveness Action'] },
+            { key: 'jealousy', labels: ['醋意值', 'Jealousy'] },
+            { key: 'jealousyTrigger', labels: ['醋意值触发', 'Jealousy Trigger'] },
+            { key: 'security', labels: ['安全感', 'Security'] },
+            { key: 'securityDesc', labels: ['安全感状态', 'Security Status'] },
+            // 欲望
+            { key: 'excitement', labels: ['兴奋度', 'Excitement'] },
+            { key: 'excitementDesc', labels: ['兴奋度描述', 'Excitement Desc'] },
+            { key: 'sensitivity', labels: ['敏感度', 'Sensitivity'] },
+            { key: 'weakPoints', labels: ['敏感度描述', 'G点状态', 'Sensitivity Desc'] },
+            { key: 'desire', labels: ['渴望程度', 'Desire Level'] },
+            { key: 'desireDesc', labels: ['渴望', 'Desire'] },
+            { key: 'bodyReaction', labels: ['身体反应', 'Body Reaction'] },
+            { key: 'bodyTrait', labels: ['体征', 'Physical Trait'] },
+            { key: 'bodyLower', labels: ['下身', 'Lower Body'] },
+            { key: 'bodyInstinct', labels: ['本能', 'Instinct'] },
+            // 随身物品
+            { key: 'coreItem', labels: ['核心物品', 'Core Item'] },
+            { key: 'consumable', labels: ['消耗品', 'Consumable'] },
+            { key: 'hiddenItem', labels: ['隐藏物品', 'Hidden Item'] },
+            // 心声
+            { key: 'mindVoice', labels: ['心声', 'Inner Voice'] },
+            { key: 'hiddenMeaning', labels: ['潜台词', '真意', 'Subtext'] },
+            // 好感度
             { key: 'affinity', labels: ['好感度', 'Affinity'] },
             { key: 'affinityChange', labels: ['好感度变化', 'Affinity Change'] },
             { key: 'affinityReason', labels: ['好感度原因', 'Reason'] }
@@ -137,12 +167,12 @@ const MindStateManager = (function() {
             for (const label of fieldDef.labels) {
                 // 创建更灵活的匹配模式
                 const patterns = [
-                    // 模式1：标签：内容（到下一个已知标签或结尾）- 不跨行
-                    new RegExp(`${label}[：:]+\\s*([^\\n【]*?)\\s*(?=\\n|(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]|$)`, 'i'),
-                    // 模式2：标签：内容（单行，包括空格）
-                    new RegExp(`${label}[：:]+\\s*([^\\n]+?)\\s*$`, 'gmi'),
-                    // 模式3：标签：内容（更宽松，匹配到任何非【】字符）
-                    new RegExp(`${label}[：:]\\s*([^【]*?)(?=\\s*(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因)[：:]|\\s*$)`, 'i')
+                    // 模式1：标签：内容（单行，匹配到换行符）
+                    new RegExp(`${label}[：:]+\\s*([^\\n]+)`, 'i'),
+                    // 模式2：标签：内容（多行，匹配到下一个标签）
+                    new RegExp(`${label}[：:]\\s*([\\s\\S]*?)(?=\\n(?:位置|穿搭|体力|状态|理智|理智线|压力|压力源|占有欲|占有欲行为|醋意值|醋意值触发|安全感|安全感状态|兴奋度|兴奋度描述|敏感度|敏感度描述|G点状态|渴望程度|渴望|身体反应|体征|下身|本能|核心物品|消耗品|隐藏物品|心声|潜台词|真意|好感度|好感度变化|好感度原因|基础指标|情感羁绊|欲望|随身物品)[：:]|$)`, 'i'),
+                    // 模式3：标签：内容（宽松模式）
+                    new RegExp(`${label}[：:]\\s*(.+?)(?=\\n\\n|$)`, 'is')
                 ];
                 
                 for (const pattern of patterns) {
@@ -150,7 +180,9 @@ const MindStateManager = (function() {
                     if (match && match[1]) {
                         value = match[1].trim();
                         // 移除多余的标点和标记
-                        value = value.replace(/^[：:]/, '').trim();
+                        value = value.replace(/^[：:]+/, '').trim();
+                        // 移除开头的换行符
+                        value = value.replace(/^\n+/, '').trim();
                         // 如果找到了有效值，就停止寻找
                         if (value && value.length > 0) {
                             break;
@@ -165,12 +197,15 @@ const MindStateManager = (function() {
             }
             
             if (value && value.length > 0) {
-                // 清理值：移除可能的多余标记和换行，但保留有意义的内容
-                value = value.replace(/【.*?】/g, '').replace(/\s+/g, ' ').trim();
+                // 清理值：移除可能的多余标记
+                value = value.replace(/【.*?】/g, '').trim();
+                
+                // 保留必要的换行，但移除多余的空白
+                value = value.replace(/\n{3,}/g, '\n\n').trim();
                 
                 // 防止字段值过长被其他字段内容污染
-                if (value.length > 500) {
-                    value = value.substring(0, 500);
+                if (value.length > 1000) {
+                    value = value.substring(0, 1000);
                 }
                 
                 // 特殊处理数值字段
@@ -209,19 +244,59 @@ const MindStateManager = (function() {
      * @returns {string} 心声系统提示词
      */
     function getMindStateSystemPrompt() {
-        return `【重要】必须每次在回复最后添加以下格式的心声信息，不能省略、不能变更格式、不能使用多消息格式：
+        return `【重要】必须每次在回复最后添加以下格式的心声信息，不能省略、不能变更格式：
 
-【心声】穿搭：{描述角色的服装、配饰、整体风格与细节。要求：符合角色设定，场景合理，细节具体。举例参考：'上身穿着一件淡蓝色的棉麻衬衫，袖口微微卷起；下装是深灰色的休闲九分裤，脚踩一双白色帆布鞋。左手腕系着一条编织红绳，胸前挂着一枚小小的银杏叶胸针。整体风格干净简约，带着几分慵懒随性。'} 心情：{描述角色当前的情绪状态。要求：细腻真实，可包含矛盾情绪，用比喻或意象增强画面感。举例参考：'平静中带着一丝雀跃，像是阴天里透过云层洒下的微弱阳光。上午的事情顺利完成，下午还有期待已久的独处时间。内心有些小满足，但表面上依然维持着淡漠从容的样子。'} 动作：{描述角色正在进行或习惯性的小动作。要求：自然流畅，体现角色性格，符合当前场景。举例参考：'靠在窗边的懒人沙发上，手指无意识地轻轻敲击着扶手。偶尔抬头望向窗外，似乎在思考什么，又像只是单纯地发呆。翻开一半的书放在手边，茶杯里的水已经凉透了。'} 心声：{角色内心未说出口的想法。要求：真实、细腻，可包含矛盾、犹豫、期待等复杂情绪。举例参考：'今天的阳光真好，要是能一直这样就好了。那件事要不要找个机会说出口呢？其实……有点在意他今天说的那句话。'} 坏心思：{角色内心的小邪念、小算计、恶作剧想法等。要求：符合角色性格，可爱调皮或腹黑狡黠，不能过分阴暗。举例参考：'嘿嘿，要是他知道我其实早就看到他发的消息了，会是什么表情呢？不过故意晾他一会儿也挺有意思的，反正他也不会生气……大概吧。'} 好感度：{对用户的好感度数值，范围0-100。要求：必须是整数，根据本次对话的愉快程度和历史互动合理变化} 好感度变化：{本次对话好感度的变化值。要求：必须是整数，可以是正数（+5）或负数（-3），范围-10到+10} 好感度原因：{本次好感度变化的具体原因。要求：简洁说明，20字以内。举例参考：'聊得很开心' '被逗笑了' '有点小误会'}
+【心声】
+位置：(当前所在位置的具体场景地点以及相对位置）
+穿搭: （上装与下装描述(材质/状态)、关键饰品(暗示性格或关系)，注意描述细节：如领口敞开的程度、衣物上沾染的气味、或是某处显眼的污渍/褶皱。)
 
-IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
-1. 心声MUST be placed at the very end of your response on a separate line
-2. Do NOT split this into multiple [MSG] blocks - 心声 must be in the SAME response as your main dialogue
-3. Format must be EXACTLY: 【心声】[all fields on one line separated by spaces]
-4. All fields MUST have content, NO empty fields
-5. Use Chinese colons 【：】not English colons【:】
-6. Example format: 【心声】穿搭：details here... 心情：details here... 动作：details here... 心声：details here... 坏心思：details here... 好感度：75 好感度变化：+5 好感度原因：互相理解
-7. CRITICAL: DO NOT use [MSG1][/MSG1] or [WAIT] format for the 心声 section
-8. Your main dialogue CAN be split into multiple messages, but 心声 must always be at the very end as ONE complete line
+基础指标：
+体力: ▮▮▮▮▮▯▯▯▯▯ (xx%)
+状态：(状态描述此处填写约15-30字，描述身体当前的疲劳程度或爆发力储备。)
+
+理智: ▮▮▯▯▯▯▯▯▯▯ (xx%)
+理智线：(精神侧写，此处填写约15-30字，描述理智线的状态。例：红灯闪烁，全凭此时此刻你在他视线范围内吊着一口气。)
+
+压力: ▮▮▮▮▮▮▮▮▯▯ (xx%)
+压力源：(列举2-3个具体来源。例：外界的噪音、无法触碰你的焦虑、被抛弃的妄想。)
+
+[情感羁绊]
+占有欲: ▮▮▮▮▮▮▮▮▯▯ (xx%)
+占有欲行为：(他此时想要做什么来确认主权？例：想要把名字刻在你的骨血里。)
+
+醋意值: ▮▮▮▮▮▮▮▮▯▯ (xx%)
+醋意值触发：(他对什么感到不满？例：仅仅是路过的风吹起了你的头发，他都觉得那是冒犯。)
+
+安全感: ▮▮▮▮▮▮▮▮▯▯ (xx%)
+安全感状态：(他是否感到安全？若破碎，需要何种特定行为修复？例：急需通过疼痛或体温来确认存在感。)
+
+[欲望]
+兴奋度: ▮▮▮▮▯▯▯▯▯▯ (xx%)
+兴奋度描述：(此处描写身体的直接反馈。例：处于"待机"状态，但引信已经暴露在外，等待点火。)
+
+敏感度: ▮▮▮▮▮▮▮▮▯▯ (xx%)
+敏感度描述：(列举3-4个具体部位目前的反应。包含：声音变化、肌肉颤抖、体温升高等细节。)
+
+渴望程度: ▮▮▮▮▮▮▯▯▯▯ (xx%)
+渴望：(意象化描述，心理层面的渴求：他此时想要如何对待你，或希望被你如何对待？需包含矛盾感或强烈的情绪色彩。)
+
+[身体反应]
+- 体征：(面部/皮肤/汗水等微观描写。例：眼角泛起生理性的泪花，脖颈青筋浮现。)
+- 下身：(此处可大胆描写其充血、勃起程度或体液分泌情况。)
+- 本能：(动物性的冲动。例：想要撕咬、想要筑巢、想要臣服。)
+
+[随身物品]
+- 核心物品：(对他意义重大的物品，通常与你有关。)
+- 消耗品：(香烟、糖果、药物等，体现生活习惯。)
+- 隐藏物品：(平时不轻易示人的物品，暗示其阴暗面或深情。)
+
+[此时此刻的心声]
+心声：(此处填写角色的台词/独白，语气需极度符合人设，包含停顿、喘息或语气词)
+潜台词：(此处揭露他口是心非之下，灵魂深处最卑微或最狂乱的祈求。建议使用第二人称"你"来增强冲击力)
+
+好感度：[0-100整数] 好感度变化：[±10] 好感度原因：[20字以内]
+
+IMPORTANT: 心声必须在回复最后、不能分割到多个MSG、所有字段必须有内容、使用中文冒号：
 `;
     }
 
@@ -251,11 +326,30 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
         
         const mindItems = [
             { key: 'affinity', label: '好感度', format: 'affinity' },
+            { key: 'location', label: '位置' },
             { key: 'outfit', label: '穿搭' },
-            { key: 'mood', label: '心情' },
-            { key: 'action', label: '动作' },
-            { key: 'thought', label: '心声' },
-            { key: 'badThought', label: '坏心思' }
+            { key: 'stamina', label: '体力' },
+            { key: 'staminaDesc', label: '状态描述' },
+            { key: 'sanity', label: '理智' },
+            { key: 'sanityDesc', label: '精神侧写' },
+            { key: 'stress', label: '压力' },
+            { key: 'stressSource', label: '压力源' },
+            { key: 'possessiveness', label: '占有欲' },
+            { key: 'possessivenessAction', label: '行为预测' },
+            { key: 'jealousy', label: '醋意值' },
+            { key: 'jealousyTrigger', label: '触发阈值' },
+            { key: 'security', label: '安全感' },
+            { key: 'securityDesc', label: '状态详述' },
+            { key: 'excitement', label: '兴奋度' },
+            { key: 'excitementDesc', label: '阶段描述' },
+            { key: 'sensitivity', label: '敏感度' },
+            { key: 'weakPoints', label: 'G点/弱点' },
+            { key: 'desire', label: '渴望程度' },
+            { key: 'desireDesc', label: '意象化描述' },
+            { key: 'bodyReaction', label: '身体反应' },
+            { key: 'items', label: '随身物品' },
+            { key: 'innerVoice', label: '此时此刻的心声' },
+            { key: 'subtext', label: '潜台词/真意' }
         ];
         
         // 获取当前状态
@@ -337,7 +431,7 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             }
             
             // 检查字段值是否被污染（包含其他标签的内容）
-            const hasOtherLabels = /穿搭|心情|动作|心声|坏心思|好感度/.test(String(value));
+            const hasOtherLabels = /位置|穿搭|体力|状态描述|理智|精神侧写|压力|压力源|占有欲|行为预测|醋意值|触发阈值|安全感|状态详述|兴奋度|阶段描述|敏感度|G点|弱点|渴望程度|意象化描述|身体反应|随身物品|此时此刻的心声|潜台词|真意|好感度/.test(String(value));
             
             content += `
                 <div style="margin-bottom:clamp(12px,2.5vw,14px);padding:clamp(16px,3.5vw,20px);background:linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,250,252,0.95));border-radius:16px;border:1px solid rgba(255,218,228,0.4);box-shadow:0 6px 20px rgba(255,182,193,0.12);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,182,193,0.2)';this.style.transform='translateY(-3px)';this.style.borderColor='rgba(255,192,203,0.5)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,182,193,0.12)';this.style.transform='translateY(0)';this.style.borderColor='rgba(255,218,228,0.4)'">
@@ -446,11 +540,30 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
                         ${affinityDisplay}
                         ${Object.entries(state).filter(([key]) => !['affinity', 'affinityChange', 'affinityReason', 'timestamp', 'messageId', 'failed', 'reason', 'failedReason'].includes(key)).map(([key, value]) => {
                             const labels = {
+                                'location': '位置',
                                 'outfit': '穿搭',
-                                'mood': '心情',
-                                'action': '动作',
-                                'thought': '心声',
-                                'badThought': '坏心思'
+                                'stamina': '体力',
+                                'staminaDesc': '状态描述',
+                                'sanity': '理智',
+                                'sanityDesc': '精神侧写',
+                                'stress': '压力',
+                                'stressSource': '压力源',
+                                'possessiveness': '占有欲',
+                                'possessivenessAction': '行为预测',
+                                'jealousy': '醋意值',
+                                'jealousyTrigger': '触发阈值',
+                                'security': '安全感',
+                                'securityDesc': '状态详述',
+                                'excitement': '兴奋度',
+                                'excitementDesc': '阶段描述',
+                                'sensitivity': '敏感度',
+                                'weakPoints': 'G点/弱点',
+                                'desire': '渴望程度',
+                                'desireDesc': '意象化描述',
+                                'bodyReaction': '身体反应',
+                                'items': '随身物品',
+                                'innerVoice': '此时此刻的心声',
+                                'subtext': '潜台词/真意'
                             };
                             if (!labels[key]) return '';
                             return `<div style="position:relative;margin-bottom:clamp(10px,2.5vw,12px);line-height:1.8;"><span style="color:#ff85a6;font-size:clamp(11px,2.5vw,12px);font-weight:700;">${labels[key]}：</span><span style="color:#9b7a9f;font-size:clamp(12px,3vw,13px);">${escapeHtml(String(value))}</span></div>`;
@@ -599,6 +712,25 @@ IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
             if (!conv.mindStates) {
                 conv.mindStates = [];
             }
+            
+            // 自动计算好感度变化
+            if (typeof mindStateData.affinity === 'number') {
+                // 获取上一次的好感度
+                let previousAffinity = 50; // 默认初始好感度
+                if (conv.mindStates.length > 0) {
+                    const lastMindState = conv.mindStates[conv.mindStates.length - 1];
+                    if (typeof lastMindState.affinity === 'number') {
+                        previousAffinity = lastMindState.affinity;
+                    }
+                }
+                
+                // 计算变化值
+                const change = mindStateData.affinity - previousAffinity;
+                mindStateData.affinityChange = change;
+                
+                console.log(`💕 好感度变化计算: ${previousAffinity} → ${mindStateData.affinity} (${change >= 0 ? '+' : ''}${change})`);
+            }
+            
             // 添加时间戳（消息ID稍后添加）
             mindStateData.timestamp = new Date().toISOString();
             mindStateData.messageId = 'pending';  // 临时标记，稍后更新

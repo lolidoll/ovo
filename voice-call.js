@@ -39,6 +39,11 @@
     let messageQueue = [];
     let isProcessingQueue = false;
     
+    // 消息气泡自动隐藏系统
+    let messageHideTimers = new Map(); // 存储每个消息的隐藏定时器
+    let isUserInteracting = false;
+    let interactionTimeout = null;
+    
     /**
      * 初始化语音通话系统
      */
@@ -50,6 +55,9 @@
         
         // 创建来电弹窗
         createIncomingCallModal();
+        
+        // 初始化消息气泡自动隐藏系统
+        initMessageAutoHide();
         
         // 暴露全局方法
         window.VoiceCallSystem = {
@@ -64,6 +72,90 @@
         };
         
         console.log('[VoiceCall] 语音通话系统初始化完成');
+    }
+    
+    /**
+     * 初始化消息气泡自动隐藏系统
+     */
+    function initMessageAutoHide() {
+        const callInterface = document.getElementById('voice-call-interface');
+        if (!callInterface) return;
+        
+        // 监听用户交互事件
+        const events = ['click', 'touchstart', 'touchmove', 'scroll', 'keydown'];
+        
+        events.forEach(event => {
+            callInterface.addEventListener(event, handleUserInteraction, { passive: true });
+        });
+    }
+    
+    /**
+     * 处理用户交互
+     */
+    function handleUserInteraction() {
+        isUserInteracting = true;
+        
+        // 清除之前的定时器
+        if (interactionTimeout) {
+            clearTimeout(interactionTimeout);
+        }
+        
+        // 显示所有消息
+        showAllMessages();
+        
+        // 5秒后如果没有新的交互，开始自动隐藏消息
+        interactionTimeout = setTimeout(() => {
+            isUserInteracting = false;
+            startAutoHideMessages();
+        }, 5000);
+    }
+    
+    /**
+     * 显示所有消息
+     */
+    function showAllMessages() {
+        const messages = document.querySelectorAll('.call-chat-message');
+        messages.forEach(msg => {
+            msg.classList.remove('hiding');
+            msg.style.opacity = '1';
+        });
+    }
+    
+    /**
+     * 开始自动隐藏消息
+     */
+    function startAutoHideMessages() {
+        const messages = document.querySelectorAll('.call-chat-message');
+        messages.forEach((msg, index) => {
+            // 延迟隐藏每条消息，营造渐隐效果
+            setTimeout(() => {
+                if (!isUserInteracting) {
+                    msg.classList.add('hiding');
+                }
+            }, index * 100);
+        });
+    }
+    
+    /**
+     * 为消息设置自动隐藏定时器
+     */
+    function scheduleMessageHide(messageElement) {
+        const messageId = Date.now() + Math.random();
+        
+        // 清除该消息之前的定时器
+        if (messageHideTimers.has(messageId)) {
+            clearTimeout(messageHideTimers.get(messageId));
+        }
+        
+        // 5秒后隐藏消息
+        const timer = setTimeout(() => {
+            if (!isUserInteracting) {
+                messageElement.classList.add('hiding');
+            }
+            messageHideTimers.delete(messageId);
+        }, 5000);
+        
+        messageHideTimers.set(messageId, timer);
     }
     
     /**
@@ -166,6 +258,7 @@
                 <img class="floating-avatar" id="floating-avatar" src="" alt="avatar">
                 <div class="floating-pulse"></div>
             </div>
+            <div class="floating-duration" id="floating-duration">00:00</div>
         `;
         
         document.body.appendChild(floatingWindow);
@@ -955,6 +1048,10 @@
                 console.error('❌ 未找到当前对话');
                 return;
             }
+
+            // 获取完整的conversation对象（包含summaries等信息）
+            const convId = currentChat.id;
+            const conversation = window.AppState?.conversations?.find(c => c.id === convId);
             
             // 显示AI正在说话
             addCallMessage('ai', '正在说话...');
@@ -968,7 +1065,15 @@
             const userName = currentChat.userNameForChar || window.AppState?.user?.name || '用户';
             const userPersonality = window.AppState?.user?.personality || '';
             
+            // 判断通话发起方
+            const isUserInitiated = callState.callType === 'outgoing';
+            const initiatorInfo = isUserInitiated
+                ? `【重要】这是${userName}主动打给你的电话，${userName}想和你说话。`
+                : `【重要】这是你主动打给${userName}的电话。`;
+
             let systemPrompt = `你正在与用户进行语音通话。
+
+${initiatorInfo}
 
 角色名称：${charName}
 角色设定：${charDescription}
@@ -981,7 +1086,8 @@
 回复要求：
 1. 用简短、口语化的方式回复，就像在打电话一样
 2. 每次回复1-2句话即可，不要太长
-3. 语气要自然，符合角色性格`;
+3. 语气要自然，符合角色性格
+4. 记住对方的名称是"${userName}"`;
 
             if (isAIInitiated) {
                 systemPrompt += `
@@ -1000,21 +1106,73 @@
                 content: systemPrompt
             });
             
+            // 添加角色的历史总结（summaries）作为上下文
+            if (conversation && conversation.summaries && conversation.summaries.length > 0) {
+                console.log('📞 [语音通话] 添加历史总结上下文，共', conversation.summaries.length, '条');
+                
+                const summariesContent = conversation.summaries.map((s, idx) => {
+                    const type = s.isAutomatic ? '自动总结' : '手动总结';
+                    const time = new Date(s.timestamp).toLocaleString('zh-CN');
+                    return `【${type} #${idx + 1}】(${time}, 基于${s.messageCount}条消息)\n${s.content}`;
+                }).join('\n\n');
+                
+                messages.push({
+                    role: 'system',
+                    content: `【历史对话总结】以下是你们之前的对话总结，请参考这些历史信息来理解你们的关系和背景：\n\n${summariesContent}\n\n请记住这些历史信息，让回复更加连贯和符合角色设定。`
+                });
+            }
+            
+            // 添加聊天页面最新的50条消息作为上下文
+            const chatMessages = window.AppState?.messages?.[convId] || [];
+            if (chatMessages.length > 0) {
+                const recentMessages = chatMessages.slice(-50); // 获取最新50条
+                console.log('📞 [语音通话] 添加聊天页面最近消息上下文，共', recentMessages.length, '条');
+                
+                const chatContext = recentMessages.map(msg => {
+                    const senderName = msg.sender === 'user' ? userName : charName;
+                    let content = msg.content || '';
+                    
+                    // 处理特殊消息类型的显示
+                    if (msg.type === 'voice') {
+                        content = '[语音消息]';
+                    } else if (msg.type === 'image') {
+                        content = '[图片消息]';
+                    } else if (msg.type === 'voicecall') {
+                        content = '[语音通话]';
+                    } else if (msg.type === 'videocall') {
+                        content = '[视频通话]';
+                    } else if (msg.type === 'location') {
+                        content = '[位置消息]';
+                    }
+                    
+                    return `${senderName}: ${content}`;
+                }).join('\n');
+                
+                messages.push({
+                    role: 'system',
+                    content: `【最近的聊天记录】以下是你们在聊天界面中最近的对话（最新50条）：\n\n${chatContext}\n\n这些是你们最近的聊天内容，请参考这些信息来保持对话的连贯性。`
+                });
+            }
+            
             // 添加通话聊天记录作为上下文
             const callMessages = document.querySelectorAll('.call-chat-message');
-            callMessages.forEach(msg => {
-                if (msg.classList.contains('call-chat-message-user')) {
-                    const text = msg.querySelector('.call-chat-text')?.textContent || '';
-                    if (text && text !== '正在说话...') {
-                        messages.push({ role: 'user', content: text });
+            if (callMessages.length > 0) {
+                console.log('📞 [语音通话] 添加通话内消息上下文，共', callMessages.length, '条');
+                
+                callMessages.forEach(msg => {
+                    if (msg.classList.contains('call-chat-message-user')) {
+                        const text = msg.querySelector('.call-chat-text')?.textContent || '';
+                        if (text && text !== '正在说话...') {
+                            messages.push({ role: 'user', content: text });
+                        }
+                    } else if (msg.classList.contains('call-chat-message-ai')) {
+                        const text = msg.querySelector('.call-chat-text')?.textContent || '';
+                        if (text && text !== '正在说话...') {
+                            messages.push({ role: 'assistant', content: text });
+                        }
                     }
-                } else if (msg.classList.contains('call-chat-message-ai')) {
-                    const text = msg.querySelector('.call-chat-text')?.textContent || '';
-                    if (text && text !== '正在说话...') {
-                        messages.push({ role: 'assistant', content: text });
-                    }
-                }
-            });
+                });
+            }
             
             // 添加当前用户消息
             if (!isAIInitiated && userMessage) {
@@ -1031,7 +1189,7 @@
                 model: api.selectedModel,
                 messages: messages,
                 temperature: 0.8,
-                max_tokens: 500, // 语音通话回复要简短
+                max_tokens: 10000, // 增加到10000，避免回复被截断
                 stream: false
             };
             
@@ -1076,13 +1234,9 @@
         messageDiv.className = `call-chat-message call-chat-message-${type}`;
         
         if (type === 'system') {
-            messageDiv.innerHTML = `<span class="call-chat-system-text">${content}</span>`;
+            messageDiv.innerHTML = `<span class="call-chat-system-text">${escapeHtml(content)}</span>`;
         } else {
-            messageDiv.innerHTML = `
-                <div class="call-chat-bubble">
-                    <div class="call-chat-text">${escapeHtml(content)}</div>
-                </div>
-            `;
+            messageDiv.innerHTML = `<div class="call-chat-text">${escapeHtml(content)}</div>`;
             
             // 记录非系统消息到通话对话历史
             if (type === 'user') {
@@ -1107,6 +1261,9 @@
                     console.log('[VoiceCall] MiniMax TTS 未配置，跳过语音播放');
                 }
             }
+            
+            // 为新消息设置自动隐藏定时器
+            scheduleMessageHide(messageDiv);
         }
         
         messagesContainer.appendChild(messageDiv);

@@ -1282,7 +1282,15 @@
             const durationText = currentDuration > 0 ?
                 `已通话 ${formatVideoDuration(currentDuration)}` : '';
             
+            // 判断通话发起方
+            const isUserInitiated = videoCallState.callType === 'outgoing';
+            const initiatorInfo = isUserInitiated
+                ? `【重要】这是${userName}主动打给你的视频电话，${userName}想和你视频聊天。`
+                : `【重要】这是你主动打给${userName}的视频电话。`;
+
             let systemPrompt = `你正在与用户进行视频通话。
+
+${initiatorInfo}
 
 角色名称：${charName}
 角色设定：${charDescription}
@@ -1297,7 +1305,8 @@
 2. 每次回复1-2句话即可，不要太长
 3. 语气要自然，符合角色性格
 4. 你知道你们正在进行视频通话，可以看到对方
-5. 可以偶尔提到看到对方的表情或动作（营造视频通话氛围）`;
+5. 可以偶尔提到看到对方的表情或动作（营造视频通话氛围）
+6. 记住对方的名称是"${userName}"`;
 
             if (isAIInitiated) {
                 systemPrompt += `
@@ -1316,21 +1325,58 @@
                 content: systemPrompt
             });
             
-            // 添加聊天页面的最近对话记录作为上下文
+            // 获取完整的conversation对象（包含summaries等信息）
             const convId = currentChat.id;
-            const recentChatMessages = window.AppState?.messages?.[convId] || [];
-            const recentCount = 20; // 读取最近20条聊天记录
-            const recentMessages = recentChatMessages.slice(-recentCount);
+            const conversation = window.AppState?.conversations?.find(c => c.id === convId);
             
-            recentMessages.forEach(msg => {
-                if (msg.type === 'text') {
-                    if (msg.sender === 'user') {
-                        messages.push({ role: 'user', content: msg.content });
-                    } else if (msg.sender === 'ai') {
-                        messages.push({ role: 'assistant', content: msg.content });
+            // 添加角色的历史总结（summaries）作为上下文
+            if (conversation && conversation.summaries && conversation.summaries.length > 0) {
+                console.log('[VideoCall] 添加历史总结上下文，共', conversation.summaries.length, '条');
+                
+                const summariesContent = conversation.summaries.map((s, idx) => {
+                    const type = s.isAutomatic ? '自动总结' : '手动总结';
+                    const time = new Date(s.timestamp).toLocaleString('zh-CN');
+                    return `【${type} #${idx + 1}】(${time}, 基于${s.messageCount}条消息)\n${s.content}`;
+                }).join('\n\n');
+                
+                messages.push({
+                    role: 'system',
+                    content: `【历史对话总结】以下是你们之前的对话总结，请参考这些历史信息来理解你们的关系和背景：\n\n${summariesContent}\n\n请记住这些历史信息，让回复更加连贯和符合角色设定。`
+                });
+            }
+            
+            // 添加聊天页面最新的50条消息作为上下文
+            const recentChatMessages = window.AppState?.messages?.[convId] || [];
+            if (recentChatMessages.length > 0) {
+                const recentCount = 50; // 读取最近50条聊天记录
+                const recentMessages = recentChatMessages.slice(-recentCount);
+                console.log('[VideoCall] 添加聊天页面最近消息上下文，共', recentMessages.length, '条');
+                
+                const chatContext = recentMessages.map(msg => {
+                    const senderName = msg.sender === 'user' ? userName : charName;
+                    let content = msg.content || '';
+                    
+                    // 处理特殊消息类型的显示
+                    if (msg.type === 'voice') {
+                        content = '[语音消息]';
+                    } else if (msg.type === 'image') {
+                        content = '[图片消息]';
+                    } else if (msg.type === 'voicecall') {
+                        content = '[语音通话]';
+                    } else if (msg.type === 'videocall') {
+                        content = '[视频通话]';
+                    } else if (msg.type === 'location') {
+                        content = '[位置消息]';
                     }
-                }
-            });
+                    
+                    return `${senderName}: ${content}`;
+                }).join('\n');
+                
+                messages.push({
+                    role: 'system',
+                    content: `【最近的聊天记录】以下是你们在聊天界面中最近的对话（最新50条）：\n\n${chatContext}\n\n这些是你们最近的聊天内容，请参考这些信息来保持对话的连贯性。`
+                });
+            }
             
             // 添加视频通话聊天记录作为上下文
             currentVideoCallConversation.forEach(msg => {
@@ -1356,7 +1402,7 @@
                 model: api.selectedModel,
                 messages: messages,
                 temperature: 0.8,
-                max_tokens: 500,
+                max_tokens: 10000, // 增加到10000，避免回复被截断
                 stream: false
             };
             

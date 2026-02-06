@@ -243,7 +243,7 @@ const RedEnvelopeModule = (function() {
      */
     function notifyAIAboutRedEnvelope(envelope, autoTrigger = false) {
         // 构建系统消息，告知AI用户发送了红包
-        const systemMessage = `[系统消息] 用户给你发送了一个红包，金额为${envelope.amount}元人民币（薯片币），留言："${envelope.message}"。你可以选择领取或退还这个红包。请用自然的方式回复用户，表达你的态度（领取或退还），不要提及系统消息。`;
+        const systemMessage = `[系统消息] 用户给你发送了一个红包，金额为${envelope.amount}元人民币，留言："${envelope.message}"。你可以选择领取或退还这个红包。请用自然的方式回复用户，表达你的态度（领取或退还），不要提及系统消息。`;
 
         // 将系统消息添加到对话历史中（但不显示在界面上）
         const convId = envelope.conversationId;

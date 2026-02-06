@@ -1,4 +1,4 @@
-/* iPhone 相册应用 - iOS原生样式 */
+/* iPhone 相册应用 - iOS原生白色主题 */
 
 .iphone-photos-page {
     position: absolute;
@@ -6,7 +6,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: #000000;
+    background: #ffffff;
     z-index: 2000;
     display: none;
     flex-direction: column;
@@ -26,34 +26,45 @@
     align-items: flex-end;
     justify-content: space-between;
     padding: 0 16px 10px;
-    background: #000000;
-    border-bottom: 0.33px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .photos-back-btn {
     background: none;
     border: none;
-    color: #0a84ff;
+    color: #007AFF;
     font-size: 17px;
-    padding: 0;
+    padding: 4px 8px;
+    margin: 0;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    gap: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     font-weight: 400;
     letter-spacing: -0.4px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    opacity: 0;
+    pointer-events: auto;
 }
 
 .photos-back-btn:active {
-    opacity: 0.4;
+    opacity: 0.5;
+    background-color: rgba(0, 122, 255, 0.1);
 }
 
 .photos-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
     letter-spacing: -0.4px;
     position: absolute;
     left: 50%;
@@ -61,32 +72,40 @@
 }
 
 .photos-generate-btn {
-    background: none;
+    background: #007AFF;
     border: none;
-    color: #0a84ff;
+    color: #ffffff;
     font-size: 17px;
-    padding: 0;
+    padding: 6px 16px;
+    margin: 0;
     cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-weight: 600;
     letter-spacing: -0.4px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+    opacity: 0;
+    pointer-events: auto;
 }
 
 .photos-generate-btn:active {
-    opacity: 0.4;
+    opacity: 0.7;
+    transform: scale(0.97);
 }
 
 .photos-generate-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.5;
     cursor: not-allowed;
+    background: #007AFF;
 }
 
 /* 相册内容 */
 .photos-content {
     flex: 1;
     overflow-y: auto;
-    padding: 2px;
-    background: #000000;
+    padding: 8px;
+    background: #f2f2f7;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -100,32 +119,46 @@
 
 .photo-item {
     aspect-ratio: 1;
-    background: #1c1c1e;
+    background: #ffffff;
     cursor: pointer;
     position: relative;
     overflow: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px;
+    padding: 12px 8px 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .photo-item:active {
-    opacity: 0.8;
+    transform: scale(0.95);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
 }
 
 .photo-item-text {
     font-size: 11px;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     letter-spacing: -0.2px;
-    line-height: 1.3;
+    line-height: 1.4;
     text-align: center;
     display: -webkit-box;
     -webkit-line-clamp: 6;
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-break: break-word;
+    font-weight: 400;
+}
+
+.photo-item-time {
+    font-size: 10px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    margin-top: 4px;
+    font-weight: 400;
 }
 
 /* 空状态 */
@@ -135,29 +168,35 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 40px 20px;
+    padding: 60px 20px;
     color: #8e8e93;
     text-align: center;
+    background: #ffffff;
+    border-radius: 12px;
+    margin: 8px;
 }
 
 .photos-empty-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-    opacity: 0.5;
+    font-size: 72px;
+    margin-bottom: 20px;
+    opacity: 0.6;
 }
 
 .photos-empty-text {
-    font-size: 17px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    letter-spacing: -0.4px;
+    font-size: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.5px;
     margin-bottom: 8px;
+    color: #000000;
+    font-weight: 600;
 }
 
 .photos-empty-hint {
     font-size: 15px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     letter-spacing: -0.4px;
     opacity: 0.7;
+    color: #8e8e93;
 }
 
 /* 加载状态 */
@@ -166,16 +205,19 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+    padding: 60px 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    margin: 8px;
 }
 
 .photos-loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(10, 132, 255, 0.2);
-    border-top-color: #0a84ff;
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(0, 122, 255, 0.15);
+    border-top-color: #007AFF;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -183,11 +225,12 @@
 }
 
 .photos-loading-text {
-    margin-top: 16px;
-    font-size: 15px;
-    color: #8e8e93;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    margin-top: 20px;
+    font-size: 17px;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     letter-spacing: -0.4px;
+    font-weight: 500;
 }
 
 /* 照片详情页（放大查看） */
@@ -197,7 +240,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: #000000;
+    background: #ffffff;
     z-index: 2001;
     display: none;
     flex-direction: column;
@@ -211,13 +254,15 @@
 }
 
 .photo-detail-header {
-    height: 54px;
+    height: 88px;
     display: flex;
     align-items: flex-end;
+    justify-content: flex-end;
     padding: 0 16px 10px;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
     position: absolute;
     top: 0;
     left: 0;
@@ -226,19 +271,24 @@
 }
 
 .photo-detail-close-btn {
-    background: none;
+    background: rgba(118, 118, 128, 0.12);
     border: none;
-    color: #0a84ff;
+    color: #007AFF;
     font-size: 17px;
-    padding: 0;
+    padding: 8px 20px;
+    margin: 0;
     cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-weight: 600;
     letter-spacing: -0.4px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
 }
 
 .photo-detail-close-btn:active {
-    opacity: 0.4;
+    opacity: 0.7;
+    transform: scale(0.95);
+    background: rgba(118, 118, 128, 0.2);
 }
 
 .photo-detail-content {
@@ -246,27 +296,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 70px 20px 20px;
+    padding: 100px 20px 20px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    background: #ffffff;
 }
 
 .photo-detail-card {
-    background: #1c1c1e;
-    border-radius: 16px;
-    padding: 24px;
+    background: #f9f9f9;
+    border-radius: 20px;
+    padding: 32px;
     max-width: 100%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    border: 0.5px solid rgba(0, 0, 0, 0.06);
 }
 
 .photo-detail-text {
     font-size: 17px;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     letter-spacing: -0.4px;
     line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-word;
+    font-weight: 400;
 }
 
 /* 滚动条隐藏 */

@@ -8,7 +8,6 @@
 
     let currentWalletData = null;
     let currentCharacter = null;
-    let isGenerating = false;
 
     // 创建钱包页面HTML
     function createWalletPage() {
@@ -21,7 +20,7 @@
                         </svg>
                         钱包
                     </button>
-                    <h1 class="wallet-title">钱包</h1>
+                    <div class="wallet-title">钱包</div>
                     <button class="wallet-generate-btn" id="wallet-generate-btn">生成</button>
                 </div>
                 
@@ -29,7 +28,7 @@
                     <div class="wallet-empty">
                         <div class="wallet-empty-icon">💳</div>
                         <div class="wallet-empty-text">暂无钱包数据</div>
-                        <div class="wallet-empty-hint">点击右上角"生成"按钮<br>创建角色的钱包记录</div>
+                        <div class="wallet-empty-hint">点击右上角"生成"按钮创建钱包记录</div>
                     </div>
                 </div>
             </div>
@@ -44,20 +43,21 @@
 
     // 初始化事件监听
     function initializeWalletEvents() {
+        // 返回按钮
         const backBtn = document.getElementById('wallet-back-btn');
-        const generateBtn = document.getElementById('wallet-generate-btn');
-        
         if (backBtn) {
-            backBtn.addEventListener('click', hideWalletPage);
+            backBtn.addEventListener('click', hideWallet);
         }
-        
+
+        // 生成按钮
+        const generateBtn = document.getElementById('wallet-generate-btn');
         if (generateBtn) {
             generateBtn.addEventListener('click', generateWalletData);
         }
     }
 
     // 显示钱包页面
-    function showWalletPage() {
+    function showWallet() {
         const walletPage = document.getElementById('iphone-wallet-page');
         if (!walletPage) {
             createWalletPage();
@@ -66,6 +66,13 @@
         const page = document.getElementById('iphone-wallet-page');
         if (page) {
             page.classList.add('show');
+            
+            // 尝试加载已保存的钱包数据
+            if (!currentWalletData) {
+                if (loadWalletFromStorage()) {
+                    renderWalletData(currentWalletData);
+                }
+            }
         }
         
         // 隐藏主屏幕
@@ -76,7 +83,7 @@
     }
 
     // 隐藏钱包页面
-    function hideWalletPage() {
+    function hideWallet() {
         const walletPage = document.getElementById('iphone-wallet-page');
         if (walletPage) {
             walletPage.classList.remove('show');
@@ -91,261 +98,382 @@
 
     // 生成钱包数据
     async function generateWalletData() {
-        if (isGenerating) {
-            return;
-        }
-
-        // 获取当前角色信息
-        const characterInfo = getCurrentCharacterInfo();
-        if (!characterInfo) {
-            showToast('请先在聊天页面打开一个角色对话');
-            return;
-        }
-
-        isGenerating = true;
         const generateBtn = document.getElementById('wallet-generate-btn');
-        if (generateBtn) {
-            generateBtn.classList.add('generating');
-            generateBtn.textContent = '生成中...';
-        }
-
+        const content = document.getElementById('wallet-content');
+        
+        if (!content || !generateBtn) return;
+        
+        generateBtn.disabled = true;
+        
         // 显示加载状态
-        showLoadingState();
-
+        content.innerHTML = `
+            <div class="wallet-loading">
+                <div class="wallet-loading-spinner"></div>
+                <div class="wallet-loading-text">正在生成钱包数据...</div>
+            </div>
+        `;
+        
         try {
-            // 调用主API生成钱包数据
-            const walletData = await callMainAPIForWallet(characterInfo);
+            currentCharacter = getCurrentCharacter();
+            const recentMessages = getRecentMessages();
             
-            if (walletData) {
-                currentWalletData = walletData;
-                currentCharacter = characterInfo;
-                renderWalletData(walletData);
+            console.log('===== 调试提示词构建 =====');
+            console.log('角色名:', currentCharacter.name);
+            console.log('用户名:', currentCharacter.userName);
+            console.log('是否有角色设定:', !!currentCharacter.card);
+            console.log('历史总结数:', currentCharacter.summaries?.length || 0);
+            console.log('最近消息数:', recentMessages.length);
+            
+            // 构建历史总结文本
+            let summariesText = '';
+            if (currentCharacter.summaries && currentCharacter.summaries.length > 0) {
+                summariesText = '\n历史总结：\n' + currentCharacter.summaries.join('\n');
             }
-        } catch (error) {
-            console.error('生成钱包数据失败:', error);
-            showErrorState(error.message || '生成失败，请重试');
-        } finally {
-            isGenerating = false;
-            if (generateBtn) {
-                generateBtn.classList.remove('generating');
-                generateBtn.textContent = '生成';
+            
+            // 构建最近对话文本
+            let messagesText = '';
+            if (recentMessages.length > 0) {
+                messagesText = '\n最近对话（最近50条）：\n' +
+                    recentMessages.slice(-20).map(m => {
+                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        return `${role}: ${m.content}`;
+                    }).join('\n');
             }
-        }
-    }
+            
+            // 构建提示词 - 要求返回纯JSON，不要任何其他内容
+            const prompt = `你是${currentCharacter.name}，请生成真实的钱包数据，包括卡片信息和今日交易记录。
 
-    // 获取当前角色信息
-    function getCurrentCharacterInfo() {
-        // 从全局AppState获取当前聊天角色
-        if (!window.AppState || !window.AppState.currentChat) {
-            return null;
-        }
-
-        const currentChat = window.AppState.currentChat;
-        const convId = currentChat.id;
-        
-        // 获取角色设定
-        const characterName = currentChat.name || '角色';
-        const characterAvatar = currentChat.avatar || '';
-        
-        // 获取角色设定（从conversation对象中）
-        let characterSetting = '';
-        const conversation = window.AppState.conversations.find(c => c.id === convId);
-        if (conversation && conversation.characterSetting) {
-            characterSetting = conversation.characterSetting;
-        }
-        
-        // 获取用户设定
-        let userSetting = '';
-        if (conversation && conversation.userSetting) {
-            userSetting = conversation.userSetting;
-        }
-        
-        // 获取用户名称
-        const userName = window.AppState.user?.name || '用户';
-        
-        // 获取最近50条对话
-        const messages = window.AppState.messages[convId] || [];
-        const recentMessages = messages.slice(-50);
-        
-        return {
-            convId,
-            characterName,
-            characterAvatar,
-            characterSetting,
-            userName,
-            userSetting,
-            recentMessages
-        };
-    }
-
-    // 调用主API生成钱包数据
-    async function callMainAPIForWallet(characterInfo) {
-        // 检查API配置
-        if (!window.MainAPIManager || !window.AppState.apiSettings) {
-            throw new Error('API未配置');
-        }
-
-        const api = window.AppState.apiSettings;
-        if (!api.endpoint || !api.selectedModel) {
-            throw new Error('请先配置API端点和模型');
-        }
-
-        // 构建对话历史摘要
-        let conversationSummary = '';
-        if (characterInfo.recentMessages && characterInfo.recentMessages.length > 0) {
-            conversationSummary = characterInfo.recentMessages
-                .map(msg => {
-                    const sender = msg.sender === 'user' ? characterInfo.userName : characterInfo.characterName;
-                    return `${sender}: ${msg.content}`;
-                })
-                .join('\n');
-        }
-
-        // 构建提示词
-        const prompt = `你是一个创意十足的AI助手，现在需要为角色"${characterInfo.characterName}"生成今日的钱包消费记录。
-
-【角色信息】
-角色名称: ${characterInfo.characterName}
-角色设定: ${characterInfo.characterSetting || '无'}
-
-【用户信息】
-用户名称: ${characterInfo.userName}
-用户设定: ${characterInfo.userSetting || '无'}
-
-【最近对话】
-${conversationSummary || '暂无对话记录'}
-
-【任务要求】
-请根据以上信息，生成一个真实、详细、有活人感的钱包消费记录。想象这是角色真实的手机钱包app，今天会有什么消费？
+角色信息：
+- 角色名：${currentCharacter.name}
+- 用户名：${currentCharacter.userName}
+${currentCharacter.card ? `- 角色设定：${currentCharacter.card}` : ''}
+${currentCharacter.userPersona ? `- 用户设定：${currentCharacter.userPersona}` : ''}
+${summariesText}
+${messagesText}
 
 要求：
-1. 生成5-10条今日消费记录
-2. 每条记录包含：商户名称、消费金额、消费时间、支付方式（银行卡/支付宝/微信/公交卡/地铁卡等）
-3. 消费内容要符合角色的性格、身份、生活习惯
+1. 生成3-5张卡片（银行卡、支付宝、微信、公交卡等）
+2. 生成8-12条今日交易记录
+3. 每条记录包含：商户名称、消费明细、金额、时间、类型、图标、支付方式
 4. 金额要合理，时间要符合逻辑（按时间倒序）
-5. 要有生活气息，比如早餐、午餐、咖啡、打车、购物等
-6. 可以包含一些有趣的细节，体现角色个性
+5. 要有生活气息，符合角色性格
+6. 必须返回完整的JSON格式
 
-【输出格式】
-请严格按照以下JSON格式输出，不要有任何其他文字：
-
+直接返回JSON，不要任何说明文字或markdown标记：
 {
   "cards": [
-    {
-      "type": "bank-card",
-      "name": "中国银行储蓄卡",
-      "balance": "12,580.50",
-      "number": "**** **** **** 8888",
-      "logo": "🏦"
-    },
-    {
-      "type": "alipay",
-      "name": "支付宝",
-      "balance": "3,256.80",
-      "number": "账户余额",
-      "logo": "💙"
-    },
-    {
-      "type": "wechat",
-      "name": "微信支付",
-      "balance": "1,580.00",
-      "number": "零钱余额",
-      "logo": "💚"
-    }
+    {"type": "bank-card", "name": "卡片名称", "balance": "余额", "number": "卡号", "logo": "图标"}
   ],
   "transactions": [
-    {
-      "title": "星巴克(万达店)",
-      "detail": "拿铁咖啡 x1",
-      "amount": "-38.00",
-      "time": "18:30",
-      "type": "expense",
-      "icon": "☕",
-      "paymentMethod": "支付宝"
-    }
+    {"title": "商户", "detail": "明细", "amount": "-金额", "time": "时间", "type": "expense/income", "icon": "图标", "paymentMethod": "支付方式"}
   ],
-  "stats": {
-    "todayExpense": "256.80",
-    "todayIncome": "0.00",
-    "monthExpense": "3,580.50"
-  }
+  "stats": {"todayExpense": "今日支出", "todayIncome": "今日收入", "monthExpense": "本月支出"}
 }`;
-
-        // 调用API
-        const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
-        const apiKey = api.apiKey || '';
-
-        const requestBody = {
-            model: api.selectedModel,
-            messages: [
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: 0.9,
-            max_tokens: 2000
-        };
-
-        const response = await fetch(baseEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            throw new Error(`API请求失败: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content || '';
-        
-        // 解析JSON
-        try {
-            // 尝试提取JSON（可能包含在代码块中）
-            let jsonStr = content;
-            const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                jsonStr = jsonMatch[1];
-            }
             
-            const walletData = JSON.parse(jsonStr);
-            return walletData;
-        } catch (e) {
-            console.error('解析API返回的JSON失败:', e);
-            console.log('原始内容:', content);
-            throw new Error('生成的数据格式错误');
-        }
-    }
+            console.log('完整提示词:', prompt);
+            console.log('========================');
 
-    // 显示加载状态
-    function showLoadingState() {
-        const content = document.getElementById('wallet-content');
-        if (content) {
-            content.innerHTML = `
-                <div class="wallet-loading">
-                    <div class="wallet-loading-spinner"></div>
-                    <div class="wallet-loading-text">正在生成钱包数据...</div>
-                </div>
-            `;
-        }
-    }
-
-    // 显示错误状态
-    function showErrorState(message) {
-        const content = document.getElementById('wallet-content');
-        if (content) {
+            // 调用主API
+            const response = await callMainAPI(prompt);
+            
+            // 解析响应
+            const walletData = parseWalletResponse(response);
+            
+            // 保存到localStorage
+            saveWalletToStorage(walletData);
+            
+            // 渲染钱包数据
+            renderWalletData(walletData);
+            
+        } catch (error) {
+            console.error('生成钱包数据失败:', error);
             content.innerHTML = `
                 <div class="wallet-empty">
                     <div class="wallet-empty-icon">⚠️</div>
                     <div class="wallet-empty-text">生成失败</div>
-                    <div class="wallet-empty-hint">${message}</div>
+                    <div class="wallet-empty-hint">${error.message || '请稍后重试'}</div>
                 </div>
             `;
+        } finally {
+            generateBtn.disabled = false;
         }
+    }
+    
+    // 保存钱包到localStorage
+    function saveWalletToStorage(walletData) {
+        try {
+            localStorage.setItem('iphoneWalletData', JSON.stringify({
+                data: walletData,
+                character: currentCharacter,
+                savedAt: Date.now()
+            }));
+        } catch (e) {
+            console.error('保存钱包数据失败:', e);
+        }
+    }
+    
+    // 从localStorage加载钱包
+    function loadWalletFromStorage() {
+        try {
+            const saved = localStorage.getItem('iphoneWalletData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // 检查是否是同一角色
+                if (data.character && data.character.name === getCurrentCharacter().name) {
+                    currentWalletData = data.data;
+                    currentCharacter = data.character;
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.error('加载钱包数据失败:', e);
+        }
+        return false;
+    }
+
+    // 获取当前角色信息（从当前聊天页面获取）
+    function getCurrentCharacter() {
+        console.log('=== 获取当前聊天角色信息 ===');
+        
+        // 获取当前聊天的ID
+        const currentChatId = window.AppState?.currentChat?.id;
+        console.log('当前聊天ID:', currentChatId);
+        
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，使用默认值');
+            return {
+                name: '角色',
+                card: null,
+                userName: '用户',
+                userPersona: '',
+                summaries: []
+            };
+        }
+        
+        // 从conversations中找到对应的conversation
+        const conversation = window.AppState?.conversations?.find(c => c.id === currentChatId);
+        console.log('找到的conversation:', conversation);
+        
+        if (!conversation) {
+            console.warn('⚠️ 未找到对应的conversation，使用默认值');
+            return {
+                name: '角色',
+                card: null,
+                userName: '用户',
+                userPersona: '',
+                summaries: []
+            };
+        }
+        
+        // 从角色设置中获取用户名和人设
+        let userName = conversation.userNameForChar || window.AppState?.user?.name || '用户';
+        let userPersona = conversation.userPersonality || window.AppState?.user?.personality || '';
+        
+        console.log('----- 角色设置信息 -----');
+        console.log('1. conversation.userNameForChar:', conversation.userNameForChar);
+        console.log('2. conversation.userPersonality:', conversation.userPersonality);
+        console.log('3. window.AppState?.user?.name:', window.AppState?.user?.name);
+        console.log('4. window.AppState?.user?.personality:', window.AppState?.user?.personality);
+        console.log('最终使用的用户名:', userName);
+        console.log('最终使用的人设:', userPersona ? userPersona.substring(0, 50) + '...' : '无');
+        console.log('=======================');
+        
+        // 提取角色信息
+        const characterInfo = {
+            name: conversation.name || '角色',
+            card: conversation.characterSetting || null,
+            userName: userName,
+            userPersona: userPersona,
+            summaries: conversation.summaries || [],
+            id: currentChatId
+        };
+        
+        console.log('✅ 获取到的角色信息:', {
+            name: characterInfo.name,
+            userName: characterInfo.userName,
+            userPersona: characterInfo.userPersona ? '有' : '无',
+            hasCard: !!characterInfo.card,
+            summariesCount: characterInfo.summaries.length
+        });
+        console.log('========================');
+        
+        return characterInfo;
+    }
+
+    // 获取最近对话
+    function getRecentMessages() {
+        const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        return messages.slice(-50); // 最近50条
+    }
+
+    // 调用主API
+    async function callMainAPI(prompt) {
+        // 获取API配置
+        const api = window.AppState?.apiSettings;
+        if (!api || !api.endpoint || !api.selectedModel) {
+            throw new Error('请先在设置中配置API信息');
+        }
+        
+        const apiKey = api.apiKey || '';
+        if (!apiKey) {
+            throw new Error('请先在设置中配置API密钥');
+        }
+        
+        // 规范化endpoint（与其他文件保持一致）
+        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
+        const endpoint = baseEndpoint + '/v1/chat/completions';
+        
+        const body = {
+            model: api.selectedModel,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 10000
+        };
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+        
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                throw new Error('API响应格式错误');
+            }
+            
+            return data.choices[0].message.content;
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('API请求超时（5分钟）');
+            }
+            throw error;
+        }
+    }
+
+    // 解析钱包响应
+    function parseWalletResponse(response) {
+        console.log('原始API响应:', response);
+        console.log('响应长度:', response.length);
+        
+        try {
+            // 清理响应内容，移除markdown代码块标记
+            let cleanedResponse = response
+                .replace(/```json\s*/gi, '')
+                .replace(/```\s*/gi, '')
+                .trim();
+            
+            console.log('清理后的响应:', cleanedResponse);
+            console.log('清理后长度:', cleanedResponse.length);
+            
+            // 尝试直接解析JSON
+            let jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    const jsonStr = jsonMatch[0];
+                    console.log('找到JSON对象，长度:', jsonStr.length);
+                    
+                    // 修复可能的JSON格式问题
+                    const fixedJson = jsonStr
+                        .replace(/,\s*\]/g, ']')  // 移除尾随逗号
+                        .replace(/,\s*}/g, '}');   // 移除尾随逗号
+                    
+                    const parsed = JSON.parse(fixedJson);
+                    console.log('解析的JSON成功');
+                    
+                    return parsed;
+                } catch (jsonError) {
+                    console.log('JSON解析失败，尝试其他方法:', jsonError);
+                }
+            }
+            
+            // 如果JSON解析失败，返回默认钱包数据
+            console.log('使用默认钱包数据');
+            return getDefaultWalletData();
+            
+        } catch (error) {
+            console.error('解析响应失败:', error);
+            // 返回默认钱包数据
+            return getDefaultWalletData();
+        }
+    }
+
+    // 获取默认钱包数据
+    function getDefaultWalletData() {
+        return {
+            cards: [
+                {
+                    type: 'bank-card',
+                    name: '银行卡',
+                    balance: '10,000.00',
+                    number: '**** **** **** 1234',
+                    logo: '🏦'
+                },
+                {
+                    type: 'alipay',
+                    name: '支付宝',
+                    balance: '5,000.00',
+                    number: '账户余额',
+                    logo: '💙'
+                },
+                {
+                    type: 'wechat',
+                    name: '微信支付',
+                    balance: '2,000.00',
+                    number: '零钱余额',
+                    logo: '💚'
+                }
+            ],
+            transactions: [
+                {
+                    title: '早餐',
+                    detail: '豆浆油条',
+                    amount: '-15.00',
+                    time: '08:30',
+                    type: 'expense',
+                    icon: '🍜',
+                    paymentMethod: '微信支付'
+                },
+                {
+                    title: '午餐',
+                    detail: '快餐',
+                    amount: '-35.00',
+                    time: '12:00',
+                    type: 'expense',
+                    icon: '🍱',
+                    paymentMethod: '支付宝'
+                },
+                {
+                    title: '咖啡',
+                    detail: '拿铁',
+                    amount: '-38.00',
+                    time: '15:30',
+                    type: 'expense',
+                    icon: '☕',
+                    paymentMethod: '支付宝'
+                }
+            ],
+            stats: {
+                todayExpense: '88.00',
+                todayIncome: '0.00',
+                monthExpense: '2,580.00'
+            }
+        };
     }
 
     // 渲染钱包数据
@@ -439,29 +567,31 @@ ${conversationSummary || '暂无对话记录'}
         content.innerHTML = html;
     }
 
-    // Toast提示
-    function showToast(message) {
-        if (window.showToast) {
-            window.showToast(message);
-        } else {
-            alert(message);
-        }
+    // 初始化
+    function init() {
+        // 等待iPhone模拟器加载完成
+        const checkInterval = setInterval(() => {
+            const screen = document.querySelector('.iphone-screen');
+            if (screen) {
+                clearInterval(checkInterval);
+                createWalletPage();
+                
+                console.log('✅ iPhone钱包模块已加载');
+            }
+        }, 100);
     }
-
-    // 导出到全局
-    window.iPhoneWallet = {
-        show: showWalletPage,
-        hide: hideWalletPage,
-        generate: generateWalletData
-    };
 
     // 页面加载完成后初始化
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ iPhone钱包模块已加载');
-        });
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        console.log('✅ iPhone钱包模块已加载');
+        init();
     }
+
+    // 导出函数
+    window.iPhoneWallet = {
+        show: showWallet,
+        hide: hideWallet
+    };
 
 })();

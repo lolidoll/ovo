@@ -3083,22 +3083,22 @@
                     let durationText = '';
                     
                     if (callStatus === 'calling') {
-                        statusText = '正在通话中';
+                        statusText = `语音通话中`;
                         statusIcon = `<div class="voicecall-icon calling-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="currentColor"/>
                             </svg>
                         </div>`;
                     } else if (callStatus === 'cancelled') {
-                        statusText = '已取消';
+                        statusText = `已取消`;
                         statusIcon = `<div class="voicecall-icon cancelled-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" fill="currentColor"/>
                             </svg>
                         </div>`;
                     } else if (callStatus === 'ended') {
-                        statusText = '已挂断';
-                        durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                        const durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                        statusText = durationText ? `已挂断，${durationText}` : `已挂断，由${senderName}挂断`;
                         statusIcon = `<div class="voicecall-icon ended-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z" fill="currentColor"/>
@@ -3141,22 +3141,22 @@
                     let durationText = '';
                     
                     if (callStatus === 'calling') {
-                        statusText = '正在视频通话中';
+                        statusText = `视频通话中`;
                         statusIcon = `<div class="videocall-icon calling-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/>
                             </svg>
                         </div>`;
                     } else if (callStatus === 'cancelled') {
-                        statusText = '已取消';
+                        statusText = `已取消`;
                         statusIcon = `<div class="videocall-icon cancelled-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" fill="currentColor"/>
                             </svg>
                         </div>`;
                     } else if (callStatus === 'ended') {
-                        statusText = '已挂断';
-                        durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                        const durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                        statusText = durationText ? `已挂断，${durationText}` : `已挂断`;
                         console.log('[VideoCall Render] ended状态 - callDuration:', callDuration, 'durationText:', durationText);
                         statusIcon = `<div class="videocall-icon ended-icon">
                             <svg viewBox="0 0 24 24" width="16" height="16">
@@ -6723,14 +6723,21 @@
             text = text.replace(/\n?\[.*?(thinking|thought|mindstate|internal|debug|system|instruction|assistant|role).*?\][\s\S]*?(?=\n|$)/gi, '');
             text = text.replace(/\n?\{.*?(thinking|thought|mindstate|internal|debug|system|instruction|assistant|role).*?\}[\s\S]*?(?=\n|$)/gi, '');
             
-            // 第四层：移除类似"穿搭："、"心情："等结构化数据
-            text = text.replace(/\n?(穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因|mood|outfit|action|thought|affinity)[:：][\s\S]*?(?=\n(?:穿搭|心情|动作|心声|坏心思|好感度|好感度变化|好感度原因|mood|outfit|action|thought|affinity)|$)/gi, '');
-            
+            // 第四层：移除类似"穿搭："、"心情："等结构化数据（包含所有新字段，使用AI实际输出的标签名）
+            text = text.replace(/\n?(位置|穿搭|体力|状态|理智|理智线|压力|压力源|占有欲|占有欲行为|醋意值|醋意值触发|安全感|安全感状态|兴奋度|兴奋度描述|敏感度|敏感度描述|G点状态|渴望程度|渴望|身体反应|体征|下身|本能|核心物品|消耗品|隐藏物品|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|stamina|sanity|stress|possessiveness|jealousy|security|excitement|sensitivity|desire|items|mood|action|thought|affinity)[:：][\s\S]*?(?=\n(?:位置|穿搭|体力|状态|理智|理智线|压力|压力源|占有欲|占有欲行为|醋意值|醋意值触发|安全感|安全感状态|兴奋度|兴奋度描述|敏感度|敏感度描述|G点状态|渴望程度|渴望|身体反应|体征|下身|本能|核心物品|消耗品|隐藏物品|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|stamina|sanity|stress|possessiveness|jealousy|security|excitement|sensitivity|desire|items|mood|action|thought|affinity)|$)/gi, '');
+
             // 第五层：移除任何看起来像JSON或YAML的结构化数据块
-            text = text.replace(/\n?\{[\s\S]*?"(穿搭|心情|动作|心声|坏心思|好感度)"[\s\S]*?\}(?=\n|$)/g, '');
+            text = text.replace(/\n?\{[\s\S]*?"(位置|穿搭|体力|状态|理智|理智线|压力|压力源|占有欲|醋意值|安全感|兴奋度|敏感度|渴望程度|渴望|身体反应|体征|下身|本能|核心物品|消耗品|隐藏物品|心声|潜台词|真意|好感度|location|outfit|stamina|sanity|stress|possessiveness|jealousy|security|excitement|sensitivity|desire|items|mood|action|thought|affinity)"[\s\S]*?\}(?=\n|$)/g, '');
             text = text.replace(/\n?---[\s\S]*?---(?=\n|$)/g, '');
             
-            // 第六层：移除时间戳和日期信息
+            // 第六层：移除基础指标、情感羁绊、欲望等分组标题
+            text = text.replace(/\n?\[?基础指标\]?[:：]?/gi, '');
+            text = text.replace(/\n?\[?情感羁绊\]?[:：]?/gi, '');
+            text = text.replace(/\n?\[?欲望\]?[:：]?/gi, '');
+            text = text.replace(/\n?\[?随身物品\]?[:：]?/gi, '');
+            text = text.replace(/\n?\[?此时此刻的心声\]?[:：]?/gi, '');
+            
+            // 第七层：移除时间戳和日期信息
             text = text.replace(/\(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\)/g, '');
             text = text.replace(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/g, '');
             text = text.replace(/当前时间[:：][^\n]*/g, '');

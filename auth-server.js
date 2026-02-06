@@ -318,6 +318,81 @@ app.use((error, req, res, next) => {
 });
 
 /**
+ * API 代理端点 - 解决CORS跨域问题
+ * POST /api/proxy
+ *
+ * 请求体:
+ * {
+ *   "url": "https://api.example.com/v1",
+ *   "apiKey": "your-api-key",
+ *   "model": "gpt-3.5-turbo",
+ *   "messages": [...]
+ * }
+ */
+app.post('/api/proxy', async (req, res) => {
+    try {
+        const { url, apiKey, model, messages, temperature, max_tokens } = req.body;
+        
+        if (!url || !apiKey) {
+            return res.status(400).json({
+                error: '缺少必要参数',
+                code: 'MISSING_PARAMS'
+            });
+        }
+        
+        console.log('🔄 代理API请求到:', url);
+        
+        // 构建请求体
+        const requestBody = {
+            model: model || 'gpt-3.5-turbo',
+            messages: messages || [],
+            temperature: temperature || 0.8
+        };
+        
+        if (max_tokens !== undefined) {
+            requestBody.max_tokens = max_tokens;
+        }
+        
+        // 转发请求到目标API
+        const response = await axios.post(url, requestBody, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            timeout: 30000 // 30秒超时
+        });
+        
+        console.log('✅ API代理请求成功');
+        res.json(response.data);
+        
+    } catch (error) {
+        console.error('❌ API代理请求失败:', error.message);
+        
+        if (error.response) {
+            // 目标服务器返回了错误
+            return res.status(error.response.status).json({
+                error: 'API请求失败',
+                details: error.response.data,
+                code: 'API_ERROR'
+            });
+        } else if (error.request) {
+            // 请求已发送但没有收到响应
+            return res.status(503).json({
+                error: 'API服务器无响应',
+                code: 'API_UNAVAILABLE'
+            });
+        } else {
+            // 其他错误
+            return res.status(500).json({
+                error: '代理服务器错误',
+                message: error.message,
+                code: 'PROXY_ERROR'
+            });
+        }
+    }
+});
+
+/**
  * 404 处理
  */
 app.use((req, res) => {

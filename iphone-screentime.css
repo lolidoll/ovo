@@ -1,51 +1,57 @@
 /**
  * iPhone 屏幕使用时间页面样式
- * 完全参考iOS原生设计
+ * 完全参考iOS原生设计 - 白色主题
+ * 返回和生成按钮透明度设为0，但功能保持可用
  */
 
 .iphone-screentime-page {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: #000000;
-    z-index: 1000;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    z-index: 2000;
+    display: none;
     flex-direction: column;
-    overflow: hidden;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
 }
 
 .iphone-screentime-page.show {
+    display: flex;
     transform: translateX(0);
 }
 
 /* 头部 */
 .screentime-header {
-    position: relative;
-    height: 44px;
-    background: #1c1c1e;
+    height: 54px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    padding: 0 16px;
-    border-bottom: 0.5px solid #2c2c2e;
-    flex-shrink: 0;
+    padding: 0 16px 10px;
+    background: #ffffff;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
 }
 
 .screentime-back-btn {
     background: none;
     border: none;
-    color: #0a84ff;
+    color: #007aff;
     font-size: 17px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
     padding: 0;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-weight: 400;
+    letter-spacing: -0.4px;
+    opacity: 0; /* 隐藏但功能可用 */
+}
+
+.screentime-back-btn:active {
+    opacity: 0.4;
 }
 
 .screentime-back-btn svg {
@@ -54,26 +60,35 @@
 }
 
 .screentime-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 17px;
-    font-weight: 600;
-    color: #ffffff;
 }
 
 .screentime-generate-btn {
     background: none;
     border: none;
-    color: #0a84ff;
+    color: #007aff;
     font-size: 17px;
-    font-weight: 400;
-    cursor: pointer;
     padding: 0;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.4px;
+    opacity: 0; /* 隐藏但功能可用 */
+}
+
+.screentime-generate-btn:active {
+    opacity: 0.4;
 }
 
 .screentime-generate-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
 }
 
@@ -81,6 +96,8 @@
 .screentime-content {
     flex: 1;
     overflow-y: auto;
+    padding: 0;
+    background: #f2f2f7;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -92,25 +109,28 @@
     justify-content: center;
     height: 100%;
     padding: 40px 20px;
+    color: #8e8e93;
     text-align: center;
 }
 
 .screentime-empty-icon {
     font-size: 64px;
     margin-bottom: 16px;
+    opacity: 0.5;
 }
 
 .screentime-empty-text {
-    font-size: 22px;
-    font-weight: 600;
-    color: #ffffff;
+    font-size: 17px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 8px;
 }
 
 .screentime-empty-hint {
     font-size: 15px;
-    color: #8e8e93;
-    line-height: 1.4;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    opacity: 0.7;
 }
 
 /* 加载状态 */
@@ -119,27 +139,28 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
     padding: 40px 20px;
 }
 
 .screentime-loading-spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid #2c2c2e;
-    border-top-color: #0a84ff;
+    border: 3px solid rgba(0, 122, 255, 0.2);
+    border-top-color: #007aff;
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .screentime-loading-text {
     margin-top: 16px;
     font-size: 15px;
     color: #8e8e93;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* 屏幕使用时间内容 */
@@ -149,10 +170,11 @@
 
 /* 总览卡片 */
 .screentime-overview {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .screentime-overview-title {
@@ -166,35 +188,42 @@
 .screentime-total-time {
     font-size: 40px;
     font-weight: 700;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.8px;
     margin-bottom: 8px;
 }
 
 .screentime-comparison {
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 .screentime-comparison.up {
-    color: #ff453a;
+    color: #ff3b30;
 }
 
 .screentime-comparison.down {
-    color: #30d158;
+    color: #34c759;
 }
 
 /* 图表区域 */
 .screentime-chart {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .screentime-chart-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 16px;
 }
 
@@ -204,6 +233,7 @@
     justify-content: space-between;
     height: 120px;
     margin-bottom: 12px;
+    padding: 0 4px;
 }
 
 .screentime-bar {
@@ -212,33 +242,41 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    height: 100%;
+    justify-content: flex-end;
 }
 
 .screentime-bar-fill {
-    width: 24px;
-    background: linear-gradient(180deg, #0a84ff 0%, #0066cc 100%);
-    border-radius: 4px;
+    width: 20px;
+    background: linear-gradient(180deg, #007aff 0%, #0051d5 100%);
+    border-radius: 4px 4px 0 0;
     min-height: 4px;
     transition: height 0.3s ease;
+    max-height: 100%;
 }
 
 .screentime-bar-label {
     font-size: 11px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.2px;
 }
 
 /* 应用列表 */
 .screentime-apps {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .screentime-apps-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     padding: 16px 16px 12px;
 }
 
@@ -246,7 +284,7 @@
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-top: 0.5px solid #2c2c2e;
+    border-top: 0.5px solid #e5e5ea;
 }
 
 .screentime-app-item:first-of-type {
@@ -273,7 +311,9 @@
 
 .screentime-app-name {
     font-size: 17px;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -283,11 +323,15 @@
 .screentime-app-category {
     font-size: 13px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.2px;
 }
 
 .screentime-app-time {
     font-size: 17px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     font-weight: 500;
     flex-shrink: 0;
     margin-left: 12px;
@@ -295,16 +339,19 @@
 
 /* 类别统计 */
 .screentime-categories {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .screentime-categories-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 16px;
 }
 
@@ -329,19 +376,23 @@
 .screentime-category-name {
     flex: 1;
     font-size: 15px;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 .screentime-category-time {
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     margin-left: 12px;
 }
 
 .screentime-category-bar {
     width: 100%;
     height: 4px;
-    background: #2c2c2e;
+    background: #e5e5ea;
     border-radius: 2px;
     margin-top: 8px;
     overflow: hidden;
@@ -355,56 +406,70 @@
 
 /* 提取次数统计 */
 .screentime-pickups {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .screentime-pickups-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 8px;
 }
 
 .screentime-pickups-count {
     font-size: 32px;
     font-weight: 700;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.6px;
     margin-bottom: 4px;
 }
 
 .screentime-pickups-label {
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* 通知统计 */
 .screentime-notifications {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .screentime-notifications-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 8px;
 }
 
 .screentime-notifications-count {
     font-size: 32px;
     font-weight: 700;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.6px;
     margin-bottom: 4px;
 }
 
 .screentime-notifications-label {
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* 应用图标颜色变体 */
@@ -435,4 +500,5 @@
 /* 滚动条样式 */
 .screentime-content::-webkit-scrollbar {
     width: 0;
+    display: none;
 }

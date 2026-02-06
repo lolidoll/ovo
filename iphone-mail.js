@@ -1,6 +1,7 @@
 /**
  * iPhone 邮件应用
  * 调用主API生成角色相关的邮件记录
+ * 完全按照备忘录逻辑实现
  */
 
 (function() {
@@ -8,7 +9,6 @@
 
     let currentMailData = null;
     let currentCharacter = null;
-    let isGenerating = false;
 
     // 创建邮件页面HTML
     function createMailPage() {
@@ -21,7 +21,7 @@
                         </svg>
                         邮箱
                     </button>
-                    <h1 class="mail-title">邮箱</h1>
+                    <div class="mail-title">邮箱</div>
                     <button class="mail-generate-btn" id="mail-generate-btn">生成</button>
                 </div>
                 
@@ -29,9 +29,21 @@
                     <div class="mail-empty">
                         <div class="mail-empty-icon">📧</div>
                         <div class="mail-empty-text">暂无邮件数据</div>
-                        <div class="mail-empty-hint">点击右上角"生成"按钮<br>创建角色的邮件记录</div>
+                        <div class="mail-empty-hint">点击右上角"生成"按钮创建角色的邮件记录</div>
                     </div>
                 </div>
+            </div>
+             
+            <div class="mail-detail-page" id="mail-detail-page">
+                <div class="mail-detail-header">
+                    <button class="mail-detail-back-btn" id="mail-detail-back-btn">
+                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
+                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
+                        </svg>
+                        返回
+                    </button>
+                </div>
+                <div class="mail-detail-content" id="mail-detail-content"></div>
             </div>
         `;
         
@@ -42,17 +54,24 @@
         }
     }
 
-    // 初始化事件监听
+    // 初始化事件
     function initializeMailEvents() {
+        // 返回按钮
         const backBtn = document.getElementById('mail-back-btn');
-        const generateBtn = document.getElementById('mail-generate-btn');
-        
         if (backBtn) {
             backBtn.addEventListener('click', hideMailPage);
         }
-        
+
+        // 生成按钮
+        const generateBtn = document.getElementById('mail-generate-btn');
         if (generateBtn) {
             generateBtn.addEventListener('click', generateMailData);
+        }
+
+        // 详情页返回按钮
+        const detailBackBtn = document.getElementById('mail-detail-back-btn');
+        if (detailBackBtn) {
+            detailBackBtn.addEventListener('click', hideMailDetail);
         }
     }
 
@@ -73,6 +92,13 @@
         if (homeScreen) {
             homeScreen.style.display = 'none';
         }
+        
+        // 尝试加载已保存的邮件
+        if (currentMailData === null) {
+            if (loadMailFromStorage()) {
+                renderMailList();
+            }
+        }
     }
 
     // 隐藏邮件页面
@@ -86,6 +112,14 @@
         const homeScreen = document.querySelector('.home-screen');
         if (homeScreen) {
             homeScreen.style.display = 'block';
+        }
+    }
+    
+    // 隐藏详情页
+    function hideMailDetail() {
+        const detailPage = document.getElementById('mail-detail-page');
+        if (detailPage) {
+            detailPage.classList.remove('show');
         }
     }
 
@@ -133,180 +167,490 @@
         }
     }
 
-    // 获取当前角色信息
-    function getCurrentCharacterInfo() {
-        // 从全局AppState获取当前聊天角色
-        if (!window.AppState || !window.AppState.currentChat) {
-            return null;
-        }
-
-        const currentChat = window.AppState.currentChat;
-        const convId = currentChat.id;
+    // 获取当前角色信息（从当前聊天页面获取）
+    function getCurrentCharacter() {
+        console.log('=== 获取当前聊天角色信息 ===');
         
-        // 获取角色设定
-        const characterName = currentChat.name || '角色';
-        const characterAvatar = currentChat.avatar || '';
+        // 获取当前聊天的ID
+        const currentChatId = window.AppState?.currentChat?.id;
+        console.log('当前聊天ID:', currentChatId);
         
-        // 获取角色设定（从conversation对象中）
-        let characterSetting = '';
-        const conversation = window.AppState.conversations.find(c => c.id === convId);
-        if (conversation && conversation.characterSetting) {
-            characterSetting = conversation.characterSetting;
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，使用默认值');
+            return {
+                name: '角色',
+                card: null,
+                userName: '用户',
+                userPersona: '',
+                summaries: []
+            };
         }
         
-        // 获取用户设定
-        let userSetting = '';
-        if (conversation && conversation.userSetting) {
-            userSetting = conversation.userSetting;
+        // 从conversations中找到对应的conversation
+        const conversation = window.AppState?.conversations?.find(c => c.id === currentChatId);
+        console.log('找到的conversation:', conversation);
+        
+        if (!conversation) {
+            console.warn('⚠️ 未找到对应的conversation，使用默认值');
+            return {
+                name: '角色',
+                card: null,
+                userName: '用户',
+                userPersona: '',
+                summaries: []
+            };
         }
         
-        // 获取用户名称
-        const userName = window.AppState.user?.name || '用户';
+        // 从角色设置中获取用户名和人设
+        let userName = conversation.userNameForChar || window.AppState?.user?.name || '用户';
+        let userPersona = conversation.userPersonality || window.AppState?.user?.personality || '';
         
-        // 获取最近50条对话
-        const messages = window.AppState.messages[convId] || [];
-        const recentMessages = messages.slice(-50);
+        console.log('----- 角色设置信息 -----');
+        console.log('1. conversation.userNameForChar:', conversation.userNameForChar);
+        console.log('2. conversation.userPersonality:', conversation.userPersonality);
+        console.log('3. window.AppState?.user?.name:', window.AppState?.user?.name);
+        console.log('4. window.AppState?.user?.personality:', window.AppState?.user?.personality);
+        console.log('最终使用的用户名:', userName);
+        console.log('最终使用的人设:', userPersona ? userPersona.substring(0, 50) + '...' : '无');
+        console.log('=======================');
         
-        return {
-            convId,
-            characterName,
-            characterAvatar,
-            characterSetting,
-            userName,
-            userSetting,
-            recentMessages
+        // 提取角色信息
+        const characterInfo = {
+            name: conversation.name || '角色',
+            card: conversation.characterSetting || null,
+            userName: userName,
+            userPersona: userPersona,
+            summaries: conversation.summaries || [],
+            id: currentChatId
         };
-    }
-
-    // 调用主API生成邮件数据
-    async function callMainAPIForMail(characterInfo) {
-        // 检查API配置
-        if (!window.MainAPIManager || !window.AppState.apiSettings) {
-            throw new Error('API未配置');
-        }
-
-        const api = window.AppState.apiSettings;
-        if (!api.endpoint || !api.selectedModel) {
-            throw new Error('请先配置API端点和模型');
-        }
-
-        // 构建对话历史摘要
-        let conversationSummary = '';
-        if (characterInfo.recentMessages && characterInfo.recentMessages.length > 0) {
-            conversationSummary = characterInfo.recentMessages
-                .map(msg => {
-                    const sender = msg.sender === 'user' ? characterInfo.userName : characterInfo.characterName;
-                    return `${sender}: ${msg.content}`;
-                })
-                .join('\n');
-        }
-
-        // 构建提示词
-        const prompt = `你是一个创意十足的AI助手，现在需要为角色"${characterInfo.characterName}"生成最近的邮件来往记录。
-
-【角色信息】
-角色名称: ${characterInfo.characterName}
-角色设定: ${characterSetting || '无'}
-
-【用户信息】
-用户名称: ${characterInfo.userName}
-用户设定: ${characterInfo.userSetting || '无'}
-
-【最近对话】
-${conversationSummary || '暂无对话记录'}
-
-【任务要求】
-请根据以上信息，生成一个真实、详细、有活人感的邮件记录。想象这是角色真实的手机邮件app，他/她会和谁有邮件来往？收到什么邮件？
-
-要求：
-1. 生成5-10条邮件记录
-2. 每条邮件包含：发件人、邮箱地址、主题、预览内容、完整正文、时间、分类（工作/个人/推广/社交）
-3. 邮件内容要符合角色的性格、身份、生活场景、职业背景
-4. 要有生活气息和真实感，比如工作邮件、朋友邮件、订阅通知、账单提醒等
-5. 时间要合理（最近几天内），按时间倒序排列
-6. 可以包含一些有趣的细节，体现角色个性和生活状态
-7. 发挥你的创意与想象，让邮件记录仿佛真的是角色手机一样
-
-【输出格式】
-请严格按照以下JSON格式输出，不要有任何其他文字：
-
-{
-  "emails": [
-    {
-      "id": "mail_1",
-      "sender": "张三",
-      "email": "zhangsan@example.com",
-      "subject": "关于周五会议的安排",
-      "preview": "你好，关于本周五下午3点的项目讨论会议...",
-      "body": "你好，\\n\\n关于本周五下午3点的项目讨论会议，我想和你确认一下具体的议程安排。\\n\\n会议地点：会议室A\\n参会人员：项目组全体成员\\n\\n请提前准备好相关资料。\\n\\n谢谢！\\n张三",
-      "time": "今天 14:30",
-      "category": "work",
-      "unread": true,
-      "icon": "💼"
-    },
-    {
-      "id": "mail_2",
-      "sender": "Netflix",
-      "email": "info@netflix.com",
-      "subject": "本月新片推荐",
-      "preview": "本月精选影片已上线，快来观看吧...",
-      "body": "亲爱的用户，\\n\\n本月Netflix为您精选了多部精彩影片：\\n\\n1. 《星际探索》- 科幻冒险\\n2. 《温暖的抱抱》- 浪漫喜剧\\n3. 《悬疑档案》- 惊悚推理\\n\\n立即观看，享受视听盛宴！",
-      "time": "昨天 20:15",
-      "category": "promotion",
-      "unread": false,
-      "icon": "🎬"
-    }
-  ]
-}`;
-
-        // 调用API
-        const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
-        const apiKey = api.apiKey || '';
-
-        const requestBody = {
-            model: api.selectedModel,
-            messages: [
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: 0.9,
-            max_tokens: 3000
-        };
-
-        const response = await fetch(baseEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(requestBody)
+        
+        console.log('✅ 获取到的角色信息:', {
+            name: characterInfo.name,
+            userName: characterInfo.userName,
+            userPersona: characterInfo.userPersona ? '有' : '无',
+            hasCard: !!characterInfo.card,
+            summariesCount: characterInfo.summaries.length
         });
-
-        if (!response.ok) {
-            throw new Error(`API请求失败: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content || '';
+        console.log('========================');
         
-        // 解析JSON
+        return characterInfo;
+    }
+
+    // 获取最近对话
+    function getRecentMessages() {
+        const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        return messages.slice(-50); // 最近50条
+    }
+
+    // 生成邮件数据
+    async function generateMailData() {
+        const generateBtn = document.getElementById('mail-generate-btn');
+        const content = document.getElementById('mail-content');
+        
+        if (!content || !generateBtn) return;
+        
+        generateBtn.disabled = true;
+        
+        // 显示加载状态
+        content.innerHTML = `
+            <div class="mail-loading">
+                <div class="mail-loading-spinner"></div>
+                <div class="mail-loading-text">正在生成邮件...</div>
+            </div>
+        `;
+        
         try {
-            // 尝试提取JSON（可能包含在代码块中）
-            let jsonStr = content;
-            const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                jsonStr = jsonMatch[1];
+            currentCharacter = getCurrentCharacter();
+            const recentMessages = getRecentMessages();
+            
+            console.log('===== 调试提示词构建 =====');
+            console.log('角色名:', currentCharacter.name);
+            console.log('用户名:', currentCharacter.userName);
+            console.log('是否有角色设定:', !!currentCharacter.card);
+            console.log('历史总结数:', currentCharacter.summaries?.length || 0);
+            console.log('最近消息数:', recentMessages.length);
+            
+            // 构建历史总结文本
+            let summariesText = '';
+            if (currentCharacter.summaries && currentCharacter.summaries.length > 0) {
+                summariesText = '\n历史总结：\n' + currentCharacter.summaries.join('\n');
             }
             
-            const mailData = JSON.parse(jsonStr);
-            return mailData;
-        } catch (e) {
-            console.error('解析API返回的JSON失败:', e);
-            console.log('原始内容:', content);
-            throw new Error('生成的数据格式错误');
+            // 构建最近对话文本
+            let messagesText = '';
+            if (recentMessages.length > 0) {
+                messagesText = '\n最近对话（最近50条）：\n' +
+                    recentMessages.slice(-20).map(m => {
+                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        return `${role}: ${m.content}`;
+                    }).join('\n');
+            }
+            
+            // 构建提示词 - 要求返回纯JSON，不要任何其他内容
+            const prompt = `你是${currentCharacter.name}，请生成10条真实的邮件记录。
+
+角色信息：
+- 角色名：${currentCharacter.name}
+- 用户名：${currentCharacter.userName}
+${currentCharacter.card ? `- 角色设定：${currentCharacter.card}` : ''}
+${currentCharacter.userPersona ? `- 用户设定：${currentCharacter.userPersona}` : ''}
+${summariesText}
+${messagesText}
+
+要求：
+1. 与${currentCharacter.userName}相关的邮件（约3-4条）
+2. 工作邮件（约2-3条）
+3. 生活相关（约3-4条）
+4. 每条邮件包含：发件人、邮箱地址、主题、预览内容、完整正文、时间、分类（work/personal/promotion/social）
+5. 要有真实感和活人感
+6. 必须生成10条，不能少
+
+直接返回JSON数组，不要任何说明文字或markdown标记：
+[{
+  "sender": "发件人",
+  "email": "邮箱地址",
+  "subject": "主题",
+  "preview": "预览内容",
+  "body": "完整正文",
+  "time": "时间（如：今天 14:30）",
+  "category": "work",
+  "unread": true,
+  "icon": "📧"
+}]`;
+            
+            console.log('完整提示词:', prompt);
+            console.log('========================');
+
+            // 调用主API
+            const response = await callMainAPI(prompt);
+            
+            // 解析响应
+            const mailData = parseMailResponse(response);
+            
+            // 生成模拟的时间分布（最近3天内）
+            const now = Date.now();
+            const timeOffsets = [
+                // 2-3条刚创建（0-30分钟前）
+                ...Array.from({length: 2}, () => Math.floor(Math.random() * 30 * 60 * 1000)),
+                ...Array.from({length: 1}, () => Math.floor(Math.random() * 30 * 60 * 1000)),
+                // 3-4条今天创建（1-12小时前）
+                ...Array.from({length: 4}, () => 60 * 60 * 1000 + Math.floor(Math.random() * 11 * 60 * 60 * 1000)),
+                // 2-3条昨天创建（24-36小时前）
+                ...Array.from({length: 3}, () => 24 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000))
+            ];
+            
+            // 打乱时间偏移顺序
+            timeOffsets.sort(() => Math.random() - 0.5);
+            
+            currentMailData = mailData.map((mail, index) => {
+                const mailTime = new Date(now - timeOffsets[index]);
+                return {
+                    id: Date.now() + index,
+                    sender: mail.sender,
+                    email: mail.email,
+                    subject: mail.subject,
+                    preview: mail.preview,
+                    body: mail.body,
+                    time: formatTime(mailTime),
+                    timestamp: mailTime.getTime(),
+                    category: mail.category,
+                    unread: mail.unread,
+                    icon: mail.icon || '📧'
+                };
+            });
+            
+            // 按时间排序（最新的在前）
+            currentMailData.sort((a, b) => b.timestamp - a.timestamp);
+            
+            // 保存到localStorage
+            saveMailToStorage();
+            
+            // 渲染邮件列表
+            renderMailList();
+            
+        } catch (error) {
+            console.error('生成邮件失败:', error);
+            content.innerHTML = `
+                <div class="mail-empty">
+                    <div class="mail-empty-icon">⚠️</div>
+                    <div class="mail-empty-text">生成失败</div>
+                    <div class="mail-empty-hint">${error.message || '请稍后重试'}</div>
+                </div>
+            `;
+        } finally {
+            generateBtn.disabled = false;
         }
+    }
+    
+    // 保存邮件到localStorage
+    function saveMailToStorage() {
+        try {
+            localStorage.setItem('iphoneMailData', JSON.stringify({
+                mails: currentMailData,
+                character: currentCharacter,
+                savedAt: Date.now()
+            }));
+        } catch (e) {
+            console.error('保存邮件失败:', e);
+        }
+    }
+    
+    // 从localStorage加载邮件
+    function loadMailFromStorage() {
+        try {
+            const saved = localStorage.getItem('iphoneMailData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // 检查是否是同一角色
+                if (data.character && data.character.name === getCurrentCharacter().name) {
+                    currentMailData = data.mails || [];
+                    currentCharacter = data.character;
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.error('加载邮件失败:', e);
+        }
+        return false;
+    }
+    
+    // 渲染邮件列表
+    function renderMailList() {
+        const content = document.getElementById('mail-content');
+        if (!content) return;
+        
+        if (currentMailData === null || currentMailData.length === 0) {
+            content.innerHTML = `
+                <div class="mail-empty">
+                    <div class="mail-empty-icon">📧</div>
+                    <div class="mail-empty-text">暂无邮件数据</div>
+                    <div class="mail-empty-hint">点击右上角"生成"按钮创建角色的邮件记录</div>
+                </div>
+            `;
+            return;
+        }
+        
+        const mailHTML = currentMailData.map(mail => `
+            <div class="mail-item ${mail.unread ? 'unread' : ''}" data-mail-id="${mail.id}">
+                <div class="mail-item-icon ${mail.category}">
+                    ${mail.icon || '📧'}
+                </div>
+                <div class="mail-item-content">
+                    <div class="mail-item-header">
+                        <div class="mail-item-sender">${escapeHtml(mail.sender)}</div>
+                        <div class="mail-item-time">${escapeHtml(mail.time)}</div>
+                    </div>
+                    <div class="mail-item-subject">${escapeHtml(mail.subject)}</div>
+                    <div class="mail-item-preview">${escapeHtml(mail.preview)}</div>
+                </div>
+            </div>
+        `).join('');
+        
+        content.innerHTML = `<div class="mail-list">${mailHTML}</div>`;
+        
+        // 绑定点击事件
+        content.querySelectorAll('.mail-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const mailId = parseInt(item.dataset.mailId);
+                openMailDetail(mailId);
+            });
+        });
+    }
+    
+    // 打开邮件详情
+    function openMailDetail(mailId) {
+        const mail = currentMailData.find(m => m.id === mailId);
+        if (!mail) return;
+        
+        const detailPage = document.getElementById('mail-detail-page');
+        const detailContent = document.getElementById('mail-detail-content');
+        
+        if (!detailPage || !detailContent) return;
+        
+        // 标记为已读
+        mail.unread = false;
+        saveMailToStorage();
+        renderMailList();
+        
+        // 构建详情内容HTML
+        detailContent.innerHTML = `
+            <div class="mail-detail-subject">${escapeHtml(mail.subject)}</div>
+            <div class="mail-detail-meta">
+                <div class="mail-detail-sender-avatar ${mail.category}">
+                    ${mail.icon || '📧'}
+                </div>
+                <div class="mail-detail-sender-info">
+                    <div class="mail-detail-sender-name">${escapeHtml(mail.sender)}</div>
+                    <div class="mail-detail-sender-email">${escapeHtml(mail.email)}</div>
+                </div>
+                <div class="mail-detail-time">${escapeHtml(mail.time)}</div>
+            </div>
+            <div class="mail-detail-body">${escapeHtml(mail.body)}</div>
+        `;
+        
+        detailPage.classList.add('show');
+    }
+
+    // 调用主API
+    async function callMainAPI(prompt) {
+        // 获取API配置
+        const api = window.AppState?.apiSettings;
+        if (!api || !api.endpoint || !api.selectedModel) {
+            throw new Error('请先在设置中配置API信息');
+        }
+        
+        const apiKey = api.apiKey || '';
+        if (!apiKey) {
+            throw new Error('请先在设置中配置API密钥');
+        }
+        
+        // 规范化endpoint（与其他文件保持一致）
+        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
+        const endpoint = baseEndpoint + '/v1/chat/completions';
+        
+        const body = {
+            model: api.selectedModel,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 10000
+        };
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+        
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                throw new Error('API响应格式错误');
+            }
+            
+            return data.choices[0].message.content;
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('API请求超时（5分钟）');
+            }
+            throw error;
+        }
+    }
+
+    // 解析邮件响应
+    function parseMailResponse(response) {
+        console.log('原始API响应:', response);
+        console.log('响应长度:', response.length);
+        
+        try {
+            // 清理响应内容，移除markdown代码块标记
+            let cleanedResponse = response
+                .replace(/```json\s*/gi, '')
+                .replace(/```\s*/gi, '')
+                .trim();
+            
+            console.log('清理后的响应:', cleanedResponse);
+            console.log('清理后长度:', cleanedResponse.length);
+            
+            // 尝试直接解析JSON（处理完整或部分JSON）
+            let jsonMatch = cleanedResponse.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+                try {
+                    const jsonStr = jsonMatch[0];
+                    console.log('找到JSON数组，长度:', jsonStr.length);
+                    
+                    // 修复可能的JSON格式问题
+                    const fixedJson = jsonStr
+                        .replace(/,\s*\]/g, ']')  // 移除尾随逗号
+                        .replace(/,\s*}/g, '}');   // 移除尾随逗号
+                    
+                    const parsed = JSON.parse(fixedJson);
+                    console.log('解析的JSON数组，项目数:', parsed.length);
+                    
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        // 验证每个项目都有必需字段
+                        const validMails = parsed.filter(item =>
+                            item.sender && typeof item.sender === 'string' &&
+                            item.subject && typeof item.subject === 'string'
+                        );
+                        console.log('有效的邮件数:', validMails.length);
+                        
+                        if (validMails.length > 0) {
+                            return validMails;
+                        }
+                    }
+                } catch (jsonError) {
+                    console.log('JSON解析失败，尝试其他方法:', jsonError);
+                }
+            }
+            
+            // 如果JSON解析失败，返回默认邮件
+            console.log('使用默认邮件');
+            return Array.from({length: 10}, (_, i) => ({
+                sender: `发件人${i + 1}`,
+                email: `sender${i + 1}@example.com`,
+                subject: `邮件主题 ${i + 1}`,
+                preview: `这是邮件${i + 1}的预览内容`,
+                body: `这是邮件${i + 1}的完整正文内容`,
+                time: '今天',
+                category: ['work', 'personal', 'promotion', 'social'][i % 4],
+                unread: i < 3,
+                icon: ['💼', '📧', '🎬', '🎉'][i % 4]
+            }));
+            
+        } catch (error) {
+            console.error('解析响应失败:', error);
+            // 返回默认邮件
+            return Array.from({length: 10}, (_, i) => ({
+                sender: `发件人${i + 1}`,
+                email: `sender${i + 1}@example.com`,
+                subject: `邮件主题 ${i + 1}`,
+                preview: `这是邮件${i + 1}的预览内容`,
+                body: `这是邮件${i + 1}的完整正文内容`,
+                time: '今天',
+                category: ['work', 'personal', 'promotion', 'social'][i % 4],
+                unread: i < 3,
+                icon: ['💼', '📧', '🎬', '🎉'][i % 4]
+            }));
+        }
+    }
+
+    // 格式化时间
+    function formatTime(date) {
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) return '刚刚';
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+        if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+        
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hour = date.getHours();
+        const minute = date.getMinutes().toString().padStart(2, '0');
+        return `${month}月${day}日 ${hour}:${minute}`;
+    }
+
+    // HTML转义
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // 显示加载状态
@@ -336,107 +680,59 @@ ${conversationSummary || '暂无对话记录'}
         }
     }
 
-    // 渲染邮件数据
+    // 渲染邮件数据（旧方法，保留兼容性）
     function renderMailData(data) {
-        const content = document.getElementById('mail-content');
-        if (!content) return;
-
-        let html = '<div class="mail-list">';
-
-        if (data.emails && data.emails.length > 0) {
-            data.emails.forEach(email => {
-                const unreadClass = email.unread ? 'unread' : '';
-                const categoryClass = email.category || 'personal';
-                
-                html += `
-                    <div class="mail-item ${unreadClass}" data-mail-id="${email.id}">
-                        <div class="mail-item-icon ${categoryClass}">
-                            ${email.icon || '📧'}
-                        </div>
-                        <div class="mail-item-content">
-                            <div class="mail-item-header">
-                                <div class="mail-item-sender">${escapeHtml(email.sender)}</div>
-                                <div class="mail-item-time">${escapeHtml(email.time)}</div>
-                            </div>
-                            <div class="mail-item-subject">${escapeHtml(email.subject)}</div>
-                            <div class="mail-item-preview">${escapeHtml(email.preview)}</div>
-                        </div>
-                    </div>
-                `;
-            });
+        if (data && data.emails) {
+            currentMailData = data.emails.map((email, index) => ({
+                id: Date.now() + index,
+                sender: email.sender,
+                email: email.email,
+                subject: email.subject,
+                preview: email.preview,
+                body: email.body,
+                time: email.time,
+                category: email.category || 'personal',
+                unread: email.unread !== false,
+                icon: email.icon || '📧'
+            }));
+            renderMailList();
         }
-
-        html += '</div>';
-        content.innerHTML = html;
-
-        // 添加点击事件
-        const mailItems = content.querySelectorAll('.mail-item');
-        mailItems.forEach(item => {
-            item.addEventListener('click', function() {
-                const mailId = this.getAttribute('data-mail-id');
-                const email = data.emails.find(e => e.id === mailId);
-                if (email) {
-                    showMailDetail(email);
-                }
-            });
-        });
     }
 
-    // 显示邮件详情
+    // 显示邮件详情（旧方法，保留兼容性）
     function showMailDetail(email) {
-        // 创建详情页面
-        let detailPage = document.getElementById('iphone-mail-detail-page');
-        if (!detailPage) {
-            detailPage = document.createElement('div');
-            detailPage.id = 'iphone-mail-detail-page';
-            detailPage.className = 'mail-detail-page';
-            document.querySelector('.iphone-screen').appendChild(detailPage);
-        }
-
-        const categoryClass = email.category || 'personal';
+        const mail = {
+            id: email.id,
+            sender: email.sender,
+            email: email.email,
+            subject: email.subject,
+            preview: email.preview,
+            body: email.body,
+            time: email.time,
+            category: email.category || 'personal',
+            unread: email.unread !== false,
+            icon: email.icon || '📧'
+        };
         
-        detailPage.innerHTML = `
-            <div class="mail-detail-header">
-                <button class="mail-detail-back-btn" id="mail-detail-back-btn">
-                    <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                        <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                    </svg>
-                    返回
-                </button>
-                <div class="mail-detail-subject">${escapeHtml(email.subject)}</div>
-                <div class="mail-detail-meta">
-                    <div class="mail-detail-sender-avatar ${categoryClass}">
-                        ${email.icon || '📧'}
-                    </div>
-                    <div class="mail-detail-sender-info">
-                        <div class="mail-detail-sender-name">${escapeHtml(email.sender)}</div>
-                        <div class="mail-detail-sender-email">${escapeHtml(email.email)}</div>
-                    </div>
-                    <div class="mail-detail-time">${escapeHtml(email.time)}</div>
-                </div>
-            </div>
-            <div class="mail-detail-content">
-                <div class="mail-detail-body">${escapeHtml(email.body)}</div>
-            </div>
-        `;
-
+        const detailPage = document.getElementById('mail-detail-page');
+        const detailSubject = document.getElementById('mail-detail-subject');
+        const detailAvatar = document.getElementById('mail-detail-avatar');
+        const detailSender = document.getElementById('mail-detail-sender');
+        const detailEmail = document.getElementById('mail-detail-email');
+        const detailTime = document.getElementById('mail-detail-time');
+        const detailContent = document.getElementById('mail-detail-content');
+        
+        if (!detailPage) return;
+        
+        detailSubject.textContent = mail.subject;
+        detailAvatar.textContent = mail.icon || '📧';
+        detailAvatar.className = `mail-detail-sender-avatar ${mail.category}`;
+        detailSender.textContent = mail.sender;
+        detailEmail.textContent = mail.email;
+        detailTime.textContent = mail.time;
+        detailContent.innerHTML = `<div class="mail-detail-body">${escapeHtml(mail.body)}</div>`;
+        
         detailPage.classList.add('show');
-
-        // 添加返回按钮事件
-        const backBtn = detailPage.querySelector('#mail-detail-back-btn');
-        if (backBtn) {
-            backBtn.addEventListener('click', function() {
-                detailPage.classList.remove('show');
-            });
-        }
-    }
-
-    // HTML转义
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     // Toast提示
@@ -448,20 +744,31 @@ ${conversationSummary || '暂无对话记录'}
         }
     }
 
-    // 导出到全局
+    // 初始化
+    function init() {
+        // 等待iPhone模拟器加载完成
+        const checkInterval = setInterval(() => {
+            const screen = document.querySelector('.iphone-screen');
+            if (screen) {
+                clearInterval(checkInterval);
+                createMailPage();
+                console.log('✅ iPhone邮件模块已初始化');
+            }
+        }, 100);
+    }
+
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // 导出函数
     window.iPhoneMail = {
         show: showMailPage,
         hide: hideMailPage,
         generate: generateMailData
     };
-
-    // 页面加载完成后初始化
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ iPhone邮件模块已加载');
-        });
-    } else {
-        console.log('✅ iPhone邮件模块已加载');
-    }
 
 })();

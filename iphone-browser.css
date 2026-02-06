@@ -1,6 +1,6 @@
 /**
  * iPhone 浏览器应用 - iOS Safari 风格
- * 完全还原iOS Safari的高级感和原生app体验
+ * 白色主题，完全还原iOS Safari的高级感和原生app体验
  */
 
 .iphone-browser-page {
@@ -9,11 +9,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: #ffffff;
     z-index: 1000;
     display: none;
     flex-direction: column;
     overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .iphone-browser-page.show {
@@ -24,15 +25,15 @@
 /* 浏览器头部 - 搜索栏 */
 .browser-header {
     position: relative;
-    padding: 60px 16px 12px;
-    background: linear-gradient(180deg, #1c1c1e 0%, #000 100%);
+    padding: 50px 16px 12px;
+    background: #ffffff;
     z-index: 10;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .browser-back-btn {
     position: absolute;
-    top: 50px;
+    top: 12px;
     left: 16px;
     background: none;
     border: none;
@@ -46,6 +47,9 @@
     padding: 8px;
     z-index: 11;
     transition: opacity 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    opacity: 0; /* 隐藏但功能可用 */
+    pointer-events: auto; /* 保持点击功能 */
 }
 
 .browser-back-btn:active {
@@ -60,14 +64,15 @@
 .browser-title {
     font-size: 34px;
     font-weight: 700;
-    color: #fff;
-    margin: 0 0 8px 0;
+    color: #000000;
+    margin: -10px 0 8px 0;
     letter-spacing: -0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
 }
 
 .browser-generate-btn {
     position: absolute;
-    top: 56px;
+    top: 16px;
     right: 16px;
     background: none;
     border: none;
@@ -78,6 +83,9 @@
     padding: 8px 12px;
     transition: opacity 0.2s;
     z-index: 11;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    opacity: 0; /* 隐藏但功能可用 */
+    pointer-events: auto; /* 保持点击功能 */
 }
 
 .browser-generate-btn:active {
@@ -91,7 +99,7 @@
 
 /* 搜索栏区域 */
 .browser-search-bar {
-    background: #2c2c2e;
+    background: #f2f2f7;
     border-radius: 12px;
     padding: 10px 14px;
     display: flex;
@@ -110,6 +118,7 @@
     flex: 1;
     font-size: 17px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 浏览器内容区域 */
@@ -117,7 +126,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    background: #000;
+    background: #f2f2f7;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -144,14 +153,16 @@
 .browser-empty-text {
     font-size: 22px;
     font-weight: 600;
-    color: #fff;
+    color: #000000;
     margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
 }
 
 .browser-empty-hint {
     font-size: 15px;
     color: #8e8e93;
     line-height: 1.4;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 加载动画 */
@@ -166,7 +177,7 @@
 .browser-loading-spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(0, 0, 0, 0.1);
     border-top-color: #007aff;
     border-radius: 50%;
     animation: browser-spin 0.8s linear infinite;
@@ -180,6 +191,7 @@
     margin-top: 20px;
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 收藏夹网格 */
@@ -211,18 +223,20 @@
     align-items: center;
     justify-content: center;
     font-size: 28px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
+    background: #ffffff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e5ea;
 }
 
 .browser-favorite-name {
     font-size: 12px;
-    color: #fff;
+    color: #000000;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 搜索历史列表 */
@@ -238,6 +252,7 @@
     letter-spacing: 0.5px;
     margin-bottom: 12px;
     padding: 0 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-history-list {
@@ -247,7 +262,7 @@
 }
 
 .browser-history-item {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 12px 14px;
     display: flex;
@@ -255,10 +270,11 @@
     gap: 12px;
     cursor: pointer;
     transition: background 0.2s;
+    border: 1px solid #e5e5ea;
 }
 
 .browser-history-item:active {
-    background: rgba(255, 255, 255, 0.05);
+    background: #f2f2f7;
 }
 
 .browser-history-favicon {
@@ -269,7 +285,7 @@
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    background: #2c2c2e;
+    background: #f2f2f7;
     flex-shrink: 0;
 }
 
@@ -281,11 +297,12 @@
 .browser-history-title {
     font-size: 16px;
     font-weight: 500;
-    color: #fff;
+    color: #000000;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-history-url {
@@ -294,12 +311,14 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-history-time {
     font-size: 12px;
     color: #8e8e93;
     flex-shrink: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 网页详情页 */
@@ -309,11 +328,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: #ffffff;
     z-index: 1001;
     display: none;
     flex-direction: column;
     overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-detail-page.show {
@@ -322,9 +342,9 @@
 }
 
 .browser-detail-header {
-    padding: 50px 16px 12px;
-    background: #1c1c1e;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 16px 12px;
+    background: #ffffff;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .browser-detail-top {
@@ -343,6 +363,7 @@
     gap: 4px;
     cursor: pointer;
     padding: 8px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-detail-back-btn:active {
@@ -351,7 +372,7 @@
 
 .browser-detail-url-bar {
     flex: 1;
-    background: #2c2c2e;
+    background: #f2f2f7;
     border-radius: 10px;
     padding: 8px 14px;
     margin-left: 12px;
@@ -369,10 +390,11 @@
 .browser-detail-url {
     flex: 1;
     font-size: 14px;
-    color: #fff;
+    color: #000000;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 浏览器工具栏 */
@@ -380,8 +402,8 @@
     display: flex;
     justify-content: space-around;
     padding: 12px 16px;
-    background: #1c1c1e;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+    background: #ffffff;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .browser-toolbar-btn {
@@ -403,6 +425,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 20px 16px;
+    background: #ffffff;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -413,9 +436,10 @@
 .browser-webpage-title {
     font-size: 28px;
     font-weight: 700;
-    color: #fff;
+    color: #000000;
     margin-bottom: 16px;
     line-height: 1.3;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
 }
 
 .browser-webpage-meta {
@@ -433,23 +457,26 @@
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    background: #2c2c2e;
+    background: #f2f2f7;
 }
 
 .browser-webpage-domain {
     font-size: 14px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-webpage-date {
     font-size: 13px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-webpage-body {
     font-size: 17px;
     line-height: 1.6;
-    color: #fff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-webpage-body p {
@@ -459,8 +486,9 @@
 .browser-webpage-body h2 {
     font-size: 22px;
     font-weight: 600;
-    color: #fff;
+    color: #000000;
     margin: 24px 0 12px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
 }
 
 .browser-webpage-body ul,
@@ -479,7 +507,7 @@
 }
 
 .browser-suggestion-item {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 12px 14px;
     display: flex;
@@ -487,10 +515,15 @@
     gap: 12px;
     margin-bottom: 8px;
     cursor: pointer;
+    border: 1px solid #e5e5ea;
 }
 
 .browser-suggestion-item:last-child {
     margin-bottom: 0;
+}
+
+.browser-suggestion-item:active {
+    background: #f2f2f7;
 }
 
 /* 隐私浏览标签 */
@@ -506,6 +539,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 滑动动画 */
@@ -547,15 +581,20 @@
 }
 
 .browser-tab-item {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
+    border: 1px solid #e5e5ea;
+}
+
+.browser-tab-item:active {
+    background: #f2f2f7;
 }
 
 .browser-tab-preview {
     height: 120px;
-    background: linear-gradient(135deg, #2c2c2e 0%, #1c1c1e 100%);
+    background: linear-gradient(135deg, #f2f2f7 0%, #e5e5ea 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -569,11 +608,12 @@
 .browser-tab-title {
     font-size: 13px;
     font-weight: 500;
-    color: #fff;
+    color: #000000;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 2px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .browser-tab-url {
@@ -582,4 +622,5 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }

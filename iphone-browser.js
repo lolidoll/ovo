@@ -9,6 +9,9 @@
     let currentBrowserData = null;
     let currentCharacter = null;
     let isGenerating = false;
+    
+    // 数据持久化存储key前缀
+    const STORAGE_KEY_PREFIX = 'browser_data_';
 
     // 创建浏览器页面HTML
     function createBrowserPage() {
@@ -56,7 +59,7 @@
         }
     }
 
-    // 显示浏览器页面
+    // 显示浏览器页面（添加数据加载）
     function showBrowserPage() {
         const browserPage = document.getElementById('iphone-browser-page');
         if (!browserPage) {
@@ -72,6 +75,18 @@
         const homeScreen = document.querySelector('.home-screen');
         if (homeScreen) {
             homeScreen.style.display = 'none';
+        }
+        
+        // 尝试加载已保存的数据
+        const characterInfo = getCurrentCharacterInfo();
+        if (characterInfo && characterInfo.convId) {
+            const savedData = loadBrowserData(characterInfo.convId);
+            if (savedData) {
+                console.log('✅ 加载已保存的浏览器数据');
+                currentBrowserData = savedData;
+                currentCharacter = characterInfo;
+                renderBrowserData(savedData);
+            }
         }
     }
 
@@ -125,6 +140,11 @@
             if (browserData) {
                 currentBrowserData = browserData;
                 currentCharacter = characterInfo;
+                
+                // 保存数据到localStorage
+                saveBrowserData(characterInfo.convId, browserData);
+                console.log('✅ 浏览器数据已保存');
+                
                 renderBrowserData(browserData);
             }
         } catch (error) {
@@ -139,55 +159,72 @@
         }
     }
 
-    // 获取当前角色信息
+    // 获取当前角色信息（参考备忘录实现）
     function getCurrentCharacterInfo() {
         // 从全局AppState获取当前聊天角色
         if (!window.AppState || !window.AppState.currentChat) {
+            console.log('❌ 未找到AppState或currentChat');
             return null;
         }
 
         const currentChat = window.AppState.currentChat;
         const convId = currentChat.id;
         
-        // 获取角色设定
-        const characterName = currentChat.name || '角色';
-        const characterAvatar = currentChat.avatar || '';
+        console.log('📱 正在获取角色信息，对话ID:', convId);
         
-        // 获取角色设定（从conversation对象中）
-        let characterSetting = '';
+        // 获取conversation对象
         const conversation = window.AppState.conversations.find(c => c.id === convId);
-        if (conversation && conversation.characterSetting) {
-            characterSetting = conversation.characterSetting;
+        if (!conversation) {
+            console.log('❌ 未找到对话对象');
+            return null;
         }
         
-        // 获取用户设定
-        let userSetting = '';
-        if (conversation && conversation.userSetting) {
-            userSetting = conversation.userSetting;
-        }
+        // 获取角色名称
+        const characterName = conversation.name || '角色';
         
-        // 获取用户名称
-        const userName = window.AppState.user?.name || '用户';
+        // 获取角色设定
+        const characterSetting = conversation.characterSetting || conversation.characterCard || '';
+        
+        // 获取用户名称（重要！使用userNameForChar）
+        const userName = conversation.userNameForChar || window.AppState.user?.name || '用户';
+        
+        // 获取用户设定（重要！使用userPersonality）
+        const userSetting = conversation.userPersonality || '';
+        
+        // 获取历史总结（重要！）
+        const summaries = conversation.summaries || [];
+        const latestSummary = summaries.length > 0 ? summaries[summaries.length - 1] : '';
         
         // 获取最近50条对话
         const messages = window.AppState.messages[convId] || [];
         const recentMessages = messages.slice(-50);
         
+        console.log('✅ 角色信息获取成功:', {
+            convId,
+            characterName,
+            userName,
+            hasSummary: !!latestSummary,
+            messageCount: recentMessages.length
+        });
+        
         return {
             convId,
             characterName,
-            characterAvatar,
             characterSetting,
             userName,
             userSetting,
+            summaries,
+            latestSummary,
             recentMessages
         };
     }
 
-    // 调用主API生成浏览器数据
+    // 调用主API生成浏览器数据（参考备忘录实现）
     async function callMainAPIForBrowser(characterInfo) {
+        console.log('🚀 开始调用API生成浏览器数据');
+        
         // 检查API配置
-        if (!window.MainAPIManager || !window.AppState.apiSettings) {
+        if (!window.AppState.apiSettings) {
             throw new Error('API未配置');
         }
 
@@ -195,6 +232,8 @@
         if (!api.endpoint || !api.selectedModel) {
             throw new Error('请先配置API端点和模型');
         }
+
+        console.log('✅ API配置检查通过');
 
         // 构建对话历史摘要
         let conversationSummary = '';
@@ -206,8 +245,10 @@
                 })
                 .join('\n');
         }
+        
+        console.log('✅ 对话摘要构建完成，消息数:', characterInfo.recentMessages?.length || 0);
 
-        // 构建提示词
+        // 构建提示词（包含历史总结）
         const prompt = `你是一个创意十足的AI助手，现在需要为角色"${characterInfo.characterName}"生成最近的浏览器搜索历史和收藏记录。
 
 【角色信息】
@@ -217,6 +258,9 @@
 【用户信息】
 用户名称: ${characterInfo.userName}
 用户设定: ${characterInfo.userSetting || '无'}
+
+【历史总结】
+${characterInfo.latestSummary || '暂无历史总结'}
 
 【最近对话】
 ${conversationSummary || '暂无对话记录'}
@@ -293,9 +337,14 @@ ${conversationSummary || '暂无对话记录'}
 - 可以使用中文网站名让内容更真实
 - 根据角色设定生成符合他/她兴趣的浏览内容`;
 
-        // 调用API
-        const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
+        console.log('✅ 提示词构建完成');
+
+        // 规范化API端点（参考备忘录）
+        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
+        const endpoint = baseEndpoint + '/v1/chat/completions';
         const apiKey = api.apiKey || '';
+
+        console.log('🌐 API端点:', endpoint);
 
         const requestBody = {
             model: api.selectedModel,
@@ -306,40 +355,91 @@ ${conversationSummary || '暂无对话记录'}
                 }
             ],
             temperature: 0.95,
-            max_tokens: 4000
+            max_tokens: 10000
         };
 
-        const response = await fetch(baseEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(requestBody)
-        });
+        // 添加超时控制（5分钟）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+            console.log('⏰ API请求超时');
+        }, 300000); // 5分钟超时
 
-        if (!response.ok) {
-            throw new Error(`API请求失败: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content || '';
-        
-        // 解析JSON
         try {
-            // 尝试提取JSON（可能包含在代码块中）
-            let jsonStr = content;
-            const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                jsonStr = jsonMatch[1];
-            }
+            console.log('📡 发送API请求...');
             
-            const browserData = JSON.parse(jsonStr);
-            return browserData;
-        } catch (e) {
-            console.error('解析API返回的JSON失败:', e);
-            console.log('原始内容:', content);
-            throw new Error('生成的数据格式错误');
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(requestBody),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ API请求失败:', response.status, errorText);
+                throw new Error(`API请求失败: ${response.status}`);
+            }
+
+            console.log('✅ API请求成功');
+
+            const data = await response.json();
+            const content = data.choices?.[0]?.message?.content || '';
+            
+            console.log('📄 API返回内容长度:', content.length);
+            
+            // 解析JSON
+            let jsonStr = ''; // 在外部定义，方便错误处理时访问
+            try {
+                jsonStr = content.trim();
+                
+                // 尝试多种方式提取JSON
+                // 1. 尝试匹配 ```json ... ```
+                let jsonMatch = jsonStr.match(/```json\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) {
+                    jsonStr = jsonMatch[1].trim();
+                    console.log('✅ 从```json代码块中提取JSON');
+                } else {
+                    // 2. 尝试匹配 ``` ... ```
+                    jsonMatch = jsonStr.match(/```\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch) {
+                        jsonStr = jsonMatch[1].trim();
+                        console.log('✅ 从```代码块中提取JSON');
+                    } else {
+                        // 3. 尝试直接查找JSON对象 { ... }
+                        jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            jsonStr = jsonMatch[0];
+                            console.log('✅ 直接提取JSON对象');
+                        }
+                    }
+                }
+                
+                console.log('🔍 准备解析的JSON字符串（前200字符）:', jsonStr.substring(0, 200));
+                console.log('🔍 JSON字符串总长度:', jsonStr.length);
+                
+                const browserData = JSON.parse(jsonStr);
+                console.log('✅ JSON解析成功，包含', Object.keys(browserData).length, '个键');
+                return browserData;
+            } catch (e) {
+                console.error('❌ 解析API返回的JSON失败:', e);
+                console.error('错误位置:', e.message);
+                console.log('📄 原始内容前500字符:', content.substring(0, 500));
+                console.log('📄 尝试解析的字符串前500字符:', jsonStr.substring(0, 500));
+                console.log('📄 尝试解析的字符串后500字符:', jsonStr.substring(jsonStr.length - 500));
+                throw new Error('生成的数据格式错误，请重试');
+            }
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时，请重试');
+            }
+            throw error;
         }
     }
 
@@ -535,6 +635,37 @@ ${conversationSummary || '暂无对话记录'}
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // 保存浏览器数据到localStorage
+    function saveBrowserData(convId, data) {
+        try {
+            const storageKey = STORAGE_KEY_PREFIX + convId;
+            const storageData = {
+                data: data,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(storageKey, JSON.stringify(storageData));
+            console.log('💾 浏览器数据已保存到localStorage');
+        } catch (error) {
+            console.error('❌ 保存浏览器数据失败:', error);
+        }
+    }
+
+    // 从localStorage加载浏览器数据
+    function loadBrowserData(convId) {
+        try {
+            const storageKey = STORAGE_KEY_PREFIX + convId;
+            const savedData = localStorage.getItem(storageKey);
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                console.log('📂 从localStorage加载浏览器数据');
+                return parsed.data;
+            }
+        } catch (error) {
+            console.error('❌ 加载浏览器数据失败:', error);
+        }
+        return null;
     }
 
     // Toast提示

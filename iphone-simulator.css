@@ -613,45 +613,6 @@
     align-items: center;
 }
 
-/* 锁屏快捷方式 - 9:18 比例自适应 */
-.lockscreen-shortcuts {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0 18px;
-}
-
-.lockscreen-shortcut {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    background: rgba(60, 60, 67, 0.36);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease;
-    pointer-events: auto;
-}
-
-.lockscreen-shortcut:active {
-    transform: scale(0.86);
-    background: rgba(60, 60, 67, 0.5);
-}
-
-.lockscreen-shortcut i {
-    font-size: 18px;
-    color: #ffffff;
-}
-
-.lockscreen-shortcut svg {
-    width: 21px;
-    height: 21px;
-    fill: #ffffff;
-}
-
 /* 锁屏指示器 - 9:18 比例自适应 */
 .lockscreen-indicator {
     text-align: center;
@@ -693,20 +654,6 @@
     
     .lockscreen-date {
         font-size: 14.5px;
-    }
-    
-    .lockscreen-shortcut {
-        width: 44px;
-        height: 44px;
-    }
-    
-    .lockscreen-shortcut i {
-        font-size: 17px;
-    }
-    
-    .lockscreen-shortcut svg {
-        width: 20px;
-        height: 20px;
     }
 }
 

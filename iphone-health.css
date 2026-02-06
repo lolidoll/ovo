@@ -1,6 +1,6 @@
 /**
  * iPhone 健康应用样式
- * 完全参考iOS原生设计
+ * 完全参考iOS原生设计 - 白色主题
  */
 
 .iphone-health-page {
@@ -9,10 +9,10 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: #ffffff;
     z-index: 1000;
     transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.36, 0.66, 0.04, 1);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -25,27 +25,34 @@
 /* 头部 */
 .health-header {
     position: relative;
-    height: 44px;
-    background: #1c1c1e;
+    height: 54px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    padding: 0 16px;
-    border-bottom: 0.5px solid #2c2c2e;
+    padding: 0 16px 10px;
+    background: #ffffff;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
 
 .health-back-btn {
     background: none;
     border: none;
-    color: #ff3b30;
+    color: #007aff;
     font-size: 17px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     padding: 0;
     cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-weight: 400;
+    letter-spacing: -0.4px;
+    opacity: 0; /* 隐藏但功能可用 */
+}
+
+.health-back-btn:active {
+    opacity: 0.4;
 }
 
 .health-back-btn svg {
@@ -59,21 +66,30 @@
     transform: translateX(-50%);
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 .health-generate-btn {
     background: none;
     border: none;
-    color: #ff3b30;
+    color: #007aff;
     font-size: 17px;
     font-weight: 400;
     cursor: pointer;
     padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    opacity: 0; /* 隐藏但功能可用 */
+}
+
+.health-generate-btn:active {
+    opacity: 0.4;
 }
 
 .health-generate-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
 }
 
@@ -81,6 +97,8 @@
 .health-content {
     flex: 1;
     overflow-y: auto;
+    padding: 0;
+    background: #f2f2f7;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -93,23 +111,28 @@
     height: 100%;
     padding: 40px 20px;
     text-align: center;
+    color: #8e8e93;
 }
 
 .health-empty-icon {
     font-size: 64px;
     margin-bottom: 16px;
+    opacity: 0.5;
 }
 
 .health-empty-text {
-    font-size: 22px;
-    font-weight: 600;
-    color: #ffffff;
+    font-size: 17px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 8px;
+    color: #000000;
 }
 
 .health-empty-hint {
     font-size: 15px;
-    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    opacity: 0.7;
     line-height: 1.4;
 }
 
@@ -126,53 +149,66 @@
 .health-loading-spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid #2c2c2e;
-    border-top-color: #ff3b30;
+    border: 3px solid rgba(0, 122, 255, 0.2);
+    border-top-color: #007aff;
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .health-loading-text {
     margin-top: 16px;
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* 健康数据 */
 .health-data {
-    padding: 20px 16px;
+    padding: 8px 16px;
 }
 
 /* 主要指标卡片 */
 .health-main-card {
     background: linear-gradient(135deg, #ff3b30 0%, #ff453a 100%);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(255, 59, 48, 0.15);
 }
 
 .health-main-title {
     font-size: 15px;
     color: rgba(255, 255, 255, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 8px;
 }
 
 .health-main-value {
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 700;
     color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.6px;
     margin-bottom: 4px;
 }
 
 .health-main-unit {
-    font-size: 20px;
+    font-size: 17px;
     color: rgba(255, 255, 255, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 .health-main-subtitle {
     font-size: 15px;
     color: rgba(255, 255, 255, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     margin-top: 8px;
 }
 
@@ -181,13 +217,14 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .health-metric-card {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .health-metric-header {
@@ -225,34 +262,42 @@
 
 .health-metric-title {
     font-size: 15px;
-    color: #ffffff;
+    color: #000000;
     font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 .health-metric-value {
     font-size: 28px;
     font-weight: 700;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.6px;
     margin-bottom: 4px;
 }
 
 .health-metric-subtitle {
     font-size: 13px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
 /* 活动记录 */
 .health-activities {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .health-activities-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 16px;
 }
 
@@ -261,7 +306,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 0.5px solid #2c2c2e;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
 }
 
 .health-activity-item:last-child {
@@ -285,32 +330,41 @@
 
 .health-activity-name {
     font-size: 17px;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 2px;
 }
 
 .health-activity-detail {
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 .health-activity-time {
     font-size: 15px;
     color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* 睡眠图表 */
 .health-sleep-chart {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .health-sleep-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 16px;
 }
 
@@ -328,13 +382,17 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    height: 100%;
+    justify-content: flex-end;
 }
 
 .health-sleep-bar-fill {
     width: 20px;
     background: linear-gradient(180deg, #5e5ce6 0%, #7c7aff 100%);
-    border-radius: 4px;
+    border-radius: 4px 4px 0 0;
     min-height: 4px;
+    transition: height 0.3s ease;
+    max-height: 100%;
 }
 
 .health-sleep-bar-label {
@@ -344,15 +402,18 @@
 
 /* 心理健康 */
 .health-mindfulness {
-    background: #1c1c1e;
+    background: #ffffff;
     border-radius: 12px;
     padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .health-mindfulness-title {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
     margin-bottom: 12px;
 }
 
@@ -367,7 +428,7 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: conic-gradient(#0a84ff 0deg, #0a84ff calc(var(--score) * 3.6deg), #2c2c2e calc(var(--score) * 3.6deg));
+    background: conic-gradient(#0a84ff 0deg, #0a84ff calc(var(--score) * 3.6deg), #f2f2f7 calc(var(--score) * 3.6deg));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -379,14 +440,15 @@
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: #1c1c1e;
+    background: #ffffff;
     position: absolute;
 }
 
 .health-mindfulness-value {
     font-size: 32px;
     font-weight: 700;
-    color: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     z-index: 1;
 }
 
@@ -395,6 +457,8 @@
     color: #8e8e93;
     text-align: center;
     line-height: 1.4;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* 滚动条样式 */

@@ -251,7 +251,7 @@ const MainAPIManager = {
             model: api.selectedModel,
             messages: messages,
             temperature: api.temperature !== undefined ? api.temperature : 0.8,
-            max_tokens: 10000,
+            max_tokens: 100000,
             frequency_penalty: api.frequencyPenalty !== undefined ? api.frequencyPenalty : 0.2,
             presence_penalty: api.presencePenalty !== undefined ? api.presencePenalty : 0.1,
             top_p: api.topP !== undefined ? api.topP : 1.0
@@ -503,22 +503,10 @@ const MainAPIManager = {
             systemPrompts.push(`用户人物设定：${replacedPersonality}`);
         }
         
-        // 添加心声相关的提示
-        systemPrompts.push(`【重要】必须每次在回复最后添加以下格式的心声信息,不能省略、不能变更格式、不能使用多消息格式：
-
-【心声】穿搭：{描述角色的服装、配饰、整体风格与细节。要求：符合角色设定,场景合理,细节具体。举例参考：'上身穿着一件淡蓝色的棉麻衬衫,袖口微微卷起；下装是深灰色的休闲九分裤,脚踩一双白色帆布鞋。左手腕系着一条编织红绳,胸前挂着一枚小小的银杏叶胸针。整体风格干净简约,带着几分慵懒随性。'} 心情：{描述角色当前的情绪状态。要求：细腻真实,可包含矛盾情绪,用比喻或意象增强画面感。举例参考：'平静中带着一丝雀跃,像是阴天里透过云层洒下的微弱阳光。上午的事情顺利完成,下午还有期待已久的独处时间。内心有些小满足,但表面上依然维持着淡漠从容的样子。'} 动作：{描述角色正在进行或习惯性的小动作。要求：自然流畅,体现角色性格,符合当前场景。举例参考：'靠在窗边的懒人沙发上,手指无意识地轻轻敲击着扶手。偶尔抬头望向窗外,似乎在思考什么,又像只是单纯地发呆。翻开一半的书放在手边,茶杯里的水已经凉透了。'} 心声：{角色内心未说出口的想法。要求：真实、细腻,可包含矛盾、犹豫、期待等复杂情绪举例参考：'今天的阳光真好,要是能一直这样就好了。那件事要不要找个机会说出口呢？其实……有点在意他今天说的那句话。'} 坏心思：{角色偷偷打的算盘、恶作剧念头、或不愿让他人知道的小计划。要求：符合人设,带点狡黠或俏皮。举例参考：'计划偷偷把冰箱里的蛋糕吃掉,然后嫁祸给那只经常来窗台的流浪猫。打算在朋友面前装作若无其事,其实早就猜到了他要说的惊喜是什么。如果明天有人问起,就说自己一整天都在看书,什么都没做。'} 好感度：{0-100的整数} 好感度变化：{变化数值,增减的数值都不可超过3,如+3或-2或0} 好感度原因：{简短说明,20字以内,举例参考：'对当前话题感到无趣且烦躁'}
-
-IMPORTANT REQUIREMENTS FOR 心声 (Mind State):
-1. 心声MUST be placed at the very end of your response on a separate line
-2. Do NOT split this into multiple [MSG] blocks - 心声 must be in the SAME response as your main dialogue
-3. Format must be EXACTLY: 【心声】[all fields on one line separated by spaces]
-4. All fields MUST have content, NO empty fields
-5. Use Chinese colons 【：】not English colons【:】
-6. Example format: 【心声】穿搭：details here... 心情：details here... 动作：details here... 心声：details here... 坏心思：details here... 好感度：75 好感度变化：+5 好感度原因：互相理解
-7. CRITICAL: DO NOT use [MSG1][/MSG1] or [WAIT] format for the 心声 section
-8. Your main dialogue CAN be split into multiple messages, but 心声 must always be at the very end as ONE complete line
-
-严格按照这个格式输出,系统会自动提取和清理这一行,用户看不到这个内容。`);
+        // 添加心声相关的提示 - 使用 MindStateManager 的统一提示词
+        if (typeof MindStateManager !== 'undefined' && MindStateManager.getMindStateSystemPrompt) {
+            systemPrompts.push(MindStateManager.getMindStateSystemPrompt() + '\n\n严格按照这个格式输出,系统会自动提取和清理这一行,用户看不到这个内容。');
+        }
         
         // 添加用户消息类型识别说明
         systemPrompts.push(`【用户内容识别规则】用户可能发送以下类型的内容,你需要正确识别并做出相应回应：
