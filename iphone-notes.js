@@ -171,14 +171,41 @@ ${recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')}
 
     // 调用主API
     async function callMainAPI(prompt) {
-        // 获取API配置
-        const apiConfig = JSON.parse(localStorage.getItem('apiConfig') || '{}');
+        // 从AppState获取API配置
+        let apiConfig = {};
+        
+        // 尝试从window.AppState获取
+        if (window.AppState && window.AppState.apiSettings) {
+            apiConfig = {
+                url: window.AppState.apiSettings.endpoint || '',
+                key: window.AppState.apiSettings.apiKey || '',
+                model: window.AppState.apiSettings.selectedModel || 'gpt-3.5-turbo'
+            };
+        } else {
+            // 从localStorage的shupianjAppState中获取
+            try {
+                const savedState = localStorage.getItem('shupianjAppState');
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    if (state.apiSettings) {
+                        apiConfig = {
+                            url: state.apiSettings.endpoint || '',
+                            key: state.apiSettings.apiKey || '',
+                            model: state.apiSettings.selectedModel || 'gpt-3.5-turbo'
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error('读取API配置失败:', e);
+            }
+        }
+        
         const apiUrl = apiConfig.url || '';
         const apiKey = apiConfig.key || '';
         const model = apiConfig.model || 'gpt-3.5-turbo';
         
         if (!apiUrl || !apiKey) {
-            throw new Error('请先配置API设置');
+            throw new Error('请先在设置中配置API信息');
         }
         
         const response = await fetch(apiUrl, {

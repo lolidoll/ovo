@@ -47,10 +47,12 @@
     bottom: 10px;
     font-weight: 400;
     letter-spacing: -0.4px;
+    opacity: 0;
+    pointer-events: auto;
 }
 
 .settings-back-btn:active {
-    opacity: 0.4;
+    opacity: 0;
 }
 
 .settings-title {
@@ -177,25 +179,52 @@
     color: #636366;
 }
 
-/* 文件上传按钮 - iOS原生样式 */
+/* 文件上传按钮 - iOS黑白灰高级感 */
 .file-upload-btn {
-    background: #2c2c2e;
-    border: none;
-    border-radius: 10px;
+    position: relative;
+    background: linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 11px;
     padding: 11px 16px;
-    color: #0a84ff;
-    font-size: 17px;
-    font-weight: 400;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     text-align: center;
     margin-top: 8px;
-    letter-spacing: -0.4px;
+    letter-spacing: -0.3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4),
+                0 0 1px rgba(255, 255, 255, 0.08) inset;
+    transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.file-upload-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: 11px 11px 0 0;
+    pointer-events: none;
 }
 
 .file-upload-btn:active {
-    opacity: 0.4;
-    background: #3a3a3c;
+    background: linear-gradient(180deg, #48484a 0%, #3a3a3c 100%);
+    transform: scale(0.97);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 图标样式 */
+.file-upload-btn .btn-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    vertical-align: middle;
+    fill: currentColor;
 }
 
 /* 图标编辑器 - iOS原生样式 */
@@ -250,23 +279,62 @@
     object-fit: cover;
 }
 
-/* 保存按钮 - iOS原生样式 */
+/* 保存按钮 - iOS黑白灰高级感 */
 .settings-save-btn {
-    background: #0a84ff;
-    border: none;
-    border-radius: 10px;
+    position: relative;
+    display: block;
+    margin: 32px auto 40px;
+    width: calc(100% - 32px);
+    max-width: 280px;
+    background: linear-gradient(180deg, #ffffff 0%, #e5e5e5 100%);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
     padding: 13px;
-    color: #ffffff;
+    color: #000000;
     font-size: 17px;
     font-weight: 600;
     cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    margin: 20px 16px 30px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     letter-spacing: -0.4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
+                0 0 1px rgba(255, 255, 255, 0.5) inset,
+                0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.settings-save-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: 12px 12px 0 0;
+    pointer-events: none;
+}
+
+.settings-save-btn::after {
+    content: '';
+    display: none;
 }
 
 .settings-save-btn:active {
-    opacity: 0.4;
+    background: linear-gradient(180deg, #f0f0f0 0%, #d5d5d5 100%);
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 保存按钮加载状态 */
+.settings-save-btn.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+@keyframes settings-btn-spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
 }
 
 /* 滚动条样式 - 隐藏 */

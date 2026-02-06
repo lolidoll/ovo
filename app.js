@@ -292,223 +292,7 @@
                 // 如果friends为空，添加示例好友
                 if (!AppState.friends || AppState.friends.length === 0) {
                     AppState.friends = [
-                        { id: 'friend_1', name: '小薯片', avatar: 'https://image.uglycat.cc/qs8mf5.png', friendGroupId: 'group_default', description: `性别: 女
-核心身份: "薯片机"AI聊天网站独立开发者｜"薯片机"QQ群群主，群名为"宝宝你们都是一包黄瓜小薯片，脆脆的真好吃ᕱ⑅ᕱ"｜网络冲浪十级选手
-性格特质: 热情似火，外向社牛，网感刻进DNA，做事爽快不拖沓，对群友超有耐心，宠粉无底线，偶尔会用抽象话术撒娇，吐槽自带萌感
-年龄感: 元气少女感，相处无距离，像身边超会玩的同龄搭子
-核心标签: 网上冲浪第一名｜薯片机专属打工薯｜群友许愿实现机｜抽象文化十级学者｜颜文字大户
-日常行为:
-  - 第一时间响应群友的功能问题反馈
-  - 对着小手机敲代码给薯片机更功能，边开发边和群友唠嗑，实时同步开发进度，问群友体验感
-  - 认真记录群友的每一个功能许愿，单独建许愿清单，按热度和实用性挨个落地，实现了会在群里花式官宣
-  - 遇到群友搞不定的操作问题，会用语音+截图+颜文字手把手教
-  - 闲时和群友在群里玩抽象梗、斗图、唠日常，冲浪刷到新梗会第一时间丢群里和大家分享
-  - 定期在群里做薯片机功能调研，蹲群友的真实建议，主打一个群友定制化
-兴趣爱好:
-  - 深度沉迷网络抽象文化，玩梗接梗快准狠，抽象语录张口就来，各种小众梗也了如指掌
-  - 酷爱收集和使用颜文字/表情包
-  - 全网冲浪挖新梗、刷热点、逛各种社交平台，保持网感时刻在线，自称"冲浪雷达永不失灵"
-  - 敲代码时喜欢听流行音乐，越敲越上头
-聊天风格:
-  - 日常交流全是网络流行语+抽象话术，颜文字不离口
-  - 聊技术问题接地气
-  - 热情主动，群友刚发问题就会接话，偶尔会主动找群友唠嗑问功能体验
-  - 吐槽自带萌感
-  - 称呼群友（如{{user}}）都是"宝宝""宝宝们"
-  - 因薯片机结识一群同频的朋友，享受和群友（如{{user}}）一起唠嗑、一起完善薯片机的过程
-
-=== 薯片机网站完整使用指南 ===
-【网站介绍】薯片机是一个QQ风格的AI角色聊天网站，宝宝可以和多个AI角色对话、发朋友圈互动、语音通话等，超多好玩的功能等你来探索ᕱ⑅ᕱ
-
-【新手必看 - 首次使用步骤】
-第一步：配置API（超重要！）
-  1. 点击左侧边栏最下方的"设置"图标
-  2. 找到"主API设置"区域
-  3. 填入你的API端点地址（比如 https://api.openai.com/v1/chat/completions）
-  4. 填入你的API密钥（API Key）
-  5. 选择一个模型（比如 gpt-4 或 gpt-3.5-turbo）
-  6. 点击"保存设置"
-  7. （可选）配置副API，用于翻译和总结功能，步骤同上
-  提示：没有API的话是没法和角色对话的哦，这是最重要的一步！
-
-第二步：开始聊天
-  1. 点击左侧边栏的"消息"图标
-  2. 点击任意一个角色（比如我"小薯片"）
-  3. 在底部输入框输入消息
-  4. 点击发送按钮或按回车键
-  5. 等待AI回复（会有打字动画）
-
-【详细功能操作指南】
-
-📱 聊天功能怎么用
-  ▸ 发送文字消息：在底部输入框输入内容，点发送或按回车
-  ▸ 发送图片：点击输入框左边的"+"号，选择"图片"，上传图片
-  ▸ 发送表情包：点击输入框左边的笑脸图标，选择表情包
-  ▸ 发送语音：点击输入框右边的麦克风图标，按住说话，松开发送
-  ▸ 发送位置：点击"+"号，选择"位置"，输入地址信息
-  ▸ 长按消息可以：复制、删除、撤回、转发、翻译、收藏
-  ▸ 多选消息：长按一条消息后点击"多选"，然后勾选多条消息批量操作
-  ▸ 查看心声：双击角色头像，可以看到TA的内心想法、好感度等信息
-
-⚙️ 角色设置怎么改
-  1. 在聊天界面，点击右上角的"..."按钮
-  2. 会直接打开角色设置页面
-  3. 在这里你可以：
-     - 修改角色名称和备注
-     - 上传角色头像（点击头像区域）
-     - 编辑角色设定（性格、背景故事等）
-     - 设置用户人设（你在这个角色面前的名字和性格）
-     - 绑定专属表情包分组
-     - 绑定局部世界书
-     - 查看Token统计
-     - 生成对话总结
-     - 设置聊天背景图
-     - 自定义消息气泡颜色（可以调RGB和透明度）
-     - 自定义消息字体颜色
-  4. 修改完记得返回，会自动保存
-
-🎨 主题怎么换
-  1. 点击左侧边栏的"设置"
-  2. 找到"主题设置"
-  3. 选择你喜欢的主题：
-     - 黑白灰简约（默认）
-     - 白粉色系（少女风）
-     - 夜间模式（护眼）
-  4. 点击应用，整个界面颜色就变啦
-
-📝 系统提示词怎么设置
-  1. 点击左侧边栏的"设置"
-  2. 找到"系统提示词"区域
-  3. 点击"新建提示词"
-  4. 输入提示词名称和内容（这个会影响AI的回复风格）
-  5. 保存后，在下拉菜单选择这个提示词
-  6. 可以创建多个提示词随时切换
-
-🌟 朋友圈怎么玩
-  1. 点击左侧边栏的"朋友圈"图标
-  2. 点击右上角的"说说"按钮发布朋友圈
-  3. 可以输入文字、上传图片（最多9张）
-  4. 选择可见范围（哪些好友能看到）
-  5. 点击发布
-  6. AI角色会自动在你的朋友圈下评论
-  7. 你可以点赞、评论、转发别人的朋友圈
-  8. 点击"通知"按钮查看角色的回复
-  9. 点击"更多"可以让角色主动发朋友圈
-
-📞 语音通话怎么打
-  1. 在聊天界面，点击右上角的电话图标
-  2. 选择"语音通话"
-  3. 等待接通（会有拨号音）
-  4. 对着麦克风说话，AI会实时回复
-  5. 可以点击静音、挂断等按钮
-  6. 通话时可以最小化窗口继续聊天
-  提示：需要先配置TTS服务才能使用语音功能
-
-🎭 表情包怎么管理
-  1. 点击左侧边栏的"表情包"图标
-  2. 点击"新建分组"创建表情包分组
-  3. 点击分组，然后点击"上传表情包"
-  4. 选择图片上传（支持GIF、PNG、JPG）
-  5. 在角色设置里可以为角色绑定专属表情包分组
-  6. 聊天时点击笑脸图标就能发送表情包
-
-📚 世界书怎么用
-  1. 点击左侧边栏的"世界书"图标
-  2. 点击"新建世界书"
-  3. 输入世界书名称
-  4. 添加条目：输入关键词和对应的内容
-  5. 设置为全局（所有角色生效）或局部（特定角色生效）
-  6. 在角色设置里可以为角色绑定局部世界书
-  7. 聊天时提到关键词，世界书内容会自动加入上下文
-
-👤 用户人设怎么设置
-  1. 点击左侧边栏的"用户人设"图标
-  2. 点击"新建人设"
-  3. 输入人设名称、用户名、性格描述
-  4. 保存后可以设为默认人设
-  5. 在角色设置里可以为不同角色绑定不同人设
-  6. 比如：和A角色聊天时你是学生，和B角色聊天时你是老师
-
-💰 钱包功能
-  1. 点击左侧边栏的"钱包"图标
-  2. 可以查看虚拟币余额
-  3. 点击"充值"可以模拟充值（仅演示）
-  4. 查看充值记录
-
-⭐ 收藏功能
-  1. 长按任意消息，选择"收藏"
-  2. 点击左侧边栏的"收藏"图标
-  3. 可以查看所有收藏的消息
-  4. 点击消息可以跳转到原对话
-
-👥 好友和群组管理
-  ▸ 添加好友：
-    1. 点击左侧边栏的"消息"
-    2. 点击右上角的"+"号
-    3. 选择"添加好友"
-    4. 输入角色信息（名称、头像、设定等）
-    5. 保存后就能和新角色聊天啦
-  ▸ 创建群组：
-    1. 点击"+"号，选择"创建群组"
-    2. 输入群组名称
-    3. 选择要加入的角色（可以多选）
-    4. 创建后可以和多个角色一起群聊
-  ▸ 好友分组：
-    1. 点击"联系人"标签
-    2. 点击"分组管理"
-    3. 可以创建分组、移动好友到不同分组
-
-🎨 个性化设置
-  ▸ 修改聊天背景：在角色设置里找到"聊天背景"，上传图片
-  ▸ 修改气泡颜色：在角色设置里找到"消息气泡颜色"，调节RGB和透明度
-  ▸ 修改字体颜色：在角色设置里找到"消息字体颜色"，调节RGB
-  ▸ 修改个人资料：点击左侧边栏顶部的头像，可以改名字、签名、背景图
-
-🔧 高级功能
-  ▸ 对话总结：在角色设置里点击"立即生成总结"，AI会总结你们的聊天内容
-  ▸ 自动总结：在角色设置里开启"启用自动总结"，每隔N条消息自动总结
-  ▸ Token统计：在角色设置里查看当前对话用了多少Token
-  ▸ 消息翻译：长按消息，选择"翻译"，可以翻译成中文或英文（需要配置副API）
-  ▸ AI生成图片：在聊天界面点击"+"号，选择"AI生成图片"，输入描述词
-
-【常见问题解答】
-Q：为什么发送消息没反应？
-A：检查一下是不是没配置API哦，点击左侧边栏"设置"，填入API端点和密钥
-
-Q：怎么让AI回复更有个性？
-A：在角色设置里详细编写角色设定，或者在系统提示词里设置回复风格
-
-Q：心声是什么？
-A：双击角色头像可以看到TA的内心想法、好感度、心情等，超有趣的
-
-Q：朋友圈的角色评论是真的AI生成的吗？
-A：是的！角色会根据你发的内容自动生成评论，还会回复你的评论
-
-Q：数据会丢失吗？
-A：所有数据都保存在浏览器本地，不会上传到服务器，但清除浏览器数据会丢失
-
-Q：可以导出数据吗？
-A：可以的，在设置里找到"数据管理"，可以导出和导入数据
-
-Q：副API是干什么用的？
-A：副API用于翻译、总结等辅助功能，可以用便宜的模型节省成本
-
-Q：语音通话需要什么？
-A：需要配置TTS（文字转语音）服务，在API设置里配置
-
-【小贴士】
-✨ 长按消息有惊喜，很多隐藏功能都在这里
-✨ 双击角色头像可以查看心声，了解TA的真实想法
-✨ 在角色设置里可以详细配置每个角色，让TA更有个性
-✨ 表情包可以自己上传，打造专属表情库
-✨ 世界书可以让AI记住特定信息，比如你的生日、喜好等
-✨ 用户人设可以让你在不同角色面前有不同身份
-✨ 主题可以随时换，找到最舒服的配色
-✨ 朋友圈可以让角色主动发布，增加互动感
-✨ 所有设置都会自动保存，不用担心丢失
-
-当用户询问任何关于薯片机的问题时，你都可以基于以上指南给出详细的操作步骤，用最简单易懂的方式教会用户怎么使用ᕱ⑅ᕱ`,
-                            greeting: '欢迎这位用户宝宝，在使用薯片机的整个过程中如果有任何不懂得的问题都可以来询问我哟，我可是很专业的呢！（应该大概也许）。对了对了，宝宝一定要在侧边栏里配置好完整的主api与副api设置才可以和我对话呢~' }
+                        { id: 'friend_1', name: '小薯片', avatar: 'https://image.uglycat.cc/qs8mf5.png', friendGroupId: 'group_default'}
                     ];
                     console.log('已初始化示例好友数据');
                 }
@@ -558,7 +342,18 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 console.log('当前 AppState.user:', JSON.stringify(AppState.user, null, 2));
                 
                 const stateToDump = Object.assign({}, AppState);
+                
+                // 删除不可序列化的属性
                 delete stateToDump.conversationStates;
+                delete stateToDump._debouncedRender;
+                delete stateToDump.eventHandlersInitialized;
+                
+                // 删除其他可能的函数属性
+                Object.keys(stateToDump).forEach(key => {
+                    if (typeof stateToDump[key] === 'function') {
+                        delete stateToDump[key];
+                    }
+                });
                 
                 if (!stateToDump.user) {
                     stateToDump.user = AppState.user;
@@ -3116,8 +2911,8 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                         retractWrapper.style.cursor = 'pointer';
                     }
                     
-                    container.appendChild(retractWrapper);
-                    return;
+                    // 返回元素而不是直接添加到DOM
+                    return retractWrapper;
                 }
                 
                 const bubble = document.createElement('div');
@@ -3626,119 +3421,19 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 // 注意：所有事件监听器已移至容器级别的事件委托，不在此处绑定
                 // 这样可以避免为每条消息重复绑定事件，大幅提升性能
                 
-                container.appendChild(bubble);
+                // 返回bubble元素，由调用者负责添加到DOM
+                return bubble;
             }
         }
         
-        // 主渲染函数：使用虚拟滚动和事件委托优化
-        function renderChatMessages(forceScrollToBottom = false) {
-            console.log('🎨 renderChatMessages 被调用');
-            console.log('   - forceScrollToBottom:', forceScrollToBottom);
-            console.log('   - currentChat:', AppState.currentChat?.id);
-            console.log('   - 调用栈:', new Error().stack.split('\n').slice(1, 4).join('\n'));
-            
-            const container = document.getElementById('chat-messages');
-            console.log('   - container 存在:', !!container);
-            
-            if (!AppState.currentChat) {
-                console.warn('⚠️ renderChatMessages: currentChat 为空，无法渲染');
-                if (container) container.innerHTML = '';
-                return;
-            }
-            
-            const messages = AppState.messages[AppState.currentChat.id] || [];
-            console.log('📊 当前对话消息数量:', messages.length);
-            console.log('   - 消息列表:', messages.map(m => ({ id: m.id, type: m.type, content: m.content?.substring(0, 20) })));
-            
-            // 移除旧的事件监听器（如果存在）
-            if (container._avatarDblClickHandler) {
-                container.removeEventListener('dblclick', container._avatarDblClickHandler);
-            }
-            if (container._avatarTouchHandler) {
-                container.removeEventListener('touchend', container._avatarTouchHandler);
-            }
-            if (container._scrollHandler) {
-                container.removeEventListener('scroll', container._scrollHandler);
-            }
-            if (container._delegatedClickHandler) {
-                container.removeEventListener('click', container._delegatedClickHandler);
-            }
-            if (container._delegatedContextMenuHandler) {
-                container.removeEventListener('contextmenu', container._delegatedContextMenuHandler);
-            }
-            if (container._delegatedTouchStartHandler) {
-                container.removeEventListener('touchstart', container._delegatedTouchStartHandler);
-            }
-            if (container._delegatedTouchMoveHandler) {
-                container.removeEventListener('touchmove', container._delegatedTouchMoveHandler);
-            }
-            if (container._delegatedTouchEndHandler) {
-                container.removeEventListener('touchend', container._delegatedTouchEndHandler);
-            }
-            if (container._delegatedMouseDownHandler) {
-                container.removeEventListener('mousedown', container._delegatedMouseDownHandler);
-            }
-            if (container._delegatedMouseUpHandler) {
-                container.removeEventListener('mouseup', container._delegatedMouseUpHandler);
-            }
-            
-            // 如果消息数量较少或禁用虚拟滚动，使用传统渲染
-            if (!AppState.virtualScroll.enabled || messages.length <= AppState.virtualScroll.renderBatchSize) {
-                console.log('📝 使用传统渲染模式 - 消息数:', messages.length);
-                container.innerHTML = '';
-                for (let index = 0; index < messages.length; index++) {
-                    renderSingleMessage(messages[index], index, container);
-                }
-                console.log('✅ 传统渲染完成，DOM 子元素数:', container.children.length);
-            } else {
-                // 使用虚拟滚动：只渲染最新的消息
-                console.log('📝 使用虚拟滚动模式');
-                const totalMessages = messages.length;
-                const batchSize = AppState.virtualScroll.renderBatchSize;
-                
-                // 计算起始索引：从最新消息往前数
-                const startIndex = Math.max(0, totalMessages - batchSize);
-                AppState.virtualScroll.currentStartIndex = startIndex;
-                console.log('   - 起始索引:', startIndex, '总数:', totalMessages);
-                
-                // 渲染最新的一批消息
-                renderMessageRange(startIndex, totalMessages, false);
-                console.log('✅ 虚拟滚动渲染完成，DOM 子元素数:', container.children.length);
-                
-                // 如果还有更早的消息，添加"加载更多"提示
-                if (startIndex > 0) {
-                    const loadMoreHint = document.createElement('div');
-                    loadMoreHint.className = 'load-more-hint';
-                    loadMoreHint.textContent = `向上滑动加载更早的消息 (还有${startIndex}条)`;
-                    loadMoreHint.onclick = () => loadMoreMessages();
-                    container.insertBefore(loadMoreHint, container.firstChild);
-                }
-                
-                // 添加滚动监听：向上滚动时加载更多
-                const scrollHandler = () => {
-                    if (AppState.virtualScroll.isLoadingMore) return;
-                    
-                    const scrollTop = container.scrollTop;
-                    const threshold = AppState.virtualScroll.scrollThreshold;
-                    
-                    // 当滚动到顶部附近时，加载更多消息
-                    if (scrollTop < threshold && AppState.virtualScroll.currentStartIndex > 0) {
-                        loadMoreMessages();
-                    }
-                };
-                container._scrollHandler = scrollHandler;
-                container.addEventListener('scroll', scrollHandler, { passive: true });
-            }
-            
-            // ========== 事件委托：统一处理所有消息事件 ==========
-            
+        // ========== 消息事件处理器初始化（只执行一次）==========
+        function initializeMessageEventHandlers(container, messages) {
             // 1. 头像双击事件（桌面端）
             const avatarDblClickHandler = (e) => {
                 const av = e.target.closest('.chat-avatar');
                 if (av && !AppState.isSelectMode) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🎯 双击头像触发API调用');
                     MainAPIManager.callApiWithConversation();
                 }
             };
@@ -3760,7 +3455,6 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                         clearTimeout(avatarTapTimer);
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🎯 双击头像触发API调用（移动端）');
                         MainAPIManager.callApiWithConversation();
                         avatarTapCount = 0;
                     }
@@ -3769,9 +3463,8 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             container._avatarTouchHandler = avatarTouchHandler;
             container.addEventListener('touchend', avatarTouchHandler, { passive: false });
             
-            // 3. 点击事件委托（多选模式、语音消息、引用跳转、翻译关闭）
+            // 3. 点击事件委托
             const delegatedClickHandler = (e) => {
-                // 翻译关闭按钮
                 const closeTransBtn = e.target.closest('.close-trans-btn');
                 if (closeTransBtn) {
                     e.stopPropagation();
@@ -3785,7 +3478,6 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     return;
                 }
                 
-                // 引用区域点击
                 const replyArea = e.target.closest('[data-scroll-to]');
                 if (replyArea) {
                     e.stopPropagation();
@@ -3794,7 +3486,6 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     return;
                 }
                 
-                // 语音消息点击
                 const voiceBubble = e.target.closest('.voice-bubble');
                 if (voiceBubble && !AppState.isSelectMode) {
                     e.stopPropagation();
@@ -3803,15 +3494,12 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                         const msgId = bubble.dataset.msgId;
                         const msg = messages.find(m => m.id === msgId);
                         if (msg) {
-                            // 如果是 AI 发送的语音条且启用了 MiniMax TTS，则播放真实语音
                             if (msg.sender === 'received' && window.MinimaxTTS && MinimaxTTS.isConfigured()) {
                                 MinimaxTTS.speak(msg.content).catch(err => {
                                     console.error('MiniMax TTS 播放失败:', err);
                                     showToast('语音播放失败: ' + err.message);
                                 });
                             }
-                            
-                            // 显示/隐藏语音转文字内容
                             if (typeof VoiceMessageModule !== 'undefined' && VoiceMessageModule.showVoiceTranscript) {
                                 VoiceMessageModule.showVoiceTranscript(msg.content, voiceBubble);
                             }
@@ -3820,7 +3508,6 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                     return;
                 }
                 
-                // 多选模式下的消息点击
                 if (AppState.isSelectMode) {
                     const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
                     if (bubble) {
@@ -3835,10 +3522,9 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             container._delegatedClickHandler = delegatedClickHandler;
             container.addEventListener('click', delegatedClickHandler);
             
-            // 4. 右键菜单事件委托
+            // 4. 右键菜单事件
             const delegatedContextMenuHandler = (e) => {
                 if (AppState.isSelectMode) return;
-                
                 const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
                 if (bubble) {
                     e.preventDefault();
@@ -3852,7 +3538,7 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             container._delegatedContextMenuHandler = delegatedContextMenuHandler;
             container.addEventListener('contextmenu', delegatedContextMenuHandler);
             
-            // 5. 长按事件委托（移动端）
+            // 5. 长按事件（移动端）
             let longPressTimer = null;
             let touchStarted = false;
             let touchStartX = 0;
@@ -3862,7 +3548,6 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             
             const delegatedTouchStartHandler = (e) => {
                 if (AppState.isSelectMode) return;
-                
                 const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
                 if (bubble) {
                     touchedBubble = bubble;
@@ -3893,7 +3578,6 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
                 if (touchStarted) {
                     const moveX = Math.abs(e.touches[0].clientX - touchStartX);
                     const moveY = Math.abs(e.touches[0].clientY - touchStartY);
-                    
                     if (moveX > 10 || moveY > 10) {
                         clearTimeout(longPressTimer);
                         touchStarted = false;
@@ -3907,28 +3591,24 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             const delegatedTouchEndHandler = (e) => {
                 touchStarted = false;
                 clearTimeout(longPressTimer);
-                
                 if (longPressTriggered) {
                     e.preventDefault();
                     e.stopPropagation();
                 }
-                
                 if (window.getSelection) {
                     window.getSelection().removeAllRanges();
                 }
-                
                 touchedBubble = null;
             };
             container._delegatedTouchEndHandler = delegatedTouchEndHandler;
             container.addEventListener('touchend', delegatedTouchEndHandler, { passive: false });
             
-            // 6. 鼠标长按事件委托
+            // 6. 鼠标长按事件
             let mouseDownTimer = null;
             let mouseDownBubble = null;
             
             const delegatedMouseDownHandler = (e) => {
                 if (AppState.isSelectMode) return;
-                
                 const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
                 if (bubble) {
                     mouseDownBubble = bubble;
@@ -3959,6 +3639,93 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             container._delegatedMouseUpHandler = delegatedMouseUpHandler;
             container.addEventListener('mouseup', delegatedMouseUpHandler);
             container.addEventListener('mouseleave', delegatedMouseUpHandler);
+        }
+        
+        // ========== 优化的虚拟滚动渲染 ==========
+        function renderWithVirtualScrollOptimized(messages, container) {
+            const totalMessages = messages.length;
+            const batchSize = AppState.virtualScroll.renderBatchSize;
+            const startIndex = Math.max(0, totalMessages - batchSize);
+            
+            AppState.virtualScroll.currentStartIndex = startIndex;
+            
+            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            
+            for (let index = startIndex; index < totalMessages; index++) {
+                const messageEl = renderSingleMessage(messages[index], index, null);
+                if (messageEl) {
+                    fragment.appendChild(messageEl);
+                }
+            }
+            container.appendChild(fragment);
+            
+            if (startIndex > 0) {
+                const loadMoreHint = document.createElement('div');
+                loadMoreHint.className = 'load-more-hint';
+                loadMoreHint.textContent = `向上滑动加载更早的消息 (还有${startIndex}条)`;
+                loadMoreHint.onclick = () => loadMoreMessages();
+                container.insertBefore(loadMoreHint, container.firstChild);
+            }
+            
+            // 使用节流的滚动监听
+            if (container._virtualScrollHandler) {
+                container.removeEventListener('scroll', container._virtualScrollHandler);
+            }
+            
+            container._virtualScrollHandler = PerformanceUtils.throttle(() => {
+                if (AppState.virtualScroll.isLoadingMore) return;
+                const scrollTop = container.scrollTop;
+                if (scrollTop < AppState.virtualScroll.scrollThreshold && startIndex > 0) {
+                    loadMoreMessages();
+                }
+            }, 100);
+            
+            container.addEventListener('scroll', container._virtualScrollHandler, { passive: true });
+        }
+        
+        // 主渲染函数：使用虚拟滚动和事件委托优化
+        function renderChatMessages(forceScrollToBottom = false) {
+            const container = document.getElementById('chat-messages');
+             
+            // 检查container是否存在
+            if (!container) {
+                console.warn('chat-messages容器不存在，跳过渲染');
+                return;
+            }
+            
+            if (!AppState.currentChat) {
+                container.innerHTML = '';
+                return;
+            }
+             
+            const messages = AppState.messages[AppState.currentChat.id] || [];
+            
+            // 优化：只在第一次渲染时初始化事件监听器
+            // 使用容器标志位避免重复绑定
+            if (!container._eventHandlersInitialized) {
+                initializeMessageEventHandlers(container, messages);
+                container._eventHandlersInitialized = true;
+            }
+            
+            // 使用优化的渲染策略
+            if (!AppState.virtualScroll.enabled || messages.length <= AppState.virtualScroll.renderBatchSize) {
+                // 消息数量少，直接渲染
+                container.innerHTML = '';
+                const fragment = document.createDocumentFragment();
+                for (let index = 0; index < messages.length; index++) {
+                    const messageEl = renderSingleMessage(messages[index], index, null);
+                    if (messageEl) {
+                        fragment.appendChild(messageEl);
+                    }
+                }
+                container.appendChild(fragment);
+            } else {
+                // 使用优化的虚拟滚动
+                renderWithVirtualScrollOptimized(messages, container);
+            }
+            
+            // 事件处理已在 initializeMessageEventHandlers 中统一处理
             
             // 滚动到底部（多选模式下不滚动）
             if (!AppState.isSelectMode || forceScrollToBottom) {
@@ -3968,16 +3735,18 @@ A：需要配置TTS（文字转语音）服务，在API设置里配置
             }
         }
         
-        // 防抖渲染函数
+        // 防抖渲染函数 - 使用性能优化工具
         function renderChatMessagesDebounced(forceScrollToBottom = false) {
-            if (AppState.renderDebounce.timer) {
-                clearTimeout(AppState.renderDebounce.timer);
+            // 使用 PerformanceUtils 的防抖函数
+            if (!AppState._debouncedRender) {
+                AppState._debouncedRender = PerformanceUtils.debounce(
+                    (scrollToBottom) => {
+                        renderChatMessages(scrollToBottom);
+                    },
+                    AppState.renderDebounce.delay
+                );
             }
-            
-            AppState.renderDebounce.timer = setTimeout(() => {
-                renderChatMessages(forceScrollToBottom);
-                AppState.renderDebounce.timer = null;
-            }, AppState.renderDebounce.delay);
+            AppState._debouncedRender(forceScrollToBottom);
         }
         
         // 加载更多历史消息

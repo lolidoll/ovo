@@ -91,26 +91,23 @@
                         <div class="home-screen">
                             <!-- iOS 锁屏界面 -->
                             <div class="lockscreen">
-                                <div class="lockscreen-time">
-                                    <div class="lockscreen-hour" id="lockscreen-hour">9:41</div>
-                                    <div class="lockscreen-date" id="lockscreen-date">2月5日 星期三</div>
-                                </div>
-                                <div class="lockscreen-notifications">
-                                    <!-- 可以添加通知卡片 -->
-                                </div>
-                                <div class="lockscreen-bottom">
-                                    <div class="lockscreen-shortcuts">
-                                        <div class="lockscreen-shortcut lockscreen-flashlight">
-                                            <svg viewBox="0 0 24 24" fill="white">
-                                                <path d="M9 2L7 6h10l-2-4H9zm-1 6v2h8V8H8zm0 4v8c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-8H8z"/>
-                                            </svg>
-                                        </div>
-                                        <div class="lockscreen-shortcut lockscreen-camera">
-                                            <i class="fas fa-camera"></i>
-                                        </div>
+                                <div class="lockscreen-content">
+                                    <div class="lockscreen-time">
+                                        <div class="lockscreen-hour" id="lockscreen-hour">9:41</div>
+                                        <div class="lockscreen-date" id="lockscreen-date">2月5日 星期三</div>
                                     </div>
-                                    <div class="lockscreen-indicator">
-                                        <div class="lockscreen-swipe-bar"></div>
+                                    <div class="lockscreen-notifications">
+                                        <!-- 可以添加通知卡片 -->
+                                    </div>
+                                    <div class="lockscreen-bottom">
+                                        <div class="lockscreen-shortcuts">
+                                            <div class="lockscreen-shortcut lockscreen-camera">
+                                                <i class="fas fa-camera"></i>
+                                            </div>
+                                        </div>
+                                        <div class="lockscreen-indicator">
+                                            <div class="lockscreen-swipe-bar"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -140,11 +140,14 @@
 .iphone-screen {
     width: 100%;
     height: 100%;
-    background: #ffffff;
+    /* 使用白色背景作为回退，当背景图未加载时显示白色 */
+    background-color: #ffffff;
     border-radius: 47px;
     overflow: hidden;
     position: relative;
-    background: url('https://image.uglycat.cc/d2r7d4.jpg') center/cover no-repeat;
+    /* 背景图设置，使用white作为回退色 */
+    background: url('https://image.uglycat.cc/d2r7d4.jpg') center/cover no-repeat, #ffffff;
+    background-size: cover;
 }
 
 /* 手机端屏幕圆角保持一致 */
@@ -511,7 +514,8 @@
     bottom: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-top: 59px;
+    /* 移除padding-top，让锁屏可以覆盖整个屏幕 */
+    padding-top: 0;
 }
 
 /* 主屏幕 - 9:18 比例自适应 */
@@ -534,14 +538,28 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 120px 22px 50px;
-    z-index: 1000;
-    background: url('https://image.uglycat.cc/fx1inq.jpg') center/cover no-repeat;
+    z-index: 1001; /* 提高z-index，确保在状态栏和灵动岛之上 */
+    /* 使用白色背景作为回退，当背景图未加载时显示白色 */
+    background-color: #ffffff;
+    /* 背景图设置，使用white作为回退色 */
+    background: url('https://image.uglycat.cc/fx1inq.jpg') center/cover no-repeat, #ffffff;
     background-size: cover;
+    background-position: center;
     pointer-events: auto;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
     transform: translateY(0);
     opacity: 1;
+}
+
+/* 锁屏内容容器 - 用于添加padding而不影响背景图 */
+.lockscreen-content {
+    padding: 120px 22px 50px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
 }
 
 .lockscreen.unlocked {
@@ -664,8 +682,9 @@
 
 /* 手机端锁屏优化 - 9:18 比例 */
 @media (max-width: 768px) {
-    .lockscreen {
+    .lockscreen-content {
         padding: 55px 18px 45px;
+        box-sizing: border-box;
     }
     
     .lockscreen-hour {

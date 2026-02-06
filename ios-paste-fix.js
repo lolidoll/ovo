@@ -42,55 +42,48 @@
                 input.style.setProperty('user-select', 'text', 'important');
                 input.style.setProperty('-webkit-touch-callout', 'default', 'important');
                 input.style.setProperty('touch-callout', 'default', 'important');
-                
+                 
                 // 2. 确保输入框可以接收焦点
                 input.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.1)', 'important');
                 
-                // 3. 添加粘贴事件监听器
-                input.addEventListener('paste', function(e) {
-                    console.log('📋 粘贴事件触发');
-                    // 不阻止默认行为，让系统正常处理
-                }, { passive: true });
-                
-                // 4. 添加长按事件处理（iOS需要长按才能显示粘贴菜单）
-                let longPressTimer;
-                const longPressDuration = 500; // 500ms长按
-                
-                input.addEventListener('touchstart', function(e) {
-                    // 只处理单指触摸
-                    if (e.touches.length === 1) {
-                        longPressTimer = setTimeout(function() {
-                            console.log('👆 长按检测，准备显示粘贴菜单');
-                            // 长按时不阻止默认行为，让iOS显示原生菜单
-                        }, longPressDuration);
-                    }
-                }, { passive: true });
-                
-                input.addEventListener('touchend', function(e) {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
+                // 3. 强制覆盖所有可能的事件监听器
+                const allEventListeners = ['touchstart', 'touchend', 'touchmove', 'touchcancel', 'contextmenu', 'paste', 'copy', 'cut'];
+                allEventListeners.forEach(eventName => {
+                    input.addEventListener(eventName, function(e) {
+                        // 不阻止任何事件，让iOS原生行为正常工作
+                        console.log('📱 输入框事件:', eventName, e.type);
+                    }, { passive: true, capture: true });
                 });
+                 
+                // 4. 强制设置输入框的只读属性为false
+                if (input.hasAttribute('readonly')) {
+                    input.removeAttribute('readonly');
+                }
+                input.readOnly = false;
                 
-                input.addEventListener('touchmove', function(e) {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-                });
-                
-                // 5. 确保输入框的父元素不会阻止事件
+                // 5. 强制设置输入框的disabled属性为false
+                if (input.hasAttribute('disabled')) {
+                    input.removeAttribute('disabled');
+                }
+                input.disabled = false;
+                 
+                // 6. 确保输入框的父元素不会阻止事件
                 let parent = input.parentElement;
                 while (parent && parent !== document.body) {
-                    // 移除父元素上的事件阻止
-                    parent.addEventListener('paste', function(e) {
-                        // 不阻止冒泡
-                    }, { capture: false, passive: true });
+                    // 强制移除父元素上的所有可能阻止事件的样式
+                    parent.style.setProperty('-webkit-touch-callout', 'default', 'important');
+                    parent.style.setProperty('touch-callout', 'default', 'important');
+                    
+                    // 为父元素添加事件监听器，确保事件不被阻止
+                    allEventListeners.forEach(eventName => {
+                        parent.addEventListener(eventName, function(e) {
+                            // 不阻止任何事件冒泡
+                        }, { passive: true, capture: true });
+                    });
                     parent = parent.parentElement;
                 }
-                
-                console.log('✅ 已修复输入框:', input.id || input.className);
+                 
+                console.log('✅ 已修复输入框:', input.id || input.className || '无ID');
             });
         });
         
@@ -99,19 +92,18 @@
             mutations.forEach(function(mutation) {
                 mutation.addedNodes.forEach(function(node) {
                     if (node.nodeType === 1) { // 元素节点
-                        // 检查新添加的节点是否是输入框或包含输入框
+                        // 检查新添加的节点是否是输入框
                         if (node.matches && node.matches(apiSettingsInputSelectors.join(', '))) {
                             console.log('🔄 检测到动态添加的输入框，应用修复');
-                            // 重新应用修复
-                            setTimeout(fixIOSPasteIssue, 100);
+                            // 直接应用修复，不递归调用整个函数
+                            applyInputFix(node);
                         }
                         
                         // 检查子节点
                         const inputs = node.querySelectorAll ? node.querySelectorAll(apiSettingsInputSelectors.join(', ')) : [];
                         if (inputs.length > 0) {
                             console.log('🔄 检测到动态添加的输入框（子节点），应用修复');
-                            // 重新应用修复
-                            setTimeout(fixIOSPasteIssue, 100);
+                            inputs.forEach(applyInputFix);
                         }
                     }
                 });
@@ -124,9 +116,38 @@
             subtree: true
         });
         
-        console.log('✅ iOS粘贴修复已应用，共修复', 
-                   document.querySelectorAll(apiSettingsInputSelectors.join(', ')).length, 
+        console.log('✅ iOS粘贴修复已应用，共修复',
+                   document.querySelectorAll(apiSettingsInputSelectors.join(', ')).length,
                    '个输入框');
+    }
+    
+    /**
+     * 对单个输入框应用修复（避免递归调用）
+     */
+    function applyInputFix(input) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (!isIOS) return;
+        
+        // 强制设置CSS样式
+        input.style.setProperty('-webkit-user-select', 'text', 'important');
+        input.style.setProperty('user-select', 'text', 'important');
+        input.style.setProperty('-webkit-touch-callout', 'default', 'important');
+        input.style.setProperty('touch-callout', 'default', 'important');
+        input.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.1)', 'important');
+        
+        // 强制设置输入框的只读属性为false
+        input.readOnly = false;
+        input.disabled = false;
+        
+        // 确保父元素不会阻止事件
+        let parent = input.parentElement;
+        while (parent && parent !== document.body) {
+            parent.style.setProperty('-webkit-touch-callout', 'default', 'important');
+            parent.style.setProperty('touch-callout', 'default', 'important');
+            parent = parent.parentElement;
+        }
+        
+        console.log('✅ 单个输入框修复完成:', input.id || input.className || '无ID');
     }
     
     // 页面加载完成后应用修复
@@ -146,7 +167,20 @@
                 const apiSettingsPage = document.getElementById('api-settings-page');
                 if (apiSettingsPage && apiSettingsPage.classList.contains('active')) {
                     console.log('🔄 API设置页面已显示，应用粘贴修复');
-                    setTimeout(fixIOSPasteIssue, 100);
+                    // 使用新的函数应用修复
+                    setTimeout(function() {
+                        const apiSettingsInputSelectors = [
+                            '#api-settings-page input[type="text"]',
+                            '#api-settings-page input[type="password"]',
+                            '#api-settings-page textarea',
+                            '#api-settings-page select',
+                            '.modern-input',
+                            '.modern-select'
+                        ];
+                        const inputs = document.querySelectorAll(apiSettingsInputSelectors.join(', '));
+                        inputs.forEach(applyInputFix);
+                        console.log('✅ API设置页面输入框修复完成，共', inputs.length, '个');
+                    }, 100);
                 }
             }
         });
