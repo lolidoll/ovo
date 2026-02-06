@@ -608,12 +608,20 @@
                 z-index: 100 !important;
             }
             
-            /* 消息页面和好友页面为顶部导航栏和搜索栏预留空间 */
+            /* 重置消息页面和好友页面的margin和padding */
             .msg-page,
             .friend-page {
-                padding-top: 110px !important; /* 45px(导航栏) + 65px(搜索栏包含padding) */
+                margin-top: 0 !important;
+                padding-top: 56px !important; /* 搜索栏高度: 10px(padding上) + 36px(输入框) + 10px(padding下) */
             }
             
+            /* msg-list需要额外的padding-top来避开固定的顶部导航栏 */
+            .msg-page .msg-list,
+            .friend-page .friend-content {
+                padding-top: 50px !important; /* 顶部导航栏高度 + 5px间距 */
+            }
+            
+            /* 确保搜索栏也使用fixed定位 */
             .msg-page .search-bar,
             .friend-page .search-bar {
                 position: fixed !important;
@@ -622,6 +630,7 @@
                 right: 0 !important;
                 width: 100% !important;
                 z-index: 100 !important;
+                margin-top: 0 !important;
             }
         }
         .search-input {
