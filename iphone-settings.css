@@ -383,3 +383,60 @@
     background: rgba(84, 84, 88, 0.65);
     margin: 0 16px;
 }
+
+/* iOS风格开关 */
+.settings-switch {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 31px;
+}
+
+.settings-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.settings-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #39393d;
+    transition: 0.3s;
+    border-radius: 31px;
+}
+
+.settings-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 27px;
+    width: 27px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.settings-switch input:checked + .settings-switch-slider {
+    background-color: #34c759;
+}
+
+.settings-switch input:checked + .settings-switch-slider:before {
+    transform: translateX(20px);
+}
+
+/* 设置项动作样式（如关机按钮） */
+.settings-item-action {
+    cursor: pointer;
+    justify-content: center;
+}
+
+.settings-item-action:active {
+    background: #2c2c2e;
+}

@@ -16,10 +16,7 @@
             <div class="iphone-health-page" id="iphone-health-page">
                 <div class="health-header">
                     <button class="health-back-btn" id="health-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        健康
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="health-title">健康</div>
                     <button class="health-generate-btn" id="health-generate-btn">生成</button>
@@ -539,17 +536,7 @@ ${messagesText}
             if (screen) {
                 clearInterval(checkInterval);
                 createHealthPage();
-                
-                // 绑定健康按钮点击事件
-                setTimeout(() => {
-                    const appIcons = document.querySelectorAll('.app-icon');
-                    if (appIcons[1]) { // 第二个是健康
-                        appIcons[1].addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            showHealth();
-                        });
-                    }
-                }, 500);
+                // 注意：不要在这里绑定点击事件，由 iphone-simulator.js 统一处理
             }
         }, 100);
     }

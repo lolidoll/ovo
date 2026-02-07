@@ -781,7 +781,16 @@
         // 应用图标点击效果
         const appIcons = document.querySelectorAll('.app-icon, .dock-icon');
         appIcons.forEach(icon => {
-            icon.addEventListener('click', function() {
+            // 移除旧的事件监听器，防止重复绑定
+            const oldHandler = icon._clickHandler;
+            if (oldHandler) {
+                icon.removeEventListener('click', oldHandler);
+            }
+            
+            // 创建新的处理函数
+            const clickHandler = function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                e.preventDefault(); // 阻止默认行为
                 const appName = this.querySelector('.app-name')?.textContent;
                 const iconImage = this.querySelector('.dock-icon-image');
                 const iconClass = iconImage ? iconImage.className : '';
@@ -816,40 +825,63 @@
                     if (window.iPhoneWallet) {
                         window.iPhoneWallet.show();
                     }
+                    return;
                 } else if (appName === '备忘录') {
                     if (window.iPhoneNotes) {
                         window.iPhoneNotes.show();
                     }
+                    return;
                 } else if (appName === '相机') {
-                    if (window.iPhoneCamera) {
-                        window.iPhoneCamera.show();
+                    console.log('✅ 相机app被正确识别，准备打开相册');
+                    // 先关闭所有其他应用页面
+                    const allAppPages = document.querySelectorAll('[id$="-page"]');
+                    allAppPages.forEach(page => {
+                        if (page.classList.contains('show')) {
+                            page.classList.remove('show');
+                        }
+                    });
+                    // 打开相册功能
+                    if (window.iPhonePhotos) {
+                        console.log('✅ 调用 window.iPhonePhotos.show()');
+                        window.iPhonePhotos.show();
                     }
+                    return;
                 } else if (appName === '屏幕使用') {
                     if (window.iPhoneScreenTime) {
                         window.iPhoneScreenTime.show();
                     }
+                    return;
                 } else if (appName === '日历') {
                     if (window.iPhoneCalendar) {
                         window.iPhoneCalendar.show();
                     }
+                    return;
                 } else if (appName === '地图') {
                     if (window.iPhoneMaps) {
                         window.iPhoneMaps.show();
                     }
+                    return;
                 } else if (appName === '健康') {
                     if (window.iPhoneHealth) {
                         window.iPhoneHealth.show();
                     }
+                    return;
                 } else if (appName === '相册') {
                     if (window.iPhonePhotos) {
                         window.iPhonePhotos.show();
                     }
+                    return;
                 } else if (appName === '邮件') {
                     if (window.iPhoneMail) {
                         window.iPhoneMail.show();
                     }
+                    return;
                 }
-            });
+            };
+            
+            // 保存处理函数引用并添加监听器
+            icon._clickHandler = clickHandler;
+            icon.addEventListener('click', clickHandler);
         });
     }
 

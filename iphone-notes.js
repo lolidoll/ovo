@@ -15,10 +15,7 @@
             <div class="iphone-notes-page" id="iphone-notes-page">
                 <div class="notes-header">
                     <button class="notes-back-btn" id="notes-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        备忘录
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="notes-title">备忘录</div>
                     <button class="notes-generate-btn" id="notes-generate-btn">生成</button>
@@ -36,10 +33,7 @@
             <div class="note-detail-page" id="note-detail-page">
                 <div class="note-detail-header">
                     <button class="note-detail-back-btn" id="note-detail-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        备忘录
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                 </div>
                 <div class="note-detail-content" id="note-detail-content"></div>
@@ -193,8 +187,27 @@
                     }).join('\n');
             }
             
-            // 构建提示词 - 要求返回纯JSON，不要任何其他内容
-            const prompt = `你是${currentCharacter.name}，请生成15条真实的备忘录标题。
+            // 获取真实的现在时间和日期
+            const nowDate = new Date();
+            const year = nowDate.getFullYear();
+            const month = String(nowDate.getMonth() + 1).padStart(2, '0');
+            const date = String(nowDate.getDate()).padStart(2, '0');
+            const hours = String(nowDate.getHours()).padStart(2, '0');
+            const minutes = String(nowDate.getMinutes()).padStart(2, '0');
+            const seconds = String(nowDate.getSeconds()).padStart(2, '0');
+            
+            // 获取星期几
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[nowDate.getDay()];
+            
+            const currentDateTime = `${year}年${month}月${date}日 ${hours}:${minutes}:${seconds} ${weekDay}`;
+            
+            console.log('当前时间:', currentDateTime);
+            
+            // 构建提示词 - 要求返回纯JSON，包含标题和内容
+            const prompt = `你是${currentCharacter.name}，请生成8条真实的备忘录，每条需包含标题和详细内容。
+
+【当前时间】${currentDateTime}
 
 角色信息：
 - 角色名：${currentCharacter.name}
@@ -205,15 +218,19 @@ ${summariesText}
 ${messagesText}
 
 要求：
-1. 与${currentCharacter.userName}相关的备忘录（约5-7条）
-2. 日常生活相关（约5-7条）
-3. 结合世界观和现实（约3-4条）
-4. 每条标题简短（8-20字）
-5. 要有真实感和活人感
-6. 必须生成15条，不能少
+1. 可以为与${currentCharacter.userName}相关的备忘录或者日常生活相关（需结合世界观和现实）
+2. 每条标题简短（8-20字）
+3. 每条内容详细真实，有活人感（300-800字）
+4. 语言风格：纯口语化，使用生活常用词汇，禁用书面化表达（如购置→买、前往→去）；可自然添加少量语气词（啊、啦、哦、呢）与emoij
+5. 句式排版：短句为主，断句贴合口语停顿，多换行，多段落；标点仅用逗号、句号、顿号，禁用分号、冒号、括号嵌套等；清单类仅用「数字+顿号+短句」格式，无复杂层级。
+6. 模糊信息标注「大概/待确认/可能」，口误/修正类表述直接复刻原句修正过程，不优化通顺度。
+7. 细节补充：重要/紧急事项可添加「⚠️/📍」提醒符号，单条记录可附带1句简短真人式提醒（如“别迟到/别忘带”）；未提及的个人偏好，不随意补充。
+8. 场景化执行指令【按输入内容匹配】。场景1：多件碎片化事项（如“明天去银行，取快递，下午约朋友”）。执行：按时间/场景简单整合排序，短句连写/分行，禁用正式分类，保留口语随意感。示例：输入“明天去银行，还要取快递，下午约了朋友”→输出“明天：去银行、取快递，下午约朋友”。场景2：含口误/修正的表述（如“下午去书店？不对，取快递，改晚上”）。执行：完全复刻修正过程，保留口语化疑问/修正语气，不优化语句通顺度。示例：输入“下午去书店？不对，下午要取快递，改晚上去”→输出“下午去书店？不，取快递，书店改晚上”。场景3：模糊信息表述（如“下周和小张看电影，大概周六”）。执行：核心信息保留，模糊部分标注「大概/待确认」，不强行补全未知信息。示例：输入“下周和小张看电影，大概周六”→输出“下周（大概周六）和小张看电影”。场景4：重要/紧急事项（如“周五9点开会，必须到，带笔记本”）。执行：标注「⚠️/📍」提醒符号，明确核心要求，附带1句简短真人式提醒。示例：输入“周五9点开会，必须到，带笔记本”→输出“⚠️周五9点开会，必须到，带笔记本（别忘带！）”。场景5：明确要求列清单（如“买水果、牛奶、牙膏，水果要苹果香蕉”）。执行：仅用「数字+顿号+短句」格式，同类项合并，非必要项标注「可选」。示例：输入“买水果、牛奶、面包，还有牙膏，水果要苹果和香蕉”→输出“购物清单：1、水果（苹果、香蕉）2、牛奶3、面包4、牙膏”
+9. 注意上述风格只供参考！具体输出仍需要针对你目前的设定来思考如何灵活地输出内容！禁止ooc！
+10. 必须生成8条，不能少
 
 直接返回JSON数组，不要任何说明文字或markdown标记：
-[{"title":"标题1"},{"title":"标题2"},...]`;
+[{"title":"标题1","content":"详细内容1"},{"title":"标题2","content":"详细内容2"},...]`;
             
             console.log('完整提示词:', prompt);
             console.log('========================');
@@ -225,31 +242,32 @@ ${messagesText}
             const notesData = parseNotesResponse(response);
             
             // 生成模拟的时间分布（最近3天内）
-            const now = Date.now();
+            const nowTimestamp = Date.now();
             const timeOffsets = [
-                // 2-3条刚创建（0-30分钟前）
+                // 1-2条刚创建（0-30分钟前）
                 ...Array.from({length: 2}, () => Math.floor(Math.random() * 30 * 60 * 1000)),
-                ...Array.from({length: 1}, () => Math.floor(Math.random() * 30 * 60 * 1000)),
-                // 3-4条今天创建（1-12小时前）
-                ...Array.from({length: 4}, () => 60 * 60 * 1000 + Math.floor(Math.random() * 11 * 60 * 60 * 1000)),
-                // 4-5条昨天创建（24-36小时前）
-                ...Array.from({length: 5}, () => 24 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000)),
-                // 3-4条前天创建（48-60小时前）
-                ...Array.from({length: 3}, () => 48 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000))
+                // 2-3条今天创建（1-12小时前）
+                ...Array.from({length: 3}, () => 60 * 60 * 1000 + Math.floor(Math.random() * 11 * 60 * 60 * 1000)),
+                // 2条昨天创建（24-36小时前）
+                ...Array.from({length: 2}, () => 24 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000)),
+                // 1条前天创建（48-60小时前）
+                ...Array.from({length: 1}, () => 48 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000))
             ];
             
             // 打乱时间偏移顺序
             timeOffsets.sort(() => Math.random() - 0.5);
             
             currentNotes = notesData.map((note, index) => {
-                const noteTime = new Date(now - timeOffsets[index]);
+                const noteTime = new Date(nowTimestamp - timeOffsets[index]);
+                // 生成预览文本（取内容前50字）
+                const preview = note.content ? note.content.substring(0, 50) + (note.content.length > 50 ? '...' : '') : '点击查看详情';
                 return {
                     id: Date.now() + index,
                     title: note.title,
-                    preview: '点击查看详情',
+                    preview: preview,
                     time: formatTime(noteTime),
                     timestamp: noteTime.getTime(),
-                    content: null
+                    content: note.content || null
                 };
             });
             
@@ -308,6 +326,46 @@ ${messagesText}
         return false;
     }
 
+    // 验证请求体（与main-api-manager保持一致）
+    function validateRequestBody(body) {
+        if (!body) {
+            console.error('❌ 备忘录API请求体为空');
+            return false;
+        }
+        
+        if (!body.model || typeof body.model !== 'string') {
+            console.error('❌ 无效的 model 参数:', body.model);
+            return false;
+        }
+        
+        if (!Array.isArray(body.messages)) {
+            console.error('❌ messages 必须是数组');
+            return false;
+        }
+        
+        if (body.messages.length === 0) {
+            console.error('❌ messages 数组为空');
+            return false;
+        }
+        
+        // 验证每条消息
+        for (let i = 0; i < body.messages.length; i++) {
+            const msg = body.messages[i];
+            
+            if (!msg.role || !['system', 'user', 'assistant'].includes(msg.role)) {
+                console.error(`❌ 消息 ${i} 角色无效:`, msg.role);
+                return false;
+            }
+            
+            if (msg.content === undefined || msg.content === null) {
+                console.error(`❌ 消息 ${i} content 为空`);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
     // 调用主API
     async function callMainAPI(prompt) {
         // 获取API配置
@@ -332,6 +390,11 @@ ${messagesText}
             max_tokens: 10000
         };
         
+        // 验证请求体
+        if (!validateRequestBody(body)) {
+            throw new Error('请求参数验证失败');
+        }
+        
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
         
@@ -349,7 +412,25 @@ ${messagesText}
             clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                let errorDetails = '';
+                try {
+                    const errorData = await response.text();
+                    if (errorData) {
+                        try {
+                            const errorJson = JSON.parse(errorData);
+                            if (errorJson.error) {
+                                errorDetails = typeof errorJson.error === 'string'
+                                    ? errorJson.error
+                                    : (errorJson.error.message || JSON.stringify(errorJson.error));
+                            }
+                        } catch (e) {
+                            errorDetails = errorData.substring(0, 200);
+                        }
+                    }
+                } catch (e) {
+                    console.error('无法读取错误响应:', e);
+                }
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}${errorDetails ? '\n' + errorDetails : ''}`);
             }
             
             const data = await response.json();
@@ -399,8 +480,11 @@ ${messagesText}
                     console.log('解析的JSON数组，项目数:', parsed.length);
                     
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        // 验证每个项目都有title字段
-                        const validNotes = parsed.filter(item => item.title && typeof item.title === 'string');
+                        // 验证每个项目都有title和content字段
+                        const validNotes = parsed.filter(item =>
+                            item.title && typeof item.title === 'string' &&
+                            item.content && typeof item.content === 'string'
+                        );
                         console.log('有效的备忘录数:', validNotes.length);
                         
                         if (validNotes.length > 0) {
@@ -412,9 +496,11 @@ ${messagesText}
                 }
             }
             
-            // 如果JSON解析失败，尝试提取所有"title"字段
+            // 如果JSON解析失败，尝试提取所有"title"和"content"字段
             const titleMatches = cleanedResponse.match(/"title"\s*:\s*"([^"]+)"/g);
+            const contentMatches = cleanedResponse.match(/"content"\s*:\s*"([^"]*(?:\\.[^"]*)*)"(?=\s*[,\}])/g);
             console.log('找到title匹配数:', titleMatches ? titleMatches.length : 0);
+            console.log('找到content匹配数:', contentMatches ? contentMatches.length : 0);
             
             if (titleMatches && titleMatches.length > 0) {
                 const titles = titleMatches.map(match => {
@@ -422,10 +508,30 @@ ${messagesText}
                     return titleMatch ? titleMatch[1] : '';
                 }).filter(title => title.trim());
                 
+                let contents = [];
+                if (contentMatches && contentMatches.length > 0) {
+                    contents = contentMatches.map(match => {
+                        const contentMatch = match.match(/"content"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/);
+                        if (contentMatch) {
+                            // 处理转义字符
+                            return contentMatch[1]
+                                .replace(/\\n/g, '\n')
+                                .replace(/\\t/g, '\t')
+                                .replace(/\\"/g, '"')
+                                .replace(/\\\\/g, '\\');
+                        }
+                        return '';
+                    }).filter(content => content.trim());
+                }
+                
                 console.log('提取的标题数:', titles.length);
+                console.log('提取的内容数:', contents.length);
                 
                 if (titles.length > 0) {
-                    return titles.slice(0, 15).map(title => ({ title }));
+                    return titles.slice(0, 8).map((title, index) => ({
+                        title: title,
+                        content: contents[index] || `关于"${title}"的备忘录内容。`
+                    }));
                 }
             }
             
@@ -433,35 +539,41 @@ ${messagesText}
             const lines = cleanedResponse
                 .split('\n')
                 .map(line => line.trim())
-                .filter(line => line.length > 0 && line.length < 100) // 过滤空行和过长的行
+                .filter(line => line.length > 0 && line.length < 200) // 过滤空行和过长的行
                 .filter(line => !line.match(/^[\d\.\-\*]+$/)) // 过滤只有数字/符号的空行
-                .slice(0, 15);
+                .slice(0, 8);
             
             console.log('按行解析的行数:', lines.length);
                 
             if (lines.length > 0) {
-                const parsed = lines.map(line => ({
-                    title: line
+                const parsed = lines.map(line => {
+                    const cleanedLine = line
                         .replace(/^\d+[\.\、]\s*/, '')
                         .replace(/^[-*]\s*/, '')
                         .replace(/^["'`]|["'`]$/g, '')
-                        .trim()
-                }));
+                        .trim();
+                    return {
+                        title: cleanedLine,
+                        content: `关于"${cleanedLine}"的备忘录内容。`
+                    };
+                });
                 console.log('按行解析的结果:', parsed);
                 return parsed;
             }
             
             // 如果都没有，返回默认备忘录
             console.log('使用默认备忘录');
-            return Array.from({length: 15}, (_, i) => ({
-                title: `备忘录 ${i + 1}`
+            return Array.from({length: 8}, (_, i) => ({
+                title: `备忘录 ${i + 1}`,
+                content: `这是第${i + 1}条备忘录的默认内容。`
             }));
             
         } catch (error) {
             console.error('解析响应失败:', error);
             // 返回默认备忘录
-            return Array.from({length: 15}, (_, i) => ({
-                title: `备忘录 ${i + 1}`
+            return Array.from({length: 8}, (_, i) => ({
+                title: `备忘录 ${i + 1}`,
+                content: `这是第${i + 1}条备忘录的默认内容。`
             }));
         }
     }
@@ -503,8 +615,8 @@ ${messagesText}
         });
     }
 
-    // 打开备忘录详情
-    async function openNoteDetail(noteId) {
+    // 打开备忘录详情（直接显示已生成的内容）
+    function openNoteDetail(noteId) {
         const note = currentNotes.find(n => n.id === noteId);
         if (!note) return;
         
@@ -516,56 +628,16 @@ ${messagesText}
         // 显示详情页
         detailPage.classList.add('show');
         
-        // 如果已有内容，直接显示
+        // 直接显示已生成的内容
         if (note.content) {
             renderNoteDetail(note);
-            return;
-        }
-        
-        // 显示加载状态
-        detailContent.innerHTML = `
-            <div class="note-detail-loading">
-                <div class="notes-loading-spinner"></div>
-                <div class="notes-loading-text">正在加载详情...</div>
-            </div>
-        `;
-        
-        try {
-            // 生成详细内容
-            const prompt = `你是${currentCharacter.name}，这是你手机备忘录中的一条记录，标题是："${note.title}"。
-
-请根据以下信息，生成这条备忘录的详细内容（300-500字）：
-
-角色信息：
-- 角色名：${currentCharacter.name}
-- 用户名：${currentCharacter.userName}
-${currentCharacter.card ? `- 角色设定：${JSON.stringify(currentCharacter.card)}` : ''}
-
-要求：
-1. 内容要真实自然，符合角色性格
-2. 可以包含具体的时间、地点、人物、事件
-3. 要有情感和细节
-4. 300-500字左右
-5. 直接输出正文内容，不要重复标题，不要说"这是备忘录"之类的话`;
-
-            const response = await callMainAPI(prompt);
-            // 清理可能的标题重复
-            let content = response.trim();
-            content = content.replace(new RegExp(`^${note.title}\\s*`, 'i'), '');
-            content = content.replace(/^【备忘录】\s*/, '');
-            content = content.replace(/^备忘录[:：]\s*/, '');
-            note.content = content;
-            
-            // 渲染详情
-            renderNoteDetail(note);
-            
-        } catch (error) {
-            console.error('加载详情失败:', error);
+        } else {
+            // 如果没有内容（不应该发生），显示错误
             detailContent.innerHTML = `
                 <div class="notes-empty">
                     <div class="notes-empty-icon">⚠️</div>
-                    <div class="notes-empty-text">加载失败</div>
-                    <div class="notes-empty-hint">${error.message || '请稍后重试'}</div>
+                    <div class="notes-empty-text">内容加载失败</div>
+                    <div class="notes-empty-hint">请返回重新生成备忘录</div>
                 </div>
             `;
         }

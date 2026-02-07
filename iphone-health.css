@@ -25,39 +25,39 @@
 /* 头部 */
 .health-header {
     position: relative;
-    height: 54px;
+    height: 44px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    padding: 0 16px 10px;
+    padding: 0 16px;
     background: #ffffff;
     border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
 
 .health-back-btn {
-    background: none;
-    border: none;
-    color: #007aff;
-    font-size: 17px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 0;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
     cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-weight: 400;
-    letter-spacing: -0.4px;
-    opacity: 0; /* 隐藏但功能可用 */
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
 }
 
 .health-back-btn:active {
-    opacity: 0.4;
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
 }
 
-.health-back-btn svg {
-    width: 13px;
-    height: 21px;
+.health-back-btn i {
+    font-size: 18px;
 }
 
 .health-title {
@@ -74,14 +74,12 @@
 .health-generate-btn {
     background: none;
     border: none;
-    color: #007aff;
+    color: #007AFF;
     font-size: 17px;
     font-weight: 400;
     cursor: pointer;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    letter-spacing: -0.4px;
-    opacity: 0; /* 隐藏但功能可用 */
+    transition: opacity 0.2s ease;
 }
 
 .health-generate-btn:active {
@@ -91,6 +89,12 @@
 .health-generate-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+    pointer-events: none;
+}
+
+.health-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 /* 内容区域 */

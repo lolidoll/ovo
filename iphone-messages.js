@@ -17,10 +17,7 @@
             <div class="iphone-messages-page" id="iphone-messages-page">
                 <div class="messages-header">
                     <button class="messages-back-btn" id="messages-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        信息
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <h1 class="messages-title">信息</h1>
                     <button class="messages-generate-btn" id="messages-generate-btn">生成</button>
@@ -215,6 +212,68 @@
         };
     }
 
+    // 验证请求体（与main-api-manager保持一致）
+    function validateRequestBody(body) {
+        if (!body) {
+            console.error('❌ 短信API请求体为空');
+            return false;
+        }
+        
+        if (!body.model || typeof body.model !== 'string') {
+            console.error('❌ 无效的 model 参数:', body.model);
+            return false;
+        }
+        
+        if (!Array.isArray(body.messages)) {
+            console.error('❌ messages 必须是数组');
+            return false;
+        }
+        
+        if (body.messages.length === 0) {
+            console.error('❌ messages 数组为空');
+            return false;
+        }
+        
+        // 验证每条消息
+        for (let i = 0; i < body.messages.length; i++) {
+            const msg = body.messages[i];
+            
+            if (!msg.role || !['system', 'user', 'assistant'].includes(msg.role)) {
+                console.error(`❌ 消息 ${i} 角色无效:`, msg.role);
+                return false;
+            }
+            
+            if (msg.content === undefined || msg.content === null) {
+                console.error(`❌ 消息 ${i} content 为空`);
+                return false;
+            }
+            
+            if (typeof msg.content === 'string' && msg.content.trim().length === 0) {
+                console.error(`❌ 消息 ${i} content 为空字符串`);
+                return false;
+            }
+            
+            if (Array.isArray(msg.content) && msg.content.length === 0) {
+                console.error(`❌ 消息 ${i} content 数组为空`);
+                return false;
+            }
+        }
+        
+        // 验证参数范围
+        if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) {
+            console.error('❌ temperature 参数超出范围 (0-2):', body.temperature);
+            return false;
+        }
+        
+        if (body.top_p !== undefined && (typeof body.top_p !== 'number' || body.top_p < 0 || body.top_p > 1)) {
+            console.error('❌ top_p 参数超出范围 (0-1):', body.top_p);
+            return false;
+        }
+        
+        console.log('✅ 短信API请求体验证通过');
+        return true;
+    }
+
     // 调用主API生成短信数据（参考备忘录实现）
     async function callMainAPIForMessages(characterInfo) {
         // 检查API配置
@@ -341,6 +400,11 @@ ${conversationSummary}
             max_tokens: 40000
         };
 
+        // 验证请求体
+        if (!validateRequestBody(requestBody)) {
+            throw new Error('请求参数验证失败');
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
 
@@ -362,7 +426,26 @@ ${conversationSummary}
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                let errorDetails = '';
+                try {
+                    const errorData = await response.text();
+                    if (errorData) {
+                        // 尝试解析JSON错误信息
+                        try {
+                            const errorJson = JSON.parse(errorData);
+                            if (errorJson.error) {
+                                errorDetails = typeof errorJson.error === 'string'
+                                    ? errorJson.error
+                                    : (errorJson.error.message || JSON.stringify(errorJson.error));
+                            }
+                        } catch (e) {
+                            errorDetails = errorData.substring(0, 200);
+                        }
+                    }
+                } catch (e) {
+                    console.error('无法读取错误响应:', e);
+                }
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}${errorDetails ? '\n' + errorDetails : ''}`);
             }
 
             const data = await response.json();
@@ -570,7 +653,6 @@ ${conversationSummary}
                             </div>
                             <div class="messages-item-preview">${escapeHtml(conv.lastMessage)}</div>
                         </div>
-                        ${conv.unread ? '<div class="messages-unread-badge">1</div>' : ''}
                     </div>
                 `;
             });
@@ -630,18 +712,37 @@ ${conversationSummary}
                 }
                 
                 const sentClass = msg.sent ? 'sent' : 'received';
-                const statusHtml = msg.sent ? `
-                    <div class="messages-bubble-status">
-                        <span class="messages-bubble-${msg.status || 'delivered'}">${msg.status === 'read' ? '已读' : '已送达'}</span>
-                    </div>
-                ` : '';
+                
+                // 处理不同类型的消息内容
+                let messageContent = '';
+                if (msg.text) {
+                    // 文本消息
+                    messageContent = escapeHtml(msg.text);
+                } else if (msg.image) {
+                    // 图片消息
+                    messageContent = '📷 [图片]';
+                } else if (msg.voice) {
+                    // 语音消息
+                    messageContent = '🎤 [语音消息]';
+                } else if (msg.video) {
+                    // 视频消息
+                    messageContent = '🎬 [视频]';
+                } else if (msg.location) {
+                    // 位置消息
+                    messageContent = '📍 [位置]';
+                } else if (msg.file) {
+                    // 文件消息
+                    messageContent = '📎 [文件]';
+                } else {
+                    // 其他类型
+                    messageContent = '[消息]';
+                }
                 
                 messagesHtml += `
                     <div class="messages-bubble-row ${sentClass}">
                         <div class="messages-bubble ${sentClass}">
-                            <div class="messages-bubble-text">${escapeHtml(msg.text)}</div>
+                            <div class="messages-bubble-text">${messageContent}</div>
                         </div>
-                        ${statusHtml}
                     </div>
                 `;
             });

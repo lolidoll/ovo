@@ -5639,13 +5639,15 @@
             const minimaxKeyToggle = document.getElementById('minimax-api-key-toggle');
             const minimaxKeyInput = document.getElementById('minimax-api-key');
             if (minimaxKeyToggle && minimaxKeyInput) {
+                // 初始状态：输入框为text类型，按钮显示"隐藏"
+                minimaxKeyToggle.textContent = '隐藏';
                 minimaxKeyToggle.addEventListener('click', function() {
-                    if (minimaxKeyInput.type === 'password') {
-                        minimaxKeyInput.type = 'text';
-                        this.textContent = '隐藏';
-                    } else {
+                    if (minimaxKeyInput.type === 'text') {
                         minimaxKeyInput.type = 'password';
                         this.textContent = '显示';
+                    } else {
+                        minimaxKeyInput.type = 'text';
+                        this.textContent = '隐藏';
                     }
                 });
             }

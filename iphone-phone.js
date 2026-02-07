@@ -16,10 +16,7 @@
             <div class="iphone-phone-page" id="iphone-phone-page">
                 <div class="phone-header">
                     <button class="phone-back-btn" id="phone-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        电话
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <h1 class="phone-title">电话</h1>
                     <button class="phone-generate-btn" id="phone-generate-btn">生成</button>
@@ -300,43 +297,18 @@ ${messagesText}
 请根据角色性格、生活状态、社交关系，以及最近的对话内容，生成真实的电话联系人和通话记录。
 
 【重要要求】
-1. 生成5-8个联系人（不要太多，避免超出token限制）
-2. 每个联系人生成2-3条通话记录（不要太多）
-3. detail字段保持简短（10-20字以内）
+1. 生成8-12条最近通话记录（recentCalls）
+2. 每条通话记录必须包含详细的通话内容（detail字段），内容要丰富具体（30-80字）
+3. 通话内容要符合角色关系和情境，比如：
+   - 亲密关系：聊天内容、关心问候、约会计划等
+   - 工作关系：工作汇报、项目讨论、会议安排等
+   - 朋友关系：闲聊、约饭、分享生活等
 4. 必须返回完整、有效的JSON格式
 5. 不要在JSON中使用注释
 6. 确保所有括号、引号、逗号都正确闭合
 
 请严格按照以下JSON格式返回（不要添加任何其他文字）：
 {
-  "contacts": [
-    {
-      "id": "contact_1",
-      "name": "联系人姓名",
-      "avatar": "👨‍💼",
-      "relationship": "工作伙伴",
-      "phone": "138****1234",
-      "label": "重要",
-      "calls": [
-        {
-          "type": "outgoing",
-          "direction": "去电",
-          "date": "今天",
-          "time": "09:30",
-          "duration": "3分25秒",
-          "detail": "讨论项目"
-        }
-      ]
-    }
-  ],
-  "stats": {
-    "totalCalls": 156,
-    "missedCalls": 12,
-    "incomingCalls": 89,
-    "outgoingCalls": 67,
-    "avgDuration": "2分30秒",
-    "longestCall": "45分12秒"
-  },
   "recentCalls": [
     {
       "name": "联系人姓名",
@@ -345,7 +317,18 @@ ${messagesText}
       "date": "今天",
       "time": "09:30",
       "duration": "3分25秒",
-      "avatar": "👨‍💼"
+      "avatar": "👨‍💼",
+      "detail": "详细的通话内容描述，至少30字，包括谈话的主要话题和重要细节"
+    },
+    {
+      "name": "另一个联系人",
+      "type": "incoming",
+      "direction": "来电",
+      "date": "昨天",
+      "time": "18:45",
+      "duration": "12分18秒",
+      "avatar": "👩",
+      "detail": "另一段详细的通话内容，要真实生动，符合角色性格和关系"
     }
   ]
 }`;
@@ -478,29 +461,24 @@ ${messagesText}
                     
                     let parsed = JSON.parse(fixedJson);
                     console.log('✅ 成功解析JSON');
-                    console.log('contacts数量:', parsed.contacts?.length || 0);
                     console.log('recentCalls数量:', parsed.recentCalls?.length || 0);
                     
-                    // 验证并补充缺失的必要字段
-                    if (!parsed.contacts || !Array.isArray(parsed.contacts)) {
-                        console.warn('缺少contacts字段，使用空数组');
-                        parsed.contacts = [];
-                    }
-                    if (!parsed.stats) {
-                        console.warn('缺少stats字段，使用默认值');
-                        parsed.stats = {
-                            totalCalls: 0,
-                            missedCalls: 0,
-                            incomingCalls: 0,
-                            outgoingCalls: 0,
-                            avgDuration: '0分0秒',
-                            longestCall: '0分0秒'
-                        };
-                    }
+                    // 验证并补充缺失的必要字段（只需要recentCalls）
                     if (!parsed.recentCalls || !Array.isArray(parsed.recentCalls)) {
                         console.warn('缺少recentCalls字段，使用空数组');
                         parsed.recentCalls = [];
                     }
+                    
+                    // 不再需要contacts和stats字段，但为了兼容性保留空值
+                    parsed.contacts = [];
+                    parsed.stats = {
+                        totalCalls: 0,
+                        missedCalls: 0,
+                        incomingCalls: 0,
+                        outgoingCalls: 0,
+                        avgDuration: '0分0秒',
+                        longestCall: '0分0秒'
+                    };
                     
                     return parsed;
                     
@@ -564,55 +542,26 @@ ${messagesText}
         }
     }
 
-    // 渲染电话数据
+    // 渲染电话数据 - 只显示最近通话
     function renderPhoneData(phoneData) {
         const content = document.getElementById('phone-content');
         if (!content) return;
 
         let html = '';
 
-        // 渲染统计卡片
-        if (phoneData.stats) {
-            html += `
-                <div class="phone-stats">
-                    <div class="stats-header">通话统计</div>
-                    <div class="stats-row">
-                        <span class="stats-label">总通话次数</span>
-                        <span class="stats-value total-calls">${phoneData.stats.totalCalls || 0}</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">未接来电</span>
-                        <span class="stats-value missed-calls">${phoneData.stats.missedCalls || 0}</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">来电信</span>
-                        <span class="stats-value">${phoneData.stats.incomingCalls || 0}</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">去电信</span>
-                        <span class="stats-value">${phoneData.stats.outgoingCalls || 0}</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">平均时长</span>
-                        <span class="stats-value">${phoneData.stats.avgDuration || '0'}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 渲染最近通话
+        // 只渲染最近通话
         if (phoneData.recentCalls && phoneData.recentCalls.length > 0) {
             html += `
                 <div class="contact-section">
                     <div class="contact-section-header">最近通话</div>
             `;
             
-            phoneData.recentCalls.forEach(call => {
+            phoneData.recentCalls.forEach((call, index) => {
                 const typeClass = call.type;
                 const iconSvg = getCallIcon(call.type);
                 
                 html += `
-                    <div class="recent-call-item">
+                    <div class="recent-call-item" data-call-index="${index}">
                         <div class="call-icon ${typeClass}">
                             ${iconSvg}
                         </div>
@@ -624,45 +573,138 @@ ${messagesText}
                             </div>
                         </div>
                         <div class="contact-time">${call.date || ''} ${call.time || ''}</div>
+                        <div class="call-arrow">
+                            <i class="fa fa-chevron-right"></i>
+                        </div>
                     </div>
                 `;
             });
             
             html += `</div>`;
-        }
-
-        // 渲染联系人列表
-        if (phoneData.contacts && phoneData.contacts.length > 0) {
-            html += `
-                <div class="contact-section">
-                    <div class="contact-section-header">联系人</div>
-                    <div class="phone-contacts">
-            `;
-            
-            phoneData.contacts.forEach(contact => {
-                html += `
-                    <div class="contact-item">
-                        <div class="contact-avatar">
-                            ${contact.avatar || '👤'}
-                        </div>
-                        <div class="contact-info">
-                            <div class="contact-name">${contact.name || '未知'}</div>
-                            <div class="contact-subtitle">${contact.relationship || contact.phone || ''}</div>
-                        </div>
-                        <div class="contact-meta">
-                            <div class="contact-type ${contact.label ? 'incoming' : ''}">${contact.label || '联系人'}</div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `
-                    </div>
+        } else {
+            html = `
+                <div class="phone-empty">
+                    <div class="phone-empty-icon">📱</div>
+                    <div class="phone-empty-text">暂无通话记录</div>
+                    <div class="phone-empty-hint">点击右上角"生成"按钮<br>创建角色的通话记录</div>
                 </div>
             `;
         }
 
         content.innerHTML = html;
+        
+        // 添加点击事件监听
+        attachCallItemListeners(phoneData);
+    }
+
+    // 添加通话记录点击事件
+    function attachCallItemListeners(phoneData) {
+        const callItems = document.querySelectorAll('.recent-call-item');
+        callItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-call-index'));
+                const call = phoneData.recentCalls[index];
+                if (call) {
+                    showCallDetail(call);
+                }
+            });
+        });
+    }
+
+    // 显示通话详情弹窗
+    function showCallDetail(call) {
+        // 生成随机头像URL（使用稳定可靠的头像服务）
+        const name = call.name || '用户';
+        const avatarServices = [
+            // UI Avatars - 纯色背景+首字母（最稳定，最常用）
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=200&background=random&color=fff&bold=true&font-size=0.5`,
+            // DiceBear Avataaars - 卡通头像
+            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+            // DiceBear Lorelei - 人物头像
+            `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(name)}`,
+            // DiceBear Thumbs - 简约头像
+            `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(name)}`,
+        ];
+        
+        // 随机选择一个头像服务
+        const avatarUrl = avatarServices[Math.floor(Math.random() * avatarServices.length)];
+        
+        // 创建详情弹窗
+        const detailHTML = `
+            <div class="call-detail-modal" id="call-detail-modal">
+                <div class="call-detail-overlay"></div>
+                <div class="call-detail-content">
+                    <div class="call-detail-header">
+                        <h3>通话详情</h3>
+                        <button class="call-detail-close" id="call-detail-close">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="call-detail-body">
+                        <div class="call-detail-avatar">
+                            <img src="${avatarUrl}" alt="${call.name || '头像'}" onerror="this.style.display='none'; this.parentElement.innerHTML='📱';">
+                        </div>
+                        <div class="call-detail-name">${call.name || '未知号码'}</div>
+                        <div class="call-detail-info-grid">
+                            <div class="call-detail-info-item">
+                                <div class="call-detail-info-label">通话类型</div>
+                                <div class="call-detail-info-value ${call.type}">${call.direction || '未知'}</div>
+                            </div>
+                            <div class="call-detail-info-item">
+                                <div class="call-detail-info-label">通话时长</div>
+                                <div class="call-detail-info-value">${call.duration || '未知'}</div>
+                            </div>
+                            <div class="call-detail-info-item">
+                                <div class="call-detail-info-label">通话日期</div>
+                                <div class="call-detail-info-value">${call.date || '未知'}</div>
+                            </div>
+                            <div class="call-detail-info-item">
+                                <div class="call-detail-info-label">通话时间</div>
+                                <div class="call-detail-info-value">${call.time || '未知'}</div>
+                            </div>
+                            ${call.detail ? `
+                                <div class="call-detail-info-item full-width">
+                                    <div class="call-detail-info-label">通话内容</div>
+                                    <div class="call-detail-info-value">${call.detail}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加到页面
+        document.body.insertAdjacentHTML('beforeend', detailHTML);
+        
+        // 添加关闭事件
+        const modal = document.getElementById('call-detail-modal');
+        const closeBtn = document.getElementById('call-detail-close');
+        const overlay = modal.querySelector('.call-detail-overlay');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => closeCallDetail());
+        }
+        
+        if (overlay) {
+            overlay.addEventListener('click', () => closeCallDetail());
+        }
+        
+        // 显示动画
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+    }
+
+    // 关闭通话详情弹窗
+    function closeCallDetail() {
+        const modal = document.getElementById('call-detail-modal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        }
     }
 
     // 获取通话图标

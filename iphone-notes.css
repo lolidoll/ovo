@@ -21,37 +21,43 @@
 
 /* 备忘录列表头部 */
 .notes-header {
-    height: 54px;
+    position: relative;
+    height: 44px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    padding: 0 16px 10px;
+    padding: 0 16px;
     background: #ffffff;
-    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .notes-back-btn {
-    background: none;
-    border: none;
-    color: #007aff;
-    font-size: 17px;
-    padding: 0;
-    cursor: pointer;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-weight: 400;
-    letter-spacing: -0.4px;
-    opacity: 0;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
 }
 
 .notes-back-btn:active {
-    opacity: 0.4;
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.notes-back-btn i {
+    font-size: 18px;
 }
 
 .notes-title {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 600;
     color: #000000;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
@@ -64,14 +70,12 @@
 .notes-generate-btn {
     background: none;
     border: none;
-    color: #007aff;
-    font-size: 17px;
-    padding: 0;
-    cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: #007AFF;
+    font-size: 15px;
     font-weight: 400;
-    letter-spacing: -0.4px;
-    opacity: 0;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
 }
 
 .notes-generate-btn:active {
@@ -81,6 +85,12 @@
 .notes-generate-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+    pointer-events: none;
+}
+
+.notes-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 /* 备忘录列表内容 */
@@ -114,14 +124,14 @@
 }
 
 .notes-empty-text {
-    font-size: 17px;
+    font-size: 15px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;
     margin-bottom: 8px;
 }
 
 .notes-empty-hint {
-    font-size: 15px;
+    font-size: 13px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;
     opacity: 0.7;
@@ -149,7 +159,7 @@
 }
 
 .note-item-title {
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 600;
     color: #000000;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
@@ -162,7 +172,7 @@
 }
 
 .note-item-time {
-    font-size: 15px;
+    font-size: 12px;
     color: #8e8e93;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;
@@ -170,7 +180,7 @@
 }
 
 .note-item-preview {
-    font-size: 15px;
+    font-size: 13px;
     color: #8e8e93;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;
@@ -205,7 +215,7 @@
 
 .notes-loading-text {
     margin-top: 16px;
-    font-size: 15px;
+    font-size: 13px;
     color: #8e8e93;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;
@@ -241,23 +251,28 @@
 }
 
 .note-detail-back-btn {
-    background: none;
-    border: none;
-    color: #007aff;
-    font-size: 17px;
-    padding: 0;
-    cursor: pointer;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-weight: 400;
-    letter-spacing: -0.4px;
-    opacity: 0;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
 }
 
 .note-detail-back-btn:active {
-    opacity: 0.4;
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.note-detail-back-btn i {
+    font-size: 18px;
 }
 
 .note-detail-content {
@@ -269,7 +284,7 @@
 }
 
 .note-detail-title {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     color: #000000;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
@@ -278,7 +293,7 @@
 }
 
 .note-detail-date {
-    font-size: 15px;
+    font-size: 13px;
     color: #8e8e93;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;
@@ -286,7 +301,7 @@
 }
 
 .note-detail-body {
-    font-size: 17px;
+    font-size: 14px;
     color: #000000;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     letter-spacing: -0.4px;

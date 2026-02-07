@@ -232,10 +232,22 @@ const MainAPIManager = {
             }
         }
         
-        // 验证消息列表的有效性
-        const validation = this.validateApiMessageList(messages);
+        // 清理和验证消息列表
+        const cleanedMessages = this.cleanAndValidateMessages(messages);
+        
+        // 验证清理后的消息列表
+        const validation = this.validateApiMessageList(cleanedMessages);
         if (validation.hasWarnings) {
             console.warn('API 消息列表存在警告,但仍然继续调用:', validation.errors);
+        }
+        
+        // 如果清理后没有有效消息，终止调用
+        if (cleanedMessages.length === 0) {
+            this.showToast('❌ 没有有效的消息内容可以发送');
+            setLoadingStatus(false);
+            convState.isApiCalling = false;
+            convState.isTyping = false;
+            return;
         }
         
         // 验证API配置（仅在准备实际API请求时检查）
@@ -249,13 +261,22 @@ const MainAPIManager = {
         
         const body = {
             model: api.selectedModel,
-            messages: messages,
+            messages: cleanedMessages,
             temperature: api.temperature !== undefined ? api.temperature : 0.8,
             max_tokens: 100000,
             frequency_penalty: api.frequencyPenalty !== undefined ? api.frequencyPenalty : 0.2,
             presence_penalty: api.presencePenalty !== undefined ? api.presencePenalty : 0.1,
             top_p: api.topP !== undefined ? api.topP : 1.0
         };
+        
+        // 最终请求体验证
+        if (!this.validateRequestBody(body)) {
+            this.showToast('❌ 请求参数验证失败，请检查API设置');
+            setLoadingStatus(false);
+            convState.isApiCalling = false;
+            convState.isTyping = false;
+            return;
+        }
 
         // 固定使用 /v1 路径
         const endpoint = baseEndpoint + '/chat/completions';
@@ -278,7 +299,7 @@ const MainAPIManager = {
             });
             
             // 详细的消息角色日志
-            console.log('📋 API 消息列表详情：', messages.map((m, i) => ({
+            console.log('📋 API 消息列表详情：', cleanedMessages.map((m, i) => ({
                 index: i,
                 role: m.role,
                 contentType: Array.isArray(m.content) ? 'array' : typeof m.content,
@@ -298,13 +319,27 @@ const MainAPIManager = {
                     const errorData = await res.text();
                     if (errorData) {
                         errorDetails = errorData;
-                        console.error('❌ API错误响应内容:', errorData);
-                    }
-                } catch (e) {
-                    console.error('❌ 无法读取错误响应:', e);
-                }
-                
-                lastError = `HTTP ${res.status}: ${res.statusText}${errorDetails ? '\n详情: ' + errorDetails.substring(0, 200) : ''}`;
+                                console.error('❌ API错误响应内容:', errorData);
+                                
+                                // 尝试解析JSON错误信息
+                                try {
+                                    const errorJson = JSON.parse(errorData);
+                                    if (errorJson.error) {
+                                        if (typeof errorJson.error === 'string') {
+                                            errorDetails = errorJson.error;
+                                        } else if (errorJson.error.message) {
+                                            errorDetails = errorJson.error.message;
+                                        }
+                                    }
+                                } catch (parseErr) {
+                                    // 如果不是JSON，使用原始文本
+                                }
+                            }
+                        } catch (e) {
+                            console.error('❌ 无法读取错误响应:', e);
+                        }
+                        
+                        lastError = `HTTP ${res.status}: ${res.statusText}${errorDetails ? '\n详情: ' + errorDetails.substring(0, 300) : ''}`;
                 console.error(`❌ 主API 请求失败 [${res.status}]:`, endpoint);
             } else {
                 let data;
@@ -506,6 +541,67 @@ const MainAPIManager = {
         // 添加心声相关的提示 - 使用 MindStateManager 的统一提示词
         if (typeof MindStateManager !== 'undefined' && MindStateManager.getMindStateSystemPrompt) {
             systemPrompts.push(MindStateManager.getMindStateSystemPrompt() + '\n\n严格按照这个格式输出,系统会自动提取和清理这一行,用户看不到这个内容。');
+        }
+        
+        // 注入最近一次的心声记录作为上下文参考
+        if (conv.mindStates && Array.isArray(conv.mindStates) && conv.mindStates.length > 0) {
+            const lastMindState = conv.mindStates[conv.mindStates.length - 1];
+            
+            // 检查是否有有效的心声数据（排除失败的记录）
+            if (lastMindState && !lastMindState.failed && Object.keys(lastMindState).length > 0) {
+                // 构建心声上下文摘要
+                const mindStateContext = [];
+                mindStateContext.push('【上一次心声记录】以下是你上一次回复时的心声状态，作为当前回复的参考：');
+                
+                // 添加关键字段
+                if (lastMindState.location) {
+                    mindStateContext.push(`位置：${lastMindState.location}`);
+                }
+                if (lastMindState.outfit) {
+                    mindStateContext.push(`穿搭：${lastMindState.outfit}`);
+                }
+                if (lastMindState.affinity !== undefined && lastMindState.affinity !== null) {
+                    mindStateContext.push(`好感度：${lastMindState.affinity}`);
+                }
+                if (lastMindState.stamina) {
+                    mindStateContext.push(`体力：${lastMindState.stamina}`);
+                }
+                if (lastMindState.sanity) {
+                    mindStateContext.push(`理智：${lastMindState.sanity}`);
+                }
+                if (lastMindState.stress) {
+                    mindStateContext.push(`压力：${lastMindState.stress}`);
+                }
+                if (lastMindState.possessiveness) {
+                    mindStateContext.push(`占有欲：${lastMindState.possessiveness}`);
+                }
+                if (lastMindState.jealousy) {
+                    mindStateContext.push(`醋意值：${lastMindState.jealousy}`);
+                }
+                if (lastMindState.security) {
+                    mindStateContext.push(`安全感：${lastMindState.security}`);
+                }
+                if (lastMindState.excitement) {
+                    mindStateContext.push(`兴奋度：${lastMindState.excitement}`);
+                }
+                if (lastMindState.desire) {
+                    mindStateContext.push(`渴望程度：${lastMindState.desire}`);
+                }
+                if (lastMindState.mindVoice) {
+                    mindStateContext.push(`上次心声：${lastMindState.mindVoice}`);
+                }
+                
+                // 如果有任何心声数据，添加到系统提示中
+                if (mindStateContext.length > 1) { // 大于1表示除了标题外还有内容
+                    mindStateContext.push('\n**重要提示**：');
+                    mindStateContext.push('1. 请基于上述状态继续发展，保持状态的连贯性和合理变化');
+                    mindStateContext.push('2. **严禁重复上一次的回复内容**，要有新的变化和发展');
+                    mindStateContext.push('3. 心声中的各项数值应该根据对话内容自然变化，不要原封不动照搬上次的数值');
+                    mindStateContext.push('4. 每次回复都应该是全新的、符合当前对话情境的内容');
+                    systemPrompts.push(mindStateContext.join('\n'));
+                    console.log('💖 已注入最近一次心声记录作为上下文参考（含防重复提示）');
+                }
+            }
         }
         
         // 添加用户消息类型识别说明
@@ -1097,6 +1193,165 @@ This mindset beats memorizing 100 rules.`);
         }
 
         return out;
+    },
+
+    /**
+     * 清理和验证消息，移除无效的消息
+     * @param {Array} messages - 原始消息列表
+     * @returns {Array} 清理后的有效消息列表
+     */
+    cleanAndValidateMessages: function(messages) {
+        if (!messages || messages.length === 0) return [];
+        
+        const cleaned = [];
+        
+        for (let i = 0; i < messages.length; i++) {
+            const msg = messages[i];
+            
+            // 检查基本属性
+            if (!msg || !msg.role) {
+                console.warn(`⚠️ 跳过消息 ${i}: 缺少必需属性`);
+                continue;
+            }
+            
+            // 检查角色是否有效
+            if (!['system', 'user', 'assistant'].includes(msg.role)) {
+                console.warn(`⚠️ 跳过消息 ${i}: 无效的角色 "${msg.role}"`);
+                continue;
+            }
+            
+            // 处理content
+            let validContent = null;
+            
+            if (Array.isArray(msg.content)) {
+                // Vision API 格式：content 是数组
+                if (msg.content.length === 0) {
+                    console.warn(`⚠️ 跳过消息 ${i}: content 数组为空`);
+                    continue;
+                }
+                
+                // 验证数组中的每个元素
+                const validItems = msg.content.filter(item => {
+                    if (!item || !item.type) return false;
+                    
+                    if (item.type === 'text') {
+                        return item.text && typeof item.text === 'string' && item.text.trim().length > 0;
+                    }
+                    
+                    if (item.type === 'image_url') {
+                        return item.image_url && item.image_url.url && typeof item.image_url.url === 'string';
+                    }
+                    
+                    return false;
+                });
+                
+                if (validItems.length === 0) {
+                    console.warn(`⚠️ 跳过消息 ${i}: content 数组中没有有效项`);
+                    continue;
+                }
+                
+                validContent = validItems;
+            } else if (typeof msg.content === 'string') {
+                // 字符串格式
+                const trimmed = msg.content.trim();
+                if (trimmed.length === 0) {
+                    console.warn(`⚠️ 跳过消息 ${i}: content 为空字符串`);
+                    continue;
+                }
+                validContent = trimmed;
+            } else if (msg.content === null || msg.content === undefined) {
+                console.warn(`⚠️ 跳过消息 ${i}: content 为 null 或 undefined`);
+                continue;
+            } else {
+                // 尝试转换为字符串
+                try {
+                    const str = String(msg.content).trim();
+                    if (str.length === 0 || str === '[object Object]') {
+                        console.warn(`⚠️ 跳过消息 ${i}: content 无法转换为有效字符串`);
+                        continue;
+                    }
+                    validContent = str;
+                } catch (e) {
+                    console.warn(`⚠️ 跳过消息 ${i}: content 转换失败`, e);
+                    continue;
+                }
+            }
+            
+            // 添加清理后的消息
+            cleaned.push({
+                role: msg.role,
+                content: validContent
+            });
+        }
+        
+        console.log(`✅ 消息清理完成: 原始 ${messages.length} 条 → 有效 ${cleaned.length} 条`);
+        return cleaned;
+    },
+    
+    /**
+     * 验证请求体是否符合API规范
+     * @param {Object} body - 请求体对象
+     * @returns {boolean} 是否有效
+     */
+    validateRequestBody: function(body) {
+        if (!body) {
+            console.error('❌ 请求体为空');
+            return false;
+        }
+        
+        if (!body.model || typeof body.model !== 'string') {
+            console.error('❌ 无效的 model 参数:', body.model);
+            return false;
+        }
+        
+        if (!Array.isArray(body.messages)) {
+            console.error('❌ messages 必须是数组');
+            return false;
+        }
+        
+        if (body.messages.length === 0) {
+            console.error('❌ messages 数组为空');
+            return false;
+        }
+        
+        // 验证每条消息
+        for (let i = 0; i < body.messages.length; i++) {
+            const msg = body.messages[i];
+            
+            if (!msg.role || !['system', 'user', 'assistant'].includes(msg.role)) {
+                console.error(`❌ 消息 ${i} 角色无效:`, msg.role);
+                return false;
+            }
+            
+            if (msg.content === undefined || msg.content === null) {
+                console.error(`❌ 消息 ${i} content 为空`);
+                return false;
+            }
+            
+            if (typeof msg.content === 'string' && msg.content.trim().length === 0) {
+                console.error(`❌ 消息 ${i} content 为空字符串`);
+                return false;
+            }
+            
+            if (Array.isArray(msg.content) && msg.content.length === 0) {
+                console.error(`❌ 消息 ${i} content 数组为空`);
+                return false;
+            }
+        }
+        
+        // 验证参数范围
+        if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) {
+            console.error('❌ temperature 参数超出范围 (0-2):', body.temperature);
+            return false;
+        }
+        
+        if (body.top_p !== undefined && (typeof body.top_p !== 'number' || body.top_p < 0 || body.top_p > 1)) {
+            console.error('❌ top_p 参数超出范围 (0-1):', body.top_p);
+            return false;
+        }
+        
+        console.log('✅ 请求体验证通过');
+        return true;
     },
 
     /**

@@ -15,10 +15,7 @@
             <div class="iphone-wallet-page" id="iphone-wallet-page">
                 <div class="wallet-header">
                     <button class="wallet-back-btn" id="wallet-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        钱包
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="wallet-title">钱包</div>
                     <button class="wallet-generate-btn" id="wallet-generate-btn">生成</button>
@@ -141,7 +138,7 @@
             }
             
             // 构建提示词 - 要求返回纯JSON，不要任何其他内容
-            const prompt = `你是${currentCharacter.name}，请生成真实的钱包数据，包括卡片信息和今日交易记录。
+            const prompt = `你是${currentCharacter.name}，请生成你自己真实的钱包数据，包括卡片信息和今日交易记录。
 
 角色信息：
 - 角色名：${currentCharacter.name}
@@ -152,8 +149,8 @@ ${summariesText}
 ${messagesText}
 
 要求：
-1. 生成3-5张卡片（银行卡、支付宝、微信、公交卡等）
-2. 生成8-12条今日交易记录
+1. 生成3-5张卡片（你的银行卡、支付宝、微信、公交卡等）
+2. 生成8-12条你今日的交易记录
 3. 每条记录包含：商户名称、消费明细、金额、时间、类型、图标、支付方式
 4. 金额要合理，时间要符合逻辑（按时间倒序）
 5. 要有生活气息，符合角色性格
@@ -538,22 +535,32 @@ ${messagesText}
                     <div class="wallet-transaction-list">
             `;
             
-            data.transactions.forEach(transaction => {
+            data.transactions.forEach((transaction, index) => {
                 const isExpense = transaction.type === 'expense' || transaction.amount.startsWith('-');
                 const amountClass = isExpense ? 'expense' : 'income';
                 const iconClass = isExpense ? 'expense' : 'income';
                 
+                // 使用真实图库 - Picsum Photos (免费随机图片API)
+                // 使用商户名的哈希值作为种子，确保相同商户显示相同头像
+                const seed = Math.abs(transaction.title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+                const avatarId = (seed % 100) + 1; // 1-100之间的ID
+                const avatarUrl = `https://picsum.photos/seed/${avatarId}/100/100`;
+                
                 html += `
                     <div class="wallet-transaction-item">
                         <div class="wallet-transaction-icon ${iconClass}">
-                            ${transaction.icon || (isExpense ? '💸' : '💰')}
+                            <img src="${avatarUrl}"
+                                 alt="${transaction.title}"
+                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=wallet-transaction-icon-emoji>${transaction.icon || (isExpense ? '💸' : '💰')}</span>';">
                         </div>
                         <div class="wallet-transaction-info">
                             <div class="wallet-transaction-title">${transaction.title || '交易'}</div>
                             <div class="wallet-transaction-detail">${transaction.detail || ''} · ${transaction.paymentMethod || '支付'}</div>
                         </div>
-                        <div class="wallet-transaction-amount ${amountClass}">¥${transaction.amount}</div>
-                        <div class="wallet-transaction-time">${transaction.time || ''}</div>
+                        <div class="wallet-transaction-right">
+                            <div class="wallet-transaction-amount ${amountClass}">¥${transaction.amount}</div>
+                            <div class="wallet-transaction-time">${transaction.time || ''}</div>
+                        </div>
                     </div>
                 `;
             });

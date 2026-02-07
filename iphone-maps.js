@@ -16,10 +16,7 @@
             <div class="iphone-maps-page" id="iphone-maps-page">
                 <div class="maps-header">
                     <button class="maps-back-btn" id="maps-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        地图
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="maps-title">地图</div>
                     <button class="maps-generate-btn" id="maps-generate-btn">生成</button>
@@ -174,7 +171,7 @@
                     }).join('\n');
             }
             
-            // 构建提示词 - 要求返回纯JSON，不要任何其他内容
+            // 构建提示词 - 要求返回纯JSON，生成更多地点
             const prompt = `你是${currentCharacter.name}，请生成今日的行程轨迹数据。
 
 角色信息：
@@ -186,19 +183,23 @@ ${summariesText}
 ${messagesText}
 
 要求：
-1. 生成5-8个真实的行程地点
+1. 生成8-12个真实的行程地点（比之前更多）
 2. 每个地点包含：
    - 地点名称（具体的地点，如"星巴克(中山路店)"、"公司"、"健身房"等）
    - 详细地址
    - 到达时间（HH:MM格式）
    - 停留时长（分钟）
    - 地点类型（home/work/food/shopping/entertainment/transport/other）
-3. 行程要符合逻辑：
+3. 行程要符合逻辑且丰富：
    - 早上从家出发
-   - 中午可能去餐厅
-   - 下午可能工作或活动
-   - 晚上回家或娱乐
-4. 要有真实感和活人感，符合角色人设
+   - 可能去晨练、买早餐
+   - 上班路上可能路过便利店
+   - 中午去餐厅
+   - 下午工作或多个活动
+   - 傍晚可能去超市、健身房
+   - 晚上娱乐或聚餐
+   - 最后回家
+4. 要有真实感和活人感，符合角色人设，行程要丰富多彩
 5. 总行程时间、总距离、访问地点数
 
 直接返回JSON，不要任何说明文字或markdown标记：
@@ -388,45 +389,87 @@ ${messagesText}
         }
     }
 
-    // 获取默认地图数据
+    // 获取默认地图数据 - 更多地点
     function getDefaultMapsData() {
         return {
             summary: {
-                totalTime: '8小时30分钟',
-                totalDistance: '15.2公里',
-                locations: 5
+                totalTime: '12小时45分钟',
+                totalDistance: '23.8公里',
+                locations: 10
             },
             timeline: [
                 {
-                    time: '08:00',
+                    time: '07:00',
                     location: '家',
                     address: '温馨的家',
                     duration: 30,
                     type: 'home'
                 },
                 {
-                    time: '09:00',
-                    location: '咖啡厅',
-                    address: '市中心咖啡厅',
-                    duration: 60,
+                    time: '07:30',
+                    location: '公园',
+                    address: '晨练的地方',
+                    duration: 30,
+                    type: 'entertainment'
+                },
+                {
+                    time: '08:15',
+                    location: '早餐店',
+                    address: '常去的包子铺',
+                    duration: 15,
                     type: 'food'
                 },
                 {
-                    time: '10:30',
-                    location: '公司',
-                    address: '工作的地方',
-                    duration: 240,
-                    type: 'work'
-                },
-                {
-                    time: '14:30',
-                    location: '餐厅',
-                    address: '午餐地点',
+                    time: '09:00',
+                    location: '咖啡厅',
+                    address: '星巴克(中山路店)',
                     duration: 45,
                     type: 'food'
                 },
                 {
-                    time: '18:00',
+                    time: '10:00',
+                    location: '公司',
+                    address: '工作的地方',
+                    duration: 180,
+                    type: 'work'
+                },
+                {
+                    time: '13:00',
+                    location: '餐厅',
+                    address: '午餐餐厅',
+                    duration: 60,
+                    type: 'food'
+                },
+                {
+                    time: '14:30',
+                    location: '便利店',
+                    address: '7-11便利店',
+                    duration: 10,
+                    type: 'shopping'
+                },
+                {
+                    time: '15:00',
+                    location: '图书馆',
+                    address: '市图书馆',
+                    duration: 90,
+                    type: 'entertainment'
+                },
+                {
+                    time: '17:00',
+                    location: '健身房',
+                    address: '运动健身中心',
+                    duration: 60,
+                    type: 'entertainment'
+                },
+                {
+                    time: '18:30',
+                    location: '超市',
+                    address: '家乐福超市',
+                    duration: 30,
+                    type: 'shopping'
+                },
+                {
+                    time: '19:30',
                     location: '家',
                     address: '温馨的家',
                     duration: 0,
@@ -434,6 +477,32 @@ ${messagesText}
                 }
             ]
         };
+    }
+
+    // 渲染地图元素（道路、建筑等）
+    function renderMapElements() {
+        return `
+            <div class="maps-roads">
+                <div class="maps-road horizontal main" style="top: 25%;"></div>
+                <div class="maps-road horizontal" style="top: 45%;"></div>
+                <div class="maps-road horizontal main" style="top: 70%;"></div>
+                <div class="maps-road vertical main" style="left: 30%;"></div>
+                <div class="maps-road vertical" style="left: 55%;"></div>
+                <div class="maps-road vertical main" style="left: 75%;"></div>
+            </div>
+            <div class="maps-buildings">
+                <div class="maps-building park" style="left: 15%; top: 15%;"></div>
+                <div class="maps-building office" style="left: 35%; top: 20%;"></div>
+                <div class="maps-building shop" style="left: 60%; top: 30%;"></div>
+                <div class="maps-building" style="left: 80%; top: 25%;"></div>
+                <div class="maps-building park" style="left: 25%; top: 50%;"></div>
+                <div class="maps-building office" style="left: 45%; top: 55%;"></div>
+                <div class="maps-building shop" style="left: 70%; top: 60%;"></div>
+                <div class="maps-building" style="left: 20%; top: 75%;"></div>
+                <div class="maps-building office" style="left: 50%; top: 80%;"></div>
+                <div class="maps-building park" style="left: 85%; top: 70%;"></div>
+            </div>
+        `;
     }
 
     // 渲染地图
@@ -493,6 +562,7 @@ ${messagesText}
         content.innerHTML = `
             <div class="maps-view">
                 <div class="maps-grid"></div>
+                ${renderMapElements()}
                 ${renderMapMarkers()}
             </div>
             <div class="maps-timeline">

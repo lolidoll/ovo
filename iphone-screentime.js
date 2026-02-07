@@ -16,10 +16,7 @@
             <div class="iphone-screentime-page" id="iphone-screentime-page">
                 <div class="screentime-header">
                     <button class="screentime-back-btn" id="screentime-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        屏幕使用时间
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="screentime-title">屏幕使用时间</div>
                     <button class="screentime-generate-btn" id="screentime-generate-btn">生成</button>

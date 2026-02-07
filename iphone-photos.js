@@ -15,10 +15,7 @@
             <div class="iphone-photos-page" id="iphone-photos-page">
                 <div class="photos-header">
                             <button class="photos-back-btn" id="photos-back-btn">
-                                <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                                    <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                                </svg>
-                                相册
+                                <i class="fa fa-arrow-left"></i>
                             </button>
                             <div class="photos-title">相册</div>
                             <button class="photos-generate-btn" id="photos-generate-btn">生成</button>
@@ -160,7 +157,7 @@
         content.innerHTML = `
             <div class="photos-loading">
                 <div class="photos-loading-spinner"></div>
-                <div class="photos-loading-text">正在生成照片...</div>
+                <div class="photos-loading-text">正在生成照片描述...</div>
             </div>
         `;
         
@@ -192,7 +189,7 @@
             }
             
             // 构建提示词 - 要求返回纯JSON，不要任何其他内容
-            const prompt = `你是${currentCharacter.name}，这是你的手机相册。请生成15张照片的描述。
+            const prompt = `你是${currentCharacter.name}，这是你的手机相册。请生成10张照片的描述。
 
 角色信息：
 - 角色名：${currentCharacter.name}
@@ -203,13 +200,11 @@ ${summariesText}
 ${messagesText}
 
 要求：
-1. 与${currentCharacter.userName}相关的照片（约5-7张）
-2. 角色日常生活相关（约5-7张）
-3. 结合世界观和现实（约3-4张）
-4. 每张照片描述50-80字
-5. 要有真实感和活人感，像真实拍摄的照片
-6. 描述要具体，包含场景、人物、情感、细节
-7. 必须生成15张，不能少
+1. 与${currentCharacter.userName}相关的照片或者与角色日常生活相关（结合世界观和现实）
+2. 每张照片描述60-120字
+3. 要有真实感和活人感，像真实拍摄的照片
+4. 描述要具体，包含场景、人物、情感、细节
+5. 必须生成10张，不能少
 
 直接返回JSON数组，不要任何说明文字或markdown标记：
 [{"description":"照片描述1"},{"description":"照片描述2"},...]`;
@@ -220,18 +215,25 @@ ${messagesText}
             const response = await callMainAPI(prompt);
             const photosData = parsePhotosResponse(response);
             
+            // 更新加载提示
+            content.innerHTML = `
+                <div class="photos-loading">
+                    <div class="photos-loading-spinner"></div>
+                    <div class="photos-loading-text">正在生成图片...</div>
+                </div>
+            `;
+            
             // 生成模拟的时间分布（最近3天内）
             const now = Date.now();
             const timeOffsets = [
-                // 2-3张刚拍摄（0-30分钟前）
+                // 2张刚拍摄（0-30分钟前）
                 ...Array.from({length: 2}, () => Math.floor(Math.random() * 30 * 60 * 1000)),
-                ...Array.from({length: 1}, () => Math.floor(Math.random() * 30 * 60 * 1000)),
-                // 3-4张今天拍摄（1-12小时前）
-                ...Array.from({length: 4}, () => 60 * 60 * 1000 + Math.floor(Math.random() * 11 * 60 * 60 * 1000)),
-                // 4-5张昨天拍摄（24-36小时前）
-                ...Array.from({length: 5}, () => 24 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000)),
-                // 3-4张前天拍摄（48-60小时前）
-                ...Array.from({length: 3}, () => 48 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000))
+                // 3张今天拍摄（1-12小时前）
+                ...Array.from({length: 3}, () => 60 * 60 * 1000 + Math.floor(Math.random() * 11 * 60 * 60 * 1000)),
+                // 3张昨天拍摄（24-36小时前）
+                ...Array.from({length: 3}, () => 24 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000)),
+                // 2张前天拍摄（48-60小时前）
+                ...Array.from({length: 2}, () => 48 * 60 * 60 * 1000 + Math.floor(Math.random() * 12 * 60 * 60 * 1000))
             ];
             
             // 打乱时间偏移顺序
@@ -239,9 +241,53 @@ ${messagesText}
             
             currentPhotos = photosData.map((photo, index) => {
                 const photoTime = new Date(now - timeOffsets[index]);
+                
+                // 生成图片URL - Pollinations API 完整格式
+                const seed = Date.now() + index;
+                
+                // 直接使用中文描述作为prompt
+                const finalPrompt = photo.description;
+                
+                // 构建Pollinations URL - 完整格式（带所有参数）
+                const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(finalPrompt)}?model=zimage&width=1080&height=2160&nologo=true&key=sk_InRGAIaBbde6kBPCSzO4FsOHTvYKQocd`;
+                
+                // 备选方案
+                const imageSources = [
+                    pollinationsUrl,
+                    // 备选：Picsum（随机照片）
+                    `https://picsum.photos/seed/${seed}/1080/2160`
+                ];
+                
+                const imageUrl = imageSources[0];
+                const fallbackUrls = imageSources.slice(1);
+                
+                console.log(`生成图片 [${index}]:`, {
+                    prompt: photo.description.substring(0, 50) + '...',
+                    urlPreview: imageUrl.substring(0, 120) + '...'
+                });
+                
+                // 测试URL是否可访问（仅第一张图片）
+                if (index === 0) {
+                    console.log('🔍 测试Pollinations API...');
+                    console.log('📋 提示词:', photo.description);
+                    console.log('⚙️ 参数: model=zimage, 1080x2160, nologo=true');
+                    fetch(imageUrl, { method: 'HEAD' })
+                        .then(r => {
+                            if (r.ok) {
+                                console.log('✅ Pollinations API 可用！');
+                                console.log('💡 直接使用中文描述生成图片');
+                            } else {
+                                console.warn('⚠️ API响应异常，状态:', r.status);
+                            }
+                        })
+                        .catch(e => console.error('❌ API错误:', e.message));
+                }
+                
                 return {
                     id: Date.now() + index,
                     description: photo.description,
+                    imageUrl: imageUrl,
+                    fallbackUrls: fallbackUrls, // 保存备选URL
                     time: formatTime(photoTime),
                     timestamp: photoTime.getTime()
                 };
@@ -288,11 +334,18 @@ ${messagesText}
             const saved = localStorage.getItem('iphonePhotosData');
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色
+                // 检查是否是同一角色，并且数据包含imageUrl
                 if (data.character && data.character.name === getCurrentCharacter().name) {
-                    currentPhotos = data.photos || [];
-                    currentCharacter = data.character;
-                    return true;
+                    const photos = data.photos || [];
+                    // 检查照片是否有imageUrl字段，如果没有则不加载（旧数据）
+                    if (photos.length > 0 && photos[0].imageUrl) {
+                        currentPhotos = photos;
+                        currentCharacter = data.character;
+                        console.log('✅ 从localStorage加载了包含图片URL的照片数据');
+                        return true;
+                    } else {
+                        console.log('⚠️ localStorage中的数据不包含图片URL，将重新生成');
+                    }
                 }
             }
         } catch (e) {
@@ -359,6 +412,56 @@ ${messagesText}
             }
             throw error;
         }
+    }
+
+    // 格式化时间
+    function formatTime(date) {
+        const now = new Date();
+        const d = new Date(date);
+        
+        if (d.toDateString() === now.toDateString()) {
+            return d.getHours().toString().padStart(2, '0') + ':' +
+                   d.getMinutes().toString().padStart(2, '0');
+        }
+        
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (d.toDateString() === yesterday.toDateString()) {
+            return '昨天';
+        }
+        
+        // 修复日期格式：使用padStart确保是02/07而不是2/7
+        return (d.getMonth() + 1).toString().padStart(2, '0') + '/' +
+               d.getDate().toString().padStart(2, '0');
+    }
+    
+    // 获取日期分组标签
+    function getDateGroupLabel(date) {
+        const now = new Date();
+        const d = new Date(date);
+        
+        // 重置时间到当天0点，方便比较
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const compareDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        
+        const diffTime = today - compareDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return '今天';
+        if (diffDays === 1) return '昨天';
+        if (diffDays === 2) return '前天';
+        
+        // 其他日期显示完整日期
+        const year = d.getFullYear();
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        
+        // 如果是今年，不显示年份
+        if (year === now.getFullYear()) {
+            return `${month}月${day}日`;
+        }
+        
+        return `${year}年${month}月${day}日`;
     }
 
     // 解析照片响应
@@ -459,7 +562,7 @@ ${messagesText}
         }
     }
 
-    // 渲染照片网格
+    // 渲染照片网格（按时间分组）
     function renderPhotosGrid() {
         const content = document.getElementById('photos-content');
         if (!content) return;
@@ -475,15 +578,77 @@ ${messagesText}
             return;
         }
         
-        const photosHTML = currentPhotos.map(photo => `
-            <div class="photo-item" data-photo-id="${photo.id}">
-                <div class="photo-item-text">${photo.description}</div>
-                ${photo.time ? `<div class="photo-item-time">${photo.time}</div>` : ''}
-            </div>
-        `).join('');
+        // 按日期分组
+        const photosByDate = {};
+        currentPhotos.forEach(photo => {
+            const dateLabel = getDateGroupLabel(photo.timestamp);
+            if (!photosByDate[dateLabel]) {
+                photosByDate[dateLabel] = [];
+            }
+            photosByDate[dateLabel].push(photo);
+        });
         
-        content.innerHTML = `<div class="photos-grid">${photosHTML}</div>`;
+        // 按日期顺序排序分组（今天、昨天、前天...）
+        const dateOrder = ['今天', '昨天', '前天'];
+        const sortedDates = Object.keys(photosByDate).sort((a, b) => {
+            const aIndex = dateOrder.indexOf(a);
+            const bIndex = dateOrder.indexOf(b);
+            
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            
+            // 其他日期按时间倒序
+            return b.localeCompare(a);
+        });
         
+        // 生成HTML
+        let sectionsHTML = '';
+        sortedDates.forEach(dateLabel => {
+            const photos = photosByDate[dateLabel];
+            const photosHTML = photos.map(photo => {
+                // 调试：检查imageUrl是否存在
+                if (!photo.imageUrl) {
+                    console.error('照片缺少imageUrl:', photo);
+                }
+                
+                const imageUrl = photo.imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect fill="%23f0f0f0" width="800" height="800"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="24"%3E无图片%3C/text%3E%3C/svg%3E';
+                
+                // 构建备选URL的data属性
+                const fallbackUrlsAttr = photo.fallbackUrls ? JSON.stringify(photo.fallbackUrls).replace(/"/g, '&quot;') : '[]';
+                
+                return `
+                    <div class="photo-item" data-photo-id="${photo.id}">
+                        <img src="${imageUrl}"
+                             alt="${photo.description}"
+                             class="photo-item-image"
+                             loading="lazy"
+                             data-fallback-urls="${fallbackUrlsAttr}"
+                             data-fallback-index="0"
+                             onerror="handleImageError(this)">
+                        <div class="photo-item-overlay">
+                            <div class="photo-item-time">${photo.time}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            sectionsHTML += `
+                <div class="photos-section">
+                    <div class="photos-section-header">${dateLabel}</div>
+                    <div class="photos-grid">${photosHTML}</div>
+                </div>
+            `;
+        });
+        
+        console.log('渲染照片网格，总数:', currentPhotos.length);
+        console.log('第一张照片数据:', currentPhotos[0]);
+        
+        content.innerHTML = sectionsHTML;
+        
+        // 绑定点击事件
         content.querySelectorAll('.photo-item').forEach(item => {
             item.addEventListener('click', () => {
                 const photoId = parseInt(item.dataset.photoId);
@@ -502,9 +667,22 @@ ${messagesText}
         
         if (!detailPage || !detailContent) return;
         
+        // 构建备选URL的data属性
+        const fallbackUrlsAttr = photo.fallbackUrls ? JSON.stringify(photo.fallbackUrls).replace(/"/g, '&quot;') : '[]';
+        
         detailContent.innerHTML = `
-            <div class="photo-detail-card">
-                <div class="photo-detail-text">${photo.description}</div>
+            <div class="photo-detail-image-container">
+                <img src="${photo.imageUrl}"
+                     alt="${photo.description}"
+                     class="photo-detail-image"
+                     data-fallback-urls="${fallbackUrlsAttr}"
+                     data-fallback-index="0"
+                     onerror="handleImageError(this)">
+            </div>
+            <div class="photo-detail-description">
+                <div class="photo-detail-description-label">描述</div>
+                <div class="photo-detail-description-text">${photo.description}</div>
+                <div class="photo-detail-time">${photo.time}</div>
             </div>
         `;
         
@@ -546,6 +724,41 @@ ${messagesText}
             detailPage.classList.remove('show');
         }
     }
+
+    // 图片加载错误处理（全局函数，供onerror调用）
+    window.handleImageError = function(img) {
+        console.warn('图片加载失败，尝试备选URL:', img.src);
+        
+        try {
+            const fallbackUrls = JSON.parse(img.getAttribute('data-fallback-urls') || '[]');
+            const currentIndex = parseInt(img.getAttribute('data-fallback-index') || '0');
+            
+            if (currentIndex < fallbackUrls.length) {
+                // 尝试下一个备选URL
+                const nextUrl = fallbackUrls[currentIndex];
+                console.log(`尝试备选URL [${currentIndex + 1}/${fallbackUrls.length}]:`, nextUrl);
+                
+                img.setAttribute('data-fallback-index', (currentIndex + 1).toString());
+                img.src = nextUrl;
+            } else {
+                // 所有备选都失败，显示占位图
+                console.error('所有图片源都失败，显示占位图');
+                img.style.backgroundColor = '#f0f0f0';
+                img.style.display = 'flex';
+                img.style.alignItems = 'center';
+                img.style.justifyContent = 'center';
+                img.alt = '图片加载失败';
+                
+                // 使用SVG占位图
+                img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect fill="%23f0f0f0" width="800" height="800"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="24"%3E图片加载失败%3C/text%3E%3C/svg%3E';
+                img.onerror = null; // 防止无限循环
+            }
+        } catch (error) {
+            console.error('处理图片错误时出错:', error);
+            img.style.backgroundColor = '#f0f0f0';
+            img.onerror = null;
+        }
+    };
 
     // 初始化
     function init() {

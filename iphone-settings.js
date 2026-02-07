@@ -12,11 +12,15 @@
             statusBar: '#ffffff',
             lockscreenTime: '#ffffff',
             lockscreenDate: '#ffffff',
-            appName: '#ffffff'
+            appName: '#ffffff',
+            deviceShell: '#1c1c1e'
         },
         backgrounds: {
             lockscreen: 'https://image.uglycat.cc/fx1inq.jpg',
             homescreen: 'https://image.uglycat.cc/d2r7d4.jpg'
+        },
+        display: {
+            showDynamicIsland: true
         },
         icons: {
             app0: { url: '', name: '备忘录' },
@@ -46,9 +50,20 @@
         const saved = localStorage.getItem('iphone-simulator-config');
         if (saved) {
             try {
-                currentConfig = JSON.parse(saved);
+                const savedConfig = JSON.parse(saved);
+                // 合并配置，确保新字段存在
+                currentConfig = {
+                    ...defaultConfig,
+                    ...savedConfig,
+                    colors: { ...defaultConfig.colors, ...(savedConfig.colors || {}) },
+                    backgrounds: { ...defaultConfig.backgrounds, ...(savedConfig.backgrounds || {}) },
+                    display: { ...defaultConfig.display, ...(savedConfig.display || {}) },
+                    icons: { ...defaultConfig.icons, ...(savedConfig.icons || {}) },
+                    dockIcons: { ...defaultConfig.dockIcons, ...(savedConfig.dockIcons || {}) }
+                };
             } catch (e) {
                 console.error('加载配置失败:', e);
+                currentConfig = JSON.parse(JSON.stringify(defaultConfig));
             }
         }
         applyConfig();
@@ -68,11 +83,19 @@
         applyBackgrounds();
         // 应用图标
         applyIcons();
+        // 应用显示设置
+        applyDisplaySettings();
     }
 
     // 应用颜色配置
     function applyColors() {
         const colors = currentConfig.colors;
+        
+        // 手机外壳颜色
+        const deviceShell = document.querySelector('.iphone-device');
+        if (deviceShell && colors.deviceShell) {
+            deviceShell.style.background = colors.deviceShell;
+        }
         
         // 状态栏颜色
         const statusElements = document.querySelectorAll('.status-bar, .status-left, .status-right, .status-carrier, .status-5g');
@@ -128,6 +151,17 @@
         const iphoneScreen = document.querySelector('.iphone-screen');
         if (iphoneScreen && backgrounds.homescreen) {
             iphoneScreen.style.backgroundImage = `url('${backgrounds.homescreen}')`;
+        }
+    }
+
+    // 应用显示设置
+    function applyDisplaySettings() {
+        const display = currentConfig.display;
+        
+        // 灵动岛显示/隐藏
+        const dynamicIsland = document.getElementById('dynamic-island');
+        if (dynamicIsland) {
+            dynamicIsland.style.display = display.showDynamicIsland ? 'flex' : 'none';
         }
     }
 
@@ -198,6 +232,13 @@
                         <div class="settings-section-title">颜色设置</div>
                         <div class="settings-group">
                             <div class="settings-item">
+                                <div class="settings-item-label">手机外壳颜色</div>
+                                <div class="color-picker-wrapper">
+                                    <div class="color-preview" id="color-deviceShell" style="background: ${currentConfig.colors.deviceShell}"></div>
+                                    <input type="color" class="color-input" id="color-input-deviceShell" value="${currentConfig.colors.deviceShell}">
+                                </div>
+                            </div>
+                            <div class="settings-item">
                                 <div class="settings-item-label">状态栏颜色</div>
                                 <div class="color-picker-wrapper">
                                     <div class="color-preview" id="color-statusBar" style="background: ${currentConfig.colors.statusBar}"></div>
@@ -224,6 +265,20 @@
                                     <div class="color-preview" id="color-appName" style="background: ${currentConfig.colors.appName}"></div>
                                     <input type="color" class="color-input" id="color-input-appName" value="${currentConfig.colors.appName}">
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 显示设置 -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">显示设置</div>
+                        <div class="settings-group">
+                            <div class="settings-item">
+                                <div class="settings-item-label">显示灵动岛</div>
+                                <label class="settings-switch">
+                                    <input type="checkbox" id="toggle-dynamic-island" ${currentConfig.display.showDynamicIsland ? 'checked' : ''}>
+                                    <span class="settings-switch-slider"></span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -260,6 +315,16 @@
                         <div class="settings-section-title">Dock栏图标</div>
                         <div class="settings-group">
                             <div class="icon-editor" id="dock-icons-editor"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统操作 -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">系统操作</div>
+                        <div class="settings-group">
+                            <div class="settings-item settings-item-action" id="shutdown-btn-settings">
+                                <div class="settings-item-label" style="color: #ff3b30; text-align: center; width: 100%;">关机</div>
+                            </div>
                         </div>
                     </div>
                     
@@ -327,7 +392,7 @@
         }
         
         // 颜色选择器
-        ['statusBar', 'lockscreenTime', 'lockscreenDate', 'appName'].forEach(key => {
+        ['deviceShell', 'statusBar', 'lockscreenTime', 'lockscreenDate', 'appName'].forEach(key => {
             const preview = document.getElementById(`color-${key}`);
             const input = document.getElementById(`color-input-${key}`);
             
@@ -337,9 +402,20 @@
                     const color = e.target.value;
                     preview.style.background = color;
                     currentConfig.colors[key] = color;
+                    // 立即应用颜色变化
+                    applyColors();
                 });
             }
         });
+        
+        // 灵动岛显示开关
+        const toggleDynamicIsland = document.getElementById('toggle-dynamic-island');
+        if (toggleDynamicIsland) {
+            toggleDynamicIsland.addEventListener('change', (e) => {
+                currentConfig.display.showDynamicIsland = e.target.checked;
+                applyDisplaySettings();
+            });
+        }
         
         // 背景URL输入
         const bgLockscreen = document.getElementById('bg-lockscreen');
@@ -369,10 +445,19 @@
             fileHomescreen.addEventListener('change', (e) => handleFileUpload(e, 'homescreen'));
         }
         
+        // 关机按钮
+        const shutdownBtn = document.getElementById('shutdown-btn-settings');
+        if (shutdownBtn) {
+            shutdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showShutdownOverlay();
+            });
+        }
+        
         // 图标输入
         document.querySelectorAll('[data-icon-key]').forEach(el => {
             if (el.tagName === 'INPUT' && el.type === 'text') {
-                el.addEventListener('change', (e) => {
+                el.addEventListener('input', (e) => {
                     const key = e.target.dataset.iconKey;
                     const type = e.target.dataset.iconType;
                     const value = e.target.value;
@@ -384,6 +469,9 @@
                         if (!currentConfig.dockIcons[key]) currentConfig.dockIcons[key] = {};
                         currentConfig.dockIcons[key][type] = value;
                     }
+                    
+                    // 实时更新预览
+                    updateIconPreview(key);
                 });
             } else if (el.tagName === 'INPUT' && el.type === 'file') {
                 el.addEventListener('change', (e) => handleIconFileUpload(e));
@@ -395,6 +483,8 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
                 saveConfig();
+                // 重新加载图标编辑器以显示最新状态
+                refreshIconEditors();
                 alert('设置已保存！');
             });
         }
@@ -435,8 +525,45 @@
                 // 更新输入框
                 const urlInput = document.querySelector(`[data-icon-key="${key}"][data-icon-type="url"]`);
                 if (urlInput) urlInput.value = dataUrl;
+                
+                // 立即更新预览
+                updateIconPreview(key);
             };
             reader.readAsDataURL(file);
+        }
+    }
+    
+    // 更新图标预览（在设置页面的编辑器中）
+    function updateIconPreview(key) {
+        const config = key.startsWith('app') ? currentConfig.icons[key] : currentConfig.dockIcons[key];
+        if (!config) return;
+        
+        // 更新设置页面中的预览
+        const editorItem = document.querySelector(`[data-icon-key="${key}"]`)?.closest('.icon-editor-item');
+        if (editorItem) {
+            // 更新或创建预览
+            let previewWrapper = editorItem.querySelector('.icon-preview-wrapper');
+            if (config.url) {
+                if (!previewWrapper) {
+                    previewWrapper = document.createElement('div');
+                    previewWrapper.className = 'icon-preview-wrapper';
+                    previewWrapper.innerHTML = '<div class="icon-preview"><img alt="预览"></div>';
+                    editorItem.appendChild(previewWrapper);
+                }
+                const img = previewWrapper.querySelector('img');
+                if (img) {
+                    img.src = config.url;
+                    img.alt = config.name || '预览';
+                }
+            } else if (previewWrapper) {
+                previewWrapper.remove();
+            }
+            
+            // 更新标签
+            const label = editorItem.querySelector('.icon-editor-label');
+            if (label && config.name) {
+                label.textContent = config.name;
+            }
         }
     }
 
@@ -454,6 +581,154 @@
         if (settingsPage) {
             settingsPage.classList.remove('show');
         }
+    }
+    
+    // 显示关机界面
+    function showShutdownOverlay() {
+        const shutdownOverlay = document.getElementById('shutdown-overlay');
+        if (shutdownOverlay) {
+            shutdownOverlay.classList.add('show');
+            initShutdownSlider();
+        }
+    }
+    
+    // 初始化关机滑块
+    function initShutdownSlider() {
+        const thumb = document.getElementById('shutdown-slider-thumb');
+        const track = thumb?.parentElement;
+        const cancelBtn = document.getElementById('shutdown-cancel-btn');
+        const overlay = document.getElementById('shutdown-overlay');
+        
+        if (!thumb || !track) return;
+        
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        const maxSlide = track.offsetWidth - thumb.offsetWidth - 8;
+        
+        function handleStart(e) {
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            thumb.style.transition = 'none';
+        }
+        
+        function handleMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            currentX = Math.max(0, Math.min(maxSlide, clientX - startX));
+            thumb.style.transform = `translateX(${currentX}px)`;
+            
+            // 如果滑到底部，执行关机
+            if (currentX >= maxSlide * 0.95) {
+                performShutdown();
+            }
+        }
+        
+        function handleEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            // 如果没有滑到底，回弹
+            if (currentX < maxSlide * 0.95) {
+                thumb.style.transition = 'transform 0.3s ease';
+                thumb.style.transform = 'translateX(0)';
+                currentX = 0;
+                startX = 0;
+            }
+        }
+        
+        // 绑定事件
+        thumb.addEventListener('mousedown', handleStart);
+        thumb.addEventListener('touchstart', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchend', handleEnd);
+        
+        // 取消按钮
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                overlay.classList.remove('show');
+                thumb.style.transform = 'translateX(0)';
+                currentX = 0;
+                startX = 0;
+            });
+        }
+    }
+    
+    // 执行关机
+    function performShutdown() {
+        const screen = document.querySelector('.iphone-screen');
+        const overlay = document.getElementById('iphone-simulator-overlay');
+        
+        if (screen) {
+            screen.style.transition = 'opacity 0.5s ease';
+            screen.style.opacity = '0';
+            
+            setTimeout(() => {
+                // 关闭查手机模拟器界面
+                if (overlay) {
+                    overlay.classList.remove('show');
+                }
+                // 恢复屏幕状态
+                screen.style.opacity = '1';
+            }, 500);
+        }
+    }
+    
+    // 刷新图标编辑器
+    function refreshIconEditors() {
+        const appEditor = document.getElementById('app-icons-editor');
+        const dockEditor = document.getElementById('dock-icons-editor');
+        
+        if (appEditor) {
+            appEditor.innerHTML = '';
+            Object.keys(currentConfig.icons).forEach(key => {
+                const config = currentConfig.icons[key];
+                const index = key.replace('app', '');
+                appEditor.innerHTML += createIconEditorItem(key, config, index, 'app');
+            });
+        }
+        
+        if (dockEditor) {
+            dockEditor.innerHTML = '';
+            Object.keys(currentConfig.dockIcons).forEach(key => {
+                const config = currentConfig.dockIcons[key];
+                const index = key.replace('dock', '');
+                dockEditor.innerHTML += createIconEditorItem(key, config, index, 'dock');
+            });
+        }
+        
+        // 重新绑定事件
+        initializeIconEditorEvents();
+    }
+    
+    // 单独初始化图标编辑器事件（从initializeSettingsEvents中分离出来）
+    function initializeIconEditorEvents() {
+        document.querySelectorAll('[data-icon-key]').forEach(el => {
+            if (el.tagName === 'INPUT' && el.type === 'text') {
+                el.addEventListener('input', (e) => {
+                    const key = e.target.dataset.iconKey;
+                    const type = e.target.dataset.iconType;
+                    const value = e.target.value;
+                    
+                    if (key.startsWith('app')) {
+                        if (!currentConfig.icons[key]) currentConfig.icons[key] = {};
+                        currentConfig.icons[key][type] = value;
+                    } else if (key.startsWith('dock')) {
+                        if (!currentConfig.dockIcons[key]) currentConfig.dockIcons[key] = {};
+                        currentConfig.dockIcons[key][type] = value;
+                    }
+                    
+                    // 实时更新预览
+                    updateIconPreview(key);
+                });
+            } else if (el.tagName === 'INPUT' && el.type === 'file') {
+                el.addEventListener('change', (e) => handleIconFileUpload(e));
+            }
+        });
     }
 
     // 初始化

@@ -16,10 +16,7 @@
             <div class="iphone-mail-page" id="iphone-mail-page">
                 <div class="mail-header">
                     <button class="mail-back-btn" id="mail-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        邮箱
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="mail-title">邮箱</div>
                     <button class="mail-generate-btn" id="mail-generate-btn">生成</button>
@@ -37,10 +34,7 @@
             <div class="mail-detail-page" id="mail-detail-page">
                 <div class="mail-detail-header">
                     <button class="mail-detail-back-btn" id="mail-detail-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        返回
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                 </div>
                 <div class="mail-detail-content" id="mail-detail-content"></div>
@@ -414,6 +408,22 @@ ${messagesText}
         return false;
     }
     
+    // 生成头像URL（使用免费真人头像API）
+    function getAvatarUrl(email, name) {
+        // 基于邮箱地址生成一个稳定的随机数
+        let hash = 0;
+        const str = email || name || Math.random().toString();
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash = hash & hash;
+        }
+        const id = Math.abs(hash) % 70;
+        
+        // 使用 pravatar.cc 提供的真实人物头像
+        // 这是一个免费的随机头像服务，提供真实的人物照片
+        return `https://i.pravatar.cc/150?img=${id}`;
+    }
+    
     // 渲染邮件列表
     function renderMailList() {
         const content = document.getElementById('mail-content');
@@ -430,10 +440,13 @@ ${messagesText}
             return;
         }
         
-        const mailHTML = currentMailData.map(mail => `
+        const mailHTML = currentMailData.map(mail => {
+            const avatarUrl = getAvatarUrl(mail.email, mail.sender);
+            return `
             <div class="mail-item ${mail.unread ? 'unread' : ''}" data-mail-id="${mail.id}">
-                <div class="mail-item-icon ${mail.category}">
-                    ${mail.icon || '📧'}
+                <div class="mail-item-avatar ${mail.category}">
+                    <img src="${avatarUrl}" alt="${escapeHtml(mail.sender)}" class="mail-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="mail-avatar-fallback" style="display:none;">${mail.icon || '📧'}</div>
                 </div>
                 <div class="mail-item-content">
                     <div class="mail-item-header">
@@ -444,7 +457,8 @@ ${messagesText}
                     <div class="mail-item-preview">${escapeHtml(mail.preview)}</div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
         
         content.innerHTML = `<div class="mail-list">${mailHTML}</div>`;
         
@@ -472,12 +486,16 @@ ${messagesText}
         saveMailToStorage();
         renderMailList();
         
+        // 获取头像URL
+        const avatarUrl = getAvatarUrl(mail.email, mail.sender);
+        
         // 构建详情内容HTML
         detailContent.innerHTML = `
             <div class="mail-detail-subject">${escapeHtml(mail.subject)}</div>
             <div class="mail-detail-meta">
                 <div class="mail-detail-sender-avatar ${mail.category}">
-                    ${mail.icon || '📧'}
+                    <img src="${avatarUrl}" alt="${escapeHtml(mail.sender)}" class="mail-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="mail-avatar-fallback" style="display:none;">${mail.icon || '📧'}</div>
                 </div>
                 <div class="mail-detail-sender-info">
                     <div class="mail-detail-sender-name">${escapeHtml(mail.sender)}</div>
@@ -515,6 +533,11 @@ ${messagesText}
             max_tokens: 10000
         };
         
+        // 验证请求体
+        if (!validateRequestBody(body)) {
+            throw new Error('请求参数验证失败');
+        }
+        
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
         
@@ -532,7 +555,25 @@ ${messagesText}
             clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                let errorDetails = '';
+                try {
+                    const errorData = await response.text();
+                    if (errorData) {
+                        try {
+                            const errorJson = JSON.parse(errorData);
+                            if (errorJson.error) {
+                                errorDetails = typeof errorJson.error === 'string'
+                                    ? errorJson.error
+                                    : (errorJson.error.message || JSON.stringify(errorJson.error));
+                            }
+                        } catch (e) {
+                            errorDetails = errorData.substring(0, 200);
+                        }
+                    }
+                } catch (e) {
+                    console.error('无法读取错误响应:', e);
+                }
+                throw new Error(`API请求失败: ${response.status} ${response.statusText}${errorDetails ? '\n' + errorDetails : ''}`);
             }
             
             const data = await response.json();
@@ -762,6 +803,39 @@ ${messagesText}
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+
+    // 验证请求体（与main-api-manager保持一致）
+    function validateRequestBody(body) {
+        if (!body || !body.model || !Array.isArray(body.messages)) {
+            console.error('❌ 邮件API请求体验证失败');
+            return false;
+        }
+        
+        if (body.messages.length === 0) {
+            console.error('❌ messages数组为空');
+            return false;
+        }
+        
+        for (let i = 0; i < body.messages.length; i++) {
+            const msg = body.messages[i];
+            if (!msg.role || !msg.content) {
+                console.error(`❌ 消息 ${i} 缺少role或content`);
+                return false;
+            }
+            if (typeof msg.content === 'string' && msg.content.trim().length === 0) {
+                console.error(`❌ 消息 ${i} content为空字符串`);
+                return false;
+            }
+        }
+        
+        if (body.temperature !== undefined && (body.temperature < 0 || body.temperature > 2)) {
+            console.error('❌ temperature参数超出范围');
+            return false;
+        }
+        
+        console.log('✅ 邮件API请求体验证通过');
+        return true;
     }
 
     // 导出函数

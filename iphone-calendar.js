@@ -18,10 +18,7 @@
             <div class="iphone-calendar-page" id="iphone-calendar-page">
                 <div class="calendar-header">
                     <button class="calendar-back-btn" id="calendar-back-btn">
-                        <svg width="13" height="21" viewBox="0 0 13 21" fill="currentColor">
-                            <path d="M11.67 1.77L10.26 0.36L0.5 10.13L10.26 19.89L11.67 18.48L3.31 10.13L11.67 1.77Z"/>
-                        </svg>
-                        日历
+                        <i class="fa fa-arrow-left"></i>
                     </button>
                     <div class="calendar-title">日历</div>
                     <button class="calendar-generate-btn" id="calendar-generate-btn">生成</button>
@@ -31,7 +28,7 @@
                     <div class="calendar-empty">
                         <div class="calendar-empty-icon">📅</div>
                         <div class="calendar-empty-text">暂无日历数据</div>
-                        <div class="calendar-empty-hint">点击右上角"生成"按钮<br>创建日历事件</div>
+                        <div class="calendar-empty-hint">点击右上角按钮<br>创建日历事件</div>
                     </div>
                 </div>
             </div>
@@ -546,7 +543,7 @@ ${messagesText}
         
         return `
             <div class="calendar-events-section">
-                <div class="calendar-events-title">即将到来</div>
+                <div class="calendar-events-title">计划</div>
                 ${eventsHTML}
             </div>
         `;
