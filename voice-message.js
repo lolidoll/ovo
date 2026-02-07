@@ -132,9 +132,9 @@ const VoiceMessageModule = (function() {
 
         const convId = AppState.currentChat.id;
 
-        // 创建语音消息对象
+        // 创建语音消息对象（直接生成ID，不依赖外部函数）
         const voiceMsg = {
-            id: generateMessageId(),
+            id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
             conversationId: convId,
             type: 'voice',
             content: text,
@@ -156,14 +156,14 @@ const VoiceMessageModule = (function() {
         }
         AppState.messages[convId].push(voiceMsg);
 
-        // 保存到本地存储
-        if (typeof saveToStorage === 'function') {
-            saveToStorage();
+        // 保存到本地存储（访问全局函数）
+        if (typeof window.saveToStorage === 'function') {
+            window.saveToStorage();
         }
 
-        // 重新渲染对话消息
-        if (typeof renderChatMessages === 'function') {
-            renderChatMessages();
+        // 重新渲染对话消息（访问全局函数）
+        if (typeof window.renderChatMessages === 'function') {
+            window.renderChatMessages();
         }
 
         // 关闭弹窗
@@ -199,7 +199,7 @@ const VoiceMessageModule = (function() {
     // AI回复语音消息
     function sendAIVoiceMessage(conversationId, text, duration = 1) {
         const voiceMsg = {
-            id: generateMessageId(),
+            id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
             conversationId: conversationId,
             type: 'voice',
             content: text,
@@ -221,20 +221,15 @@ const VoiceMessageModule = (function() {
         }
         AppState.messages[conversationId].push(voiceMsg);
 
-        // 保存到本地存储
-        if (typeof saveToStorage === 'function') {
-            saveToStorage();
+        // 保存到本地存储（访问全局函数）
+        if (typeof window.saveToStorage === 'function') {
+            window.saveToStorage();
         }
 
-        // 重新渲染对话消息
-        if (typeof renderChatMessages === 'function') {
-            renderChatMessages();
+        // 重新渲染对话消息（访问全局函数）
+        if (typeof window.renderChatMessages === 'function') {
+            window.renderChatMessages();
         }
-    }
-
-    // 生成消息ID
-    function generateMessageId() {
-        return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
 
     // 转义HTML字符

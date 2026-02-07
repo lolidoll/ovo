@@ -39,7 +39,7 @@ function openCharacterMindStateEnhanced(chat) {
         },
         {
             title: '基础指标',
-            icon: '🤵🏻‍♂️',
+            icon: '🍗',
             color: '#ff9bb3',
             items: [
                 { key: 'stamina', label: '体力', subKey: 'staminaDesc', subLabel: '状态', hasProgress: true },

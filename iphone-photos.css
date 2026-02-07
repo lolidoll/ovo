@@ -98,6 +98,33 @@
     pointer-events: none;
 }
 
+/* 头部操作按钮组 */
+.photos-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.photos-settings-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.photos-settings-btn:active {
+    background-color: rgba(0, 122, 255, 0.1);
+    transform: scale(0.95);
+}
+
 /* 相册内容 */
 .photos-content {
     flex: 1;
@@ -270,7 +297,7 @@
     height: 44px;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     padding: 0 16px;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(20px);
@@ -368,4 +395,341 @@
 .photo-detail-content::-webkit-scrollbar {
     width: 0;
     display: none;
+}
+
+/* ========== 设置弹窗样式 ========== */
+.photos-settings-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    display: none;
+    align-items: flex-end;
+}
+
+.photos-settings-modal.show {
+    display: flex;
+}
+
+.photos-settings-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.3s ease;
+}
+
+.photos-settings-content {
+    position: relative;
+    width: 100%;
+    max-height: 80vh;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    animation: slideUp 0.3s cubic-bezier(0.36, 0.66, 0.04, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.photos-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.photos-settings-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #000;
+}
+
+.photos-settings-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.photos-settings-close:active {
+    background: #e0e0e0;
+    transform: scale(0.95);
+}
+
+.photos-settings-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* 设置项 */
+.photos-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.photos-setting-label {
+    flex: 1;
+}
+
+.photos-setting-label span {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #000;
+    margin-bottom: 4px;
+}
+
+.photos-setting-label small {
+    display: block;
+    font-size: 13px;
+    color: #666;
+}
+
+/* iOS风格开关 */
+.photos-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 31px;
+}
+
+.photos-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.photos-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e5e5e5;
+    transition: 0.3s;
+    border-radius: 31px;
+}
+
+.photos-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 27px;
+    width: 27px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.photos-toggle-switch input:checked + .photos-toggle-slider {
+    background-color: #34C759;
+}
+
+.photos-toggle-switch input:checked + .photos-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* 设置区块 */
+.photos-setting-section {
+    margin-top: 24px;
+}
+
+.photos-setting-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 8px;
+}
+
+.photos-setting-section-desc {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+/* 提示词输入组 */
+.photos-prompt-input-group {
+    margin-bottom: 20px;
+}
+
+.photos-prompt-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    font-size: 15px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    resize: vertical;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    margin-bottom: 12px;
+}
+
+.photos-prompt-textarea:focus {
+    outline: none;
+    border-color: #007AFF;
+}
+
+.photos-prompt-save-btn {
+    width: 100%;
+    padding: 12px;
+    background: #007AFF;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.photos-prompt-save-btn:active {
+    background: #0056b3;
+    transform: scale(0.98);
+}
+
+/* 预设列表 */
+.photos-presets-section {
+    margin-top: 20px;
+}
+
+.photos-presets-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 12px;
+}
+
+.photos-presets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.photos-presets-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 14px;
+}
+
+.photos-preset-item {
+    background: #f8f8f8;
+    border-radius: 12px;
+    padding: 12px;
+    transition: all 0.2s;
+}
+
+.photos-preset-item.active {
+    background: #e3f2fd;
+    transform: scale(0.98);
+}
+
+.photos-preset-text {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.photos-preset-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.photos-preset-apply-btn,
+.photos-preset-delete-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.photos-preset-apply-btn {
+    background: #007AFF;
+    color: white;
+}
+
+.photos-preset-apply-btn:active {
+    background: #0056b3;
+}
+
+.photos-preset-delete-btn {
+    background: #ff3b30;
+    color: white;
+}
+
+.photos-preset-delete-btn:active {
+    background: #d32f2f;
+}
+
+/* ========== 仅文字模式样式 ========== */
+.photo-text-only {
+    aspect-ratio: 3/4;
+}
+
+.photo-text-card {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.photo-text-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.photo-text-desc {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+}
+
+.photo-text-time {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 8px;
 }

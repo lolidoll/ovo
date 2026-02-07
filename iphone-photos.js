@@ -14,12 +14,17 @@
         const photosHTML = `
             <div class="iphone-photos-page" id="iphone-photos-page">
                 <div class="photos-header">
-                            <button class="photos-back-btn" id="photos-back-btn">
-                                <i class="fa fa-arrow-left"></i>
-                            </button>
-                            <div class="photos-title">相册</div>
-                            <button class="photos-generate-btn" id="photos-generate-btn">生成</button>
-                        </div>
+                    <button class="photos-back-btn" id="photos-back-btn">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <div class="photos-title">相册</div>
+                    <div class="photos-header-actions">
+                        <button class="photos-settings-btn" id="photos-settings-btn">
+                            <i class="fa fa-cog"></i>
+                        </button>
+                        <button class="photos-generate-btn" id="photos-generate-btn">生成</button>
+                    </div>
+                </div>
                 
                 <div class="photos-content" id="photos-content">
                     <div class="photos-empty">
@@ -36,12 +41,65 @@
                 </div>
                 <div class="photo-detail-content" id="photo-detail-content"></div>
             </div>
+            
+            <div class="photos-settings-modal" id="photos-settings-modal">
+                <div class="photos-settings-overlay"></div>
+                <div class="photos-settings-content">
+                    <div class="photos-settings-header">
+                        <h3>相册设置</h3>
+                        <button class="photos-settings-close" id="photos-settings-close">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="photos-settings-body">
+                        <!-- 生图开关 -->
+                        <div class="photos-setting-item">
+                            <div class="photos-setting-label">
+                                <span>启用图片生成</span>
+                                <small>关闭后仅显示文字描述</small>
+                            </div>
+                            <label class="photos-toggle-switch">
+                                <input type="checkbox" id="photos-enable-generation" checked>
+                                <span class="photos-toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <!-- 提示词输入区 -->
+                        <div class="photos-setting-section" id="photos-prompt-section">
+                            <div class="photos-setting-section-title">生图提示词补充</div>
+                            <div class="photos-setting-section-desc">添加画风、画质、细节等描述</div>
+                            
+                            <div class="photos-prompt-input-group">
+                                <textarea
+                                    id="photos-prompt-input"
+                                    class="photos-prompt-textarea"
+                                    placeholder="例如：水彩画风格，高清画质，细节丰富"
+                                    rows="3"
+                                ></textarea>
+                                <button class="photos-prompt-save-btn" id="photos-prompt-save-btn">
+                                    <i class="fa fa-save"></i> 保存为预设
+                                </button>
+                            </div>
+                            
+                            <!-- 预设列表 -->
+                            <div class="photos-presets-section">
+                                <div class="photos-presets-title">我的预设</div>
+                                <div class="photos-presets-list" id="photos-presets-list">
+                                    <!-- 预设项将动态插入 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
         
         const screen = document.querySelector('.iphone-screen');
         if (screen) {
             screen.insertAdjacentHTML('beforeend', photosHTML);
             initializePhotosEvents();
+            loadPhotosSettings();
         }
     }
 
@@ -61,6 +119,255 @@
         if (closeBtn) {
             closeBtn.addEventListener('click', hidePhotoDetail);
         }
+        
+        // 设置按钮
+        const settingsBtn = document.getElementById('photos-settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', showSettingsModal);
+        }
+        
+        // 设置弹窗关闭
+        const settingsClose = document.getElementById('photos-settings-close');
+        if (settingsClose) {
+            settingsClose.addEventListener('click', hideSettingsModal);
+        }
+        
+        const settingsModal = document.getElementById('photos-settings-modal');
+        if (settingsModal) {
+            const overlay = settingsModal.querySelector('.photos-settings-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', hideSettingsModal);
+            }
+        }
+        
+        // 生图开关
+        const enableGeneration = document.getElementById('photos-enable-generation');
+        if (enableGeneration) {
+            enableGeneration.addEventListener('change', handleGenerationToggle);
+        }
+        
+        // 保存预设按钮
+        const promptSaveBtn = document.getElementById('photos-prompt-save-btn');
+        if (promptSaveBtn) {
+            promptSaveBtn.addEventListener('click', savePromptPreset);
+        }
+    }
+    
+    // ========== 设置相关功能 ==========
+    
+    // 默认设置
+    const defaultSettings = {
+        enableGeneration: true,
+        currentPrompt: '',
+        presets: []
+    };
+    
+    // 加载设置
+    function loadPhotosSettings() {
+        try {
+            const saved = localStorage.getItem('iphonePhotosSettings');
+            const settings = saved ? JSON.parse(saved) : defaultSettings;
+            
+            // 应用设置到UI
+            const enableCheckbox = document.getElementById('photos-enable-generation');
+            if (enableCheckbox) {
+                enableCheckbox.checked = settings.enableGeneration;
+            }
+            
+            const promptInput = document.getElementById('photos-prompt-input');
+            if (promptInput) {
+                promptInput.value = settings.currentPrompt || '';
+            }
+            
+            // 更新提示词区域显示状态
+            updatePromptSectionVisibility(settings.enableGeneration);
+            
+            // 渲染预设列表
+            renderPresetsList(settings.presets);
+            
+            return settings;
+        } catch (error) {
+            console.error('加载相册设置失败:', error);
+            return defaultSettings;
+        }
+    }
+    
+    // 保存设置
+    function savePhotosSettings(settings) {
+        try {
+            localStorage.setItem('iphonePhotosSettings', JSON.stringify(settings));
+        } catch (error) {
+            console.error('保存相册设置失败:', error);
+        }
+    }
+    
+    // 获取当前设置
+    function getPhotosSettings() {
+        try {
+            const saved = localStorage.getItem('iphonePhotosSettings');
+            return saved ? JSON.parse(saved) : defaultSettings;
+        } catch (error) {
+            console.error('获取相册设置失败:', error);
+            return defaultSettings;
+        }
+    }
+    
+    // 显示设置弹窗
+    function showSettingsModal() {
+        const modal = document.getElementById('photos-settings-modal');
+        if (modal) {
+            modal.classList.add('show');
+            loadPhotosSettings(); // 重新加载设置
+        }
+    }
+    
+    // 隐藏设置弹窗
+    function hideSettingsModal() {
+        const modal = document.getElementById('photos-settings-modal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+    
+    // 处理生图开关
+    function handleGenerationToggle(e) {
+        const enabled = e.target.checked;
+        const settings = getPhotosSettings();
+        settings.enableGeneration = enabled;
+        savePhotosSettings(settings);
+        
+        // 更新提示词区域显示
+        updatePromptSectionVisibility(enabled);
+        
+        console.log('生图功能', enabled ? '已启用' : '已禁用');
+    }
+    
+    // 更新提示词区域显示状态
+    function updatePromptSectionVisibility(enabled) {
+        const promptSection = document.getElementById('photos-prompt-section');
+        if (promptSection) {
+            promptSection.style.display = enabled ? 'block' : 'none';
+        }
+    }
+    
+    // 保存提示词预设
+    function savePromptPreset() {
+        const promptInput = document.getElementById('photos-prompt-input');
+        const promptText = promptInput ? promptInput.value.trim() : '';
+        
+        if (!promptText) {
+            alert('请输入提示词内容');
+            return;
+        }
+        
+        const settings = getPhotosSettings();
+        
+        // 检查是否已存在相同预设
+        const exists = settings.presets.some(p => p.text === promptText);
+        if (exists) {
+            alert('该预设已存在');
+            return;
+        }
+        
+        // 添加新预设
+        const preset = {
+            id: Date.now(),
+            text: promptText,
+            createdAt: new Date().toISOString()
+        };
+        
+        settings.presets.push(preset);
+        savePhotosSettings(settings);
+        
+        // 重新渲染预设列表
+        renderPresetsList(settings.presets);
+        
+        // 清空输入框
+        if (promptInput) {
+            promptInput.value = '';
+        }
+        
+        console.log('预设已保存:', preset);
+    }
+    
+    // 渲染预设列表
+    function renderPresetsList(presets) {
+        const listContainer = document.getElementById('photos-presets-list');
+        if (!listContainer) return;
+        
+        if (!presets || presets.length === 0) {
+            listContainer.innerHTML = '<div class="photos-presets-empty">暂无预设</div>';
+            return;
+        }
+        
+        listContainer.innerHTML = presets.map(preset => `
+            <div class="photos-preset-item" data-id="${preset.id}">
+                <div class="photos-preset-text">${escapeHtml(preset.text)}</div>
+                <div class="photos-preset-actions">
+                    <button class="photos-preset-apply-btn" onclick="window.applyPhotoPreset(${preset.id})">
+                        <i class="fa fa-check"></i> 应用
+                    </button>
+                    <button class="photos-preset-delete-btn" onclick="window.deletePhotoPreset(${preset.id})">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // 应用预设
+    window.applyPhotoPreset = function(presetId) {
+        const settings = getPhotosSettings();
+        const preset = settings.presets.find(p => p.id === presetId);
+        
+        if (!preset) {
+            console.error('预设不存在');
+            return;
+        }
+        
+        // 更新当前提示词
+        settings.currentPrompt = preset.text;
+        savePhotosSettings(settings);
+        
+        // 更新输入框
+        const promptInput = document.getElementById('photos-prompt-input');
+        if (promptInput) {
+            promptInput.value = preset.text;
+        }
+        
+        // 视觉反馈
+        const presetItems = document.querySelectorAll('.photos-preset-item');
+        presetItems.forEach(item => {
+            if (item.dataset.id === presetId.toString()) {
+                item.classList.add('active');
+                setTimeout(() => item.classList.remove('active'), 1000);
+            }
+        });
+        
+        console.log('已应用预设:', preset.text);
+    };
+    
+    // 删除预设
+    window.deletePhotoPreset = function(presetId) {
+        if (!confirm('确定要删除这个预设吗？')) {
+            return;
+        }
+        
+        const settings = getPhotosSettings();
+        settings.presets = settings.presets.filter(p => p.id !== presetId);
+        savePhotosSettings(settings);
+        
+        // 重新渲染
+        renderPresetsList(settings.presets);
+        
+        console.log('预设已删除');
+    };
+    
+    // HTML转义工具函数
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // 获取当前角色信息（从当前聊天页面获取）
@@ -239,57 +546,75 @@ ${messagesText}
             // 打乱时间偏移顺序
             timeOffsets.sort(() => Math.random() - 0.5);
             
+            // 获取相册设置
+            const settings = getPhotosSettings();
+            
             currentPhotos = photosData.map((photo, index) => {
                 const photoTime = new Date(now - timeOffsets[index]);
                 
-                // 生成图片URL - Pollinations API 完整格式
+                // 生成图片URL - 根据设置决定是否生成
                 const seed = Date.now() + index;
+                let imageUrl = null;
+                let fallbackUrls = [];
                 
-                // 直接使用中文描述作为prompt
-                const finalPrompt = photo.description;
-                
-                // 构建Pollinations URL - 完整格式（带所有参数）
-                const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(finalPrompt)}?model=zimage&width=1080&height=2160&nologo=true&key=sk_InRGAIaBbde6kBPCSzO4FsOHTvYKQocd`;
-                
-                // 备选方案
-                const imageSources = [
-                    pollinationsUrl,
-                    // 备选：Picsum（随机照片）
-                    `https://picsum.photos/seed/${seed}/1080/2160`
-                ];
-                
-                const imageUrl = imageSources[0];
-                const fallbackUrls = imageSources.slice(1);
-                
-                console.log(`生成图片 [${index}]:`, {
-                    prompt: photo.description.substring(0, 50) + '...',
-                    urlPreview: imageUrl.substring(0, 120) + '...'
-                });
-                
-                // 测试URL是否可访问（仅第一张图片）
-                if (index === 0) {
-                    console.log('🔍 测试Pollinations API...');
-                    console.log('📋 提示词:', photo.description);
-                    console.log('⚙️ 参数: model=zimage, 1080x2160, nologo=true');
-                    fetch(imageUrl, { method: 'HEAD' })
-                        .then(r => {
-                            if (r.ok) {
-                                console.log('✅ Pollinations API 可用！');
-                                console.log('💡 直接使用中文描述生成图片');
-                            } else {
-                                console.warn('⚠️ API响应异常，状态:', r.status);
-                            }
-                        })
-                        .catch(e => console.error('❌ API错误:', e.message));
+                if (settings.enableGeneration) {
+                    // 构建提示词：基础描述 + 用户补充
+                    let finalPrompt = photo.description;
+                    
+                    // 如果有用户补充的提示词，添加到描述后面
+                    if (settings.currentPrompt && settings.currentPrompt.trim()) {
+                        finalPrompt = `${photo.description}，${settings.currentPrompt}`;
+                    }
+                    
+                    // 构建Pollinations URL - 完整格式（带所有参数）
+                    const pollinationsUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(finalPrompt)}?model=zimage&width=1080&height=2160&nologo=true&key=sk_InRGAIaBbde6kBPCSzO4FsOHTvYKQocd`;
+                    
+                    // 备选方案
+                    const imageSources = [
+                        pollinationsUrl,
+                        // 备选：Picsum（随机照片）
+                        `https://picsum.photos/seed/${seed}/1080/2160`
+                    ];
+                    
+                    imageUrl = imageSources[0];
+                    fallbackUrls = imageSources.slice(1);
+                    
+                    console.log(`生成图片 [${index}]:`, {
+                        description: photo.description.substring(0, 40) + '...',
+                        customPrompt: settings.currentPrompt || '(无)',
+                        finalPrompt: finalPrompt.substring(0, 60) + '...',
+                        urlPreview: imageUrl.substring(0, 100) + '...'
+                    });
+                    
+                    // 测试URL是否可访问（仅第一张图片）
+                    if (index === 0) {
+                        console.log('🔍 测试Pollinations API...');
+                        console.log('📋 基础描述:', photo.description);
+                        console.log('🎨 用户补充:', settings.currentPrompt || '(无)');
+                        console.log('🎯 最终提示词:', finalPrompt);
+                        console.log('⚙️ 参数: model=zimage, 1080x2160, nologo=true');
+                        fetch(imageUrl, { method: 'HEAD' })
+                            .then(r => {
+                                if (r.ok) {
+                                    console.log('✅ Pollinations API 可用！');
+                                } else {
+                                    console.warn('⚠️ API响应异常，状态:', r.status);
+                                }
+                            })
+                            .catch(e => console.error('❌ API错误:', e.message));
+                    }
+                } else {
+                    console.log(`仅文字描述 [${index}]:`, photo.description.substring(0, 50) + '...');
                 }
                 
                 return {
                     id: Date.now() + index,
                     description: photo.description,
-                    imageUrl: imageUrl,
-                    fallbackUrls: fallbackUrls, // 保存备选URL
+                    imageUrl: imageUrl, // null表示不生成图片
+                    fallbackUrls: fallbackUrls,
                     time: formatTime(photoTime),
-                    timestamp: photoTime.getTime()
+                    timestamp: photoTime.getTime(),
+                    textOnly: !settings.enableGeneration // 标记是否仅文字
                 };
             });
             
@@ -609,14 +934,22 @@ ${messagesText}
         sortedDates.forEach(dateLabel => {
             const photos = photosByDate[dateLabel];
             const photosHTML = photos.map(photo => {
-                // 调试：检查imageUrl是否存在
-                if (!photo.imageUrl) {
-                    console.error('照片缺少imageUrl:', photo);
+                // 判断是否为仅文字模式
+                if (photo.textOnly || !photo.imageUrl) {
+                    // 仅文字模式：显示描述卡片
+                    return `
+                        <div class="photo-item photo-text-only" data-photo-id="${photo.id}">
+                            <div class="photo-text-card">
+                                <div class="photo-text-icon">📝</div>
+                                <div class="photo-text-desc">${escapeHtml(photo.description)}</div>
+                                <div class="photo-text-time">${photo.time}</div>
+                            </div>
+                        </div>
+                    `;
                 }
                 
-                const imageUrl = photo.imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect fill="%23f0f0f0" width="800" height="800"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="24"%3E无图片%3C/text%3E%3C/svg%3E';
-                
-                // 构建备选URL的data属性
+                // 图片模式：显示图片
+                const imageUrl = photo.imageUrl;
                 const fallbackUrlsAttr = photo.fallbackUrls ? JSON.stringify(photo.fallbackUrls).replace(/"/g, '&quot;') : '[]';
                 
                 return `
