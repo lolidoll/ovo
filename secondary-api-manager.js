@@ -449,16 +449,18 @@ const SecondaryAPIManager = (function() {
         // 副API密钥显示/隐藏切换
         const secondaryApiKeyToggle = document.getElementById('secondary-api-key-toggle');
         if (secondaryApiKeyToggle) {
+            // 初始状态：输入框为text类型，按钮显示"隐藏"
+            secondaryApiKeyToggle.textContent = '隐藏';
             secondaryApiKeyToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 const keyInput = document.getElementById('secondary-api-key');
                 if (keyInput) {
-                    if (keyInput.type === 'password') {
-                        keyInput.type = 'text';
-                        secondaryApiKeyToggle.textContent = '隐藏';
-                    } else {
+                    if (keyInput.type === 'text') {
                         keyInput.type = 'password';
                         secondaryApiKeyToggle.textContent = '显示';
+                    } else {
+                        keyInput.type = 'text';
+                        secondaryApiKeyToggle.textContent = '隐藏';
                     }
                 }
             });

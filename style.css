@@ -3433,9 +3433,15 @@ input[type="range"]::-ms-fill-upper {
     }
     
     .chat-messages {
-        overflow-y: auto;
+        overflow-y: auto !important;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
+        /* 确保flex子元素可以滚动 */
+        min-height: 0;
+        flex: 1;
+        /* 移动端滚动优化 */
+        overscroll-behavior: contain;
+        touch-action: pan-y;
     }
     
     /* vivo浏览器优化 */

@@ -1026,13 +1026,15 @@
             const apiKeyToggle = document.getElementById('api-key-toggle');
             const apiKeyInput = document.getElementById('api-key');
             if (apiKeyToggle && apiKeyInput) {
+                // 初始状态：输入框为text类型，按钮显示"隐藏"
+                apiKeyToggle.textContent = '隐藏';
                 apiKeyToggle.addEventListener('click', function() {
-                    if (apiKeyInput.type === 'password') {
-                        apiKeyInput.type = 'text';
-                        apiKeyToggle.textContent = '隐藏';
-                    } else {
+                    if (apiKeyInput.type === 'text') {
                         apiKeyInput.type = 'password';
                         apiKeyToggle.textContent = '显示';
+                    } else {
+                        apiKeyInput.type = 'text';
+                        apiKeyToggle.textContent = '隐藏';
                     }
                 });
             }
@@ -3108,7 +3110,7 @@
                     
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div class="voicecall-bubble">
+                        <div class="voicecall-bubble ${callStatus}">
                             ${statusIcon}
                             <div class="voicecall-info">
                                 <div class="voicecall-title">语音通话</div>
@@ -3167,7 +3169,7 @@
                     
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div class="videocall-bubble">
+                        <div class="videocall-bubble ${callStatus}">
                             ${statusIcon}
                             <div class="videocall-info">
                                 <div class="videocall-title">视频通话</div>

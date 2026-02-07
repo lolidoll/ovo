@@ -1354,20 +1354,20 @@
     color: #666;
 }
 
-/* 通话中状态的特殊样式 */
-.voicecall-message .voicecall-bubble:has(.calling-icon) {
+/* 通话中状态的特殊样式 - 移除:has()以支持Edge移动端 */
+.voicecall-message .voicecall-bubble.calling {
     background: linear-gradient(135deg, #fff5f8 0%, #ffe9f0 100%);
     border-color: #ffd4e8;
 }
 
-/* 已取消状态的特殊样式 */
-.voicecall-message .voicecall-bubble:has(.cancelled-icon) {
+/* 已取消状态的特殊样式 - 移除:has()以支持Edge移动端 */
+.voicecall-message .voicecall-bubble.cancelled {
     background: rgba(255, 245, 245, 0.95);
     border-color: rgba(255, 107, 107, 0.2);
 }
 
-/* 已挂断状态的特殊样式 */
-.voicecall-message .voicecall-bubble:has(.ended-icon) {
+/* 已挂断状态的特殊样式 - 移除:has()以支持Edge移动端 */
+.voicecall-message .voicecall-bubble.ended {
     background: rgba(245, 245, 245, 0.95);
     border-color: rgba(200, 200, 200, 0.2);
 }
