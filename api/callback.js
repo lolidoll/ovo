@@ -3,9 +3,23 @@
  * Vercel Serverless Function
  */
 
-import { VercelKV } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
-const kv = new VercelKV();
+function parseRedisUrl(url) {
+  if (!url) return { url: undefined, token: undefined };
+  if (url.includes('rediss://')) {
+    const match = url.match(/rediss:\/\/default:([^@]+)@([^:]+):\d+/);
+    if (match) {
+      return { url: `https://${match[2]}`, token: match[1] };
+    }
+  }
+  return { url, token: process.env.REDIS_TOKEN };
+}
+
+function getRedisClient() {
+  const { url, token } = parseRedisUrl(process.env.REDIS_URL);
+  return new Redis({ url, token });
+}
 
 export default async function handler(req, res) {
     // ⚠️ 必须在最前面设置 CORS 头 - 这是关键！
@@ -32,45 +46,12 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { code, client_id, verified_key } = req.body;
+    const { code, client_id } = req.body;
     const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
     const REDIRECT_URI = 'https://lolidoll.github.io/ovo/index.html';
 
     if (!code || !client_id || !CLIENT_SECRET) {
         return res.status(400).json({ error: 'Missing required parameters' });
-    }
-
-    // 验证密钥（如果提供了）
-    if (verified_key) {
-        const keyData = await kv.hget('login:keys', verified_key);
-        
-        if (!keyData) {
-            return res.status(403).json({ error: '无效的密钥' });
-        }
-
-        const parsed = JSON.parse(keyData);
-
-        if (parsed.used) {
-            return res.status(403).json({ error: '该密钥已被使用，已永久失效' });
-        }
-
-        // 标记密钥为已使用
-        parsed.used = true;
-        parsed.usedAt = new Date().toISOString();
-        parsed.usedBy = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
-
-        await kv.hset('login:keys', verified_key, JSON.stringify(parsed));
-
-        // 记录使用日志
-        await kv.lpush('login:usage:log', JSON.stringify({
-            key: verified_key,
-            usedAt: parsed.usedAt,
-            usedBy: parsed.usedBy,
-            note: parsed.note
-        }));
-
-        // 只保留最近 1000 条日志
-        await kv.ltrim('login:usage:log', 0, 999);
     }
 
     try {
