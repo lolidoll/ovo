@@ -10,11 +10,15 @@
 
 import { Redis } from '@upstash/redis';
 
-// 初始化 Upstash Redis 客户端
-const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
+/**
+ * 初始化 Upstash Redis 客户端（延迟初始化）
+ */
+function getRedisClient() {
+  return new Redis({
+    url: process.env.REDIS_URL,
+    token: process.env.REDIS_TOKEN,
+  });
+}
 
 /**
  * 从环境变量获取有效密钥列表
@@ -67,6 +71,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 延迟初始化 Redis 客户端
+    const redis = getRedisClient();
+    
     // 1. 检查 Redis 中是否已使用
     const isUsed = await redis.get(`key:used:${key}`);
     

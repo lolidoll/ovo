@@ -5,11 +5,15 @@
 
 import { Redis } from '@upstash/redis';
 
-// 初始化 Upstash Redis 客户端
-const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
+/**
+ * 延迟初始化 Upstash Redis 客户端
+ */
+function getRedisClient() {
+  return new Redis({
+    url: process.env.REDIS_URL,
+    token: process.env.REDIS_TOKEN,
+  });
+}
 
 export default async function handler(req, res) {
   // 设置 CORS 头
@@ -43,6 +47,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const redis = getRedisClient();
     // 检查密钥状态
     const status = await redis.get(key);
 

@@ -10,10 +10,15 @@
 
 import { Redis } from '@upstash/redis';
 
-const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
+/**
+ * 延迟初始化 Upstash Redis 客户端
+ */
+function getRedisClient() {
+  return new Redis({
+    url: process.env.REDIS_URL,
+    token: process.env.REDIS_TOKEN,
+  });
+}
 
 // 管理员密码（从环境变量读取）
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -89,6 +94,7 @@ export default async function handler(req, res) {
  */
 async function handleGet(req, res) {
   try {
+    const redis = getRedisClient();
     const validKeys = getValidKeys();
     const usageLog = await redis.lrange('key:usage:log', 0, 99);
     
@@ -181,6 +187,7 @@ async function handlePost(req, res) {
         return res.status(400).json({ error: '缺少密钥参数' });
       }
 
+      const redis = getRedisClient();
       await redis.del(`key:used:${key}`);
       await redis.del(`key:info:${key}`);
 
