@@ -246,7 +246,7 @@ class AuthModalManager {
             // 仅密钥验证通过，等待 Discord 登录
             this.show();
             this.authStep = 'discord';
-            this.updateAuthStepUI();
+            this.onKeyVerified();
         } else {
             // 都未验证，触发密钥验证
             this.authStep = 'key';
