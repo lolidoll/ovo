@@ -550,6 +550,9 @@ const MainAPIManager = {
         // 首先添加强制性的系统提示词
         const systemPrompts = [];
         
+        // 思维链语言指令（必须放在最前面）
+        systemPrompts.push('CRITICAL: All reasoning/thinking content (within <think>, <thinking>, <reasoning> tags or similar) MUST be written in Chinese (中文), matching the conversation language.');
+        
         // 强制AI读取角色名称和性别
         if (conv.name) {
             systemPrompts.push(`You will role-play as a human named "${conv.name}", and absolutely must not go out of character.`);

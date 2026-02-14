@@ -1,29 +1,29 @@
-/* iOS风格预设管理器 - 高级白色主题 */
+/* iOS原生风格预设管理器 - 白浅灰黑毛玻璃高级感 */
 .st-preset-page {
     position: fixed;
     inset: 0;
-    background: linear-gradient(180deg, #f5f5f7 0%, #e8e8ed 100%);
+    background: linear-gradient(180deg, #f8f8fa 0%, #ececf0 50%, #e2e2e7 100%);
     z-index: 30000;
     display: flex;
     flex-direction: column;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.3s;
+    transition: opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.35s;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
 }
 .st-preset-page.show { opacity: 1; visibility: visible; }
 
-/* 顶部导航栏 */
+/* 顶部导航栏 - 毛玻璃 */
 .st-preset-nav {
     display: flex;
     align-items: center;
     padding: 0 20px;
-    background: rgba(255,255,255,0.72);
+    background: rgba(255, 255, 255, 0.65);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.06);
     height: 56px;
     position: sticky;
     top: 0;
@@ -32,32 +32,34 @@
 .st-preset-back {
     width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #007aff;
+    cursor: pointer; color: #1c1c1e;
     margin-left: -8px;
     border-radius: 22px;
     transition: background 0.2s;
 }
-.st-preset-back:active { background: rgba(0,122,255,0.1); }
+.st-preset-back:active { background: rgba(0, 0, 0, 0.04); }
 .st-preset-title {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
-    color: #1d1d1f;
+    color: #000;
     flex: 1;
     text-align: center;
     margin-right: 36px;
     letter-spacing: -0.02em;
 }
 
-/* 预设选择区 */
+/* 预设选择区 - 毛玻璃卡片 */
 .st-preset-selector {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     padding: 10px;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: saturate(120%) blur(20px);
+    -webkit-backdrop-filter: saturate(120%) blur(20px);
     margin: 8px;
     border-radius: 14px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0.5px 1px rgba(0,0,0,0.06);
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
     overflow-x: auto;
 }
 @media (max-width: 480px) {
@@ -75,72 +77,82 @@
     min-width: 60px;
     max-width: 80px;
     padding: 8px 10px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.08);
     border-radius: 8px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     font-size: 12px;
     font-weight: 500;
     -webkit-appearance: none;
     appearance: none;
     transition: background 0.2s;
 }
-.st-preset-select:focus { background: rgba(118,118,128,0.12); }
+.st-preset-select:focus { background: rgba(120, 120, 128, 0.1); }
 .st-preset-name-input {
     flex: 1 1 auto;
     min-width: 50px;
     max-width: 70px;
     padding: 8px 10px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.08);
     border-radius: 8px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     font-size: 12px;
     font-weight: 500;
     transition: background 0.2s;
 }
-.st-preset-name-input:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-preset-name-input:focus { outline: none; background: rgba(120, 120, 128, 0.1); }
 .st-preset-btn {
     flex: 1 1 auto;
     min-width: 45px;
     padding: 8px 10px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 0.33px solid rgba(0, 0, 0, 0.06);
     border-radius: 8px;
-    color: #007aff;
+    color: #3a3a3c;
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
     transition: all 0.2s;
     white-space: nowrap;
 }
-.st-preset-btn:active { transform: scale(0.97); background: rgba(118,118,128,0.15); }
+.st-preset-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.7); }
 .st-preset-btn.primary { 
-    background: linear-gradient(180deg, #0a84ff 0%, #007aff 100%);
+    background: #1c1c1e;
     color: #fff;
-    box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
-.st-preset-btn.primary:active { transform: scale(0.97); }
-.st-preset-btn.danger { color: #ff3b30; }
+.st-preset-btn.primary:active { transform: scale(0.97); opacity: 0.85; }
+.st-preset-btn.danger { color: #8e8e93; }
+
+/* 内容滚动区 */
+.st-content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+}
 
 /* 提示词列表 */
 .st-prompt-list {
-    flex: 1;
-    overflow-y: auto;
     padding: 0 16px;
-    -webkit-overflow-scrolling: touch;
-    min-height: 200px;
+    min-height: 100px;
 }
 .st-prompt-item {
-    background: rgba(255,255,255,0.85);
-    border-radius: 16px;
-    margin-bottom: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: saturate(120%) blur(20px);
+    -webkit-backdrop-filter: saturate(120%) blur(20px);
+    border-radius: 14px;
+    margin-bottom: 10px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0.5px 1px rgba(0,0,0,0.06);
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 .st-prompt-item:active { transform: scale(0.99); }
-.st-prompt-item.dragging { opacity: 0.6; transform: scale(1.02); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+.st-prompt-item.dragging { opacity: 0.6; transform: scale(1.02); box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
 
 /* 提示词头部 */
 .st-prompt-header {
@@ -154,18 +166,18 @@
     color: #c7c7cc;
     font-size: 16px;
     cursor: grab;
-    opacity: 0.6;
+    opacity: 0.5;
 }
 .st-prompt-toggle {
     width: 51px; height: 31px;
-    background: rgba(120,120,128,0.16);
+    background: rgba(120, 120, 128, 0.16);
     border-radius: 16px;
     position: relative;
     cursor: pointer;
     transition: background 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     flex-shrink: 0;
 }
-.st-prompt-toggle.on { background: #34c759; }
+.st-prompt-toggle.on { background: #1c1c1e; }
 .st-prompt-toggle::after {
     content: '';
     position: absolute;
@@ -174,7 +186,7 @@
     border-radius: 50%;
     top: 2px; left: 2px;
     transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.06);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04);
 }
 .st-prompt-toggle.on::after { transform: translateX(20px); }
 .st-prompt-name {
@@ -182,7 +194,7 @@
     min-width: 60px;
     background: transparent;
     border: none;
-    color: #1d1d1f;
+    color: #1c1c1e;
     font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -190,10 +202,10 @@
 .st-prompt-name:focus { outline: none; }
 .st-prompt-role, .st-prompt-position {
     padding: 7px 12px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.08);
     border-radius: 8px;
-    color: #48484a;
+    color: #3a3a3c;
     font-size: 13px;
     font-weight: 500;
     -webkit-appearance: none;
@@ -204,41 +216,59 @@
     align-items: center;
     gap: 4px;
     font-size: 13px;
-    color: #86868b;
+    color: #8e8e93;
     font-weight: 500;
 }
 .st-prompt-depth input {
     width: 48px;
     padding: 7px 8px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.08);
     border-radius: 8px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     text-align: center;
     font-size: 13px;
     font-weight: 600;
 }
 .st-prompt-tokens {
     font-size: 12px;
-    color: #86868b;
+    color: #8e8e93;
     min-width: 36px;
     text-align: right;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
+}
+.st-prompt-pos {
+    font-size: 11px;
+    color: #636366;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.st-prompt-sys-tag {
+    font-size: 10px;
+    color: #8e8e93;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 .st-prompt-collapse, .st-prompt-delete {
     width: 32px; height: 32px;
     display: flex; align-items: center; justify-content: center;
     background: transparent;
     border: none;
-    color: #86868b;
+    color: #8e8e93;
     cursor: pointer;
     font-size: 13px;
     border-radius: 8px;
     transition: background 0.15s;
 }
-.st-prompt-delete { color: #ff3b30; }
-.st-prompt-collapse:active, .st-prompt-delete:active { background: rgba(118,118,128,0.12); }
+.st-prompt-delete { color: #aeaeb2; }
+.st-prompt-collapse:active, .st-prompt-delete:active { background: rgba(0, 0, 0, 0.04); }
 
 /* 提示词内容 */
 .st-prompt-body {
@@ -249,33 +279,33 @@
 .st-prompt-trigger-input {
     width: 100%;
     padding: 12px 14px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.08);
     border-radius: 10px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     font-size: 14px;
     font-weight: 500;
     box-sizing: border-box;
-    transition: background 0.2s;
+    transition: background 0.2s, border-color 0.2s;
 }
-.st-prompt-trigger-input:focus { outline: none; background: rgba(118,118,128,0.12); }
-.st-prompt-trigger-input::placeholder { color: #86868b; }
+.st-prompt-trigger-input:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
+.st-prompt-trigger-input::placeholder { color: #8e8e93; }
 .st-prompt-content {
     width: 100%;
     min-height: 120px;
     padding: 14px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.08);
     border-radius: 12px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     font-size: 14px;
     line-height: 1.6;
     resize: vertical;
     font-family: inherit;
     box-sizing: border-box;
-    transition: background 0.2s;
+    transition: background 0.2s, border-color 0.2s;
 }
-.st-prompt-content:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-prompt-content:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
 
 /* 添加按钮 */
 .st-add-prompt {
@@ -284,44 +314,34 @@
     justify-content: center;
     padding: 16px;
     margin: 0 16px 16px;
-    background: rgba(255,255,255,0.6);
-    border: 2px dashed rgba(0,122,255,0.3);
-    border-radius: 16px;
-    color: #007aff;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px dashed rgba(0, 0, 0, 0.1);
+    border-radius: 14px;
+    color: #636366;
     cursor: pointer;
     font-size: 15px;
     font-weight: 600;
     transition: all 0.2s;
 }
-.st-add-prompt:active { background: rgba(0,122,255,0.08); transform: scale(0.98); }
+.st-add-prompt:active { background: rgba(0, 0, 0, 0.03); transform: scale(0.98); }
 
-/* 宏提示 */
+/* 宏提示 - 已删除内容，保留样式以防万一 */
 .st-macro-hint {
-    padding: 14px 20px;
-    font-size: 12px;
-    color: #86868b;
-    line-height: 1.7;
-    font-weight: 500;
-}
-.st-macro-hint code {
-    background: rgba(118,118,128,0.12);
-    padding: 3px 8px;
-    border-radius: 6px;
-    color: #007aff;
-    font-size: 11px;
-    font-weight: 600;
+    display: none;
 }
 
-/* 底部操作栏 */
+/* 底部操作栏 - 毛玻璃 */
 .st-preset-footer {
     display: flex;
     gap: 10px;
     padding: 14px 20px;
     padding-bottom: max(14px, env(safe-area-inset-bottom));
-    background: rgba(255,255,255,0.72);
+    background: rgba(255, 255, 255, 0.65);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-top: 0.5px solid rgba(0,0,0,0.08);
+    border-top: 0.33px solid rgba(0, 0, 0, 0.06);
 }
 .st-preset-footer .st-preset-btn { flex: 1; text-align: center; padding: 14px; }
 
@@ -329,28 +349,30 @@
 .st-import-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.3);
     display: none;
     align-items: flex-end;
     justify-content: center;
     z-index: 30010;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 .st-import-modal.show { display: flex; }
 .st-import-box {
     width: 100%;
     max-width: 500px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
     border-radius: 20px 20px 0 0;
     padding: 24px 20px;
     padding-bottom: max(24px, env(safe-area-inset-bottom));
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.8);
 }
 .st-import-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1d1d1f;
+    font-size: 17px;
+    font-weight: 600;
+    color: #000;
     margin-bottom: 20px;
     text-align: center;
     letter-spacing: -0.02em;
@@ -359,17 +381,17 @@
     width: 100%;
     height: 200px;
     padding: 14px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 12px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     font-size: 13px;
     font-family: 'SF Mono', 'Menlo', monospace;
     resize: none;
     box-sizing: border-box;
     line-height: 1.5;
 }
-.st-import-textarea:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-import-textarea:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
 .st-import-actions {
     display: flex;
     gap: 10px;
@@ -381,13 +403,13 @@
 .st-edit-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.3);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 30010;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: 16px;
 }
 .st-edit-modal.show { display: flex; }
@@ -395,10 +417,12 @@
     width: 100%;
     max-width: 560px;
     max-height: 90vh;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.68);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
     border-radius: 20px;
     padding: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -412,24 +436,24 @@
 .st-edit-name {
     flex: 1;
     padding: 12px 14px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 10px;
     font-size: 17px;
     font-weight: 600;
-    color: #1d1d1f;
+    color: #1c1c1e;
 }
-.st-edit-name:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-edit-name:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
 .st-edit-close {
     width: 36px; height: 36px;
-    background: rgba(118,118,128,0.12);
+    background: rgba(120, 120, 128, 0.08);
     border: none;
     border-radius: 50%;
     font-size: 20px;
-    color: #86868b;
+    color: #8e8e93;
     cursor: pointer;
 }
-.st-edit-close:active { background: rgba(118,118,128,0.2); }
+.st-edit-close:active { background: rgba(120, 120, 128, 0.15); }
 .st-edit-row {
     display: flex;
     gap: 10px;
@@ -438,11 +462,11 @@
 .st-edit-select {
     flex: 1;
     padding: 10px 12px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 8px;
     font-size: 14px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     -webkit-appearance: none;
     appearance: none;
 }
@@ -451,10 +475,11 @@
     align-items: center;
     gap: 6px;
     padding: 0 12px;
-    background: rgba(118,118,128,0.08);
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 8px;
     font-size: 14px;
-    color: #86868b;
+    color: #8e8e93;
 }
 .st-edit-depth input {
     width: 50px;
@@ -462,37 +487,37 @@
     background: transparent;
     border: none;
     font-size: 14px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     text-align: center;
 }
 .st-edit-trigger {
     width: 100%;
     padding: 12px 14px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 10px;
     font-size: 14px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     margin-bottom: 12px;
     box-sizing: border-box;
 }
-.st-edit-trigger:focus { outline: none; background: rgba(118,118,128,0.12); }
-.st-edit-trigger::placeholder { color: #86868b; }
+.st-edit-trigger:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
+.st-edit-trigger::placeholder { color: #8e8e93; }
 .st-edit-content {
     flex: 1;
     min-height: 200px;
     padding: 14px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 12px;
     font-size: 14px;
     line-height: 1.6;
-    color: #1d1d1f;
+    color: #1c1c1e;
     resize: none;
     font-family: inherit;
     box-sizing: border-box;
 }
-.st-edit-content:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-edit-content:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
 .st-edit-footer {
     display: flex;
     align-items: center;
@@ -501,10 +526,10 @@
 }
 .st-edit-tokens {
     font-size: 13px;
-    color: #86868b;
+    color: #8e8e93;
     font-weight: 500;
 }
-.st-edit-footer .st-preset-btn { padding: 12px 32px; }
+.st-edit-footer .st-preset-btn { padding: 10px 20px; flex-shrink: 0; }
 
 /* 简化的提示词项 */
 .st-prompt-header {
@@ -520,23 +545,23 @@
     min-width: 0;
     font-size: 13px;
     font-weight: 600;
-    color: #1d1d1f;
+    color: #1c1c1e;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .st-prompt-edit-btn {
     padding: 6px 14px;
-    background: rgba(0,122,255,0.1);
+    background: rgba(0, 0, 0, 0.04);
     border: none;
     border-radius: 8px;
-    color: #007aff;
+    color: #3a3a3c;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     flex-shrink: 0;
 }
-.st-prompt-edit-btn:active { background: rgba(0,122,255,0.2); }
+.st-prompt-edit-btn:active { background: rgba(0, 0, 0, 0.08); }
 .st-prompt-delete {
     flex-shrink: 0;
 }
@@ -545,29 +570,31 @@
 .st-confirm-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.3);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 30020;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: 20px;
 }
 .st-confirm-modal.show { display: flex; }
 .st-confirm-box {
     width: 100%;
     max-width: 300px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
     border-radius: 16px;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
 }
 .st-confirm-title {
     font-size: 17px;
     font-weight: 600;
-    color: #1d1d1f;
+    color: #000;
     margin-bottom: 16px;
 }
 .st-confirm-actions {
@@ -576,28 +603,94 @@
 }
 .st-confirm-actions .st-preset-btn { flex: 1; padding: 12px; }
 
+/* 自定义输入弹窗 */
+.st-input-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 30025;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 20px;
+}
+.st-input-modal.show { display: flex; }
+.st-input-box {
+    width: 100%;
+    max-width: 300px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    animation: st-modal-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+@keyframes st-modal-in {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.st-input-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 16px;
+}
+.st-input-modal .st-input-field {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1c1c1e;
+    text-align: center;
+    box-sizing: border-box;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+.st-input-modal .st-input-field:focus {
+    outline: none;
+    border-color: rgba(0, 0, 0, 0.15);
+    background: rgba(120, 120, 128, 0.08);
+}
+.st-input-modal .st-input-field::placeholder { color: #c7c7cc; }
+.st-input-actions {
+    display: flex;
+    gap: 10px;
+}
+.st-input-actions .st-preset-btn { flex: 1; padding: 12px; }
+
 /* 正则替换区域 */
 .st-regex-section {
     margin: 0 16px 16px 16px;
-    background: rgba(255,255,255,0.6);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: saturate(120%) blur(20px);
+    -webkit-backdrop-filter: saturate(120%) blur(20px);
+    border-radius: 14px;
     overflow: hidden;
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
 }
 .st-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.05);
 }
 .st-section-title {
     font-size: 14px;
     font-weight: 600;
-    color: #1d1d1f;
+    color: #1c1c1e;
 }
 .st-add-regex-btn {
     padding: 6px 12px;
-    background: #007aff;
+    background: #1c1c1e;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -610,8 +703,6 @@
 
 .st-regex-list {
     padding: 8px;
-    max-height: 250px;
-    overflow-y: auto;
 }
 .st-regex-empty {
     padding: 24px 16px;
@@ -620,10 +711,11 @@
     font-size: 14px;
 }
 .st-regex-item {
-    background: rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
     margin-bottom: 8px;
     overflow: hidden;
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.04);
 }
 .st-regex-header {
     display: flex;
@@ -641,7 +733,7 @@
     transition: background 0.25s;
     flex-shrink: 0;
 }
-.st-regex-toggle.on { background: #34c759; }
+.st-regex-toggle.on { background: #1c1c1e; }
 .st-regex-toggle.on::after {
     transform: translateX(18px);
 }
@@ -661,12 +753,12 @@
     flex: 1;
     font-size: 14px;
     font-weight: 500;
-    color: #1d1d1f;
+    color: #1c1c1e;
 }
 .st-regex-edit {
     padding: 6px 10px;
-    background: rgba(0,122,255,0.1);
-    color: #007aff;
+    background: rgba(0, 0, 0, 0.04);
+    color: #3a3a3c;
     border: none;
     border-radius: 6px;
     font-size: 12px;
@@ -676,8 +768,8 @@
 .st-regex-delete {
     width: 24px;
     height: 24px;
-    background: rgba(255,59,48,0.15);
-    color: #ff3b30;
+    background: rgba(0, 0, 0, 0.04);
+    color: #aeaeb2;
     border: none;
     border-radius: 50%;
     font-size: 16px;
@@ -697,23 +789,23 @@
 .st-regex-pattern {
     flex: 1;
     padding: 6px 10px;
-    background: rgba(255,59,48,0.08);
+    background: rgba(0, 0, 0, 0.03);
     border-radius: 6px;
-    color: #ff3b30;
+    color: #636366;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .st-regex-arrow {
-    color: #8e8e93;
+    color: #c7c7cc;
     font-weight: 500;
 }
 .st-regex-replace {
     flex: 1;
     padding: 6px 10px;
-    background: rgba(52,199,89,0.08);
+    background: rgba(0, 0, 0, 0.03);
     border-radius: 6px;
-    color: #34c759;
+    color: #48484a;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -723,7 +815,7 @@
 .st-regex-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -734,13 +826,15 @@
 }
 .st-regex-modal.show { opacity: 1; visibility: visible; }
 .st-regex-edit-box {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
     border-radius: 20px;
     width: 90%;
     max-width: 420px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
 }
 .st-regex-form {
     padding: 16px 20px;
@@ -758,17 +852,18 @@
 .st-form-input {
     width: 100%;
     padding: 10px 12px;
-    background: rgba(118,118,128,0.08);
-    border: none;
+    background: rgba(120, 120, 128, 0.06);
+    border: 0.33px solid rgba(60, 60, 67, 0.1);
     border-radius: 10px;
     font-size: 14px;
     font-family: 'SF Mono', Monaco, monospace;
-    color: #1d1d1f;
+    color: #1c1c1e;
     box-sizing: border-box;
 }
 .st-form-input:focus {
     outline: none;
-    background: rgba(118,118,128,0.12);
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
 }
 .st-form-row {
     display: flex;
@@ -780,13 +875,13 @@
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: #1d1d1f;
+    color: #1c1c1e;
     cursor: pointer;
 }
 .st-checkbox-label input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    accent-color: #007aff;
+    accent-color: #1c1c1e;
 }
 
 /* 移动端适配 */

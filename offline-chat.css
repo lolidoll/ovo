@@ -395,13 +395,7 @@
     height: 48px;
     gap: 12px;
 }
-.st-back-btn {
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; border-radius: 4px; color: var(--st-text-secondary);
-}
-.st-back-btn:hover { background: var(--st-bg-quaternary); color: var(--st-text-primary); }
-.st-char-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+.st-char-info { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }
 .st-char-avatar-small {
     width: 36px; height: 36px; border-radius: 50%;
     overflow: hidden; background: var(--st-bg-quaternary);
@@ -455,11 +449,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .st-back-btn {
-        width: 32px;
-        height: 32px;
-        flex-shrink: 0;
-    }
     .st-nav-btn {
         width: 32px;
         height: 32px;
@@ -498,10 +487,11 @@
     position: fixed;
     background: var(--st-bg-secondary);
     border: 1px solid var(--st-border-color);
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     z-index: 100001;
-    min-width: 150px;
+    min-width: 120px;
+    max-width: calc(100vw - 20px);
     overflow: hidden;
     animation: contextFadeIn 0.15s ease;
 }
@@ -510,15 +500,16 @@
     to { opacity: 1; transform: scale(1); }
 }
 .st-context-item {
-    padding: 10px 16px;
-    font-size: 14px;
+    padding: 8px 14px;
+    font-size: 13px;
     color: var(--st-text-primary);
     cursor: pointer;
     transition: background 0.15s;
+    white-space: nowrap;
 }
 .st-context-item:hover { background: var(--st-bg-tertiary); }
-.st-context-item:first-child { border-radius: 10px 10px 0 0; }
-.st-context-item:last-child { border-radius: 0 0 10px 10px; }
+.st-context-item:first-child { border-radius: 8px 8px 0 0; }
+.st-context-item:last-child { border-radius: 0 0 8px 8px; }
 
 /* 消息列表 */
 .st-messages {
@@ -574,7 +565,7 @@
 .st-message-name { font-size: 14px; font-weight: 600; }
 .st-message.user .st-message-name { color: var(--st-user-name-color); }
 .st-message.char .st-message-name { color: var(--st-char-name-color); }
-.st-message-time { font-size: 11px; color: var(--st-text-tertiary); margin-left: auto; }
+.st-message-time { font-size: 11px; color: var(--st-text-tertiary); margin-left: auto; display: none; }
 
 .st-message-content {
     font-size: 15px;
@@ -583,76 +574,156 @@
     white-space: pre-wrap;
     word-wrap: break-word;
     padding-left: 50px;
+    margin-top: 16px;
 }
 
-/* 思维链 - 毛玻璃高级样式 */
+/* ==================== 思维链 - 主题化特殊样式 ==================== */
+
+/* === 思考按钮基础样式（夜间主题默认：水晶球） === */
 .st-thinking-toggle {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    margin: 12px 0 8px 0;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    justify-content: center;
+    margin: 10px 0 6px 0;
     cursor: pointer;
-    font-size: 12px;
-    color: var(--st-text-secondary);
-    width: fit-content;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    user-select: none;
+    position: relative;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: #5aadff;
+    font-size: 0;
+    width: 44px;
+    height: 44px;
+    box-shadow: none;
+}
+.st-thinking-toggle::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: radial-gradient(circle, rgba(138, 100, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    transition: all 0.3s;
 }
 .st-thinking-toggle:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: var(--st-text-primary);
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: scale(1.15);
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
-.st-thinking-toggle span {
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
+.st-thinking-toggle:hover::before {
+    background: radial-gradient(circle, rgba(138, 100, 255, 0.22) 0%, transparent 70%);
 }
-.st-thinking-toggle svg {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.st-thinking-toggle svg.icon-brain {
-    color: #a78bfa;
+.st-thinking-toggle:active {
+    transform: scale(0.92);
 }
 
+/* 夜间主题：纯光晕 */
+.st-thinking-icon {
+    display: block;
+    width: 36px;
+    height: 36px;
+    position: relative;
+    animation: crystalFloat 3s ease-in-out infinite;
+}
+.st-thinking-icon::before {
+    content: '';
+    display: none;
+}
+.st-thinking-icon::after {
+    content: '';
+    display: none;
+}
+@keyframes crystalFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-3px) scale(1.05); }
+}
+
+/* 展开时 */
+.st-thinking-toggle.expanded::before {
+    background: radial-gradient(circle, rgba(138, 100, 255, 0.18) 0%, transparent 70%);
+}
+.st-thinking-toggle.expanded .st-thinking-icon {
+    animation: crystalPulse 0.5s ease-out;
+    filter: drop-shadow(0 3px 10px rgba(138, 100, 255, 0.6));
+}
+@keyframes crystalPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
+/* 时长文字 - 夜间 */
+.st-thinking-duration {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    color: #5aadff;
+    background: rgba(20, 25, 40, 0.85);
+    padding: 1px 6px;
+    border-radius: 6px;
+    opacity: 0.7;
+}
+
+/* === 夜间主题 - 思维链内容 === */
 .st-thinking-content {
     display: none;
-    margin: 8px 0 8px 0;
-    padding: 16px 20px;
-    background: rgba(30, 30, 30, 0.8);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-left: 3px solid;
-    border-image: linear-gradient(180deg, 
-        rgba(255, 154, 158, 0.6) 0%, 
-        rgba(255, 94, 58, 0.6) 50%,
-        rgba(255, 209, 255, 0.6) 100%
-    ) 1;
-    border-radius: 0 16px 16px 16px;
+    margin: 4px 0 8px 0;
+    padding: 14px 18px;
+    background: rgba(10, 15, 30, 0.9);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(74, 158, 255, 0.15);
+    border-left: 3px solid rgba(74, 158, 255, 0.5);
+    border-radius: 0 12px 12px 12px;
     font-size: 13px;
     line-height: 1.7;
-    color: #a0a0a0;
+    color: #8899bb;
     white-space: pre-wrap;
     box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        inset 0 0 30px rgba(74, 158, 255, 0.03);
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 240px;
 }
+/* 思维链滚动条 - 夜间 */
+.st-thinking-content::-webkit-scrollbar {
+    width: 4px;
+}
+.st-thinking-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.st-thinking-content::-webkit-scrollbar-thumb {
+    background: rgba(74, 158, 255, 0.3);
+    border-radius: 4px;
+}
+.st-thinking-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 158, 255, 0.5);
+}
+/* 底部渐隐遮罩（提示可滚动） */
+.st-thinking-content::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    height: 28px;
+    background: linear-gradient(to bottom, transparent, rgba(10, 15, 30, 0.9));
+    pointer-events: none;
+    margin: 0 -18px -14px -18px;
+    flex-shrink: 0;
+}
+/* 顶部扫描线 */
 .st-thinking-content::before {
     content: '';
     position: absolute;
@@ -661,26 +732,302 @@
     right: 0;
     height: 1px;
     background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(255, 154, 158, 0.3) 20%,
-        rgba(255, 94, 58, 0.3) 50%,
-        rgba(255, 209, 255, 0.3) 80%,
+        rgba(74, 158, 255, 0.6) 0%,
+        rgba(90, 173, 255, 0.3) 50%,
         transparent 100%
     );
+    animation: scanLine 3s linear infinite;
+}
+@keyframes scanLine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 .st-thinking-toggle.expanded + .st-thinking-content { 
     display: block; 
     animation: thinkingSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.st-thinking-content.show {
+    display: block;
+    animation: thinkingSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 @keyframes thinkingSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== 日间主题 - 思考按钮：水晶棱镜 ==================== */
+.st-chat-page.theme-light .st-thinking-toggle {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    color: #007aff;
+}
+.st-chat-page.theme-light .st-thinking-toggle::before {
+    background: radial-gradient(circle, rgba(0, 122, 255, 0.06) 0%, transparent 70%);
+}
+.st-chat-page.theme-light .st-thinking-toggle:hover {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    transform: scale(1.15) rotate(15deg);
+}
+.st-chat-page.theme-light .st-thinking-toggle:hover::before {
+    background: radial-gradient(circle, rgba(0, 122, 255, 0.12) 0%, transparent 70%);
+}
+.st-chat-page.theme-light .st-thinking-toggle.expanded {
+    background: transparent;
+    border: none;
+}
+.st-chat-page.theme-light .st-thinking-toggle.expanded::before {
+    background: radial-gradient(circle, rgba(0, 122, 255, 0.1) 0%, transparent 70%);
+}
+
+/* 日间：水晶棱镜图标 */
+.st-chat-page.theme-light .st-thinking-icon {
+    width: 32px;
+    height: 32px;
+    position: relative;
+}
+/* 棱镜三角形 */
+.st-chat-page.theme-light .st-thinking-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -52%);
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-bottom: 24px solid rgba(0, 122, 255, 0.15);
+    filter: drop-shadow(0 2px 6px rgba(0, 122, 255, 0.2));
+    animation: prismFloat 3s ease-in-out infinite;
+    font-size: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+/* 棱镜内的彩虹折射光 */
+.st-chat-page.theme-light .st-thinking-icon::after {
+    content: '';
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-20deg);
+    width: 22px;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        #ff4444 0%, #ff8800 17%, #ffdd00 33%, 
+        #44cc44 50%, #007aff 67%, #6644ff 83%, #cc44cc 100%
+    );
+    border-radius: 2px;
+    opacity: 0.7;
+    animation: rainbowShimmer 2s ease-in-out infinite;
+    box-shadow: none;
+}
+@keyframes prismFloat {
+    0%, 100% { transform: translate(-50%, -52%) rotate(0deg); filter: drop-shadow(0 2px 6px rgba(0, 122, 255, 0.2)); }
+    50% { transform: translate(-50%, -55%) rotate(3deg); filter: drop-shadow(0 4px 12px rgba(0, 122, 255, 0.35)); }
+}
+@keyframes rainbowShimmer {
+    0%, 100% { opacity: 0.5; width: 18px; }
+    50% { opacity: 0.9; width: 24px; }
+}
+
+/* 展开时棱镜发光 */
+.st-chat-page.theme-light .st-thinking-toggle.expanded .st-thinking-icon::before {
+    border-bottom-color: rgba(0, 122, 255, 0.25);
+    filter: drop-shadow(0 4px 14px rgba(0, 122, 255, 0.4));
+    animation: none;
+}
+.st-chat-page.theme-light .st-thinking-toggle.expanded .st-thinking-icon::after {
+    opacity: 1;
+    width: 26px;
+    animation: none;
+    box-shadow: 0 0 8px rgba(0, 122, 255, 0.3);
+}
+
+/* 日间时长文字 */
+.st-chat-page.theme-light .st-thinking-duration {
+    color: #007aff;
+    background: rgba(240, 247, 255, 0.95);
+}
+
+/* 日间主题 - 思维链内容 */
+.st-chat-page.theme-light .st-thinking-content {
+    background: linear-gradient(135deg, #fafcff 0%, #f0f6ff 50%, #faf5ff 100%);
+    border: 1px solid rgba(0, 122, 255, 0.1);
+    border-left: 3px solid transparent;
+    border-image: linear-gradient(180deg, #007aff 0%, #6644ff 50%, #cc44cc 100%) 1;
+    border-image-slice: 0 0 0 1;
+    border-radius: 0 14px 14px 14px;
+    color: #4a5a7a;
+    box-shadow: 
+        0 2px 16px rgba(0, 122, 255, 0.06),
+        0 1px 4px rgba(102, 68, 255, 0.04);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+.st-chat-page.theme-light .st-thinking-content::before {
+    background: linear-gradient(90deg,
+        #ff4444, #ff8800, #ffdd00, #44cc44, #007aff, #6644ff, #cc44cc
+    );
+    height: 2px;
+    opacity: 0.3;
+    animation: none;
+}
+.st-chat-page.theme-light .st-thinking-content::after {
+    background: linear-gradient(to bottom, transparent, #f0f6ff);
+}
+.st-chat-page.theme-light .st-thinking-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 122, 255, 0.2);
+}
+.st-chat-page.theme-light .st-thinking-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 122, 255, 0.4);
+}
+
+/* ==================== 少女主题 - 思考按钮：蝴蝶结 ==================== */
+.st-chat-page.theme-girly .st-thinking-toggle {
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: #ff6b8a;
+    box-shadow: none;
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.st-chat-page.theme-girly .st-thinking-toggle::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: radial-gradient(circle, rgba(255, 157, 184, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+.st-chat-page.theme-girly .st-thinking-toggle:hover {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    transform: scale(1.15) rotate(5deg);
+}
+.st-chat-page.theme-girly .st-thinking-toggle:hover::before {
+    background: radial-gradient(circle, rgba(255, 157, 184, 0.25) 0%, transparent 70%);
+}
+.st-chat-page.theme-girly .st-thinking-toggle.expanded {
+    background: transparent;
+    border: none;
+}
+.st-chat-page.theme-girly .st-thinking-toggle.expanded::before {
+    background: radial-gradient(circle, rgba(255, 107, 138, 0.18) 0%, transparent 70%);
+}
+
+/* 蝴蝶结 - 直接用🎀emoji */
+.st-chat-page.theme-girly .st-thinking-icon {
+    width: 36px;
+    height: 36px;
+    position: relative;
+    animation: bowFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(255, 71, 133, 0.3));
+    background: none;
+}
+.st-chat-page.theme-girly .st-thinking-icon::before {
+    content: '🎀';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    line-height: 1;
+    display: block;
+    text-align: center;
+    animation: none;
+    filter: none;
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+.st-chat-page.theme-girly .st-thinking-icon::after {
+    content: none;
+    display: none;
+}
+
+/* 展开时旋转 */
+.st-chat-page.theme-girly .st-thinking-toggle.expanded .st-thinking-icon {
+    animation: bowSpin 0.5s ease-out;
+    filter: drop-shadow(0 3px 10px rgba(255, 71, 133, 0.5));
+}
+
+@keyframes bowFloat {
+    0%, 100% { transform: rotate(-3deg) scale(1); }
+    33% { transform: rotate(3deg) scale(1.04); }
+    66% { transform: rotate(-2deg) scale(0.98); }
+}
+@keyframes bowSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+/* 少女主题时长文字 */
+.st-chat-page.theme-girly .st-thinking-duration {
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #ff9db8;
+    white-space: nowrap;
+    background: rgba(255, 245, 247, 0.9);
+    padding: 1px 6px;
+    border-radius: 8px;
+}
+
+/* 少女主题 - 思维链内容 */
+.st-chat-page.theme-girly .st-thinking-content {
+    background: linear-gradient(180deg, #fff8fa 0%, #fff0f5 100%);
+    border: 2px dashed rgba(255, 157, 184, 0.3);
+    border-left: 3px solid #ff9db8;
+    border-radius: 0 16px 16px 16px;
+    color: #8a6a7a;
+    box-shadow: 0 4px 16px rgba(255, 157, 184, 0.1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    position: relative;
+}
+.st-chat-page.theme-girly .st-thinking-content::before {
+    background: linear-gradient(90deg,
+        rgba(255, 157, 184, 0.4) 0%,
+        rgba(255, 182, 193, 0.2) 50%,
+        transparent 100%
+    );
+}
+.st-chat-page.theme-girly .st-thinking-content::after {
+    background: linear-gradient(to bottom, transparent, #fff0f5);
+}
+.st-chat-page.theme-girly .st-thinking-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 157, 184, 0.3);
+}
+.st-chat-page.theme-girly .st-thinking-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 157, 184, 0.5);
+}
+/* 少女主题思维链内的文字装饰 */
+.st-chat-page.theme-girly .st-thinking-content strong {
+    color: #ff4785;
+}
+.st-chat-page.theme-girly .st-thinking-content em {
+    color: #ff6b8a;
+    font-style: italic;
 }
 
 /* 消息操作 */
@@ -762,7 +1109,7 @@
     .st-message-content, .st-thinking-toggle, .st-thinking-content,
         .st-edit-textarea, .st-edit-actions, .st-swipe-nav { margin-left: 0; padding-left: 0; width: 100%; }
     .st-message-avatar { width: 32px; height: 32px; }
-    .st-swipe-nav { justify-content: flex-start; }
+    .st-swipe-nav { justify-content: center; }
 }
 
 /* 输入区域 */
@@ -934,17 +1281,17 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin: 8px 0 8px 50px;
+    margin: 8px auto;
     user-select: none;
 }
 .st-swipe-btn {
     width: 28px; height: 28px;
     display: flex; align-items: center; justify-content: center;
-    background: var(--st-bg-tertiary); border: 1px solid var(--st-border-color); border-radius: 4px;
+    background: transparent; border: none; border-radius: 4px;
     cursor: pointer; color: var(--st-text-secondary); font-size: 18px; font-weight: bold;
 }
-.st-swipe-btn:hover { background: var(--st-bg-quaternary); color: var(--st-text-primary); }
-.st-swipe-btn:active { background: var(--st-bg-quaternary); }
+.st-swipe-btn:hover { background: transparent; color: var(--st-text-primary); }
+.st-swipe-btn:active { background: transparent; }
 .st-swipe-info { font-size: 12px; color: var(--st-text-secondary); min-width: 40px; text-align: center; }
 
 /* 空消息提示 */
@@ -1362,6 +1709,67 @@
 .st-btn.primary:active {
     transform: translateY(0);
 }
+
+/* 主题设置完成按钮 & 对话总结生成按钮 - 黑白灰毛玻璃高级感 */
+#st-theme-close-btn,
+#st-summary-generate {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    color: #f0f0f0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+#st-theme-close-btn:hover,
+#st-summary-generate:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+#st-theme-close-btn:active,
+#st-summary-generate:active {
+    transform: translateY(0);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 日间主题下的毛玻璃适配 */
+.st-theme-light #st-theme-close-btn,
+.st-theme-light #st-summary-generate {
+    background: linear-gradient(135deg, rgba(60, 60, 60, 0.75) 0%, rgba(80, 80, 80, 0.65) 100%);
+    color: #f5f5f5;
+    border: 1px solid rgba(100, 100, 100, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.st-theme-light #st-theme-close-btn:hover,
+.st-theme-light #st-summary-generate:hover {
+    background: linear-gradient(135deg, rgba(50, 50, 50, 0.85) 0%, rgba(70, 70, 70, 0.75) 100%);
+    border-color: rgba(80, 80, 80, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+/* 少女主题下的毛玻璃适配 */
+.st-theme-pink #st-theme-close-btn,
+.st-theme-pink #st-summary-generate {
+    background: linear-gradient(135deg, rgba(80, 70, 75, 0.7) 0%, rgba(60, 55, 58, 0.6) 100%);
+    color: #f5f0f2;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.st-theme-pink #st-theme-close-btn:hover,
+.st-theme-pink #st-summary-generate:hover {
+    background: linear-gradient(135deg, rgba(70, 60, 65, 0.8) 0%, rgba(50, 45, 48, 0.7) 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
 .st-btn.secondary {
     background: var(--st-bg-tertiary);
     color: var(--st-text-primary);
@@ -1523,7 +1931,7 @@
     .st-message-content, .st-thinking-toggle, .st-thinking-content,
     .st-edit-textarea, .st-edit-actions, .st-swipe-nav { margin-left: 0; padding-left: 0; width: 100%; }
     .st-message-avatar { width: 32px; height: 32px; }
-    .st-swipe-nav { justify-content: flex-start; }
+    .st-swipe-nav { justify-content: center; }
 }
 
 /* ==================== 主题选择器样式 ==================== */

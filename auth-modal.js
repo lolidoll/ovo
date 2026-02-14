@@ -234,6 +234,27 @@ class AuthModalManager {
     }
     
     checkLoginStatus() {
+        // 检测环境：本地文件 vs GitHub部署
+        const isLocalFile = window.location.protocol === 'file:' || 
+                           window.location.hostname === '' || 
+                           window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+        
+        // 如果是本地文件，直接隐藏登录并跳过验证
+        if (isLocalFile) {
+            console.log('🏠 检测到本地环境，跳过登录验证');
+            this.hide();
+            this.authStep = 'complete';
+            
+            // 模拟本地登录状态（可选）
+            localStorage.setItem('local_mode', 'true');
+            return;
+        }
+        
+        // GitHub部署环境：执行正常的双重验证
+        console.log('🌐 检测到在线环境，执行登录验证');
+        localStorage.removeItem('local_mode');
+        
         // 双重验证检查：密钥 + Discord
         const keyVerified = this.keyAuth && this.keyAuth.isVerified();
         const discordLoggedIn = authManager && authManager.isUserLoggedIn();

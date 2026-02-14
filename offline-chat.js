@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 线下功能模块 - SillyTavern风格 (增强版)
  * 新增功能: 消息分支、导出导入、Token统计、自动重试、右键菜单等
  */
@@ -76,7 +76,7 @@
         if (contextBar) contextBar.style.display = 'none';
     }
 
-    // 重试最后一条AI消息
+    // 重试最后一条消息（AI消息=重新生成，用户消息=生成AI回复）
     function retryLast() {
         if (State.streaming) return;
         const msgs = State.messages[State.chatId];
@@ -85,18 +85,30 @@
             return;
         }
 
-        // 找到最后一条AI消息
-        let lastAiIdx = -1;
-        for (let i = msgs.length - 1; i >= 0; i--) {
-            if (msgs[i].role === 'char') {
-                lastAiIdx = i;
-                break;
-            }
+        const lastMsg = msgs[msgs.length - 1];
+
+        // 最后一条是用户消息：直接生成AI回复
+        if (lastMsg.role === 'user') {
+            save();
+            callAI();
+            return;
         }
 
-        if (lastAiIdx < 0) {
-            showToast('没有AI消息可重试');
-            return;
+        // 最后一条是AI消息：重新生成（swipe）
+        let lastAiIdx = msgs.length - 1;
+        if (lastMsg.role !== 'char') {
+            // 向前找最后一条AI消息
+            lastAiIdx = -1;
+            for (let i = msgs.length - 1; i >= 0; i--) {
+                if (msgs[i].role === 'char') {
+                    lastAiIdx = i;
+                    break;
+                }
+            }
+            if (lastAiIdx < 0) {
+                showToast('没有AI消息可重试');
+                return;
+            }
         }
 
         // 删除该消息之后的所有消息并重试
@@ -117,10 +129,7 @@
         page.className = 'st-chat-page';
         page.innerHTML = `
             <div class="st-nav">
-                <div class="st-back-btn" id="st-back">
-                    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" fill="none"/></svg>
-                </div>
-                <div class="st-char-info">
+                <div class="st-char-info" id="st-back" style="cursor:pointer;">
                     <div class="st-char-avatar-small" id="st-nav-avatar"></div>
                     <div class="st-char-info-text">
                         <div class="st-char-name" id="st-nav-name">线下聊天</div>
@@ -209,7 +218,7 @@
             const time = m.timestamp ? formatTime(m.timestamp) : '';
             const isSelected = State.selectedMessages.has(m.id);
 
-            // 思维链处理 - 支持多种格式
+            // 思维链处理 - 对齐ST: 优先从extra.reasoning读取，其次从文本解析
             let thinking = '', content = m.content || '';
             // 支持swipes：获取当前版本内容
             if (m.swipes?.length) {
@@ -219,8 +228,16 @@
             if (!isUser && content) {
                 content = window.STPresetManager?.applyRegexReplacements?.(content) || content;
             }
-            thinking = extractThinking(content);
-            if (thinking) content = removeThinking(content);
+            // ST风格: 优先使用已分离存储的reasoning (message.extra.reasoning)
+            if (m.extra?.reasoning) {
+                thinking = m.extra.reasoning;
+                // 确保content中不包含reasoning标签
+                content = removeThinking(content);
+            } else if (reasoningSettings.auto_parse) {
+                // 对齐ST: 仅在auto_parse开启时从文本解析（兼容旧数据）
+                thinking = extractThinking(content);
+                if (thinking) content = removeThinking(content);
+            }
 
             // swipe导航（仅AI消息且有多个版本时显示）
             const hasSwipes = !isUser && m.swipes?.length > 1;
@@ -231,6 +248,14 @@
                     <div class="st-swipe-btn next" data-dir="next">›</div>
                 </div>
             ` : '';
+
+            // 对齐ST: reasoning显示 - 支持auto_expand和duration
+            const reasoningDuration = m.extra?.reasoning_duration;
+            const durationText = reasoningDuration 
+                ? `${(reasoningDuration / 1000).toFixed(1)}s` 
+                : '';
+            const autoExpanded = reasoningSettings.auto_expand ? 'expanded' : '';
+            const autoShow = reasoningSettings.auto_expand ? 'show' : '';
 
             // 根据布局类型渲染不同的HTML结构
             if (isCentered) {
@@ -252,10 +277,11 @@
                             </div>
                         </div>
                         ${thinking ? `
-                            <div class="st-thinking-toggle" onclick="this.classList.toggle('expanded');this.nextElementSibling.classList.toggle('show')">
-                                <span>思考过程</span>
+                            <div class="st-thinking-toggle ${autoExpanded}" onclick="this.classList.toggle('expanded');this.nextElementSibling.classList.toggle('show')">
+                                <span class="st-thinking-icon"></span>
+                                ${durationText ? `<span class="st-thinking-duration">${durationText}</span>` : ''}
                             </div>
-                            <div class="st-thinking-content">${renderMarkdown(thinking)}</div>
+                            <div class="st-thinking-content ${autoShow}">${renderMarkdown(thinking)}</div>
                         ` : ''}
                         <div class="st-message-content">${renderMarkdown(content)}${State.streaming?.id === m.id ? '<span class="st-cursor"></span>' : ''}</div>
                         ${swipeNav}
@@ -296,10 +322,11 @@
                         <div class="st-message-time">${time}</div>
                     </div>
                     ${thinking ? `
-                        <div class="st-thinking-toggle" onclick="this.classList.toggle('expanded');this.nextElementSibling.classList.toggle('show')">
-                            <span>思考过程</span>
+                        <div class="st-thinking-toggle ${autoExpanded}" onclick="this.classList.toggle('expanded');this.nextElementSibling.classList.toggle('show')">
+                            <span class="st-thinking-icon"></span>
+                            ${durationText ? `<span class="st-thinking-duration">${durationText}</span>` : ''}
                         </div>
-                        <div class="st-thinking-content">${renderMarkdown(thinking)}</div>
+                        <div class="st-thinking-content ${autoShow}">${renderMarkdown(thinking)}</div>
                     ` : ''}
                     <div class="st-message-content">${renderMarkdown(content)}${State.streaming?.id === m.id ? '<span class="st-cursor"></span>' : ''}</div>
                     ${swipeNav}
@@ -351,6 +378,8 @@
         const stopBtn = document.getElementById('st-stop-btn');
         const continueBtn = document.getElementById('st-continue-btn');
         
+        State.isContinuing = isContinue;
+        
         if (input) { input.disabled = true; input.placeholder = ''; }
         if (sendBtn) sendBtn.disabled = true;
         if (typing) typing.classList.add('show');
@@ -398,12 +427,6 @@
                     ...chatHistory
                 ];
             }
-
-            // 强制思维链使用中文（放在最前面确保生效）
-            apiMsgs.unshift({
-                role: 'system',
-                content: '【思维链语言强制指令】\n\n请务必使用中文进行思考。所有 `</think>`、`` ``, <thinking></thinking>, <reasoning></reasoning> 等标签内的思考内容，必须全部使用中文书写，包括：\n- 对用户意图的分析\n- 对角色性格和关系的理解\n- 对情节发展的规划\n- 对情感变化的推演\n\n请记住：思维链仅供系统内部参考，必须用中文完整表达，不能使用英文或中英文混杂。'
-            });
             
             // 添加线下世界书内容
             if (window.WorldbookManager?.getOfflineWorldbooksContent) {
@@ -413,9 +436,13 @@
                 }
             }
             
-            // 继续生成：添加继续指令
+            // 继续生成：将最后一条AI消息改为assistant角色，让模型直接续写
             if (isContinue) {
-                apiMsgs.push({ role: 'system', content: '[Continue the response from where it left off. Do not repeat.]' });
+                const lastAiMsg = apiMsgs[apiMsgs.length - 1];
+                if (lastAiMsg && lastAiMsg.role === 'assistant') {
+                    // 保持原内容，模型会自动续写
+                    apiMsgs.push({ role: 'system', content: '[Continue directly from where you left off. Do not include thinking or reasoning. Just continue the text naturally.]' });
+                }
             }
             
             // 代入角色：让AI以用户身份回复
@@ -430,9 +457,11 @@
             
             // 创建或更新AI消息
             let aiMsg;
+            let originalContent = '';
             if (isContinue) {
                 // 继续生成：追加到最后一条AI消息
                 aiMsg = msgs[msgs.length - 1];
+                originalContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex ?? 0] : aiMsg.content;
             } else if (swipeIdx !== null) {
                 aiMsg = msgs[swipeIdx];
                 aiMsg.swipes.push('');
@@ -450,74 +479,297 @@
                 State.messages[State.chatId].push(aiMsg);
             }
             State.streaming = aiMsg;
+            State.originalContent = originalContent;
             render();
             scrollBottom();
             
             // 流式请求
             const endpoint = api.endpoint.replace(/\/$/, '') + '/v1/chat/completions';
+            const requestBody = {
+                model: api.selectedModel,
+                messages: apiMsgs.filter(m => m.content?.trim()),
+                temperature: api.temperature ?? 0.8,
+                max_tokens: isContinue ? 2000 : 4000,
+                stream: true
+            };
+            
+            // 继续模式：禁用思维链
+            if (isContinue) {
+                requestBody.thinking = { type: 'disabled' };
+            }
+            
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(api.apiKey ? { 'Authorization': 'Bearer ' + api.apiKey } : {})
                 },
-                body: JSON.stringify({
-                    model: api.selectedModel,
-                    messages: apiMsgs.filter(m => m.content?.trim()),
-                    temperature: api.temperature ?? 0.8,
-                    max_tokens: 4000,
-                    stream: true
-                }),
+                body: JSON.stringify(requestBody),
                 signal: State.abortController?.signal
             });
             
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) {
+                let errDetail = `HTTP ${res.status}`;
+                try { const ej = await res.json(); errDetail = ej?.error?.message || errDetail; } catch(e) {}
+                throw new Error(errDetail);
+            }
             
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
+            // 流式状态
+            let reasoningBuffer = '';
+            let contentBuffer = '';
+            let isInReasoning = false;
             
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-                
-                for (const line of lines) {
-                    if (line.startsWith('data: ') && line.slice(6).trim() !== '[DONE]') {
-                        try {
-                            const json = JSON.parse(line.slice(6));
-                            // 支持reasoning_content (DeepSeek等)
-                            const reasoning = json?.choices?.[0]?.delta?.reasoning_content || json?.choices?.[0]?.delta?.reasoning || '';
-                            const delta = json?.choices?.[0]?.delta?.content || '';
+            const contentType = res.headers.get('content-type') || '';
+            const isSSE = contentType.includes('text/event-stream');
+            
+            // ========== 非流式响应（API返回JSON而非SSE） ==========
+            if (!isSSE) {
+                let fullText = '';
+                let fullReasoning = '';
+                try {
+                    const json = await res.json();
+                    const choice = json?.choices?.[0];
+                    
+                    // 继续模式：忽略所有思维链
+                    if (isContinue) {
+                        if (choice?.message?.content) {
+                            fullText = choice.message.content;
+                        } else {
+                            fullText = json?.choices?.[0]?.text || JSON.stringify(json);
+                        }
+                    } else {
+                        // === 严格对齐ST的 extractReasoningFromData ===
+                        
+                        // 1. Ollama格式 (ST: textgen_types.OLLAMA -> data?.thinking)
+                        if (json?.thinking !== undefined) {
+                            fullReasoning = json.thinking || '';
+                            fullText = json.response || '';
+                        }
+                        // 2. Gemini格式 (ST: MAKERSUITE/VERTEXAI -> responseContent.parts)
+                        else if (Array.isArray(json?.responseContent?.parts)) {
+                            fullReasoning = json.responseContent.parts
+                                .filter(part => part.thought)
+                                .map(part => part.text)
+                                .join('\n\n') || '';
+                            fullText = json.responseContent.parts
+                                .filter(part => !part.thought && part.text)
+                                .map(part => part.text)
+                                .join('') || '';
+                        }
+                        // 3. Claude原生格式 (ST: CLAUDE -> content.find(type==='thinking'))
+                        else if (Array.isArray(json?.content)) {
+                            const thinkingPart = json.content.find(part => part.type === 'thinking');
+                            fullReasoning = thinkingPart?.thinking || '';
+                            const textParts = json.content.filter(part => part.type === 'text');
+                            fullText = textParts.map(part => part.text).join('') || '';
+                        }
+                        // 4. OpenAI-likes choices格式
+                        else if (choice?.message) {
+                            const m = choice.message;
+                            // DeepSeek/XAI: reasoning_content (ST: DEEPSEEK/XAI)
+                            fullReasoning = m.reasoning_content || '';
+                            // OpenRouter: reasoning (ST: OPENROUTER)
+                            if (!fullReasoning) fullReasoning = m.reasoning || choice.reasoning || '';
                             
-                            if (reasoning || delta) {
-                                const text = reasoning ? `<think>${reasoning}</think>` : delta;
-                                if (aiMsg.swipes) {
-                                    aiMsg.swipes[aiMsg.swipeIndex] += text;
-                                } else {
-                                    aiMsg.content += text;
+                            // Mistral格式: content是数组含thinking (ST: MISTRALAI)
+                            if (Array.isArray(m.content)) {
+                                const thinkParts = m.content.filter(x => x?.thinking);
+                                if (thinkParts.length > 0) {
+                                    fullReasoning = thinkParts.map(x => {
+                                        if (Array.isArray(x.thinking)) {
+                                            return x.thinking.map(t => t.text || '').filter(Boolean).join('\n\n');
+                                        }
+                                        return '';
+                                    }).join('') || fullReasoning;
                                 }
-                                updateStreamingMsg(aiMsg);
+                                fullText = m.content.filter(x => typeof x?.text === 'string' && !x?.thinking).map(x => x.text).join('');
+                            } else {
+                                fullText = m.content || '';
                             }
+                            
+                            // 通用 fallback: reasoning_content 或 reasoning (ST: CUSTOM/AIMLAPI等)
+                            if (!fullReasoning) {
+                                fullReasoning = m.reasoning_content || m.reasoning || '';
+                            }
+                        } else {
+                            fullText = json?.choices?.[0]?.text || JSON.stringify(json);
+                        }
+                    }
+                } catch(e) {
+                    try {
+                        const raw = await res.text();
+                        fullText = raw;
+                    } catch(e2) {
+                        fullText = '解析响应失败';
+                    }
+                }
+                
+                reasoningBuffer = isContinue ? '' : fullReasoning;
+                contentBuffer = fullText;
+                
+                // 平滑打字机效果 (模拟ST的SmoothEventSourceStream)
+                await smoothTypewriter(aiMsg, fullReasoning, fullText);
+            }
+            // ========== 真流式响应（SSE） ==========
+            else {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let sseBuffer = '';
+                
+                // 平滑输出队列 (模拟ST的SmoothEventSourceStream)
+                let smoothQueue = [];
+                let smoothRunning = false;
+                let lastChar = '';
+                
+                // 启动平滑输出消费者
+                const smoothConsumer = async () => {
+                    if (smoothRunning) return;
+                    smoothRunning = true;
+                    while (smoothQueue.length > 0) {
+                        if (State.abortController?.signal?.aborted) break;
+                        const item = smoothQueue.shift();
+                        if (item.type === 'reasoning') {
+                            reasoningBuffer += item.char;
+                            isInReasoning = true;
+                            // 对齐ST: 记录reasoning开始时间
+                            if (!aiMsg._reasoningStartTime) {
+                                aiMsg._reasoningStartTime = Date.now();
+                            }
+                        } else {
+                            contentBuffer += item.char;
+                            isInReasoning = false;
+                        }
+                        // 组合并更新显示
+                        const display = composeContent(reasoningBuffer, contentBuffer, isInReasoning);
+                        writeToMsg(aiMsg, display);
+                        updateStreamingMsg(aiMsg);
+                        // ST风格延迟: 基于字符类型的动态延迟
+                        await sleep(getSmoothDelay(lastChar));
+                        lastChar = item.char;
+                    }
+                    smoothRunning = false;
+                };
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    sseBuffer += decoder.decode(value, { stream: true });
+                    
+                    // 按SSE规范用双换行分割事件 (ST: EventSourceStream)
+                    const events = sseBuffer.split(/\r\n\r\n|\r\r|\n\n/);
+                    sseBuffer = events.pop() || '';
+                    
+                    for (const eventChunk of events) {
+                        if (!eventChunk.trim()) continue;
+                        
+                        // 解析SSE事件的data字段
+                        let eventData = '';
+                        const lines = eventChunk.split(/\r\n|\r|\n/);
+                        for (const line of lines) {
+                            if (line.startsWith('data:')) {
+                                eventData += (eventData ? '\n' : '') + line.slice(5).trimStart();
+                            }
+                        }
+                        
+                        if (!eventData || eventData.trim() === '[DONE]') continue;
+                        
+                        try {
+                            const json = JSON.parse(eventData);
+                            // 解析流式数据 (ST: parseStreamData + getStreamingReply)
+                            const parsed = parseSSEChunk(json);
+                            if (!parsed) continue;
+                            
+                            // 继续模式：忽略思维链
+                            if (isContinue && parsed.reasoning) {
+                                parsed.reasoning = '';
+                            }
+                            
+                            // 将每个chunk拆成单字符推入平滑队列 (ST: SmoothEventSourceStream)
+                            if (parsed.reasoning) {
+                                for (const ch of parsed.reasoning) {
+                                    smoothQueue.push({ type: 'reasoning', char: ch });
+                                }
+                            }
+                            if (parsed.content) {
+                                for (const ch of parsed.content) {
+                                    smoothQueue.push({ type: 'content', char: ch });
+                                }
+                            }
+                            
+                            // 启动消费者
+                            smoothConsumer();
                         } catch(e) {
-                            console.log('[Stream Parse Error]', e.message, line);
+                            console.log('[SSE Parse Error]', e.message);
                         }
                     }
                 }
+                
+                // 等待平滑队列消费完毕
+                while (smoothQueue.length > 0) {
+                    await sleep(10);
+                }
+                // 等待最后一次消费者完成
+                await sleep(50);
             }
+            
+            // 流结束后确保reasoning标签闭合
+            const finalContent = composeContent(reasoningBuffer, contentBuffer, false);
+            writeToMsg(aiMsg, finalContent);
             
             State.streaming = null;
             State.abortController = null;
             
-            // 提取思考内容并存储到cot变量
-            const aiContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex] : aiMsg.content;
-            const thinkingContent = extractThinking(aiContent);
-            if (thinkingContent) {
-                window.STPresetManager?.VariableStore?.setCOT?.(thinkingContent);
-                console.log('[COT] 已存储思考内容到cot变量');
+            // === 对齐ST: 流结束后自动解析reasoning并分离存储 ===
+            // 继续模式：跳过reasoning处理
+            if (!isContinue) {
+                // ST在 registerReasoningAppEvents -> MESSAGE_RECEIVED 事件中做 parseReasoningFromString
+                const aiContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex] : aiMsg.content;
+                
+                // 优先使用流式过程中已收集的reasoningBuffer
+                let finalReasoning = reasoningBuffer;
+                
+                // 如果流式没有收集到reasoning，尝试从文本中解析（对齐ST的auto_parse）
+                // ST: strict=true（默认），reasoning必须在字符串开头
+                if (!finalReasoning && reasoningSettings.auto_parse) {
+                    const parsed = parseReasoningFromString(aiContent);
+                    if (parsed?.reasoning) {
+                        finalReasoning = parsed.reasoning;
+                        // 从消息内容中移除reasoning部分（对齐ST: message.mes = parsedReasoning.content）
+                        writeToMsg(aiMsg, parsed.content);
+                    } else if (parsed && parsed.content !== aiContent) {
+                        // ST: 即使reasoning为空，如果content变了也要更新
+                        writeToMsg(aiMsg, parsed.content);
+                    }
+                }
+                
+                // 存储reasoning到消息的extra字段（对齐ST: message.extra.reasoning）
+                if (finalReasoning) {
+                    if (!aiMsg.extra) aiMsg.extra = {};
+                    aiMsg.extra.reasoning = finalReasoning;
+                    aiMsg.extra.reasoning_type = reasoningBuffer ? 'model' : 'parsed';
+                    // 对齐ST: 存储reasoning持续时间
+                    if (aiMsg._reasoningStartTime) {
+                        aiMsg.extra.reasoning_duration = Date.now() - aiMsg._reasoningStartTime;
+                        delete aiMsg._reasoningStartTime;
+                    }
+                    
+                    // 存储到cot变量
+                    window.STPresetManager?.VariableStore?.setCOT?.(finalReasoning);
+                    console.log('[COT] 已存储思考内容到cot变量');
+                }
+
+                // 对齐ST: add_to_prompts - 如果启用，将reasoning添加回消息内容供下次prompt使用
+                if (reasoningSettings.add_to_prompts && finalReasoning) {
+                    const prefix = reasoningSettings.prefix || '';
+                    const suffix = reasoningSettings.suffix || '';
+                    const separator = reasoningSettings.separator || '';
+                    const aiContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex] : aiMsg.content;
+                    const formattedReasoning = `${prefix}${finalReasoning}${suffix}${separator}`;
+                    // 不修改显示内容，但在extra中标记以便buildMessages时使用
+                    if (!aiMsg.extra) aiMsg.extra = {};
+                    aiMsg.extra.reasoning_formatted = formattedReasoning;
+                }
             }
             
             save();
@@ -551,7 +803,9 @@
             if (continueBtn) continueBtn.style.display = 'inline-block';
             State.streaming = null;
             State.abortController = null;
-            State.retryCount = 0; // 重置重试计数
+            State.retryCount = 0;
+            State.isContinuing = false;
+            State.originalContent = '';
         }
     }
     
@@ -1117,8 +1371,16 @@
             `;
             document.body.appendChild(menu);
             const rect = e.target.getBoundingClientRect();
-            menu.style.left = rect.left + 'px';
-            menu.style.top = (rect.bottom + 5) + 'px';
+            const menuWidth = menu.offsetWidth || 120;
+            let left = rect.left;
+            // 防止菜单超出屏幕右侧
+            if (left + menuWidth > window.innerWidth - 10) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+            // 防止菜单超出屏幕左侧
+            if (left < 10) left = 10;
+            menu.style.left = left + 'px';
+            menu.style.top = (rect.bottom + 4) + 'px';
 
             menu.onclick = (me) => {
                 const action = me.target.dataset.action;
@@ -1447,65 +1709,420 @@
         if (el) el.scrollTop = el.scrollHeight;
     }
     
-    // 提取思维链 - 支持多种格式
-    //  <think>, <thinking>, <reasoning>, ```thinking, 【思考】等
+    // 提取思维链 - 严格对齐SillyTavern的处理方式
+    // 支持模板: <think>, <thinking>, <reasoning>, ```thinking, 【思考】, [思考]
+    // 参考: ST reasoning.js -> parseReasoningFromString, extractReasoningFromData
+    //       ST sse-stream.js -> parseStreamData
+    //       ST openai.js -> getStreamingReply
+
+    // ========== SillyTavern风格流式处理工具函数 ==========
+    
+    // 解析SSE chunk数据 (严格对齐ST的 getStreamingReply + parseStreamData)
+    // 支持: Claude, Gemini, Cohere, DeepSeek, XAI, OpenRouter, Mistral, Ollama, NovelAI/KoboldCpp, llama.cpp等
+    function parseSSEChunk(json) {
+        let reasoning = '';
+        let content = '';
+        
+        // === Claude格式 (ST: getStreamingReply -> chat_completion_sources.CLAUDE) ===
+        // Claude SSE: delta.text (正文) / delta.thinking (思考)
+        if (json?.delta?.text !== undefined || json?.delta?.thinking !== undefined) {
+            reasoning = json.delta?.thinking || '';
+            content = json.delta?.text || '';
+            return (reasoning || content) ? { reasoning, content } : null;
+        }
+        
+        // === Cohere格式 (ST: getStreamingReply -> chat_completion_sources.COHERE) ===
+        if (typeof json?.delta === 'object' && typeof json?.delta?.message === 'object' 
+            && ['tool-plan-delta', 'content-delta'].includes(json?.type)) {
+            content = json.delta?.message?.content?.text || json.delta?.message?.tool_plan || '';
+            return content ? { reasoning: '', content } : null;
+        }
+        
+        // === Gemini格式 (ST: getStreamingReply -> MAKERSUITE/VERTEXAI) ===
+        // candidates[].content.parts[] 中 thought=true 的是 reasoning
+        if (Array.isArray(json?.candidates)) {
+            const parts = json.candidates?.[0]?.content?.parts || [];
+            for (const part of parts) {
+                if (part?.thought && part?.text) {
+                    reasoning += part.text;
+                } else if (part?.text) {
+                    content += part.text;
+                }
+            }
+            return (reasoning || content) ? { reasoning, content } : null;
+        }
+        
+        // === NovelAI/KoboldCpp格式 (ST: parseStreamData -> json.token) ===
+        if (typeof json?.token === 'string') {
+            return json.token ? { reasoning: '', content: json.token } : null;
+        }
+        
+        // === llama.cpp格式: content (非chat.completion.chunk) ===
+        if (typeof json?.content === 'string' && json?.object !== 'chat.completion.chunk') {
+            return json.content ? { reasoning: '', content: json.content } : null;
+        }
+        
+        // === Ollama格式 (ST: textgen_settings -> thinking + response) ===
+        if (json?.thinking !== undefined || json?.response !== undefined) {
+            reasoning = json.thinking || '';
+            content = json.response || '';
+            return (reasoning || content) ? { reasoning, content } : null;
+        }
+        
+        // === OpenAI-likes格式: choices[] ===
+        if (Array.isArray(json?.choices) && json.choices.length > 0) {
+            const choice = json.choices[0];
+            
+            // --- 流式delta格式 ---
+            if (choice?.delta) {
+                const d = choice.delta;
+                
+                // DeepSeek/XAI: delta.reasoning_content (ST: getStreamingReply)
+                reasoning = d.reasoning_content || '';
+                
+                // OpenRouter: delta.reasoning (ST: getStreamingReply -> OPENROUTER)
+                if (!reasoning && typeof d.reasoning === 'string') {
+                    reasoning = d.reasoning;
+                }
+                
+                // Ollama via choices: choice.thinking (ST: textgen_settings)
+                if (!reasoning && typeof choice.thinking === 'string') {
+                    reasoning = choice.thinking;
+                }
+                
+                // Mistral格式 (ST: getStreamingReply -> MISTRALAI): delta.content是数组，含thinking
+                if (Array.isArray(d.content)) {
+                    const thinkParts = d.content.filter(x => x?.thinking);
+                    const textParts = d.content.filter(x => typeof x?.text === 'string' && !x?.thinking);
+                    if (thinkParts.length > 0) {
+                        reasoning += thinkParts.map(x => {
+                            if (Array.isArray(x.thinking)) {
+                                return x.thinking.map(t => t.text || '').join('');
+                            }
+                            return '';
+                        }).join('');
+                    }
+                    content = textParts.map(x => x.text).join('');
+                } else {
+                    content = d.content || '';
+                }
+                
+                // Custom/通用: reasoning_content 或 reasoning (ST: CUSTOM/POLLINATIONS/AIMLAPI等)
+                if (!reasoning) {
+                    reasoning = d.reasoning_content || d.reasoning || '';
+                }
+                
+                return (reasoning || content) ? { reasoning, content } : null;
+            }
+            
+            // --- 非流式message格式 (某些API在SSE中也会发送完整message) ---
+            if (choice?.message) {
+                const m = choice.message;
+                
+                // DeepSeek: message.reasoning_content
+                reasoning = m.reasoning_content || '';
+                // OpenRouter: message.reasoning
+                if (!reasoning) reasoning = m.reasoning || '';
+                
+                // Claude非流式 (ST: extractReasoningFromData -> CLAUDE)
+                // content数组中 type==='thinking' 的部分
+                if (!reasoning && Array.isArray(m.content)) {
+                    const thinkingPart = m.content.find(x => x?.type === 'thinking');
+                    if (thinkingPart?.thinking) {
+                        reasoning = thinkingPart.thinking;
+                    }
+                }
+                
+                // Mistral非流式: content数组含thinking
+                if (Array.isArray(m.content)) {
+                    const thinkParts = m.content.filter(x => x?.thinking);
+                    const textParts = m.content.filter(x => typeof x?.text === 'string' && !x?.thinking);
+                    if (thinkParts.length > 0) {
+                        reasoning += thinkParts.map(x => {
+                            if (Array.isArray(x.thinking)) {
+                                return x.thinking.map(t => t.text || '').filter(Boolean).join('\n\n');
+                            }
+                            return '';
+                        }).join('');
+                    }
+                    content = textParts.map(x => x.text).join('');
+                } else {
+                    content = m.content || '';
+                }
+                return (reasoning || content) ? { reasoning, content } : null;
+            }
+            
+            // text completion格式
+            if (typeof choice?.text === 'string') {
+                return choice.text ? { reasoning: '', content: choice.text } : null;
+            }
+        }
+        
+        return null;
+    }
+    
+    // 组合reasoning和content为最终显示内容（使用当前模板的prefix/suffix）
+    function composeContent(reasoning, content, isThinking) {
+        const tmpl = getCurrentReasoningTemplate();
+        let result = '';
+        if (reasoning) {
+            result = isThinking ? `${tmpl.prefix}${reasoning}` : `${tmpl.prefix}${reasoning}${tmpl.suffix}`;
+        }
+        result += content;
+        return result;
+    }
+    
+    // ST风格平滑延迟: 基于前一个字符类型计算延迟 (对应ST的getDelay)
+    function getSmoothDelay(lastChar) {
+        if (!lastChar) return 0;
+        // 标点符号延迟更长，模拟自然阅读节奏
+        if (/[.。!！?？]/.test(lastChar)) return 30;
+        if (/[,，;；:：、]/.test(lastChar)) return 20;
+        if (/[\n\r]/.test(lastChar)) return 25;
+        if (/\s/.test(lastChar)) return 8;
+        return 5; // 普通字符
+    }
+    
+    // 非流式响应的平滑打字机 (模拟ST的SmoothEventSourceStream对非流式的处理)
+    async function smoothTypewriter(aiMsg, reasoning, content) {
+        const isAborted = () => !State.streaming || State.abortController?.signal?.aborted;
+        let currentReasoning = '';
+        let currentContent = '';
+        let lastChar = '';
+        
+        // 阶段1: reasoning
+        if (reasoning) {
+            for (let i = 0; i < reasoning.length; i++) {
+                if (isAborted()) {
+                    writeToMsg(aiMsg, composeContent(reasoning, content, false));
+                    updateStreamingMsg(aiMsg);
+                    return;
+                }
+                currentReasoning += reasoning[i];
+                writeToMsg(aiMsg, composeContent(currentReasoning, currentContent, true));
+                updateStreamingMsg(aiMsg);
+                await sleep(getSmoothDelay(lastChar));
+                lastChar = reasoning[i];
+            }
+        }
+        
+        // 阶段2: content
+        if (content) {
+            for (let i = 0; i < content.length; i++) {
+                if (isAborted()) {
+                    writeToMsg(aiMsg, composeContent(reasoning, content, false));
+                    updateStreamingMsg(aiMsg);
+                    return;
+                }
+                currentContent += content[i];
+                writeToMsg(aiMsg, composeContent(reasoning || currentReasoning, currentContent, false));
+                updateStreamingMsg(aiMsg);
+                await sleep(getSmoothDelay(lastChar));
+                lastChar = content[i];
+            }
+        }
+        
+        // 确保最终完整
+        writeToMsg(aiMsg, composeContent(reasoning, content, false));
+        updateStreamingMsg(aiMsg);
+    }
+    
+    function writeToMsg(aiMsg, text) {
+        const finalText = State.isContinuing && State.originalContent ? State.originalContent + text : text;
+        if (aiMsg.swipes) {
+            aiMsg.swipes[aiMsg.swipeIndex] = finalText;
+        } else {
+            aiMsg.content = finalText;
+        }
+    }
+    
+    function sleep(ms) {
+        return new Promise(r => setTimeout(r, ms));
+    }
+
+    // === ST风格: 基于模板的思维链解析 (对齐 reasoning.js -> parseReasoningFromString) ===
+    // 对齐ST reasoning.js: reasoning_templates 从预设管理器加载
+    // === 对齐ST: ReasoningTemplate = {name, prefix, suffix, separator} ===
+    const REASONING_TEMPLATES = [
+        { name: 'DeepSeek', prefix: '<think>', suffix: '</think>', separator: '' },
+        { name: 'Claude', prefix: '<thinking>', suffix: '</thinking>', separator: '' },
+        { name: 'Reasoning', prefix: '<reasoning>', suffix: '</reasoning>', separator: '' },
+        { name: 'CodeBlock', prefix: '```thinking\n', suffix: '```', separator: '' },
+        { name: 'Chinese1', prefix: '【思考】', suffix: '【/思考】', separator: '' },
+        { name: 'Chinese2', prefix: '[思考]', suffix: '[/思考]', separator: '' },
+        // 对齐ST: 更多模板
+        { name: 'QwQ', prefix: '<think>', suffix: '</think>', separator: '' },
+        { name: 'Gemini', prefix: '<thinking>', suffix: '</thinking>', separator: '' },
+        { name: 'Custom', prefix: '', suffix: '', separator: '' },
+    ];
+
+    // 当前选中的reasoning模板 - 对齐ST power_user.reasoning
+    // 优先从STPresetManager读取，否则使用本地默认
+    const reasoningSettings = {
+        get name() { return window.STPresetManager?.getReasoningSettings?.()?.name || 'DeepSeek'; },
+        get prefix() { return window.STPresetManager?.getReasoningSettings?.()?.prefix || '<think>'; },
+        get suffix() { return window.STPresetManager?.getReasoningSettings?.()?.suffix || '</think>'; },
+        get separator() { return window.STPresetManager?.getReasoningSettings?.()?.separator || ''; },
+        get auto_parse() { return window.STPresetManager?.getReasoningSettings?.()?.auto_parse !== false; },
+        get add_to_prompts() { return window.STPresetManager?.getReasoningSettings?.()?.add_to_prompts || false; },
+        get max_additions() { return window.STPresetManager?.getReasoningSettings?.()?.max_additions || 1; },
+        get auto_expand() { return window.STPresetManager?.getReasoningSettings?.()?.auto_expand || false; },
+        get show_hidden() { return window.STPresetManager?.getReasoningSettings?.()?.show_hidden || false; },
+    };
+
+    // 获取当前reasoning模板 - 对齐ST: power_user.reasoning
+    function getCurrentReasoningTemplate() {
+        return {
+            name: reasoningSettings.name,
+            prefix: reasoningSettings.prefix,
+            suffix: reasoningSettings.suffix,
+            separator: reasoningSettings.separator,
+        };
+    }
+
+    /**
+     * 对齐ST的 parseReasoningFromString (reasoning.js L1305-L1334):
+     * - 默认 strict=true（reasoning必须在字符串开头）
+     * - 只使用当前选中的单一模板（不遍历所有模板）
+     * - didReplace时总是返回结果（即使reasoning为空）
+     */
+    function parseReasoningFromString(str, { strict = true } = {}, template = null) {
+        if (!str) return null;
+        
+        template = template ?? getCurrentReasoningTemplate();
+        
+        // ST: Both prefix and suffix must be defined
+        if (!template.prefix || !template.suffix) {
+            return null;
+        }
+        
+        try {
+            const escPrefix = template.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escSuffix = template.suffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(
+                `${strict ? '^\\s*?' : ''}${escPrefix}(.*?)${escSuffix}`,
+                's'
+            );
+            
+            let didReplace = false;
+            let reasoning = '';
+            let content = String(str).replace(regex, (_match, captureGroup) => {
+                didReplace = true;
+                reasoning = captureGroup;
+                return '';
+            });
+            
+            // ST: didReplace时执行trimSpaces并总是返回
+            if (didReplace) {
+                reasoning = reasoning.trim();
+                content = content.trim();
+            }
+            
+            return { reasoning, content };
+        } catch (e) {
+            console.error('[Reasoning] Error parsing reasoning block', e);
+            return null;
+        }
+    }
+
+    /**
+     * 对齐ST: extractReasoningFromData (reasoning.js L98-L144)
+     * 从API响应数据中提取reasoning，支持多种API格式
+     */
+    function extractReasoningFromData(data) {
+        if (!data) return '';
+        
+        // Ollama格式
+        if (data.thinking !== undefined) return data.thinking || '';
+        
+        // Gemini格式
+        if (Array.isArray(data.responseContent?.parts)) {
+            return data.responseContent.parts
+                .filter(part => part.thought)
+                .map(part => part.text)
+                .join('\n\n') || '';
+        }
+        
+        // Claude原生格式
+        if (Array.isArray(data.content)) {
+            const thinkingPart = data.content.find(part => part.type === 'thinking');
+            return thinkingPart?.thinking || '';
+        }
+        
+        // OpenAI-likes choices格式
+        const choice = data.choices?.[0];
+        if (choice?.message) {
+            const m = choice.message;
+            // DeepSeek/XAI
+            if (m.reasoning_content) return m.reasoning_content;
+            // OpenRouter
+            if (m.reasoning) return m.reasoning;
+            if (choice.reasoning) return choice.reasoning;
+            // Mistral
+            if (Array.isArray(m.content)) {
+                const thinkParts = m.content.filter(x => x?.thinking);
+                if (thinkParts.length > 0) {
+                    return thinkParts.map(x => {
+                        if (Array.isArray(x.thinking)) {
+                            return x.thinking.map(t => t.text || '').filter(Boolean).join('\n\n');
+                        }
+                        return '';
+                    }).join('');
+                }
+            }
+        }
+        
+        return '';
+    }
+
+    /**
+     * 对齐ST: extractThinking 只使用当前模板解析，不遍历所有模板
+     * 流式中间状态(allowOpen)时使用当前模板的prefix匹配未闭合标签
+     */
     function extractThinking(text, allowOpen = false) {
         if (!text) return '';
 
-        const allThinking = [];
+        // 使用当前模板解析闭合的思考块
+        const parsed = parseReasoningFromString(text, { strict: false });
+        if (parsed?.reasoning) {
+            return parsed.reasoning;
+        }
         
-        // 格式列表: [闭合正则, 未闭合正则]
-        const patterns = [
-            [/<think>([\s\S]*?)<\/think>/i, /<think>([\s\S]*)$/i],
-            [/<thinking>([\s\S]*?)<\/thinking>/i, /<thinking>([\s\S]*)$/i],
-            [/<reasoning>([\s\S]*?)<\/reasoning>/i, /<reasoning>([\s\S]*)$/i],
-            [/```thinking\n?([\s\S]*?)```/i, /```thinking\n?([\s\S]*)$/i],
-            [/【思考】([\s\S]*?)【\/思考】/i, /【思考】([\s\S]*)$/i],
-            [/\[思考\]([\s\S]*?)\[\/思考\]/i, /\[思考\]([\s\S]*)$/i],
-        ];
-        
-        for (const [closed, open] of patterns) {
-            // 收集所有闭合的思考块（使用 matchAll 获取所有匹配）
-            const closedMatches = [...text.matchAll(new RegExp(closed.source, closed.flags + 'g'))];
-            for (const m of closedMatches) {
-                if (m[1]?.trim()) {
-                    allThinking.push(m[1].trim());
-                }
-            }
-            // 允许未闭合时收集
-            if (allowOpen) {
-                const openMatches = [...text.matchAll(new RegExp(open.source, open.flags + 'g'))];
-                for (const m of openMatches) {
-                    if (m[1]?.trim()) {
-                        allThinking.push(m[1].trim());
-                    }
+        // 允许未闭合时（流式中间状态），匹配当前模板的未闭合标签
+        if (allowOpen) {
+            const tmpl = getCurrentReasoningTemplate();
+            if (tmpl.prefix) {
+                const escPrefix = tmpl.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const openRegex = new RegExp(`${escPrefix}([\\s\\S]*)$`, 'i');
+                const match = text.match(openRegex);
+                if (match?.[1]?.trim()) {
+                    return match[1].trim();
                 }
             }
         }
 
-        // 如果找到思考块，用换行连接返回
-        if (allThinking.length > 0) {
-            return allThinking.join('\n\n---\n\n');
-        }
         return '';
     }
     
+    /**
+     * 对齐ST的 removeReasoningFromString (reasoning.js L1268-L1280):
+     * 只使用当前模板移除reasoning，不遍历所有模板
+     */
     function removeThinking(text) {
         if (!text) return '';
-        return text
-            .replace(/<think>[\s\S]*?<\/think>/gi, '')
-            .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
-            .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
-            .replace(/```thinking\n?[\s\S]*?```/gi, '')
-            .replace(/【思考】[\s\S]*?【\/思考】/gi, '')
-            .replace(/\[思考\][\s\S]*?\[\/思考\]/gi, '')
-            .replace(/<think>[\s\S]*$/i, '')
-            .replace(/<thinking>[\s\S]*$/i, '')
-            .replace(/<reasoning>[\s\S]*$/i, '')
-            .replace(/```thinking\n?[\s\S]*$/i, '')
-            .replace(/【思考】[\s\S]*$/i, '')
-            .replace(/\[思考\][\s\S]*$/i, '')
-            .trim();
+        
+        const parsed = parseReasoningFromString(text, { strict: false });
+        if (parsed) {
+            return parsed.content;
+        }
+        
+        // fallback: 移除当前模板的未闭合标签
+        const tmpl = getCurrentReasoningTemplate();
+        if (tmpl.prefix) {
+            const escPrefix = tmpl.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            text = text.replace(new RegExp(`${escPrefix}[\\s\\S]*$`, 'i'), '');
+        }
+        return text.trim();
     }
 
     // 流式更新消息DOM
@@ -1519,8 +2136,8 @@
             if (!el) return;
         }
 
-        // 解析思维链 - 支持多种格式
-        let content = msg.content || '';
+        // 读取当前内容（支持swipe）
+        let content = msg.swipes ? (msg.swipes[msg.swipeIndex ?? 0] || '') : (msg.content || '');
         // 应用正则替换（仅AI消息）
         if (msg.role !== 'user' && content) {
             content = window.STPresetManager?.applyRegexReplacements?.(content) || content;
@@ -1538,7 +2155,7 @@
             toggleEl = document.createElement('div');
             toggleEl.className = 'st-thinking-toggle';
             toggleEl.innerHTML = `
-                <span>思考过程</span>
+                <span class="st-thinking-icon"></span>
             `;
 
             thinkEl = document.createElement('div');
@@ -1876,5 +2493,33 @@
 
     // 初始化
     load();
-    window.OfflineChat = { open, close };
+    window.OfflineChat = {
+        open, close,
+        // 暴露reasoning设置供外部使用
+        reasoningSettings,
+        REASONING_TEMPLATES,
+        // 对齐ST: 选择reasoning模板并同步到STPresetManager
+        setReasoningTemplate(name) {
+            const tmpl = REASONING_TEMPLATES.find(t => t.name === name);
+            if (tmpl) {
+                // 同步到STPresetManager的reasoning设置
+                window.STPresetManager?.setReasoningSettings?.({
+                    name: tmpl.name,
+                    prefix: tmpl.prefix,
+                    suffix: tmpl.suffix,
+                    separator: tmpl.separator,
+                });
+            }
+        },
+        // 对齐ST: 获取reasoning模板列表
+        getReasoningTemplates() {
+            return REASONING_TEMPLATES;
+        },
+        // 对齐ST: parseReasoningFromString
+        parseReasoningFromString,
+        // 对齐ST: extractReasoningFromData
+        extractReasoningFromData,
+        // 对齐ST: removeReasoningFromString
+        removeThinking,
+    };
 })();
