@@ -11,7 +11,7 @@ class DiscordAuthManager {
             TOKEN_ENDPOINT: 'https://ovo-psi.vercel.app/api/callback',
             KEY_API: window.location.hostname === 'localhost' 
                 ? 'http://localhost:3000/api/keys'
-                : 'https://lolidoll.github.io/ovo/api/keys',
+                : 'https://ovo-psi.vercel.app/api/keys',
             SCOPES: ['identify', 'email']
         };
         

@@ -6,7 +6,9 @@
 class KeyAuthManager {
     constructor() {
         // API 端点 - 指向你的 Vercel 后端
-        this.API_ENDPOINT = 'https://ovo-psi.vercel.app/api/verify-key';
+        // 如果使用 Upstash Redis SET (keys:valid)，用 verify-key-upstash
+        // 如果使用 Vercel 环境变量 (VALID_KEYS)，用 verify-key
+        this.API_ENDPOINT = 'https://ovo-psi.vercel.app/api/verify-key-upstash';
         
         // 本地存储键
         this.STORAGE_KEY = 'key_verified';
