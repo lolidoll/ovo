@@ -11,18 +11,31 @@
 import { Redis } from '@upstash/redis';
 
 /**
+ * 解析 Upstash Redis 连接 URL
+ * 支持 rediss:// 和 https:// 格式
+ */
+function parseRedisUrl(url) {
+  if (!url) return { url: undefined, token: undefined };
+  
+  // rediss://default:TOKEN@HOST:6379 格式
+  if (url.includes('rediss://')) {
+    const match = url.match(/rediss:\/\/default:([^@]+)@([^:]+):\d+/);
+    if (match) {
+      return { url: `https://${match[2]}`, token: match[1] };
+    }
+  }
+  
+  // https:// 格式，token 可能在 URL 中或单独配置
+  return { url, token: process.env.REDIS_TOKEN };
+}
+
+/**
  * 延迟初始化 Upstash Redis 客户端
  * 支持 rediss:// 格式的 URL（Upstash 完整连接字符串）
  */
 function getRedisClient() {
-  const url = process.env.REDIS_URL;
-  if (url && url.includes('rediss://')) {
-    return new Redis({ url });
-  }
-  return new Redis({
-    url,
-    token: process.env.REDIS_TOKEN,
-  });
+  const { url, token } = parseRedisUrl(process.env.REDIS_URL);
+  return new Redis({ url, token });
 }
 
 // 管理员密码（从环境变量读取）
