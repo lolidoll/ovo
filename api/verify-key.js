@@ -91,12 +91,6 @@ export default async function handler(req, res) {
     // 延迟初始化 Redis 客户端
     const redis = getRedisClient();
     
-    // 调试日志
-    console.log('VALID_KEYS:', process.env.VALID_KEYS?.substring(0, 100));
-    const validKeys = getValidKeys();
-    console.log('Valid keys count:', validKeys.length);
-    console.log('Testing key:', key);
-    
     // 1. 检查 Redis 中是否已使用
     const isUsed = await redis.get(`key:used:${key}`);
     
