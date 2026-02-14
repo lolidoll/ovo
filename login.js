@@ -611,34 +611,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.authManager = new DiscordAuthManager();
     
     // 添加飘落的心形背景装饰
-    createFloatingHearts();
+    // createFloatingHearts(); // 已禁用飘落爱心效果
 });
 
-// ========================================
-// 创建飘落的心形背景
-// ========================================
 
-function createFloatingHearts() {
-    const heartsContainer = document.createElement('div');
-    heartsContainer.className = 'floating-hearts';
-    document.body.appendChild(heartsContainer);
-    
-    const hearts = ['💕', '💗', '💖', '💝', '💓', '✨', '🎀'];
-    const numHearts = 12;
-    
-    for (let i = 0; i < numHearts; i++) {
-        setTimeout(() => {
-            const heart = document.createElement('div');
-            heart.className = 'floating-heart';
-            heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
-            heart.style.left = Math.random() * 100 + '%';
-            heart.style.fontSize = (15 + Math.random() * 20) + 'px';
-            heart.style.animationDuration = (12 + Math.random() * 10) + 's';
-            heart.style.animationDelay = (Math.random() * 5) + 's';
-            heartsContainer.appendChild(heart);
-        }, i * 300);
-    }
-}
 
 // ========================================
 // 导出给其他脚本使用
