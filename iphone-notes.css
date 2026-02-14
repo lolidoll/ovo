@@ -1,0 +1,325 @@
+/* iPhone 备忘录应用 - iOS原生样式 */
+
+.iphone-notes-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.iphone-notes-page.show {
+    display: flex;
+    transform: translateX(0);
+}
+
+/* 备忘录列表头部 */
+.notes-header {
+    position: relative;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: #ffffff;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+
+.notes-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.notes-back-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.notes-back-btn i {
+    font-size: 18px;
+}
+
+.notes-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.notes-generate-btn {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 15px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+}
+
+.notes-generate-btn:active {
+    opacity: 0.4;
+}
+
+.notes-generate-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.notes-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* 备忘录列表内容 */
+.notes-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    background: #f2f2f7;
+    -webkit-overflow-scrolling: touch;
+}
+
+.notes-list {
+    padding: 0;
+}
+
+.notes-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    color: #8e8e93;
+    text-align: center;
+}
+
+.notes-empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.notes-empty-text {
+    font-size: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    margin-bottom: 8px;
+}
+
+.notes-empty-hint {
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    opacity: 0.7;
+}
+
+/* 备忘录项 */
+.note-item {
+    background: #ffffff;
+    margin: 8px 16px;
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.note-item:active {
+    background: #e5e5ea;
+}
+
+.note-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.note-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+    flex: 1;
+    margin-right: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.note-item-time {
+    font-size: 12px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    white-space: nowrap;
+}
+
+.note-item-preview {
+    font-size: 13px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 加载状态 */
+.notes-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.notes-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 122, 255, 0.2);
+    border-top-color: #007aff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.notes-loading-text {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+/* 备忘录详情页 */
+.note-detail-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    z-index: 2001;
+    display: none;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.note-detail-page.show {
+    display: flex;
+    transform: translateX(0);
+}
+
+.note-detail-header {
+    height: 54px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 16px 10px;
+    background: #ffffff;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
+}
+
+.note-detail-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.note-detail-back-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.note-detail-back-btn i {
+    font-size: 18px;
+}
+
+.note-detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    background: #ffffff;
+    -webkit-overflow-scrolling: touch;
+}
+
+.note-detail-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.6px;
+    margin-bottom: 8px;
+}
+
+.note-detail-date {
+    font-size: 13px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    margin-bottom: 20px;
+}
+
+.note-detail-body {
+    font-size: 14px;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.note-detail-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* 滚动条隐藏 */
+.notes-content::-webkit-scrollbar,
+.note-detail-content::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}

@@ -1,0 +1,805 @@
+/* iOS风格预设管理器 - 高级白色主题 */
+.st-preset-page {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, #f5f5f7 0%, #e8e8ed 100%);
+    z-index: 30000;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.3s;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+}
+.st-preset-page.show { opacity: 1; visibility: visible; }
+
+/* 顶部导航栏 */
+.st-preset-nav {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.st-preset-back {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #007aff;
+    margin-left: -8px;
+    border-radius: 22px;
+    transition: background 0.2s;
+}
+.st-preset-back:active { background: rgba(0,122,255,0.1); }
+.st-preset-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d1d1f;
+    flex: 1;
+    text-align: center;
+    margin-right: 36px;
+    letter-spacing: -0.02em;
+}
+
+/* 预设选择区 */
+.st-preset-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px;
+    background: rgba(255,255,255,0.8);
+    margin: 8px;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0.5px 1px rgba(0,0,0,0.06);
+    overflow-x: auto;
+}
+@media (max-width: 480px) {
+    .st-preset-selector {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 4px;
+        padding: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+.st-preset-select {
+    flex: 1 1 auto;
+    min-width: 60px;
+    max-width: 80px;
+    padding: 8px 10px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 8px;
+    color: #1d1d1f;
+    font-size: 12px;
+    font-weight: 500;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background 0.2s;
+}
+.st-preset-select:focus { background: rgba(118,118,128,0.12); }
+.st-preset-name-input {
+    flex: 1 1 auto;
+    min-width: 50px;
+    max-width: 70px;
+    padding: 8px 10px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 8px;
+    color: #1d1d1f;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.st-preset-name-input:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-preset-btn {
+    flex: 1 1 auto;
+    min-width: 45px;
+    padding: 8px 10px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 8px;
+    color: #007aff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.st-preset-btn:active { transform: scale(0.97); background: rgba(118,118,128,0.15); }
+.st-preset-btn.primary { 
+    background: linear-gradient(180deg, #0a84ff 0%, #007aff 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+}
+.st-preset-btn.primary:active { transform: scale(0.97); }
+.st-preset-btn.danger { color: #ff3b30; }
+
+/* 提示词列表 */
+.st-prompt-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+    min-height: 200px;
+}
+.st-prompt-item {
+    background: rgba(255,255,255,0.85);
+    border-radius: 16px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0.5px 1px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.st-prompt-item:active { transform: scale(0.99); }
+.st-prompt-item.dragging { opacity: 0.6; transform: scale(1.02); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+
+/* 提示词头部 */
+.st-prompt-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 12px;
+    background: transparent;
+}
+.st-prompt-drag {
+    color: #c7c7cc;
+    font-size: 16px;
+    cursor: grab;
+    opacity: 0.6;
+}
+.st-prompt-toggle {
+    width: 51px; height: 31px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 16px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    flex-shrink: 0;
+}
+.st-prompt-toggle.on { background: #34c759; }
+.st-prompt-toggle::after {
+    content: '';
+    position: absolute;
+    width: 27px; height: 27px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.06);
+}
+.st-prompt-toggle.on::after { transform: translateX(20px); }
+.st-prompt-name {
+    flex: 1;
+    min-width: 60px;
+    background: transparent;
+    border: none;
+    color: #1d1d1f;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+.st-prompt-name:focus { outline: none; }
+.st-prompt-role, .st-prompt-position {
+    padding: 7px 12px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 8px;
+    color: #48484a;
+    font-size: 13px;
+    font-weight: 500;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.st-prompt-depth {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #86868b;
+    font-weight: 500;
+}
+.st-prompt-depth input {
+    width: 48px;
+    padding: 7px 8px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 8px;
+    color: #1d1d1f;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+.st-prompt-tokens {
+    font-size: 12px;
+    color: #86868b;
+    min-width: 36px;
+    text-align: right;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.st-prompt-collapse, .st-prompt-delete {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent;
+    border: none;
+    color: #86868b;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+.st-prompt-delete { color: #ff3b30; }
+.st-prompt-collapse:active, .st-prompt-delete:active { background: rgba(118,118,128,0.12); }
+
+/* 提示词内容 */
+.st-prompt-body {
+    padding: 0 16px 16px;
+    background: transparent;
+}
+.st-prompt-trigger { margin-bottom: 10px; }
+.st-prompt-trigger-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 10px;
+    color: #1d1d1f;
+    font-size: 14px;
+    font-weight: 500;
+    box-sizing: border-box;
+    transition: background 0.2s;
+}
+.st-prompt-trigger-input:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-prompt-trigger-input::placeholder { color: #86868b; }
+.st-prompt-content {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 12px;
+    color: #1d1d1f;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: background 0.2s;
+}
+.st-prompt-content:focus { outline: none; background: rgba(118,118,128,0.12); }
+
+/* 添加按钮 */
+.st-add-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    margin: 0 16px 16px;
+    background: rgba(255,255,255,0.6);
+    border: 2px dashed rgba(0,122,255,0.3);
+    border-radius: 16px;
+    color: #007aff;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.st-add-prompt:active { background: rgba(0,122,255,0.08); transform: scale(0.98); }
+
+/* 宏提示 */
+.st-macro-hint {
+    padding: 14px 20px;
+    font-size: 12px;
+    color: #86868b;
+    line-height: 1.7;
+    font-weight: 500;
+}
+.st-macro-hint code {
+    background: rgba(118,118,128,0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #007aff;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* 底部操作栏 */
+.st-preset-footer {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid rgba(0,0,0,0.08);
+}
+.st-preset-footer .st-preset-btn { flex: 1; text-align: center; padding: 14px; }
+
+/* 导入模态框 */
+.st-import-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 30010;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.st-import-modal.show { display: flex; }
+.st-import-box {
+    width: 100%;
+    max-width: 500px;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+}
+.st-import-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin-bottom: 20px;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+.st-import-textarea {
+    width: 100%;
+    height: 200px;
+    padding: 14px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 12px;
+    color: #1d1d1f;
+    font-size: 13px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    resize: none;
+    box-sizing: border-box;
+    line-height: 1.5;
+}
+.st-import-textarea:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-import-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+.st-import-actions .st-preset-btn { flex: 1; padding: 16px; font-size: 16px; }
+
+/* 编辑弹窗 */
+.st-edit-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 30010;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 16px;
+}
+.st-edit-modal.show { display: flex; }
+.st-edit-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.st-edit-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.st-edit-name {
+    flex: 1;
+    padding: 12px 14px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+.st-edit-name:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-edit-close {
+    width: 36px; height: 36px;
+    background: rgba(118,118,128,0.12);
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    color: #86868b;
+    cursor: pointer;
+}
+.st-edit-close:active { background: rgba(118,118,128,0.2); }
+.st-edit-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.st-edit-select {
+    flex: 1;
+    padding: 10px 12px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1d1d1f;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.st-edit-depth {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    background: rgba(118,118,128,0.08);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #86868b;
+}
+.st-edit-depth input {
+    width: 50px;
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    color: #1d1d1f;
+    text-align: center;
+}
+.st-edit-trigger {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #1d1d1f;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+.st-edit-trigger:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-edit-trigger::placeholder { color: #86868b; }
+.st-edit-content {
+    flex: 1;
+    min-height: 200px;
+    padding: 14px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1d1d1f;
+    resize: none;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.st-edit-content:focus { outline: none; background: rgba(118,118,128,0.12); }
+.st-edit-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+.st-edit-tokens {
+    font-size: 13px;
+    color: #86868b;
+    font-weight: 500;
+}
+.st-edit-footer .st-preset-btn { padding: 12px 32px; }
+
+/* 简化的提示词项 */
+.st-prompt-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 12px;
+    background: transparent;
+    flex-wrap: nowrap;
+}
+.st-prompt-name-display {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d1d1f;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.st-prompt-edit-btn {
+    padding: 6px 14px;
+    background: rgba(0,122,255,0.1);
+    border: none;
+    border-radius: 8px;
+    color: #007aff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.st-prompt-edit-btn:active { background: rgba(0,122,255,0.2); }
+.st-prompt-delete {
+    flex-shrink: 0;
+}
+
+/* 自定义确认弹窗 */
+.st-confirm-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 30020;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 20px;
+}
+.st-confirm-modal.show { display: flex; }
+.st-confirm-box {
+    width: 100%;
+    max-width: 300px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.st-confirm-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 16px;
+}
+.st-confirm-actions {
+    display: flex;
+    gap: 10px;
+}
+.st-confirm-actions .st-preset-btn { flex: 1; padding: 12px; }
+
+/* 正则替换区域 */
+.st-regex-section {
+    margin: 0 16px 16px 16px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.st-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+}
+.st-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+.st-add-regex-btn {
+    padding: 6px 12px;
+    background: #007aff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.st-add-regex-btn:active { opacity: 0.7; }
+
+.st-regex-list {
+    padding: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+.st-regex-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: #8e8e93;
+    font-size: 14px;
+}
+.st-regex-item {
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.st-regex-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 10px;
+}
+.st-regex-toggle {
+    width: 44px;
+    height: 26px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s;
+    flex-shrink: 0;
+}
+.st-regex-toggle.on { background: #34c759; }
+.st-regex-toggle.on::after {
+    transform: translateX(18px);
+}
+.st-regex-toggle::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.st-regex-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+}
+.st-regex-edit {
+    padding: 6px 10px;
+    background: rgba(0,122,255,0.1);
+    color: #007aff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.st-regex-delete {
+    width: 24px;
+    height: 24px;
+    background: rgba(255,59,48,0.15);
+    color: #ff3b30;
+    border: none;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.st-regex-preview {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px 12px 12px;
+    gap: 8px;
+    font-size: 12px;
+    font-family: 'SF Mono', Monaco, monospace;
+}
+.st-regex-pattern {
+    flex: 1;
+    padding: 6px 10px;
+    background: rgba(255,59,48,0.08);
+    border-radius: 6px;
+    color: #ff3b30;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.st-regex-arrow {
+    color: #8e8e93;
+    font-weight: 500;
+}
+.st-regex-replace {
+    flex: 1;
+    padding: 6px 10px;
+    background: rgba(52,199,89,0.08);
+    border-radius: 6px;
+    color: #34c759;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 正则编辑弹窗 */
+.st-regex-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 31000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s, visibility 0.25s;
+}
+.st-regex-modal.show { opacity: 1; visibility: visible; }
+.st-regex-edit-box {
+    background: #fff;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 420px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.st-regex-form {
+    padding: 16px 20px;
+}
+.st-form-group {
+    margin-bottom: 14px;
+}
+.st-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-bottom: 6px;
+}
+.st-form-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(118,118,128,0.08);
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'SF Mono', Monaco, monospace;
+    color: #1d1d1f;
+    box-sizing: border-box;
+}
+.st-form-input:focus {
+    outline: none;
+    background: rgba(118,118,128,0.12);
+}
+.st-form-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+}
+.st-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #1d1d1f;
+    cursor: pointer;
+}
+.st-checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #007aff;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .st-preset-selector { flex-wrap: nowrap; flex-direction: row; overflow-x: auto; margin: 12px; padding: 12px; }
+    .st-preset-select { min-width: 70px; max-width: 90px; font-size: 13px; padding: 8px 10px; }
+    .st-preset-name-input { min-width: 60px; max-width: 80px; font-size: 13px; padding: 8px 10px; }
+    .st-preset-btn { font-size: 13px; padding: 8px 12px; white-space: nowrap; }
+    .st-preset-nav { height: 50px; }
+    .st-preset-title { font-size: 17px; }
+    .st-edit-box { max-height: 85vh; padding: 16px; border-radius: 16px; }
+    .st-edit-row { flex-wrap: wrap; }
+    .st-edit-select { min-width: calc(50% - 5px); }
+    .st-edit-content { min-height: 180px; }
+    .st-prompt-header { padding: 12px 14px; flex-wrap: nowrap; }
+}

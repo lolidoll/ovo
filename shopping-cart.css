@@ -1,0 +1,809 @@
+/* 购物车和订单系统专用样式 */
+
+/* ==================== 删除按钮样式 ==================== */
+
+#shopping-page .cart-item-delete {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999 !important;
+    font-size: 20px !important;
+    cursor: pointer;
+    padding: 10px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+#shopping-page .cart-item-delete:active {
+    color: #ff4400 !important;
+}
+
+#shopping-page .cart-item-delete i {
+    display: block !important;
+    pointer-events: none;
+    color: inherit;
+}
+
+/* ==================== 订单确认页面样式 ==================== */
+
+.order-confirm-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+}
+
+.order-confirm-page.active {
+    display: flex;
+}
+
+.order-header {
+    height: 44px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    padding-top: env(safe-area-inset-top);
+}
+
+.order-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.order-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+}
+
+.order-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 60px;
+}
+
+.order-address {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.order-address-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    border: 1px dashed #ddd;
+    border-radius: 8px;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.order-address-info {
+    display: flex;
+    gap: 12px;
+    padding: 15px;
+    cursor: pointer;
+}
+
+.order-address-icon {
+    font-size: 20px;
+    color: #ff4400;
+}
+
+.order-address-details {
+    flex: 1;
+}
+
+.order-address-name-phone {
+    font-size: 15px;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.order-address-text {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.order-goods {
+    background-color: #fff;
+    margin-bottom: 10px;
+}
+
+.order-section-title {
+    padding: 15px;
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+    border-bottom: 1px solid #f5f5f5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-goods-list {
+    padding: 15px;
+}
+
+.order-goods-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.order-goods-img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.order-goods-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.order-goods-name {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.order-goods-spec {
+    font-size: 12px;
+    color: #999;
+}
+
+.order-goods-price-num {
+    display: flex;
+    justify-content: space-between;
+}
+
+.order-goods-price {
+    font-size: 14px;
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.order-goods-num {
+    font-size: 12px;
+    color: #999;
+}
+
+.order-coupon,
+.order-delivery {
+    background-color: #fff;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.order-message {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.order-message-label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.order-message-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+}
+
+.order-amount {
+    background-color: #fff;
+    padding: 15px;
+}
+
+.order-amount-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.order-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding-bottom: env(safe-area-inset-bottom);
+    align-items: center;
+}
+
+.order-footer-money {
+    font-size: 18px;
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.order-footer-btn {
+    padding: 10px 30px;
+    background-color: #ff4400;
+    color: #fff;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ==================== 支付页面样式 ==================== */
+
+.payment-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+}
+
+.payment-page.active {
+    display: flex;
+}
+
+.payment-header {
+    height: 44px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    padding-top: env(safe-area-inset-top);
+}
+
+.payment-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.payment-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+}
+
+.payment-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.payment-order-info {
+    background-color: #fff;
+    padding: 30px 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.payment-amount-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.payment-amount-money {
+    font-size: 32px;
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.payment-order-no {
+    font-size: 12px;
+    color: #999;
+    margin-top: 10px;
+}
+
+.payment-methods {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.payment-method-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.payment-method-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.payment-method-item.active {
+    border-color: #ff4400;
+    background-color: #fff5f0;
+}
+
+.payment-method-icon {
+    font-size: 24px;
+}
+
+.payment-method-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.payment-method-desc {
+    font-size: 12px;
+    color: #999;
+}
+
+.payment-method-check {
+    font-size: 20px;
+    color: #ddd;
+}
+
+.payment-method-item.active .payment-method-check {
+    color: #ff4400;
+}
+
+.payment-footer {
+    padding: 15px;
+    background-color: #fff;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding-bottom: calc(15px + env(safe-area-inset-bottom));
+}
+
+.payment-footer-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: #ff4400;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* ==================== 订单列表页面样式 ==================== */
+
+.order-list-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+}
+
+.order-list-page.active {
+    display: flex;
+}
+
+.order-list-header {
+    height: 44px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    padding-top: env(safe-area-inset-top);
+}
+
+.order-list-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.order-list-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.order-list-tabs {
+    display: flex;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-list-tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    position: relative;
+}
+
+.order-list-tab.active {
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.order-list-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 2px;
+    background-color: #ff4400;
+}
+
+.order-list-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.order-list-empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+}
+
+.order-list-empty.active {
+    display: flex;
+}
+
+.order-list-empty i {
+    font-size: 60px;
+    color: #ddd;
+    margin-bottom: 15px;
+}
+
+.order-list-empty .text {
+    font-size: 14px;
+    color: #999;
+}
+
+.order-items-container {
+    padding: 10px;
+}
+
+.order-item-card {
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.order-item-header {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f5f5f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-item-no {
+    font-size: 12px;
+    color: #999;
+}
+
+.order-item-status {
+    font-size: 13px;
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.order-item-goods {
+    padding: 15px;
+}
+
+.order-item-goods-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.order-item-goods-item:last-child {
+    margin-bottom: 0;
+}
+
+.order-item-img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.order-item-info {
+    flex: 1;
+}
+
+.order-item-name {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.order-item-price-num {
+    display: flex;
+    justify-content: space-between;
+}
+
+.order-item-price {
+    font-size: 14px;
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.order-item-num {
+    font-size: 12px;
+    color: #999;
+}
+
+.order-item-footer {
+    padding: 12px 15px;
+    border-top: 1px solid #f5f5f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-item-total {
+    font-size: 14px;
+    color: #333;
+}
+
+.order-item-total-price {
+    font-size: 16px;
+    color: #ff4400;
+    font-weight: 600;
+}
+
+.order-item-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.order-item-btn {
+    padding: 6px 15px;
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+}
+
+.order-item-btn.primary {
+    border-color: #ff4400;
+    color: #ff4400;
+}
+
+/* ==================== 订单详情页面样式 ==================== */
+
+.order-detail-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+}
+
+.order-detail-page.active {
+    display: flex;
+}
+
+.order-detail-header {
+    height: 44px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    padding-top: env(safe-area-inset-top);
+}
+
+.order-detail-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.order-detail-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.order-detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 60px;
+}
+
+.order-detail-status {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff4400 100%);
+    padding: 30px 20px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.order-detail-status-icon {
+    font-size: 40px;
+}
+
+.status-main {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.status-sub {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.order-detail-logistics,
+.order-detail-address,
+.order-detail-goods,
+.order-detail-info {
+    background-color: #fff;
+    margin-bottom: 10px;
+    padding: 15px;
+}
+
+.logistics-header,
+.address-header,
+.goods-header {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logistics-info,
+.address-info {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.8;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row.total {
+    font-weight: 600;
+    color: #ff4400;
+}
+
+.order-detail-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #fff;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 15px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding-bottom: env(safe-area-inset-bottom);
+    align-items: center;
+}
+
+.order-detail-btn {
+    padding: 8px 20px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+}
+
+.order-detail-btn.primary {
+    border-color: #ff4400;
+    background-color: #ff4400;
+    color: #fff;
+}

@@ -1,0 +1,1034 @@
+/* ========================================
+   QQ风格聊天页面样式
+   适配移动端,顶部和底部布局参考QQ
+======================================== */
+
+/* ========================================
+   朋友圈转发消息卡片 - QQ风格（高级版）
+======================================== */
+.forward-moment-card {
+    width: 260px;
+    max-width: 90vw;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* 顶部装饰条 */
+.forward-moment-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 50%, #ffd1ff 100%);
+}
+
+.forward-moment-header {
+    background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+    padding: 14px 16px 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    position: relative;
+}
+
+/* 左侧标题区 */
+.forward-moment-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 朋友圈图标（使用CSS绘制） */
+.forward-moment-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(255, 154, 158, 0.3);
+}
+
+.forward-moment-icon::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid #fff;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.forward-moment-label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* 右侧箭头 */
+.forward-moment-arrow {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #999;
+}
+
+.forward-moment-arrow::after {
+    content: '›';
+    font-weight: bold;
+}
+
+.forward-moment-content {
+    padding: 14px 16px 16px 16px;
+}
+
+.forward-moment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.forward-moment-author {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 作者名前的小圆点装饰 */
+.forward-moment-author::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+}
+
+.forward-moment-date {
+    font-size: 11px;
+    color: #aaa;
+    background: #f8f8f8;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+.forward-moment-text {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.6;
+    word-break: break-word;
+    margin-bottom: 12px;
+    white-space: normal;
+    text-align: left;
+    position: relative;
+    padding-left: 10px;
+}
+
+/* 文本左侧引用线 */
+.forward-moment-text::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    background: linear-gradient(180deg, #ff9a9e 0%, #fad0c4 100%);
+    border-radius: 2px;
+    opacity: 0.6;
+}
+
+.forward-moment-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #e5e5e5 50%, transparent 100%);
+    margin: 12px 0 10px 0;
+}
+
+.forward-moment-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #999;
+    padding: 10px 16px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.01) 100%);
+    margin: 0 -16px -16px -16px;
+}
+
+/* 底部图标（使用CSS绘制） */
+.forward-moment-footer::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 3px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.forward-moment-footer::after {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #ddd;
+    border-radius: 50%;
+    position: absolute;
+    margin-left: -9px;
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 375px) {
+    .forward-moment-card {
+        width: 240px;
+    }
+    
+    .forward-moment-content {
+        padding: 12px 14px 14px 14px;
+    }
+    
+    .forward-moment-text {
+        font-size: 12px;
+    }
+}
+
+/* 聊天页面容器 - 重置为flex布局 */
+.chat-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background-color: #f5f5f5;
+    z-index: 150;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-page.open {
+    transform: translateX(0);
+}
+
+/* ========================================
+   顶部导航栏 - QQ风格
+======================================== */
+.chat-nav {
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    background: #f7f7f7;
+    border-bottom: 0.5px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    position: relative;
+    z-index: 200;
+    flex-shrink: 0;
+}
+
+/* 返回按钮 */
+.chat-nav .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    cursor: pointer;
+    color: #000;
+    font-size: 16px;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.chat-nav .back-arrow {
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #000;
+    border-bottom: 2px solid #000;
+    transform: rotate(45deg);
+}
+
+/* 标题区域 */
+.chat-title-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: calc(100% - 140px);
+    overflow: hidden;
+}
+
+.chat-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.chat-typing-status {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+}
+
+/* 右侧按钮组 */
+.chat-toolbar-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 60px;
+    justify-content: flex-end;
+}
+
+/* 心声按钮 */
+#chat-mind-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 更多按钮(三点) */
+.chat-more {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-more-dots {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+}
+
+.chat-more-dots span {
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+}
+
+/* ========================================
+   顶部导航栏 - QQ风格
+======================================== */
+.chat-nav {
+    border-bottom: none !important;
+}
+
+.chat-nav .back-btn span {
+    display: none; /* 隐藏"返回"文字 */
+}
+
+/* 角色名字体大小和颜色 */
+.chat-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+}
+
+/* 正在打字中的颜色 */
+.chat-typing-status {
+    color: #666;
+}
+
+/* 返回按钮箭头颜色 */
+.back-arrow {
+    border-color: #666 !important;
+}
+
+/* 汉堡菜单样式（三条横线） */
+.chat-more-hamburger {
+    width: 16px;
+    height: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-more-hamburger span {
+    display: block;
+    width: 14px;
+    height: 2px;
+    background: #666;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+/* 隐藏旧的三点样式 */
+.chat-more-dots {
+    display: none;
+}
+
+/* ========================================
+   消息区域
+======================================== */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    background: #f5f5f5;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    touch-action: pan-y;
+}
+
+/* ========================================
+   引用消息栏 - QQ风格
+======================================== */
+.quote-message-bar-container {
+    display: none;
+    background: #f7f7f7;
+    border-top: 0.5px solid #e5e5e5;
+    border-bottom: none;
+    flex-shrink: 0;
+    z-index: 51;
+    position: relative;
+}
+
+.quote-message-bar-container[style*="display: block"],
+.quote-message-bar-container[style*="display:block"] {
+    display: flex !important;
+}
+
+.quote-message-bar {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    width: 100%;
+}
+
+.quote-content {
+    flex: 1;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 8px;
+    border-left: 3px solid #ffd5e0;
+}
+
+.quote-cancel-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    color: #999;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.quote-cancel-btn:hover {
+    color: #666;
+}
+
+.quote-cancel-btn:active {
+    color: #333;
+}
+
+/* ========================================
+   底部区域 - QQ风格(工具栏在输入框上方)
+======================================== */
+
+/* 输入区域(在最底部) */
+.chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f7f7f7;
+    border-top: none;
+    flex-shrink: 0;
+    min-height: 50px;
+    z-index: 60;
+    position: relative;
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+.chat-input {
+    flex: 1;
+    min-height: 30px;
+    max-height: 100px;
+    line-height: 18px;
+    padding: 6px 10px;
+    border: 0.5px solid #ebebeb;
+    border-radius: 8px;
+    background: rgba(255, 253, 250, 0.95);
+    font-size: 15px;
+    color: #000;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    -webkit-user-select: text;
+    user-select: text;
+    transition: background 0.2s ease;
+    margin: 0 4px;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0,0,0,0.05);
+    cursor: text;
+}
+
+.chat-input::placeholder {
+    color: transparent;
+}
+
+.chat-input:focus {
+    background: rgba(255, 253, 250, 1);
+    border-color: #e0e0e0;
+}
+
+.chat-send-btn {
+    width: 52px;
+    height: 30px;
+    min-width: 52px;
+    min-height: 30px;
+    border: none;
+    background: #ffd5e0;
+    border-radius: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255, 213, 224, 0.3);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.chat-send-btn:active {
+    opacity: 0.7;
+}
+
+.chat-send-btn svg {
+    display: none;
+}
+
+/* 工具栏(在最底部) */
+.chat-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0;
+    background: #f7f7f7;
+    border-top: none;
+    flex-shrink: 0;
+    min-height: 36px;
+    height: 36px;
+    z-index: 55;
+    position: relative;
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+/* 工具栏按钮 - 6个核心按钮 */
+.tb-btn {
+    flex: 1;
+    height: 36px;
+    max-width: 60px;
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+    transition: opacity 0.2s;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0,0,0,0.05);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.tb-btn:active {
+    opacity: 0.6;
+}
+
+.tb-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: #666;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.tb-btn-label {
+    display: none;
+    pointer-events: none;
+}
+
+/* 隐藏超出6个的按钮 */
+.tb-btn.hidden-btn {
+    display: none;
+}
+
+/* ========================================
+   更多功能面板 - QQ风格
+======================================== */
+.toolbar-more-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f7f7f7;
+    border-top: 0.5px solid #e5e5e5;
+    z-index: 160;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 70vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    touch-action: pan-y;
+}
+
+.toolbar-more-panel.show {
+    transform: translateY(0);
+}
+
+/* 关闭按钮 */
+.more-panel-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-bottom: 0.5px solid #e5e5e5;
+    background: #fff;
+}
+
+.more-panel-close-btn {
+    width: 32px;
+    height: 4px;
+    background: #d0d0d0;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+}
+
+/* 滑动容器 */
+.more-panel-swiper {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    display: flex;
+}
+
+.more-panel-swiper::-webkit-scrollbar {
+    display: none;
+}
+
+/* 每一页 */
+.more-panel-page {
+    min-width: 100%;
+    width: 100%;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 20px 16px;
+    box-sizing: border-box;
+}
+
+/* 网格布局 - 一行4个 */
+.more-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 12px;
+}
+
+/* 功能项 */
+.more-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: opacity 0.2s;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0,0,0,0.05);
+    user-select: none;
+    -webkit-user-select: none;
+    min-width: 60px;
+    min-height: 60px;
+}
+
+.more-item:active {
+    opacity: 0.6;
+}
+
+.more-item-icon {
+    width: 48px;
+    height: 48px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.more-item-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #666;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.more-item span {
+    font-size: 12px;
+    color: #000;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* 分页指示器 */
+.more-panel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    background: #f7f7f7;
+}
+
+.more-panel-dot {
+    width: 6px;
+    height: 6px;
+    background: #d0d0d0;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.more-panel-dot.active {
+    width: 18px;
+    background: #666;
+    border-radius: 3px;
+}
+
+/* ========================================
+   表情包库 - QQ风格
+======================================== */
+.emoji-library {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f7f7f7;
+    border-top: 0.5px solid #e5e5e5;
+    z-index: 150;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none !important;
+    pointer-events: auto;
+    touch-action: pan-y;
+}
+
+.emoji-library.show {
+    display: block !important;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 10px 8px 12px 8px;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 表情包库顶部按钮栏 */
+.emoji-lib-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 0 4px;
+}
+
+.emoji-lib-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.emoji-lib-btn:active {
+    background: #f0f0f0;
+    transform: scale(0.95);
+}
+
+.emoji-lib-btn svg {
+    pointer-events: none;
+}
+
+/* 分组标签栏 */
+.emoji-groups-bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex: 1;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 4px;
+}
+
+.emoji-groups-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.emoji-group-tag {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 14px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.emoji-group-tag:active {
+    transform: scale(0.96);
+}
+
+.emoji-group-tag.active {
+    background: #ffd5e0;
+    color: #333;
+    font-weight: 600;
+}
+
+/* 表情包网格 */
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px;
+}
+
+.emoji-item {
+    border: none;
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    background: #fff;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.emoji-item:active {
+    background: #f8f8f8;
+    transform: scale(0.95);
+}
+
+.emoji-item.selected {
+    border: 2px solid #ffd5e0;
+    background: #fff5f8;
+    box-shadow: 0 2px 6px rgba(255, 213, 224, 0.3);
+}
+
+.emoji-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    margin: 0 auto;
+    border-radius: 6px;
+}
+
+.emoji-text {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.emoji-checkbox {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    display: none;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.emoji-item.selecting .emoji-checkbox {
+    display: block;
+}
+
+.emoji-checkbox.checked {
+    background: #ffd5e0;
+    border-color: #ffd5e0;
+}
+
+.emoji-checkbox.checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ========================================
+   移动端适配
+======================================== */
+@media screen and (max-width: 375px) {
+    .chat-nav {
+        height: 46px;
+        min-height: 46px;
+    }
+    
+    .chat-title {
+        font-size: 16px;
+    }
+    
+    .tb-btn {
+        max-width: 55px;
+    }
+    
+    .tb-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .tb-btn-label {
+        font-size: 9px;
+    }
+    
+    .more-panel-grid {
+        gap: 16px 10px;
+    }
+    
+    .more-item-icon {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .more-item span {
+        font-size: 11px;
+    }
+}
+
+/* 横屏适配 */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .chat-toolbar {
+        padding: 6px 8px;
+        min-height: 48px;
+    }
+    
+    .tb-btn {
+        height: 30px;
+    }
+    
+    .toolbar-more-panel {
+        max-height: 80vh;
+    }
+    
+    .emoji-library.show {
+        max-height: 60vh;
+    }
+}
+
+/* ========================================
+   主题适配(如果需要)
+======================================== */
+@media (prefers-color-scheme: dark) {
+    /* 暗色模式可以在这里添加 */
+}

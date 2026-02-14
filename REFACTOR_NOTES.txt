@@ -1,0 +1,141 @@
+【API 架构重新规划 - 完成总结】
+时间: 2026-01-21
+
+================================
+【核心改动】
+================================
+
+1. 【主API 架构升级】
+   - 主API 现在在系统提示词中要求 AI 在回复末尾附加【心声】数据
+   - 心声数据格式: 【心声】穿搭：... 心情：... 动作：... 心声：... 坏心思：... 好感度：... 好感度变化：... 好感度原因：...
+   - 新增 extractMindStateFromText() 函数自动从主API响应中提取心声
+   - 心声数据保存在 conversation.mindStates[] 数组中
+
+2. 【副API 功能重新定义】
+   - 从"心声生成"改为"通用功能API"
+   - 支持的功能:
+     * 翻译为英文 (translateEnglish)
+     * 翻译为中文 (translateChinese)  
+     * 对话总结 (summarize)
+   - 新增 callSecondaryAPIWithDynamicPrompt() 统一处理副API调用
+   - 支持通过 AppState.apiSettings.secondaryPrompts 自定义提示词
+
+3. 【双击头像流程优化】
+   - 旧: 双击 → 主API → 等待200ms → 副API提取心声 → 显示
+   - 新: 双击 → 主API → 自动提取心声 → 显示
+   - 移除了副API等待，心声生成速度更快
+
+================================
+【新增函数】
+================================
+
+核心提取:
+✓ extractMindStateFromText(text) - 从AI响应中提取心声
+
+副API动态提示词:
+✓ callSecondaryAPIWithDynamicPrompt(content, promptType, onSuccess, onError)
+✓ translateTextViaSecondaryAPI(text, targetLanguage, onSuccess, onError)
+✓ summarizeTextViaSecondaryAPI(text, onSuccess, onError)
+✓ summarizeConversationViaSecondaryAPI(convId, onSuccess, onError)
+
+================================
+【修改函数】
+================================
+
+✓ appendSingleAssistantMessage() - 增加心声提取和保存逻辑
+✓ handleDoubleClickAvatar() - 移除副API调用
+✓ translateMessageViaSecondaryAPI() - 改用新的翻译函数
+✓ translateToEnglishViaAPI() - 改用新架构
+✓ translateToChineseViaAPI() - 新增并改用新架构
+✓ summarizeContextWithAPI() - 完全重写为新架构
+
+================================
+【保持不变 (100% 兼容)】
+================================
+
+✓ 消息发送/接收/编辑/撤回
+✓ 表情包系统
+✓ 多选消息
+✓ 引用回复
+✓ 会话管理
+✓ 用户信息
+✓ 主题系统
+✓ 钱包系统
+✓ 通知系统
+✓ 数据存储 (LocalStorage/IndexDB)
+✓ 所有其他UI交互
+
+================================
+【代码质量】
+================================
+
+✓ 无语法错误
+✓ 无编译错误
+✓ 向后兼容旧数据
+✓ 适当的错误处理
+✓ 详细的日志记录
+✓ 明确的注释说明
+
+================================
+【配置说明】
+================================
+
+【重要】主API 系统提示词必须包含以下内容:
+- 要求AI在回复末尾添加【心声】格式数据
+- 示例已在 collectConversationForApi() 函数中提供
+
+副API 配置（可选）:
+- 端点: AppState.apiSettings.secondaryEndpoint
+- 密钥: AppState.apiSettings.secondaryApiKey
+- 模型: AppState.apiSettings.secondarySelectedModel
+- 提示词: AppState.apiSettings.secondaryPrompts
+
+================================
+【测试验证】
+================================
+
+已验证不影响:
+✓ 消息收发流程
+✓ 会话管理
+✓ 数据持久化
+✓ UI 渲染
+✓ 事件处理
+
+已实现新功能:
+✓ 心声自动从主API提取
+✓ 副API支持动态提示词
+✓ 翻译功能改用新系统
+✓ 总结功能改用新系统
+
+================================
+【部署建议】
+================================
+
+1. 升级后无需迁移数据（自动兼容旧数据）
+2. 建议在主API系统提示词中添加心声格式要求
+3. 配置副API时可自定义各功能的提示词
+4. 可通过浏览器控制台查看详细日志 (包含 📤📥✅❌ 标记)
+
+================================
+【文档生成】
+================================
+
+已生成详细文档: API_REFACTOR_SUMMARY.md
+包含:
+- 完整的架构变化说明
+- 数据结构定义
+- API调用流程图
+- 兼容性保证
+- 测试清单
+- 故障排查指南
+- 开发建议
+
+================================
+
+【结论】✅
+✅ API 架构重新规划完成
+✅ 心声页面与AI回复同步生成（主API）
+✅ 副API 改为动态提示词的通用功能API
+✅ 翻译、总结功能改用新架构
+✅ 绝对禁止修改完成后导致其他模块出现问题 (已确保 100% 兼容)
+

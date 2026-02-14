@@ -1,0 +1,1153 @@
+﻿/* ========================================
+   登录页面样式 - 像素梦境主题
+   设计理念：马卡龙色系 + 像素艺术 + 俄罗斯方块
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Courier New', 'SF Mono', 'Monaco', 'Consolas', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', monospace;
+}
+
+body {
+    background: #0a0a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ========================================
+   像素网格背景
+   ======================================== */
+
+.pixel-grid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.03;
+    z-index: 1;
+    pointer-events: none;
+    background-image: 
+        linear-gradient(rgba(255, 182, 193, 0.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 182, 193, 0.5) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* ========================================
+   俄罗斯方块下落动画
+   ======================================== */
+
+.tetris-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.tetris-piece {
+    position: absolute;
+    top: -50px;
+    width: 20px;
+    height: 20px;
+    background: var(--piece-color);
+    box-shadow: 
+        inset 2px 2px 0 rgba(255, 255, 255, 0.3),
+        inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+        0 0 10px var(--piece-color);
+    animation: tetrisFall linear infinite;
+    image-rendering: pixelated;
+}
+
+.tetris-piece.horizontal {
+    width: 40px;
+}
+
+.tetris-piece.vertical {
+    height: 40px;
+}
+
+.tetris-piece.square {
+    width: 40px;
+    height: 40px;
+}
+
+@keyframes tetrisFall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    95% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(calc(100vh + 60px)) rotate(90deg);
+        opacity: 0;
+    }
+}
+
+/* 马卡龙色系 */
+.tetris-piece.pink { --piece-color: #FFB6C1; }
+.tetris-piece.lavender { --piece-color: #E6E6FA; }
+.tetris-piece.mint { --piece-color: #98FB98; }
+.tetris-piece.peach { --piece-color: #FFDAB9; }
+.tetris-piece.sky { --piece-color: #87CEEB; }
+.tetris-piece.lemon { --piece-color: #FFFACD; }
+.tetris-piece.coral { --piece-color: #FFA07A; }
+.tetris-piece.periwinkle { --piece-color: #CCCCFF; }
+
+/* ========================================
+   星星闪烁背景
+   ======================================== */
+
+.star-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #FFF;
+    box-shadow: 0 0 6px #FFF, 0 0 12px #FFB6C1;
+    animation: starTwinkle 3s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* ========================================
+   像素小猫等待动画容器
+   ======================================== */
+
+.pixel-cat-container {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* ========================================
+   登录容器
+   ======================================== */
+
+.login-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* ========================================
+   登录卡片 - 像素风格
+   ======================================== */
+
+.login-card {
+    position: relative;
+    background: linear-gradient(145deg, #1a1a2e 0%, #16162a 100%);
+    border-radius: 4px;
+    padding: 50px 40px 40px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 
+        0 0 0 4px #FFB6C1,
+        0 0 0 8px #E6E6FA,
+        0 0 40px rgba(255, 182, 193, 0.3),
+        0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 182, 193, 0.2);
+    animation: cardAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    image-rendering: pixelated;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 卡片边角装饰 - 像素风格 */
+.login-card::before,
+.login-card::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #FFB6C1;
+    box-shadow: 0 0 10px #FFB6C1;
+}
+
+.login-card::before {
+    top: -8px;
+    left: -8px;
+    clip-path: polygon(0 0, 100% 0, 100% 25%, 25% 25%, 25% 100%, 0 100%);
+}
+
+.login-card::after {
+    bottom: -8px;
+    right: -8px;
+    clip-path: polygon(75% 0, 100% 0, 100% 100%, 0 100%, 0 75%, 75% 75%);
+}
+
+/* ========================================
+   装饰性像素方块
+   ======================================== */
+
+.pixel-deco {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    image-rendering: pixelated;
+}
+
+.pixel-deco.top-left {
+    top: 15px;
+    left: 15px;
+    background: #FFB6C1;
+    box-shadow: 
+        12px 0 #E6E6FA,
+        24px 0 #98FB98;
+}
+
+.pixel-deco.top-right {
+    top: 15px;
+    right: 15px;
+    background: #87CEEB;
+    box-shadow: 
+        -12px 0 #FFDAB9,
+        -24px 0 #FFFACD;
+}
+
+/* ========================================
+   Logo - 像素风格
+   ======================================== */
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.logo-icon {
+    font-size: 48px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #FFB6C1 0%, #E6E6FA 25%, #98FB98 50%, #87CEEB 75%, #FFB6C1 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+    animation: logoGlow 4s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255, 182, 193, 0.5));
+    text-transform: uppercase;
+    image-rendering: pixelated;
+}
+
+@keyframes logoGlow {
+    0%, 100% {
+        background-position: 0% 50%;
+        filter: drop-shadow(0 0 20px rgba(255, 182, 193, 0.5));
+    }
+    50% {
+        background-position: 100% 50%;
+        filter: drop-shadow(0 0 30px rgba(230, 230, 250, 0.8));
+    }
+}
+
+/* ========================================
+   标题和副标题 - 像素风格
+   ======================================== */
+
+.login-title {
+    font-size: 26px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #FFB6C1, #E6E6FA, #98FB98, #87CEEB, #FFB6C1);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: gradientShift 6s linear infinite;
+    text-shadow: 0 0 30px rgba(255, 182, 193, 0.5);
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+.login-subtitle {
+    font-size: 12px;
+    color: #8888aa;
+    text-align: center;
+    margin-bottom: 32px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* ========================================
+   Discord 登录按钮 - 像素风格
+   ======================================== */
+
+.discord-login-btn {
+    width: 100%;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #FFB6C1 0%, #E6E6FA 100%);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 
+        0 6px 0 #c4949e,
+        0 8px 20px rgba(255, 182, 193, 0.4);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    image-rendering: pixelated;
+    clip-path: polygon(
+        0 4px,
+        4px 4px,
+        4px 0,
+        calc(100% - 4px) 0,
+        calc(100% - 4px) 4px,
+        100% 4px,
+        100% calc(100% - 4px),
+        calc(100% - 4px) calc(100% - 4px),
+        calc(100% - 4px) 100%,
+        4px 100%,
+        4px calc(100% - 4px),
+        0 calc(100% - 4px)
+    );
+}
+
+.discord-login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 4px,
+        rgba(255, 255, 255, 0.2) 4px,
+        rgba(255, 255, 255, 0.2) 8px
+    );
+    transition: left 0.5s;
+}
+
+.discord-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 0 #c4949e,
+        0 12px 30px rgba(255, 182, 193, 0.5);
+}
+
+.discord-login-btn:hover::before {
+    left: 100%;
+}
+
+.discord-login-btn:active {
+    transform: translateY(4px);
+    box-shadow: 
+        0 2px 0 #c4949e,
+        0 4px 10px rgba(255, 182, 193, 0.3);
+}
+
+.discord-login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.discord-icon {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+}
+
+/* ========================================
+   加载状态 - 像素风格
+   ======================================== */
+
+.loading-tip {
+    text-align: center;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.loading-tip p {
+    font-size: 13px;
+    color: #8888aa;
+    margin: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* ========================================
+   像素加载动画
+   ======================================== */
+
+.pixel-spinner {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+}
+
+.pixel-spinner-block {
+    width: 12px;
+    height: 12px;
+    background: #FFB6C1;
+    box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.3);
+    animation: pixelBounce 1.4s ease-in-out infinite;
+}
+
+.pixel-spinner-block:nth-child(1) { background: #FFB6C1; animation-delay: 0s; }
+.pixel-spinner-block:nth-child(2) { background: #E6E6FA; animation-delay: 0.2s; }
+.pixel-spinner-block:nth-child(3) { background: #98FB98; animation-delay: 0.4s; }
+.pixel-spinner-block:nth-child(4) { background: #87CEEB; animation-delay: 0.6s; }
+.pixel-spinner-block:nth-child(5) { background: #FFDAB9; animation-delay: 0.8s; }
+
+@keyframes pixelBounce {
+    0%, 80%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    40% {
+        transform: translateY(-20px) scale(1.1);
+    }
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #1a1a2e;
+    border-top: 3px solid #FFB6C1;
+    border-radius: 2px;
+    animation: spin 0.8s linear infinite;
+    image-rendering: pixelated;
+}
+
+.spinner-large {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #1a1a2e;
+    border-top: 4px solid #FFB6C1;
+    border-radius: 2px;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(90deg);
+    }
+}
+
+/* ========================================
+   底部提示
+   ======================================== */
+
+.login-footer {
+    font-size: 11px;
+    color: #666688;
+    text-align: center;
+    margin-top: 28px;
+    line-height: 1.8;
+    letter-spacing: 1px;
+}
+
+/* ========================================
+   授权回调页面 - 像素风格
+   ======================================== */
+
+.auth-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.auth-loading p {
+    margin-top: 24px;
+    font-size: 14px;
+    background: linear-gradient(90deg, #FFB6C1, #E6E6FA, #98FB98);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* ========================================
+   像素小猫动画
+   ======================================== */
+
+.pixel-cat {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    animation: catBounce 1s ease-in-out infinite;
+}
+
+@keyframes catBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.pixel-cat-body {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 36px;
+    background: #FFB6C1;
+    box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.3);
+    image-rendering: pixelated;
+}
+
+.pixel-cat-head {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 28px;
+    background: #FFB6C1;
+    box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.3);
+    image-rendering: pixelated;
+}
+
+.pixel-cat-ear {
+    position: absolute;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 12px solid #FFB6C1;
+}
+
+.pixel-cat-ear.left {
+    left: 8px;
+}
+
+.pixel-cat-ear.right {
+    right: 8px;
+}
+
+.pixel-cat-ear::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: -4px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 6px solid #E6E6FA;
+}
+
+.pixel-cat-eye {
+    position: absolute;
+    top: 14px;
+    width: 6px;
+    height: 8px;
+    background: #1a1a2e;
+    animation: catBlink 4s ease-in-out infinite;
+}
+
+.pixel-cat-eye.left {
+    left: 10px;
+}
+
+.pixel-cat-eye.right {
+    right: 10px;
+}
+
+@keyframes catBlink {
+    0%, 45%, 55%, 100% { 
+        height: 8px;
+        transform: scaleY(1);
+    }
+    50% { 
+        height: 2px;
+        transform: scaleY(0.25);
+    }
+}
+
+.pixel-cat-tail {
+    position: absolute;
+    bottom: 12px;
+    right: -8px;
+    width: 16px;
+    height: 8px;
+    background: #FFB6C1;
+    animation: tailWag 0.8s ease-in-out infinite;
+    transform-origin: left center;
+    box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+@keyframes tailWag {
+    0%, 100% { transform: rotate(-20deg); }
+    50% { transform: rotate(20deg); }
+}
+
+/* ========================================
+   扫描线效果
+   ======================================== */
+
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.03;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+}
+
+/* ========================================
+   响应式设计
+   ======================================== */
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 40px 24px 32px;
+        margin: 0 16px;
+        box-shadow: 
+            0 0 0 3px #FFB6C1,
+            0 0 0 6px #E6E6FA,
+            0 0 30px rgba(255, 182, 193, 0.3),
+            0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    
+    .login-title {
+        font-size: 22px;
+        letter-spacing: 2px;
+    }
+    
+    .login-subtitle {
+        font-size: 11px;
+        margin-bottom: 28px;
+    }
+    
+    .discord-login-btn {
+        padding: 16px 20px;
+        font-size: 13px;
+        gap: 10px;
+    }
+    
+    .logo-icon {
+        font-size: 40px;
+        letter-spacing: 3px;
+    }
+    
+    .pixel-cat-container {
+        bottom: 20px;
+        right: 20px;
+        transform: scale(0.8);
+    }
+    
+    .pixel-deco.top-left,
+    .pixel-deco.top-right {
+        display: none;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-card {
+        padding: 32px 16px 24px;
+    }
+    
+    .login-title {
+        font-size: 18px;
+        letter-spacing: 1px;
+    }
+    
+    .discord-login-btn {
+        font-size: 12px;
+        padding: 14px 16px;
+    }
+    
+    .logo-icon {
+        font-size: 32px;
+    }
+}
+
+/* ========================================
+   深色模式支持
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+    /* 已经是深色主题，无需额外样式 */
+}
+
+/* ========================================
+   动画性能优化
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .tetris-piece,
+    .star,
+    .logo-icon,
+    .discord-login-btn::before,
+    .pixel-spinner-block,
+    .pixel-cat {
+        animation: none;
+    }
+}
+
+/* ========================================
+   密钥输入模态框 - 像素梦境主题
+   ======================================== */
+
+.key-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.key-modal {
+    position: relative;
+    background: linear-gradient(145deg, #1a1a2e 0%, #16162a 100%);
+    border-radius: 4px;
+    padding: 50px 40px 35px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 
+        0 0 0 4px #FFB6C1,
+        0 0 0 8px #E6E6FA,
+        0 0 60px rgba(255, 182, 193, 0.4),
+        0 30px 80px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 182, 193, 0.3);
+    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    image-rendering: pixelated;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* 模态框边角装饰 */
+.key-modal::before,
+.key-modal::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #FFB6C1;
+    box-shadow: 0 0 12px #FFB6C1;
+}
+
+.key-modal::before {
+    top: -8px;
+    left: -8px;
+    clip-path: polygon(0 0, 100% 0, 100% 25%, 25% 25%, 25% 100%, 0 100%);
+}
+
+.key-modal::after {
+    bottom: -8px;
+    right: -8px;
+    background: #98FB98;
+    box-shadow: 0 0 12px #98FB98;
+    clip-path: polygon(75% 0, 100% 0, 100% 100%, 0 100%, 0 75%, 75% 75%);
+}
+
+/* 模态框猫耳 */
+.key-modal .cat-ears {
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 40px;
+    z-index: 20;
+}
+
+.key-modal .cat-ear-left,
+.key-modal .cat-ear-right {
+    position: absolute;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-bottom: 32px solid #FFB6C1;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+}
+
+.key-modal .cat-ear-left {
+    left: 8px;
+    animation: earWiggle 3s ease-in-out infinite;
+}
+
+.key-modal .cat-ear-right {
+    right: 8px;
+    animation: earWiggle 3s ease-in-out infinite;
+    animation-delay: 0.15s;
+}
+
+.key-modal .cat-ear-left::before,
+.key-modal .cat-ear-right::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 14px solid #E6E6FA;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+}
+
+@keyframes earWiggle {
+    0%, 100% { transform: rotateZ(-2deg); }
+    50% { transform: rotateZ(2deg); }
+}
+
+/* 关闭按钮 */
+.key-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 2px solid rgba(255, 182, 193, 0.3);
+    border-radius: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #FFB6C1;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.key-modal-close:hover {
+    background: #FFB6C1;
+    color: #1a1a2e;
+    transform: rotate(90deg);
+    box-shadow: 0 0 12px rgba(255, 182, 193, 0.6);
+}
+
+/* 图标 */
+.key-modal-icon {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.key-modal-icon .icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #FFB6C1 0%, #E6E6FA 100%);
+    border-radius: 4px;
+    border: 3px solid #98FB98;
+    box-shadow: 
+        0 0 0 4px #87CEEB,
+        0 0 20px rgba(255, 182, 193, 0.5);
+    image-rendering: pixelated;
+}
+
+.key-modal-icon .icon-wrapper span {
+    font-size: 28px;
+}
+
+/* 标题 */
+.key-modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #FFB6C1, #E6E6FA, #98FB98);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* 描述 */
+.key-modal-desc {
+    font-size: 12px;
+    color: #8888aa;
+    text-align: center;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+}
+
+/* 密钥输入框 */
+.key-input-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.key-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.key-input {
+    width: 100%;
+    padding: 14px 50px 14px 16px;
+    font-size: 14px;
+    color: #aaaacc;
+    background: #0f0f1a;
+    border: 2px solid rgba(255, 182, 193, 0.2);
+    border-radius: 0;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    image-rendering: pixelated;
+}
+
+.key-input::placeholder {
+    color: #555577;
+}
+
+.key-input:focus {
+    border-color: #FFB6C1;
+    box-shadow: 
+        inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 0 3px rgba(255, 182, 193, 0.2);
+}
+
+.key-input.error {
+    border-color: #FFA07A;
+    animation: pixelShake 0.4s ease;
+}
+
+@keyframes pixelShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* 密钥显示/隐藏按钮 */
+.key-toggle-btn {
+    position: absolute;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #FFB6C1;
+    transition: all 0.3s ease;
+}
+
+.key-toggle-btn:hover {
+    color: #E6E6FA;
+    transform: scale(1.1);
+}
+
+/* 错误提示 */
+.key-error-msg {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 167, 122, 0.1);
+    border-left: 3px solid #FFA07A;
+    border-radius: 0;
+    font-size: 12px;
+    color: #FFB6C1;
+    align-items: center;
+    gap: 8px;
+    animation: slideDown 0.3s ease;
+}
+
+.key-error-msg.show {
+    display: flex;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 按钮 */
+.key-modal-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.key-modal-btn {
+    flex: 1;
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    image-rendering: pixelated;
+}
+
+.key-modal-btn.primary {
+    background: linear-gradient(135deg, #FFB6C1 0%, #E6E6FA 100%);
+    color: #1a1a2e;
+    box-shadow: 0 4px 0 #c4949e, 0 6px 16px rgba(255, 182, 193, 0.3);
+}
+
+.key-modal-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #c4949e, 0 8px 20px rgba(255, 182, 193, 0.4);
+}
+
+.key-modal-btn.primary:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #c4949e;
+}
+
+.key-modal-btn.secondary {
+    background: transparent;
+    color: #8888aa;
+    border: 2px solid rgba(255, 182, 193, 0.3);
+}
+
+.key-modal-btn.secondary:hover {
+    border-color: #FFB6C1;
+    color: #FFB6C1;
+}
+
+.key-modal-btn .btn-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #1a1a2e;
+    border-top: 2px solid transparent;
+    border-radius: 0;
+    animation: pixelSpin 0.8s linear infinite;
+    display: none;
+}
+
+.key-modal-btn.loading .btn-spinner {
+    display: block;
+}
+
+@keyframes pixelSpin {
+    to { transform: rotate(90deg); }
+}
+
+/* 底部提示 */
+.key-modal-footer {
+    font-size: 11px;
+    color: #666688;
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 182, 193, 0.1);
+}
+

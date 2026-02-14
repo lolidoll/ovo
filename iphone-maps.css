@@ -1,0 +1,594 @@
+/**
+ * iPhone 地图应用样式
+ * 完全参考iOS原生地图设计
+ * 高级感、原生app感、适配手机端
+ * 返回和生成按钮透明度设为0，但功能保持可用
+ */
+
+.iphone-maps-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000000;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+    overflow: hidden;
+}
+
+.iphone-maps-page.show {
+    display: flex;
+    transform: translateX(0);
+}
+
+/* 头部导航栏 - 半透明毛玻璃效果 */
+.maps-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.maps-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.maps-back-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.maps-back-btn i {
+    font-size: 18px;
+}
+
+.maps-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.43px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.maps-generate-btn {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 17px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+}
+
+.maps-generate-btn:active {
+    opacity: 0.4;
+}
+
+.maps-generate-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.maps-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* 内容区域 - 全屏地图 */
+.maps-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #e5e5e5;
+}
+
+/* 空状态 - 地图中心显示 */
+.maps-empty {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 10;
+}
+
+.maps-empty-icon {
+    font-size: 72px;
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.maps-empty-text {
+    font-size: 22px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.55px;
+    margin-bottom: 8px;
+}
+
+.maps-empty-hint {
+    font-size: 15px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    line-height: 1.4;
+}
+
+/* 加载状态 */
+.maps-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 20;
+}
+
+.maps-loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #007aff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.maps-loading-text {
+    margin-top: 20px;
+    font-size: 15px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    font-weight: 500;
+}
+
+/* 地图视图 - 全屏 */
+.maps-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    overflow: hidden;
+}
+
+/* 地图网格背景 - 更密集的网格，更真实的地图效果 */
+.maps-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        linear-gradient(rgba(180, 180, 190, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(180, 180, 190, 0.3) 1px, transparent 1px),
+        linear-gradient(rgba(160, 160, 170, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(160, 160, 170, 0.15) 1px, transparent 1px);
+    background-size: 25px 25px, 25px 25px, 5px 5px, 5px 5px;
+    opacity: 0.6;
+}
+
+.maps-roads {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.maps-road {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.maps-road.horizontal {
+    height: 3px;
+    width: 100%;
+}
+
+.maps-road.vertical {
+    width: 3px;
+    height: 100%;
+}
+
+.maps-road.main {
+    background: rgba(255, 204, 0, 0.4);
+    box-shadow: 0 2px 4px rgba(255, 204, 0, 0.2);
+}
+
+.maps-road.main.horizontal {
+    height: 4px;
+}
+
+.maps-road.main.vertical {
+    width: 4px;
+}
+
+.maps-buildings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.maps-building {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: rgba(200, 200, 210, 0.5);
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.maps-building.park {
+    background: rgba(144, 238, 144, 0.5);
+    border-radius: 50%;
+}
+
+.maps-building.office {
+    background: rgba(100, 149, 237, 0.5);
+}
+
+.maps-building.shop {
+    background: rgba(255, 182, 193, 0.5);
+}
+
+/* 路线轨迹 */
+.maps-route {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.maps-route-line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+}
+
+.maps-route-line svg {
+    width: 100%;
+    height: 100%;
+}
+
+.maps-route-line path {
+    stroke: #007aff;
+    stroke-width: 4;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 2px 4px rgba(0, 122, 255, 0.3));
+}
+
+/* 位置标记 - iOS风格的大头针 */
+.maps-marker {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    transform: translate(-50%, -100%);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    z-index: 5;
+}
+
+.maps-marker:active {
+    transform: translate(-50%, -100%) scale(0.9);
+}
+
+.maps-marker-icon {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.maps-marker-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.maps-marker-icon path {
+    fill: #ff3b30;
+}
+
+.maps-marker.current .maps-marker-icon path {
+    fill: #007aff;
+}
+
+/* 时间轴面板 - iOS风格底部抽屉，增大高度显示更多内容 */
+.maps-timeline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 65%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+}
+
+.maps-timeline-handle {
+    width: 36px;
+    height: 5px;
+    background: rgba(142, 142, 147, 0.4);
+    border-radius: 3px;
+    margin: 8px auto;
+}
+
+/* 统计卡片 - iOS风格更紧凑布局 */
+.maps-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 6px 16px 8px;
+}
+
+.maps-stat-item {
+    text-align: center;
+    padding: 8px 6px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.maps-stat-item:active {
+    background: #e8e8e8;
+    transform: scale(0.98);
+}
+
+.maps-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.45px;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.maps-stat-label {
+    font-size: 11px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.1px;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+/* 时间轴头部 - 更紧凑 */
+.maps-timeline-header {
+    padding: 6px 20px 4px;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+
+.maps-timeline-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.55px;
+    margin-bottom: 2px;
+}
+
+.maps-timeline-subtitle {
+    font-size: 14px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    font-weight: 500;
+}
+
+/* 时间轴内容 - 可滚动 */
+.maps-timeline-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.maps-timeline-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* 时间轴项目 - 更紧凑以显示更多内容 */
+.maps-timeline-item {
+    display: flex;
+    padding: 6px 20px;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.maps-timeline-item:active {
+    background: rgba(118, 118, 128, 0.1);
+}
+
+.maps-timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 40px;
+    top: 38px;
+    bottom: -8px;
+    width: 2px;
+    background: rgba(142, 142, 147, 0.3);
+}
+
+.maps-timeline-time {
+    flex-shrink: 0;
+    width: 40px;
+    padding-top: 2px;
+}
+
+.maps-timeline-time-text {
+    font-size: 14px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    font-weight: 500;
+}
+
+.maps-timeline-marker {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #8e8e93;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px 10px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.maps-timeline-marker svg {
+    width: 14px;
+    height: 14px;
+    fill: #ffffff;
+}
+
+.maps-timeline-marker.start {
+    background: #007aff;
+}
+
+.maps-timeline-marker.end {
+    background: #ff3b30;
+}
+
+.maps-timeline-info {
+    flex: 1;
+    padding-top: 2px;
+    min-width: 0;
+}
+
+.maps-timeline-location {
+    font-size: 16px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.4px;
+    margin-bottom: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.maps-timeline-address {
+    font-size: 14px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.maps-timeline-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    letter-spacing: -0.2px;
+    font-weight: 500;
+}
+
+.maps-timeline-duration svg {
+    width: 12px;
+    height: 12px;
+    fill: #8e8e93;
+}
+
+/* 位置类型颜色 */
+.maps-timeline-marker.home {
+    background: #ff9500;
+}
+
+.maps-timeline-marker.work {
+    background: #007aff;
+}
+
+.maps-timeline-marker.food {
+    background: #ff3b30;
+}
+
+.maps-timeline-marker.shopping {
+    background: #ff2d55;
+}
+
+.maps-timeline-marker.entertainment {
+    background: #5e5ce6;
+}
+
+.maps-timeline-marker.transport {
+    background: #30d158;
+}
+
+.maps-timeline-marker.other {
+    background: #8e8e93;
+}
+
+/* 滚动条隐藏 */
+.maps-timeline-content::-webkit-scrollbar {
+    display: none;
+}

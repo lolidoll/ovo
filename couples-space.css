@@ -1,0 +1,1132 @@
+/* 情侣空间 - 粉白色系设计 */
+/* 参考QQ情侣空间、moments.css和iOS原生APP风格 */
+
+:root {
+  --main-pink: #ff6b9d;
+  --light-pink: #ffccd5;
+  --soft-white: #fefefe;
+  --text-dark: #333333;
+  --text-gray: #666666;
+  --text-light: #999999;
+  --border-color: #f0f0f0;
+  --bg-white: #ffffff;
+  --pixel-font: "Pixelify Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  
+  /* iOS安全区域变量 */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+}
+
+/* 容器 */
+.couples-space-container {
+  background: var(--bg-white);
+  min-height: 100vh;
+  font-family: var(--pixel-font);
+  color: var(--text-dark);
+  overflow-x: hidden;
+  padding-bottom: 20px;
+  /* iOS安全区域适配 */
+  padding-bottom: calc(20px + var(--safe-area-inset-bottom));
+}
+
+/* 顶部导航栏 */
+.cs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 18px;
+  padding-top: calc(15px + env(safe-area-inset-top));
+  position: sticky;
+  top: env(safe-area-inset-top);
+  background: var(--bg-white);
+  z-index: 100;
+  border-bottom: 1px solid var(--border-color);
+  /* iOS安全区域适配 */
+  padding-left: calc(18px + env(safe-area-inset-left));
+  padding-right: calc(18px + env(safe-area-inset-right));
+}
+
+.cs-back-btn {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: var(--pixel-font);
+  color: var(--text-gray);
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.cs-back-btn:hover {
+  background: var(--light-pink);
+  color: var(--main-pink);
+}
+
+.cs-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--main-pink);
+}
+
+.cs-selector-btn {
+  background: transparent;
+  border: 1px solid var(--light-pink);
+  color: var(--main-pink);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--pixel-font);
+  transition: all 0.2s;
+}
+
+.cs-selector-btn:hover {
+  background: var(--light-pink);
+}
+
+/* 个人信息卡片 */
+.cs-profile-card {
+  background: linear-gradient(135deg, #fff 0%, #fff5f7 100%);
+  margin: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid var(--light-pink);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.1);
+}
+
+.cs-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.cs-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--light-pink);
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.cs-avatar:hover {
+  transform: scale(1.05);
+}
+
+.cs-profile-info h3 {
+  font-size: 18px;
+  color: var(--main-pink);
+  margin-bottom: 4px;
+}
+
+.cs-profile-info p {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+/* 时间范围选择器 */
+.cs-time-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.cs-time-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--light-pink);
+  background: var(--bg-white);
+  color: var(--text-gray);
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--pixel-font);
+  transition: all 0.2s;
+}
+
+.cs-time-btn:hover {
+  background: var(--light-pink);
+  color: var(--main-pink);
+}
+
+.cs-time-btn.active {
+  background: var(--main-pink);
+  color: white;
+  border-color: var(--main-pink);
+}
+
+/* 核心数据卡片 */
+.cs-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 15px;
+}
+
+.cs-stat-card {
+  background: var(--bg-white);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.cs-stat-card:hover {
+  border-color: var(--light-pink);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.1);
+  transform: translateY(-2px);
+}
+
+.cs-stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--main-pink);
+  margin-bottom: 4px;
+}
+
+.cs-stat-label {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+/* 情感健康报告 */
+.cs-emotion-section {
+  margin: 15px;
+  background: linear-gradient(135deg, #fff 0%, #fff5f7 100%);
+  border-radius: 12px;
+  border: 2px solid var(--light-pink);
+  padding: 20px;
+}
+
+.cs-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--main-pink);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-generate-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--main-pink);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: var(--pixel-font);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 15px;
+}
+
+.cs-generate-btn:hover {
+  background: #ff5a8a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+}
+
+.cs-generate-btn:active {
+  transform: translateY(0);
+}
+
+.cs-generate-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cs-emotion-placeholder {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-light);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.cs-emotion-report {
+  background: var(--bg-white);
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid var(--main-pink);
+}
+
+.cs-report-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-dark);
+  white-space: pre-wrap;
+}
+
+.cs-report-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cs-regenerate-btn,
+.cs-history-btn,
+.cs-view-history-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--main-pink);
+  border: 1px solid var(--main-pink);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--pixel-font);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cs-regenerate-btn:hover,
+.cs-history-btn:hover,
+.cs-view-history-btn:hover {
+  background: var(--light-pink);
+}
+
+.cs-view-history-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* 历史报告列表 */
+.cs-history-modal {
+  max-width: 500px;
+}
+
+.cs-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.cs-history-item {
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s;
+}
+
+.cs-history-item:hover {
+  border-color: var(--light-pink);
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.1);
+}
+
+.cs-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.cs-history-info {
+  flex: 1;
+}
+
+.cs-history-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-pink);
+  margin-bottom: 4px;
+}
+
+.cs-history-meta {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.cs-history-delete {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.cs-history-delete:hover {
+  color: var(--main-pink);
+}
+
+.cs-history-preview {
+  font-size: 13px;
+  color: var(--text-gray);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cs-history-view {
+  width: 100%;
+  padding: 6px 12px;
+  background: var(--light-pink);
+  color: var(--main-pink);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--pixel-font);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cs-history-view:hover {
+  background: var(--main-pink);
+  color: white;
+}
+
+/* 活跃时段分析 */
+.cs-activity-section {
+  margin: 15px;
+  background: var(--bg-white);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+}
+
+.cs-activity-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 120px;
+  gap: 4px;
+  margin-top: 15px;
+}
+
+.cs-activity-bar {
+  flex: 1;
+  background: var(--light-pink);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: all 0.3s;
+  min-height: 10px;
+}
+
+.cs-activity-bar:hover {
+  background: var(--main-pink);
+}
+
+.cs-activity-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.cs-activity-value {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--main-pink);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.cs-activity-bar:hover .cs-activity-value {
+  opacity: 1;
+}
+
+/* 消息类型分布 */
+.cs-message-types {
+  margin: 15px;
+  background: var(--bg-white);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+}
+
+.cs-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.cs-type-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cs-type-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--light-pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-pink);
+  flex-shrink: 0;
+}
+
+.cs-type-info {
+  flex: 1;
+}
+
+.cs-type-name {
+  font-size: 14px;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.cs-type-bar {
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cs-type-progress {
+  height: 100%;
+  background: var(--main-pink);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.cs-type-count {
+  font-size: 14px;
+  color: var(--main-pink);
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* 时光记录 */
+.cs-timeline-section {
+  margin: 15px;
+  background: var(--bg-white);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+}
+
+.cs-timeline {
+  margin-top: 15px;
+  position: relative;
+  padding-left: 30px;
+}
+
+.cs-timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--light-pink);
+}
+
+.cs-timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cs-timeline-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cs-timeline-dot {
+  position: absolute;
+  left: -26px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--main-pink);
+  border: 2px solid var(--bg-white);
+  box-shadow: 0 0 0 2px var(--light-pink);
+}
+
+.cs-timeline-date {
+  font-size: 13px;
+  color: var(--main-pink);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.cs-timeline-content {
+  font-size: 14px;
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+.cs-timeline-meta {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+/* 角色选择器模态框 */
+.cs-selector-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 107, 157, 0.1);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s;
+  /* 防止背景滚动 */
+  overflow: hidden;
+}
+
+.cs-selector-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 移动端居中优化 */
+  padding: 20px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cs-selector-content {
+  background: linear-gradient(135deg, #fff 0%, #fff5f7 100%);
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 85%;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(255, 107, 157, 0.15);
+  border: 2px solid var(--light-pink);
+  animation: slideUp 0.3s;
+  /* 移动端优化 */
+  -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
+  overscroll-behavior: contain; /* 防止滚动穿透 */
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cs-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cs-selector-header h3 {
+  font-size: 18px;
+  color: var(--main-pink);
+  font-weight: 600;
+}
+
+.cs-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.cs-close-btn:hover {
+  color: var(--main-pink);
+}
+
+.cs-character-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-character-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cs-character-item:hover {
+  border-color: var(--main-pink);
+  background: var(--light-pink);
+  transform: translateX(4px);
+}
+
+.cs-character-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 2px solid var(--light-pink);
+  object-fit: cover;
+}
+
+.cs-character-info {
+  flex: 1;
+}
+
+.cs-character-name {
+  font-size: 15px;
+  color: var(--text-dark);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.cs-character-desc {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* 空状态 */
+.cs-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-light);
+}
+
+.cs-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.cs-empty-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* 加载状态 */
+.cs-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+}
+
+.cs-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--light-pink);
+  border-top-color: var(--main-pink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 响应式设计 - 移动端优化 */
+@media (max-width: 768px) {
+  /* 容器 */
+  .couples-space-container {
+    padding-bottom: 80px; /* 为底部导航栏留空间 */
+  }
+  
+  /* 顶部导航栏 */
+  .cs-header {
+    padding: 12px 15px;
+  }
+  
+  .cs-title {
+    font-size: 16px;
+  }
+  
+  .cs-back-btn,
+  .cs-selector-btn {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+  
+  /* 个人信息卡片 */
+  .cs-profile-card {
+    margin: 12px;
+    padding: 16px;
+  }
+  
+  .cs-avatar {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .cs-profile-name {
+    font-size: 16px;
+  }
+  
+  .cs-profile-desc {
+    font-size: 12px;
+  }
+  
+  /* 时间范围选择器 */
+  .cs-time-selector {
+    margin: 12px;
+    padding: 8px;
+    gap: 6px;
+  }
+  
+  .cs-time-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  /* 数据卡片网格 */
+  .cs-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 12px;
+  }
+  
+  .cs-stat-card {
+    padding: 12px;
+  }
+  
+  .cs-stat-value {
+    font-size: 22px;
+  }
+  
+  .cs-stat-label {
+    font-size: 12px;
+  }
+  
+  .cs-stat-icon {
+    font-size: 16px;
+  }
+  
+  /* 情感报告区域 */
+  .cs-emotion-section {
+    margin: 12px;
+    padding: 16px;
+  }
+  
+  .cs-section-title {
+    font-size: 15px;
+  }
+  
+  .cs-generate-btn,
+  .cs-regenerate-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  .cs-emotion-placeholder {
+    font-size: 13px;
+    padding: 20px;
+  }
+  
+  .cs-report-content {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  
+  /* 活跃时段 */
+  .cs-activity-section {
+    margin: 12px;
+    padding: 16px;
+  }
+  
+  .cs-activity-chart {
+    gap: 8px;
+    padding: 15px 10px;
+  }
+  
+  .cs-activity-bar {
+    min-width: 30px;
+  }
+  
+  .cs-activity-value {
+    font-size: 11px;
+  }
+  
+  .cs-activity-label {
+    font-size: 10px;
+  }
+  
+  /* 消息类型 */
+  .cs-message-types {
+    margin: 12px;
+    padding: 16px;
+  }
+  
+  .cs-type-item {
+    padding: 10px;
+  }
+  
+  .cs-type-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .cs-type-name {
+    font-size: 13px;
+  }
+  
+  .cs-type-count {
+    font-size: 13px;
+  }
+  
+  /* 时光记录 */
+  .cs-timeline-section {
+    margin: 12px;
+    padding: 16px;
+  }
+  
+  .cs-timeline {
+    padding-left: 25px;
+  }
+  
+  .cs-timeline-date {
+    font-size: 12px;
+  }
+  
+  .cs-timeline-content {
+    font-size: 13px;
+  }
+  
+  .cs-timeline-meta {
+    font-size: 11px;
+  }
+  
+  /* 角色选择器模态框 */
+  .cs-selector-content {
+    width: 90%;
+    max-width: 100%;
+    padding: 20px;
+    max-height: 80vh;
+    margin: 10px;
+  }
+  
+  .cs-selector-header h3 {
+    font-size: 16px;
+  }
+  
+  .cs-character-item {
+    padding: 10px;
+  }
+  
+  .cs-character-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .cs-character-name {
+    font-size: 14px;
+  }
+  
+  .cs-character-desc {
+    font-size: 11px;
+  }
+  
+  /* 历史报告列表 */
+  .cs-history-modal {
+    max-width: 95%;
+  }
+  
+  .cs-history-list {
+    max-height: 70vh;
+  }
+  
+  .cs-history-item {
+    padding: 10px;
+  }
+  
+  .cs-history-date {
+    font-size: 13px;
+  }
+  
+  .cs-history-meta {
+    font-size: 11px;
+  }
+  
+  .cs-history-preview {
+    font-size: 12px;
+  }
+  
+  .cs-report-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .cs-regenerate-btn,
+  .cs-history-btn {
+    width: 100%;
+  }
+}
+
+/* 小屏幕手机优化 (iPhone SE, 小安卓机) */
+@media (max-width: 375px) {
+  .cs-header {
+    padding: 10px 12px;
+  }
+  
+  .cs-title {
+    font-size: 15px;
+  }
+  
+  .cs-back-btn,
+  .cs-selector-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  .cs-stats-grid {
+    gap: 8px;
+    margin: 10px;
+  }
+  
+  .cs-stat-card {
+    padding: 10px;
+  }
+  
+  .cs-stat-value {
+    font-size: 20px;
+  }
+  
+  .cs-stat-label {
+    font-size: 11px;
+  }
+  
+  .cs-profile-card,
+  .cs-emotion-section,
+  .cs-activity-section,
+  .cs-message-types,
+  .cs-timeline-section {
+    margin: 10px;
+    padding: 12px;
+  }
+  
+  .cs-section-title {
+    font-size: 14px;
+  }
+  
+  .cs-activity-chart {
+    gap: 6px;
+    padding: 12px 8px;
+  }
+  
+  .cs-activity-bar {
+    min-width: 25px;
+  }
+  
+  .cs-selector-content {
+    width: 95%;
+    padding: 16px;
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .cs-selector-content {
+    max-height: 90vh;
+  }
+  
+  .cs-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大可点击区域 */
+  .cs-back-btn,
+  .cs-selector-btn,
+  .cs-time-btn,
+  .cs-character-item {
+    min-height: 44px; /* iOS推荐的最小触摸目标 */
+  }
+  
+  /* 移除hover效果，使用active效果 */
+  .cs-back-btn:active {
+    background: var(--light-pink);
+    color: var(--main-pink);
+  }
+  
+  .cs-selector-btn:active {
+    background: var(--light-pink);
+  }
+  
+  .cs-time-btn:active {
+    background: var(--main-pink);
+    color: white;
+  }
+  
+  .cs-character-item:active {
+    border-color: var(--main-pink);
+    background: var(--light-pink);
+    transform: scale(0.98);
+  }
+  
+  .cs-generate-btn:active,
+  .cs-regenerate-btn:active {
+    background: #ff5a8f;
+    transform: scale(0.98);
+  }
+}
+
+/* 滚动条美化 */
+.cs-selector-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cs-selector-content::-webkit-scrollbar-track {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.cs-selector-content::-webkit-scrollbar-thumb {
+  background: var(--light-pink);
+  border-radius: 3px;
+}
+
+.cs-selector-content::-webkit-scrollbar-thumb:hover {
+  background: var(--main-pink);
+}

@@ -1,0 +1,23 @@
+/*
+ * 密钥验证模态框样式
+ * 
+ * 注意：此样式文件已弃用，所有样式现在使用 login.css 中的 .key-modal-* 类名
+ * 保留此文件仅为兼容性，未来可删除
+ */
+
+/* 所有密钥弹窗样式已移至 login.css，类名包括：
+ * - .key-modal-overlay (遮罩层)
+ * - .key-modal (弹窗容器)
+ * - .key-modal-icon (图标)
+ * - .key-modal-title (标题)
+ * - .key-modal-desc (描述)
+ * - .key-input-container (输入框容器)
+ * - .key-input (输入框)
+ * - .key-toggle-btn (显示/隐藏按钮)
+ * - .key-error-msg (错误提示)
+ * - .key-modal-buttons (按钮组)
+ * - .key-modal-btn (按钮)
+ * - .key-modal-footer (底部提示)
+ * - .key-modal-close (关闭按钮)
+ * - .cat-ears, .cat-ear-left, .cat-ear-right (猫耳装饰)
+ */

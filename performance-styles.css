@@ -1,0 +1,254 @@
+/**
+ * 性能优化样式表
+ * 包含针对聊天界面的CSS性能优化
+ * 
+ * @module PerformanceStyles
+ * @version 1.0.0
+ */
+
+/* ========== 滚动容器优化 ========== */
+
+.chat-messages {
+    /* 启用GPU加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    
+    /* 告诉浏览器这个元素的哪些属性会变化 */
+    will-change: scroll-position;
+    
+    /* 限制重排和重绘的范围 */
+    contain: layout style paint;
+    
+    /* 优化滚动性能 */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    
+    /* 减少合成层创建 */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* ========== 消息气泡优化 ========== */
+
+.chat-bubble {
+    /* 减少重排 */
+    contain: layout style;
+    
+    /* 只在需要时通知浏览器属性变化 */
+    will-change: transform, opacity;
+    
+    /* 硬件加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    
+    /* 减少合成层 */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.chat-bubble.selected {
+    /* 选中状态只改变背景色 */
+    will-change: background-color;
+}
+
+/* ========== 头像优化 ========== */
+
+.chat-avatar {
+    contain: layout style;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* ========== 加载更多提示优化 ========== */
+
+.load-more-hint {
+    contain: layout style;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ========== 消息内容优化 ========== */
+
+.message-content {
+    contain: layout style;
+    will-change: auto;
+}
+
+.message-text {
+    contain: layout style;
+    will-change: auto;
+}
+
+/* ========== 图片优化 ========== */
+
+.message-image {
+    contain: layout;
+    will-change: opacity;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* 防止图片闪烁 */
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* ========== 动画和过渡优化 ========== */
+
+/* 使用GPU加速的淡入动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateZ(0) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateZ(0) translateY(0);
+    }
+}
+
+.chat-bubble.new-message {
+    animation: fadeIn 0.3s ease-out;
+    will-change: transform, opacity;
+}
+
+/* 消息高亮动画 */
+@keyframes highlightPulse {
+    0%, 100% {
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+    50% {
+        background-color: rgba(0, 123, 255, 0.2);
+    }
+}
+
+.chat-bubble.highlight-message {
+    animation: highlightPulse 2s ease-in-out;
+    contain: layout style;
+}
+
+/* ========== 文本选择优化 ========== */
+
+.chat-bubble {
+    /* 改进文本选择性能 */
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+    touch-callout: default;
+}
+
+/* ========== 触摸交互优化 ========== */
+
+.chat-messages {
+    /* 优化触摸响应 */
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ========== 列表渲染优化 ========== */
+
+/* 使用CSS Containment优化大量消息渲染 */
+.chat-messages > * {
+    contain: layout style;
+}
+
+/* 减少重排的伪元素 */
+.chat-bubble::before,
+.chat-bubble::after {
+    contain: layout;
+}
+
+/* ========== 语音消息优化 ========== */
+
+.voice-bubble {
+    contain: layout style;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ========== 翻译内容优化 ========== */
+
+.translation-content {
+    contain: layout style;
+    will-change: opacity;
+}
+
+/* ========== 表情包优化 ========== */
+
+.emoji-sticker {
+    contain: layout;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ========== 位置消息优化 ========== */
+
+.location-message {
+    contain: layout style;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ========== 撤回消息优化 ========== */
+
+.retracted-message-wrapper {
+    contain: layout style;
+    will-change: opacity;
+}
+
+/* ========== 引用消息优化 ========== */
+
+.reply-reference {
+    contain: layout style;
+    will-change: auto;
+}
+
+/* ========== 多选模式优化 ========== */
+
+.chat-bubble.selected {
+    contain: layout style;
+    will-change: background-color, transform;
+}
+
+/* ========== 消息时间戳优化 ========== */
+
+.message-time {
+    contain: layout;
+    will-change: opacity;
+}
+
+/* ========== 工具类 ========== */
+
+/* 强制GPU加速 */
+.gpu-accelerated {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* 限制重排重绘 */
+.contain-all {
+    contain: layout style paint;
+}
+
+/* 优化滚动性能 */
+.optimize-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    will-change: scroll-position;
+}
+
+/* ========== 打印样式优化 ========== */
+
+@media print {
+    .chat-messages {
+        contain: none;
+        transform: none;
+    }
+}

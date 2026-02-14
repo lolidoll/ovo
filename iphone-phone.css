@@ -1,0 +1,709 @@
+/**
+ * iPhone 电话应用 - iOS 白色主题
+ * 完全还原iOS电话的高级感和原生app体验
+ * 返回和生成按钮透明度设为0，但功能保持可用
+ */
+
+.iphone-phone-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.iphone-phone-page.show {
+    display: flex;
+    transform: translateX(0);
+}
+
+/* 电话头部 */
+.phone-header {
+    position: relative;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: #ffffff;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.phone-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
+    z-index: 11;
+}
+
+.phone-back-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.phone-back-btn i {
+    font-size: 18px;
+}
+
+.phone-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #000000;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.phone-generate-btn {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 17px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+    z-index: 11;
+}
+
+.phone-generate-btn:active {
+    opacity: 0.4;
+}
+
+.phone-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* 电话内容区域 */
+.phone-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 0 20px;
+    background: #f2f2f7;
+    -webkit-overflow-scrolling: touch;
+}
+
+.phone-content::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}
+
+/* 空状态 */
+.phone-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px;
+    text-align: center;
+}
+
+.phone-empty-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.phone-empty-text {
+    font-size: 17px;
+    font-weight: 400;
+    color: #8e8e93;
+    margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.phone-empty-hint {
+    font-size: 15px;
+    color: #8e8e93;
+    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+    opacity: 0.7;
+}
+
+/* 加载状态 */
+.phone-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px;
+    text-align: center;
+}
+
+.phone-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 122, 255, 0.2);
+    border-top-color: #007aff;
+    border-radius: 50%;
+    animation: phone-spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes phone-spin {
+    to { transform: rotate(360deg); }
+}
+
+.phone-loading-text {
+    font-size: 15px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+/* 联系人列表 */
+.phone-contacts {
+    padding: 20px 0;
+}
+
+.contact-section {
+    margin-bottom: 20px;
+}
+
+.contact-section-header {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: #ffffff;
+    border-bottom: 0.5px solid #e5e5ea;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.contact-item:active {
+    background: #f2f2f7;
+}
+
+.contact-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    overflow: hidden;
+}
+
+.contact-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-name {
+    font-size: 17px;
+    font-weight: 400;
+    color: #000000;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.contact-subtitle {
+    font-size: 15px;
+    color: #8e8e93;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.contact-meta {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.contact-time {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.contact-type {
+    font-size: 11px;
+    color: #8e8e93;
+    padding: 2px 8px;
+    background: rgba(142, 142, 147, 0.15);
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.contact-type.incoming {
+    color: #34c759;
+    background: rgba(52, 199, 89, 0.15);
+}
+
+.contact-type.outgoing {
+    color: #007aff;
+    background: rgba(0, 122, 255, 0.15);
+}
+
+.contact-type.missed {
+    color: #ff3b30;
+    background: rgba(255, 59, 48, 0.15);
+}
+
+/* 最近通话记录 */
+.phone-recent-calls {
+    margin-top: 20px;
+}
+
+.recent-call-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: #ffffff;
+    border-bottom: 0.5px solid #e5e5ea;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.recent-call-item:active {
+    background: #f2f2f7;
+}
+
+.call-arrow {
+    margin-left: 12px;
+    color: #c7c7cc;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.call-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+    background: #f2f2f7;
+}
+
+.call-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.call-icon.incoming {
+    color: #34c759;
+}
+
+.call-icon.outgoing {
+    color: #007aff;
+}
+
+.call-icon.missed {
+    color: #ff3b30;
+}
+
+.call-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.call-name {
+    font-size: 17px;
+    font-weight: 400;
+    color: #000000;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.call-detail {
+    font-size: 13px;
+    color: #8e8e93;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+}
+
+.call-type {
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.call-duration {
+    color: #8e8e93;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.call-time {
+    font-size: 13px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.2px;
+}
+
+/* 统计卡片 */
+.phone-stats {
+    padding: 20px;
+    margin: 20px 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.stats-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 0.5px solid #e5e5ea;
+}
+
+.stats-row:last-child {
+    border-bottom: none;
+}
+
+.stats-label {
+    font-size: 17px;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.stats-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: #007aff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.stats-value.total-calls {
+    color: #34c759;
+}
+
+.stats-value.missed-calls {
+    color: #ff3b30;
+}
+
+/* 快速拨号 */
+.phone-keypad {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px;
+    background: rgba(28, 28, 30, 0.8);
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.keypad-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 28px;
+    font-weight: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin: 0 auto;
+}
+
+.keypad-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.95);
+}
+
+.keypad-sub {
+    font-size: 9px;
+    color: #8e8e93;
+    font-weight: 400;
+    margin-top: 2px;
+    letter-spacing: 1px;
+}
+
+/* 底部通话按钮 */
+.phone-call-actions {
+    padding: 0 20px 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.call-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: none;
+    background: #30d158;
+    color: #fff;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 20px rgba(48, 209, 88, 0.3);
+}
+
+.call-btn:active {
+    transform: scale(0.95);
+    background: #28c03d;
+}
+
+.call-btn svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* 通话列表箭头 */
+.call-arrow {
+    margin-left: 12px;
+    color: #c7c7cc;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* 通话详情弹窗 */
+.call-detail-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.call-detail-modal.show {
+    opacity: 1;
+}
+
+.call-detail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.call-detail-content {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.call-detail-modal.show .call-detail-content {
+    transform: scale(1);
+}
+
+.call-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 0.5px solid #e5e5ea;
+    background: #f8f8f8;
+}
+
+.call-detail-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.call-detail-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e5ea;
+    border: none;
+    border-radius: 50%;
+    color: #000000;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.call-detail-close:active {
+    background: #d1d1d6;
+    transform: scale(0.95);
+}
+
+.call-detail-body {
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.call-detail-avatar {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    overflow: hidden;
+}
+
+.call-detail-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.call-detail-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 30px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.call-detail-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    text-align: left;
+}
+
+.call-detail-info-item {
+    background: #f8f8f8;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.call-detail-info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.call-detail-info-label {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.2px;
+}
+
+.call-detail-info-value {
+    font-size: 17px;
+    font-weight: 400;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.call-detail-info-value.incoming {
+    color: #34c759;
+    font-weight: 400;
+}
+
+.call-detail-info-value.outgoing {
+    color: #007aff;
+    font-weight: 400;
+}
+
+.call-detail-info-value.missed {
+    color: #ff3b30;
+    font-weight: 400;
+}
+
+/* 分隔线 */
+.phone-divider {
+    height: 0.5px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+}

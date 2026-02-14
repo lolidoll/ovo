@@ -1,0 +1,702 @@
+/**
+ * iPhone 钱包应用 - iOS 17 风格
+ * 完全还原iOS钱包的高级感和原生app体验
+ */
+
+.iphone-wallet-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.iphone-wallet-page.show {
+    display: flex;
+    transform: translateX(0);
+}
+
+.iphone-wallet-page.show {
+    display: flex;
+}
+
+/* 钱包头部 */
+.wallet-header {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: #ffffff;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.1);
+}
+
+.wallet-back-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.wallet-back-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(0.95);
+}
+
+.wallet-back-btn i {
+    font-size: 16px;
+}
+
+.wallet-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.3px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.wallet-generate-btn {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+}
+
+.wallet-generate-btn:active {
+    opacity: 0.4;
+}
+
+.wallet-generate-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.wallet-generate-btn.generating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* 钱包内容区域 */
+.wallet-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    background: #f2f2f7;
+    -webkit-overflow-scrolling: touch;
+}
+
+.wallet-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* 空状态 */
+.wallet-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 30px 16px;
+    color: #8e8e93;
+    text-align: center;
+}
+
+.wallet-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.wallet-empty-text {
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+}
+
+.wallet-empty-hint {
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+    opacity: 0.7;
+}
+
+/* 卡片容器 */
+.wallet-cards-container {
+    padding: 12px 12px 8px;
+}
+
+/* 卡片样式 - 重新设计，更真实的银行卡外观 */
+.wallet-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 0 0 12px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wallet-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 卡片装饰背景 */
+.wallet-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* 不同卡片类型的渐变色 */
+.wallet-card.bank-card {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.wallet-card.alipay {
+    background: linear-gradient(135deg, #108ee9 0%, #1890ff 100%);
+}
+
+.wallet-card.wechat {
+    background: linear-gradient(135deg, #09bb07 0%, #2aae67 100%);
+}
+
+.wallet-card.transit {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+}
+
+.wallet-card.subway {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+/* 卡片头部 */
+.wallet-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 8px;
+}
+
+.wallet-card-type {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.wallet-card-logo {
+    font-size: 24px;
+    opacity: 0.9;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* 卡片余额 */
+.wallet-card-balance {
+    position: relative;
+    z-index: 1;
+    margin: 16px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.wallet-card-balance-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.wallet-card-balance-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 卡片底部信息 */
+.wallet-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    z-index: 1;
+}
+
+.wallet-card-number {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 1.5px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 500;
+}
+
+.wallet-card-chip {
+    width: 36px;
+    height: 28px;
+    background: linear-gradient(135deg, #f5d547 0%, #f0c420 100%);
+    border-radius: 5px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.wallet-card-chip::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+    background: linear-gradient(135deg, #daa520 0%, #b8860b 100%);
+    border-radius: 3px;
+}
+
+.wallet-card-chip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 16px;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.1) 2px,
+        rgba(0, 0, 0, 0.1) 3px
+    );
+}
+
+/* 交易记录部分 */
+.wallet-transactions {
+    padding: 0 12px;
+    margin-bottom: 16px;
+}
+
+.wallet-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #000000;
+    margin: 16px 0 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.3px;
+    padding: 0 2px;
+}
+
+.wallet-transaction-list {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.wallet-transaction-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.15s ease;
+}
+
+.wallet-transaction-item:last-child {
+    border-bottom: none;
+}
+
+.wallet-transaction-item:active {
+    background: #f5f5f7;
+}
+
+.wallet-transaction-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+}
+
+.wallet-transaction-icon.expense {
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.wallet-transaction-icon.income {
+    background: rgba(52, 199, 89, 0.1);
+}
+
+.wallet-transaction-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wallet-transaction-icon-emoji {
+    font-size: 18px;
+}
+
+.wallet-transaction-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 8px;
+}
+
+.wallet-transaction-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #000000;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.wallet-transaction-detail {
+    font-size: 11px;
+    color: #8e8e93;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.wallet-transaction-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.wallet-transaction-amount {
+    font-size: 15px;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.wallet-transaction-amount.expense {
+    color: #ff3b30;
+}
+
+.wallet-transaction-amount.income {
+    color: #34c759;
+}
+
+.wallet-transaction-time {
+    font-size: 11px;
+    color: #8e8e93;
+    text-align: right;
+    margin-top: 4px;
+}
+
+/* 加载动画 */
+.wallet-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 16px;
+}
+
+.wallet-loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(0, 122, 255, 0.2);
+    border-top-color: #007aff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.wallet-loading-text {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+}
+
+/* 统计卡片 */
+.wallet-stats {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 12px 12px 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.wallet-stats-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+}
+
+.wallet-stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 4px 2px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.wallet-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wallet-stat-label {
+    font-size: 10px;
+    color: #8e8e93;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 日期分组 */
+.wallet-date-group {
+    margin-bottom: 16px;
+}
+
+.wallet-date-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    padding: 0 12px 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.3px;
+}
+
+/* 响应式调整 */
+@media (max-width: 375px) {
+    .wallet-card {
+        min-height: 170px;
+        padding: 14px;
+    }
+    
+    .wallet-card-balance-amount {
+        font-size: 22px;
+    }
+    
+    .wallet-transaction-icon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .wallet-transaction-title {
+        font-size: 13px;
+    }
+    
+    .wallet-transaction-amount {
+        font-size: 14px;
+    }
+}
+
+/* 滚动条隐藏 */
+.wallet-content::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}
+
+/* 交易项右箭头 */
+.wallet-transaction-arrow {
+    color: #c7c7cc;
+    font-size: 12px;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+/* 交易详情页面 */
+.wallet-transaction-detail-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f2f2f7;
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.wallet-transaction-detail-page.show {
+    transform: translateX(0);
+}
+
+/* 交易详情容器 */
+.transaction-detail-container {
+    padding: 16px 12px;
+}
+
+/* 金额卡片 */
+.transaction-detail-amount-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.transaction-detail-merchant {
+    font-size: 16px;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+}
+
+.transaction-detail-amount {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.transaction-detail-amount.expense {
+    color: #ff3b30;
+}
+
+.transaction-detail-amount.income {
+    color: #34c759;
+}
+
+.transaction-detail-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.status-badge.expense {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+}
+
+.status-badge.income {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34c759;
+}
+
+/* 交易信息区块 */
+.transaction-detail-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.transaction-detail-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.transaction-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 0.33px solid rgba(0, 0, 0, 0.05);
+}
+
+.transaction-detail-row:last-child {
+    border-bottom: none;
+}
+
+.transaction-detail-label {
+    font-size: 14px;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.transaction-detail-value {
+    font-size: 14px;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-all;
+}
+
+.transaction-detail-description {
+    font-size: 14px;
+    color: #000000;
+    line-height: 1.5;
+    padding: 8px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}

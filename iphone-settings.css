@@ -1,0 +1,442 @@
+/* iPhone 设置页面样式 - iOS原生高级感 */
+
+.iphone-settings-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000000;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.iphone-settings-page.show {
+    display: flex;
+    transform: translateX(0);
+}
+
+/* 设置页面头部 - iOS原生样式 */
+.settings-header {
+    height: 54px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 16px 10px;
+    background: #000000;
+    border-bottom: 0.33px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+}
+
+.settings-back-btn {
+    background: none;
+    border: none;
+    color: #0a84ff;
+    font-size: 17px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    position: absolute;
+    left: 16px;
+    bottom: 10px;
+    font-weight: 400;
+    letter-spacing: -0.4px;
+    opacity: 0;
+    pointer-events: auto;
+}
+
+.settings-back-btn:active {
+    opacity: 0;
+}
+
+.settings-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+/* 设置内容区域 */
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    background: #000000;
+}
+
+.settings-section {
+    margin-bottom: 36px;
+}
+
+.settings-section:first-child {
+    margin-top: 36px;
+}
+
+.settings-section-title {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8e8e93;
+    text-transform: uppercase;
+    padding: 0 20px 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.08px;
+}
+
+.settings-group {
+    background: #1c1c1e;
+    border-radius: 10px;
+    margin: 0 16px;
+    overflow: hidden;
+}
+
+.settings-item {
+    padding: 11px 16px;
+    border-bottom: 0.33px solid rgba(84, 84, 88, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    background: #1c1c1e;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item:active {
+    background: #2c2c2e;
+}
+
+.settings-item-label {
+    font-size: 17px;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    flex: 1;
+    letter-spacing: -0.4px;
+}
+
+.settings-item-value {
+    font-size: 17px;
+    color: #8e8e93;
+    margin-right: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+/* 颜色选择器 - iOS原生样式 */
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-preview {
+    width: 29px;
+    height: 29px;
+    border-radius: 7px;
+    border: 0.33px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.color-preview:active {
+    transform: scale(0.95);
+}
+
+.color-input {
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+/* 文本输入框 - iOS原生样式 */
+.settings-input {
+    background: #2c2c2e;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 12px;
+    color: #ffffff;
+    font-size: 17px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    width: 100%;
+    margin-top: 8px;
+    letter-spacing: -0.4px;
+}
+
+.settings-input:focus {
+    outline: none;
+    background: #3a3a3c;
+}
+
+.settings-input::placeholder {
+    color: #636366;
+}
+
+/* 文件上传按钮 - iOS黑白灰高级感 */
+.file-upload-btn {
+    position: relative;
+    background: linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 11px;
+    padding: 11px 16px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: -0.3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4),
+                0 0 1px rgba(255, 255, 255, 0.08) inset;
+    transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.file-upload-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: 11px 11px 0 0;
+    pointer-events: none;
+}
+
+.file-upload-btn:active {
+    background: linear-gradient(180deg, #48484a 0%, #3a3a3c 100%);
+    transform: scale(0.97);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 图标样式 */
+.file-upload-btn .btn-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    vertical-align: middle;
+    fill: currentColor;
+}
+
+/* 图标编辑器 - iOS原生样式 */
+.icon-editor {
+    padding: 0;
+}
+
+.icon-editor-item {
+    padding: 11px 16px;
+    border-bottom: 0.33px solid rgba(84, 84, 88, 0.65);
+    background: #1c1c1e;
+}
+
+.icon-editor-item:last-child {
+    border-bottom: none;
+}
+
+.icon-editor-item:active {
+    background: #2c2c2e;
+}
+
+.icon-editor-label {
+    font-size: 17px;
+    color: #ffffff;
+    margin-bottom: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    letter-spacing: -0.4px;
+}
+
+.icon-preview-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.icon-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 13.5px;
+    background: #2c2c2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.icon-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 保存按钮 - iOS黑白灰高级感 */
+.settings-save-btn {
+    position: relative;
+    display: block;
+    margin: 32px auto 40px;
+    width: calc(100% - 32px);
+    max-width: 280px;
+    background: linear-gradient(180deg, #ffffff 0%, #e5e5e5 100%);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 13px;
+    color: #000000;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -0.4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
+                0 0 1px rgba(255, 255, 255, 0.5) inset,
+                0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.settings-save-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: 12px 12px 0 0;
+    pointer-events: none;
+}
+
+.settings-save-btn::after {
+    content: '';
+    display: none;
+}
+
+.settings-save-btn:active {
+    background: linear-gradient(180deg, #f0f0f0 0%, #d5d5d5 100%);
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 保存按钮加载状态 */
+.settings-save-btn.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+@keyframes settings-btn-spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* 滚动条样式 - 隐藏 */
+.settings-content::-webkit-scrollbar {
+    width: 0;
+    display: none;
+}
+
+/* iOS原生滚动效果 */
+.settings-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* 展开/收起动画 */
+.settings-expandable {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.36, 0.66, 0.04, 1);
+}
+
+.settings-expandable.expanded {
+    max-height: 2000px;
+}
+
+.settings-expand-btn {
+    background: none;
+    border: none;
+    color: #0a84ff;
+    font-size: 17px;
+    padding: 11px 16px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    width: 100%;
+    text-align: left;
+    letter-spacing: -0.4px;
+}
+
+.settings-expand-btn:active {
+    opacity: 0.4;
+}
+
+/* 分隔线 */
+.settings-divider {
+    height: 0.33px;
+    background: rgba(84, 84, 88, 0.65);
+    margin: 0 16px;
+}
+
+/* iOS风格开关 */
+.settings-switch {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 31px;
+}
+
+.settings-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.settings-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #39393d;
+    transition: 0.3s;
+    border-radius: 31px;
+}
+
+.settings-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 27px;
+    width: 27px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.settings-switch input:checked + .settings-switch-slider {
+    background-color: #34c759;
+}
+
+.settings-switch input:checked + .settings-switch-slider:before {
+    transform: translateX(20px);
+}
+
+/* 设置项动作样式（如关机按钮） */
+.settings-item-action {
+    cursor: pointer;
+    justify-content: center;
+}
+
+.settings-item-action:active {
+    background: #2c2c2e;
+}

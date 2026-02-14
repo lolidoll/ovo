@@ -1,0 +1,384 @@
+/* 地址管理系统样式 */
+
+/* ==================== 地址管理页面 ==================== */
+
+.address-manage-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+}
+
+.address-manage-page.active {
+    display: flex;
+}
+
+.address-header {
+    height: 44px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    padding-top: env(safe-area-inset-top);
+}
+
+.address-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.address-header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.address-header-right {
+    width: 32px;
+}
+
+.address-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+/* 地址列表 */
+.address-list {
+    background-color: #fff;
+}
+
+.address-item {
+    padding: 15px;
+    border-bottom: 1px solid #f5f5f5;
+    position: relative;
+}
+
+.address-item-top {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.address-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-right: 10px;
+}
+
+.address-item-phone {
+    font-size: 14px;
+    color: #666;
+}
+
+.address-item-default {
+    margin-left: auto;
+    padding: 2px 8px;
+    background-color: #ff4400;
+    color: #fff;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.address-item-region {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.address-item-detail {
+    font-size: 14px;
+    color: #999;
+    line-height: 1.5;
+}
+
+.address-item-actions {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f5f5f5;
+}
+
+.address-item-btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    border-right: 1px solid #f5f5f5;
+}
+
+.address-item-btn:last-child {
+    border-right: none;
+}
+
+.address-item-btn.default {
+    color: #ff4400;
+}
+
+.address-item-btn:active {
+    background-color: #f5f5f5;
+}
+
+/* 空状态 */
+.address-empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.address-empty.active {
+    display: flex;
+}
+
+.address-empty i {
+    font-size: 64px;
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+.address-empty-text {
+    font-size: 14px;
+}
+
+/* 添加地址按钮 */
+.address-add-btn {
+    margin: 15px;
+    padding: 15px;
+    background-color: #ff4400;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.address-add-btn:active {
+    background-color: #e63d00;
+}
+
+.address-add-btn i {
+    margin-right: 5px;
+}
+
+/* ==================== 地址编辑页面 ==================== */
+
+.address-edit-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+}
+
+.address-edit-page.active {
+    display: flex;
+}
+
+.address-edit-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.address-form {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.address-form-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.address-form-item:last-child {
+    border-bottom: none;
+}
+
+.address-form-label {
+    width: 80px;
+    font-size: 14px;
+    color: #333;
+    flex-shrink: 0;
+}
+
+.address-form-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #333;
+}
+
+.address-form-input::placeholder {
+    color: #ccc;
+}
+
+.address-form-textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #333;
+    resize: none;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+.address-form-textarea::placeholder {
+    color: #ccc;
+}
+
+.address-form-switch {
+    justify-content: space-between;
+}
+
+/* 开关样式 */
+.address-switch {
+    width: 50px;
+    height: 28px;
+    background-color: #ddd;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.address-switch.active {
+    background-color: #ff4400;
+}
+
+.address-switch-btn {
+    width: 24px;
+    height: 24px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.address-switch.active .address-switch-btn {
+    left: 24px;
+}
+
+/* 保存按钮 */
+.address-save-btn {
+    padding: 15px;
+    background-color: #ff4400;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.address-save-btn:active {
+    background-color: #e63d00;
+}
+
+/* 删除按钮 */
+.address-delete-btn {
+    padding: 15px;
+    background-color: #fff;
+    color: #ff4400;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 16px;
+    border: 1px solid #ff4400;
+    cursor: pointer;
+}
+
+.address-delete-btn:active {
+    background-color: #fff5f3;
+}
+
+/* ==================== 地址选择页面（订单确认用） ==================== */
+
+.address-select-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1002;
+    display: none;
+    flex-direction: column;
+}
+
+.address-select-page.active {
+    display: flex;
+}
+
+.address-select-item {
+    padding: 15px;
+    background-color: #fff;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    position: relative;
+}
+
+.address-select-item:active {
+    background-color: #f9f9f9;
+}
+
+.address-select-item.selected::after {
+    content: "\f00c";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ff4400;
+    font-size: 18px;
+}
+
+/* 订单确认页面的地址卡片 */
+.order-address-card {
+    cursor: pointer;
+}
+
+.order-address-card:active {
+    background-color: #f9f9f9;
+}
+
+.order-address-arrow {
+    color: #999;
+    font-size: 14px;
+}
