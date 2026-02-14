@@ -86,7 +86,11 @@ export default async function handler(req, res) {
       userAgent: req.headers['user-agent'] || 'unknown'
     };
     
+    // 先标记已使用（永久存储）
     await redis.set(`key:used:${key}`, 'true');
+    // 从有效列表中移除，防止再次使用
+    await redis.srem('keys:valid', key);
+    // 记录使用信息（永久存储）
     await redis.set(`key:info:${key}`, JSON.stringify(useInfo));
     
     // 记录到使用日志
