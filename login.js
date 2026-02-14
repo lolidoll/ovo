@@ -91,8 +91,8 @@ class DiscordAuthManager {
     async initiateLogin() {
         try {
             // 检查密钥是否已验证（由 KeyAuthManager 处理）
-            const keyVerified = localStorage.getItem(this.STORAGE_KEYS.KEY_VERIFIED) === 'true';
-            
+            const keyVerified = localStorage.getItem(this.STORAGE_KEYS.KEY_VERIFIED);
+
             if (!keyVerified) {
                 console.warn('⚠️ 密钥未验证，请先验证密钥');
                 // 通知 authModalManager 显示密钥输入
