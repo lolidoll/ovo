@@ -128,8 +128,6 @@ class DiscordAuthManager {
                 `state=${state}`;
             
             console.log('🚀 完整重定向 URL:', authUrl);
-            // 显示加载状态
-            this.showLoadingTip();
             
             // 重定向到 Discord 授权页面
             window.location.href = authUrl;
@@ -137,7 +135,6 @@ class DiscordAuthManager {
         } catch (error) {
             console.error('启动登录失败:', error);
             alert('启动登录失败，请重试');
-            this.hideLoadingTip();
         }
     }
 
