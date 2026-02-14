@@ -12,10 +12,17 @@ import { Redis } from '@upstash/redis';
 
 /**
  * 初始化 Upstash Redis 客户端（延迟初始化）
+ * 支持 rediss:// 格式的 URL（Upstash 完整连接字符串）
  */
 function getRedisClient() {
+  const url = process.env.REDIS_URL;
+  // 如果 URL 包含 rediss:// 且包含 token，直接使用
+  // 否则需要单独配置 token
+  if (url && url.includes('rediss://')) {
+    return new Redis({ url });
+  }
   return new Redis({
-    url: process.env.REDIS_URL,
+    url,
     token: process.env.REDIS_TOKEN,
   });
 }
