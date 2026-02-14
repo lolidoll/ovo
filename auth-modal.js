@@ -238,8 +238,8 @@ class AuthModalManager {
         const keyVerified = this.keyAuth && this.keyAuth.isVerified();
         const discordLoggedIn = authManager && authManager.isUserLoggedIn();
         
-        if (keyVerified && discordLoggedIn) {
-            // 双重验证都通过，隐藏模态框
+        // Discord 已登录，说明双重验证已完成（密钥在登录时已验证）
+        if (discordLoggedIn) {
             this.hide();
             this.authStep = 'complete';
         } else if (keyVerified) {
