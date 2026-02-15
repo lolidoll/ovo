@@ -34,7 +34,7 @@
                 const defaultPersona = {
                     id: 'persona_' + Date.now(),
                     name: '默认用户',
-                    userName: window.AppState.user?.name || '薯片机用户',
+                    userName: window.AppState.user?.name || '小喵1号',
                     personality: '',
                     isDefault: true,
                     createdAt: new Date().toISOString(),

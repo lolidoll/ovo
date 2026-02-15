@@ -65,7 +65,7 @@
                 imageApiType: 'openai' // 图片生成API类型：'openai', 'stability', 'custom'
             },
             user: {
-                name: '薯片机用户',
+                name: '小喵1号',
                 avatar: '', // 侧边栏头像
                 signature: '这个人很懒，什么都没写~',
                 bgImage: '',
@@ -317,7 +317,7 @@
                 // 如果friends为空，添加示例好友
                 if (!AppState.friends || AppState.friends.length === 0) {
                     AppState.friends = [
-                        { id: 'friend_1', name: '小薯片', avatar: 'https://image.uglycat.cc/qs8mf5.png', friendGroupId: 'group_default'}
+                        { id: 'friend_1', name: '客服1号', avatar: 'https://image.uglycat.cc/hoxxrm.jpg', friendGroupId: 'group_default'}
                     ];
                     console.log('已初始化示例好友数据');
                 }
@@ -2171,14 +2171,14 @@
                 // 如果有Service Worker，使用它发送通知（更可靠）
                 if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification('薯片机', notificationOptions);
+                        registration.showNotification('喵机1号', notificationOptions);
                     }).catch(error => {
                         console.error('通过Service Worker发送通知失败:', error);
                         // 降级使用普通Notification API
-                        new Notification('薯片机', notificationOptions);
+                        new Notification('喵机1号', notificationOptions);
                     });
                 } else {
-                    const notification = new Notification('薯片机', notificationOptions);
+                    const notification = new Notification('喵机1号', notificationOptions);
                     
                     notification.onclick = function() {
                         window.focus();

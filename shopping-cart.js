@@ -791,7 +791,7 @@
             
             // 余额支付成功
             OrderManager.updateOrderStatus(this.currentOrder.id, 'unshipped', {
-                paymentMethod: '余额支付（薯片币）'
+                paymentMethod: '余额支付（喵币）'
             });
             
             // 模拟发货（3秒后自动发货）

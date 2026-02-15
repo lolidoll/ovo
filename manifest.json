@@ -1,7 +1,7 @@
 {
-  "name": "薯片机",
-  "short_name": "薯片机",
-  "description": "薯片机 - 智能聊天应用",
+  "name": "喵机1机",
+  "short_name": "喵机",
+  "description": "喵机1机 - ai聊天",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

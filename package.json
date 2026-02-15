@@ -1,7 +1,7 @@
 {
   "name": "discord-auth-server",
   "version": "1.0.0",
-  "description": "Discord OAuth2 认证服务 - 薯片机应用后端",
+  "description": "Discord OAuth2 认证服务 - 喵机1号应用后端",
   "type": "module",
   "main": "auth-server.js",
   "scripts": {

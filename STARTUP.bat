@@ -2,7 +2,7 @@
 REM Discord 登录系统 - 快速启动脚本（Windows）
 
 echo.
-echo 🚀 薯片机 - Discord 登录系统
+echo 🚀 喵机1号 - Discord 登录系统
 echo ================================
 echo.
 

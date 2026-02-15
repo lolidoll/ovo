@@ -328,7 +328,7 @@ const TransferModule = (function() {
                         <div class="transfer-detail-amount-value">
                             <span class="transfer-detail-amount-unit">¥</span>${transfer.amount.toFixed(2)}
                         </div>
-                        <div class="transfer-detail-amount-label">薯片币</div>
+                        <div class="transfer-detail-amount-label">喵币</div>
                     </div>
                     <div class="transfer-detail-info">
                         <div class="transfer-detail-info-item">

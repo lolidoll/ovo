@@ -198,7 +198,7 @@ class DiscordAuthManager {
                 
                 <!-- 底部提示 -->
                 <div class="key-modal-footer">
-                    还没有密钥？联系小薯片获取哦 ~
+                    还没有密钥？联系小奶芙获取哦 ~
                 </div>
             `;
             
@@ -385,7 +385,7 @@ class DiscordAuthManager {
                 return true;
             } else {
                 if (data.used) {
-                    alert('❌ 该密钥已被使用，已永久失效！\n请联系小薯片获取新密钥。');
+                    alert('❌ 该密钥已被使用，已永久失效！\n请联系小奶芙获取新密钥。');
                 } else {
                     alert('❌ 无效的密钥！\n请检查密钥是否正确。');
                 }

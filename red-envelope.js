@@ -102,7 +102,7 @@ const RedEnvelopeModule = (function() {
                                    step="0.01">
                         </div>
                         <div class="red-envelope-balance">
-                            <span>余额：<span class="red-envelope-balance-amount" id="red-envelope-balance-display">0</span> 薯片币</span>
+                            <span>余额：<span class="red-envelope-balance-amount" id="red-envelope-balance-display">0</span> 喵币</span>
                             <span style="color: #999;">单个红包限额200元</span>
                         </div>
                     </div>
@@ -375,7 +375,7 @@ const RedEnvelopeModule = (function() {
                         <div class="red-envelope-detail-amount-value">
                             <span class="red-envelope-detail-amount-unit">¥</span>${envelope.amount.toFixed(2)}
                         </div>
-                        <div class="red-envelope-detail-amount-label">薯片币</div>
+                        <div class="red-envelope-detail-amount-label">喵币</div>
                     </div>
                     <div class="red-envelope-detail-actions">
                         <button class="red-envelope-detail-btn red-envelope-detail-btn-return" onclick="RedEnvelopeModule.handleUserReturn('${envelope.id}')">退还</button>

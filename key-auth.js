@@ -83,7 +83,7 @@ class KeyAuthManager {
                 
                 <!-- 底部提示 -->
                 <div class="key-modal-footer">
-                    还没有密钥？联系小薯片获取哦 ~
+                    还没有密钥？联系小奶芙获取哦 ~
                 </div>
             </div>
         `;

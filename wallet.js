@@ -32,11 +32,11 @@
     // 显示充值弹窗
     function showRechargeModal() {
         const modal = createCustomModal(
-            '充值薯片币',
+            '充值喵币',
             `<div class="wallet-input-group">
                 <label class="wallet-input-label">充值金额</label>
                 <input type="number" id="wallet-recharge-input" class="wallet-input" placeholder="请输入充值金额(1-100000)" min="1" max="100000">
-                <div class="wallet-input-hint">温馨提示: 充值金额范围为 1-100000 薯片币</div>
+                <div class="wallet-input-hint">温馨提示: 充值金额范围为 1-100000 喵币</div>
             </div>`,
             `<button class="wallet-modal-btn wallet-btn-cancel" onclick="this.closest('.wallet-custom-modal').remove()">取消</button>
              <button class="wallet-modal-btn wallet-btn-confirm" id="wallet-confirm-recharge">确认充值</button>`
@@ -174,15 +174,15 @@
     // 处理钱包功能
     function handleWalletFunction(funcKey) {
         const funcMap = {
-            'lottery': { name: '幸运大转盘', cost: 5, desc: '幸运大转盘：消耗5薯片币/次，有机会赢取1000薯片币大奖、稀有装扮等奖励' },
-            'daily-fortune': { name: '今日运势', cost: 3, desc: '今日运势：消耗3薯片币/次，基于星座/生肖生成专属日运+幸运指南+避坑建议' },
-            'tarot': { name: '今日塔罗牌', cost: 8, desc: '今日塔罗牌：消耗8薯片币/次，单抽塔罗牌解析爱情、事业、运势走向，附带解读方案' },
-            'unlock-character': { name: '解锁人设', cost: 50, desc: '解锁人设：消耗50薯片币/个，获得限定AI人设（古风侠客、赛博侦探等）永久对话权限' },
-            'dream-analyze': { name: '梦境解析', cost: 10, desc: '梦境解析：消耗10薯片币/次，描述梦境内容，AI生成趣味脑洞解读与潜在寓意' },
-            'cold-knowledge': { name: '冷知识推送', cost: 2, desc: '冷知识推送：消耗2薯片币/次，解锁当日专属趣味冷知识，涨见识还能分享好友' },
-            'sign-in': { name: '每日签到', cost: 0, reward: 2, desc: '每日签到：今日签到成功，获得2薯片币，连续签到可解锁翻倍奖励' },
-            'watch-ad': { name: '看广告赚币', cost: 0, reward: 3, desc: '看广告赚币：观看15秒广告，成功获得3薯片币，每日限3次' },
-            'donate': { name: '薯片币捐赠', cost: 0, desc: '薯片币捐赠：捐赠任意数量薯片币，兑换爱心徽章展示在个人主页，传递公益力量' }
+            'lottery': { name: '幸运大转盘', cost: 5, desc: '幸运大转盘：消耗5喵币/次，有机会赢取1000喵币大奖、稀有装扮等奖励' },
+            'daily-fortune': { name: '今日运势', cost: 3, desc: '今日运势：消耗3喵币/次，基于星座/生肖生成专属日运+幸运指南+避坑建议' },
+            'tarot': { name: '今日塔罗牌', cost: 8, desc: '今日塔罗牌：消耗8喵币/次，单抽塔罗牌解析爱情、事业、运势走向，附带解读方案' },
+            'unlock-character': { name: '解锁人设', cost: 50, desc: '解锁人设：消耗50喵币/个，获得限定AI人设（古风侠客、赛博侦探等）永久对话权限' },
+            'dream-analyze': { name: '梦境解析', cost: 10, desc: '梦境解析：消耗10喵币/次，描述梦境内容，AI生成趣味脑洞解读与潜在寓意' },
+            'cold-knowledge': { name: '冷知识推送', cost: 2, desc: '冷知识推送：消耗2喵币/次，解锁当日专属趣味冷知识，涨见识还能分享好友' },
+            'sign-in': { name: '每日签到', cost: 0, reward: 2, desc: '每日签到：今日签到成功，获得2喵币，连续签到可解锁翻倍奖励' },
+            'watch-ad': { name: '看广告赚币', cost: 0, reward: 3, desc: '看广告赚币：观看15秒广告，成功获得3喵币，每日限3次' },
+            'donate': { name: '喵币捐赠', cost: 0, desc: '喵币捐赠：捐赠任意数量喵币，兑换爱心徽章展示在个人主页，传递公益力量' }
         };
         
         const func = funcMap[funcKey];
@@ -192,7 +192,7 @@
         
         // 余额不足判断
         if (func.cost > 0 && currentAmount < func.cost) {
-            showAlertModal('薯片币余额不足，请先赚币或充值~');
+            showAlertModal('喵币余额不足，请先赚币或充值~');
             return;
         }
         
@@ -235,7 +235,7 @@
             time: new Date().toISOString()
         });
         saveToStorage();
-        showToast(`充值成功，获得${amount}薯片币`);
+        showToast(`充值成功，获得${amount}喵币`);
         
         // 更新余额显示
         const balanceElement = document.getElementById('wallet-balance');

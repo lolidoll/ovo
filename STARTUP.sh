@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Discord 登录系统 - 快速启动脚本（适用于 macOS/Linux）
 
-echo "🚀 薯片机 - Discord 登录系统"
+echo "🚀 喵机1号 - Discord 登录系统"
 echo "================================"
 echo ""
 

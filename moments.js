@@ -88,7 +88,7 @@ class MomentsManager {
       } catch (e) {
         console.error('加载朋友圈个人资料失败:', e);
         this.profileData = {
-          name: '薯片机用户',
+          name: '小喵1号',
           avatar: '',
           visitorCount: 0,
           bgImage: ''
@@ -96,7 +96,7 @@ class MomentsManager {
       }
     } else {
       this.profileData = {
-        name: '薯片机用户',
+        name: '小喵1号',
         avatar: '',
         visitorCount: 0,
         bgImage: ''
@@ -244,7 +244,7 @@ class MomentsManager {
   // 获取用户名（仅从朋友圈独立存储获取）
   getUserName() {
     // 直接从朋友圈独立存储的profileData获取
-    return this.profileData.name || '薯片机用户';
+    return this.profileData.name || '小喵1号';
   }
 
   // 获取好友分组

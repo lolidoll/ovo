@@ -65,7 +65,7 @@ self.addEventListener('push', (event) => {
     };
     
     event.waitUntil(
-        self.registration.showNotification('薯片机', options)
+        self.registration.showNotification('喵机1号', options)
     );
 });
 
