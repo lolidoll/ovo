@@ -90,6 +90,8 @@ export default async function handler(req, res) {
     await redis.set(`key:used:${key}`, 'true');
     // 从有效列表中移除，防止再次使用
     await redis.srem('keys:valid', key);
+    // 从pending中删除
+    await redis.srem('pending_keys', key);
     // 记录使用信息（永久存储）
     await redis.set(`key:info:${key}`, JSON.stringify(useInfo));
     
