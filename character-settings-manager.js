@@ -87,16 +87,74 @@
                     chat = conv;
                 }
             
+                // 判断是否为群聊
+                const isGroupChat = chat.type === 'group';
+                const group = isGroupChat ? (window.AppState.groups || []).find(g => g.id === chat.id) : null;
+
             page.innerHTML = `
                 <div class="sub-nav char-settings-nav">
                     <div class="back-btn" id="char-settings-back-btn">
                         <div class="back-arrow"></div>
                         <span>返回</span>
                     </div>
-                    <div class="sub-title">角色设置</div>
+                    <div class="sub-title">${isGroupChat ? '群聊设置' : '角色设置'}</div>
                 </div>
                 
                 <div class="sub-content char-settings-content">
+                    ${isGroupChat ? `
+                    <!-- 群聊头像区域 -->
+                    <div class="char-avatar-section">
+                        <div class="avatar-container" style="justify-content:center;">
+                            <div class="avatar-wrapper char-avatar-wrapper">
+                                <div class="avatar-glow"></div>
+                                <div id="settings-char-avatar-display" class="avatar-display clickable-avatar" data-type="char" style="width:72px;height:72px;">
+                                    ${chat.avatar ? `<img src="${chat.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<span class="avatar-initial" style="font-size:28px;">' + chat.name.charAt(0) + '</span>'}
+                                </div>
+                                <div class="avatar-label">${this.escapeHtml(chat.name)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 群聊信息 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon"><circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/><path d="M3 19c0-3 3-5 6-5"/><path d="M15 14c3 0 6 2 6 5"/></svg>
+                            <span>群聊信息</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">群名称</label>
+                                <input type="text" id="char-name-input" value="${this.escapeHtml(chat.name || '')}" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">群公告</label>
+                                <textarea id="gc-announcement-input" class="form-textarea" placeholder="输入群公告内容...">${this.escapeHtml((group && group.announcement) || '')}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">我在本群的昵称</label>
+                                <input type="text" id="gc-my-nickname" class="form-input" value="${this.escapeHtml((group && group.myNickname) || (window.AppState.user && window.AppState.user.name) || '')}" placeholder="输入你在群里的昵称">
+                                <div class="form-hint">其他群成员将看到此昵称</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 群成员管理 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span>群成员管理 <span style="color:#999;font-weight:400;font-size:12px;">(${(group && group.members) ? group.members.length : 0}人)</span></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="gc-member-list" id="gc-member-list">
+                                ${this.renderGroupMemberList(group)}
+                            </div>
+                            <button id="gc-invite-member-btn" class="btn-secondary btn-full" style="margin-top:12px;">
+                                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                <span>邀请新成员</span>
+                            </button>
+                        </div>
+                    </div>
+                    ` : `
                     <!-- 头像区域 - 公主风格 -->
                     <div class="char-avatar-section">
                         <div class="avatar-container">
@@ -151,6 +209,7 @@
                             </div>
                         </div>
                     </div>
+                    `}
 
                     <!-- 用户人设 - 公主风格卡片 -->
                     <div class="settings-card">
@@ -164,11 +223,13 @@
                             <span>用户人设</span>
                         </div>
                         <div class="card-body">
+                            ${!isGroupChat ? `
                             <div class="form-group">
                                 <label class="form-label">用户名称</label>
                                 <input type="text" id="user-name-for-char" value="${this.escapeHtml(userNameForChar)}" class="form-input">
                                 <div class="form-hint">在与该角色对话时使用此名称</div>
                             </div>
+                            ` : ''}
                             
                             <div class="form-group">
                                 <label class="form-label">选择人设</label>
@@ -562,7 +623,7 @@
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
-                            <span>删除角色</span>
+                            <span>${isGroupChat ? '解散群聊' : '删除角色'}</span>
                         </button>
                     </div>
                     
@@ -577,7 +638,7 @@
                             </svg>
                             <span>删除所有聊天记录</span>
                         </button>
-                        <div class="danger-hint">此操作将清空该角色的所有对话记录和心声，无法恢复</div>
+                        <div class="danger-hint">此操作将清空该${isGroupChat ? '群聊' : '角色'}的所有对话记录${isGroupChat ? '' : '和心声'}，无法恢复</div>
                     </div>
                 </div>
             `;
@@ -878,6 +939,11 @@
                 deleteAllMessagesBtn.addEventListener('click', () => {
                     this.deleteAllMessages(chat.id);
                 });
+            }
+
+            // 群聊特有事件绑定
+            if (chat.type === 'group') {
+                this.bindGroupSettingsEvents(chat);
             }
 
             // 绑定消息气泡颜色控制事件
@@ -1581,11 +1647,25 @@
             const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
 
+            const isGroupChat = conv.type === 'group';
+
             // 保存基本信息
-            conv.name = document.getElementById('char-name-input').value || conv.name;
-            conv.remark = document.getElementById('char-remark-input').value.trim();
-            conv.description = document.getElementById('char-desc-input').value;
-            conv.userNameForChar = document.getElementById('user-name-for-char').value || window.AppState.user.name;
+            const nameInput = document.getElementById('char-name-input');
+            if (nameInput) conv.name = nameInput.value || conv.name;
+
+            const remarkInput = document.getElementById('char-remark-input');
+            if (remarkInput) conv.remark = remarkInput.value.trim();
+
+            const descInput = document.getElementById('char-desc-input');
+            if (descInput) conv.description = descInput.value;
+
+            const userNameInput = document.getElementById('user-name-for-char');
+            if (userNameInput) conv.userNameForChar = userNameInput.value || window.AppState.user.name;
+
+            // 群聊特有设置保存
+            if (isGroupChat) {
+                this.saveGroupSettings(charId);
+            }
 
             // 同步更新好友列表中的备注
             const friend = window.AppState.friends && window.AppState.friends.find(f => f.id === charId);
@@ -1773,6 +1853,11 @@
                 renderChatMessages(charId);
                 const displayName = conv.remark || conv.name;
                 document.getElementById('chat-title').textContent = displayName;
+
+                // 群聊：刷新成员数显示
+                if (isGroupChat && window.GroupChat) {
+                    window.GroupChat.applyGroupChatMode(conv);
+                }
             } else {
                 console.log('ℹ️ saveCharacterSettings - 当前未在该聊天中，跳过UI更新');
             }
@@ -2029,11 +2114,20 @@
             const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
 
+            const isGroup = conv.type === 'group';
+            const confirmMsg = isGroup
+                ? `确定要解散群聊「${conv.name}」并删除所有聊天记录吗？`
+                : `确定要删除 ${conv.name} 及其所有聊天记录吗？`;
+
             this.showPrincessConfirm(
-                `确定要删除 ${conv.name} 及其所有聊天记录吗？`,
+                confirmMsg,
                 () => {
                     window.AppState.conversations = window.AppState.conversations.filter(c => c.id !== charId);
-                    window.AppState.friends = window.AppState.friends.filter(f => f.id !== charId);
+                    if (isGroup) {
+                        window.AppState.groups = (window.AppState.groups || []).filter(g => g.id !== charId);
+                    } else {
+                        window.AppState.friends = window.AppState.friends.filter(f => f.id !== charId);
+                    }
                     delete window.AppState.messages[charId];
 
                     if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
@@ -2043,10 +2137,11 @@
 
                     saveToStorage();
                     renderConversations();
-                    renderFriends();
+                    if (!isGroup) renderFriends();
+                    if (isGroup && typeof renderGroups === 'function') renderGroups();
 
                     document.getElementById('character-settings-page').classList.remove('open');
-                    showToast('角色已删除');
+                    showToast(isGroup ? '群聊已解散' : '角色已删除');
                 },
                 true
             );
@@ -2206,6 +2301,253 @@
                 messageCountEl.textContent = '-';
                 messageCountEl.style.color = '#ffb6c8';
                 messageCountEl.style.opacity = '0.6';
+            }
+        },
+
+        // ===== 群聊设置相关函数 =====
+
+        /**
+         * 渲染群成员列表
+         */
+        renderGroupMemberList: function(group) {
+            if (!group || !group.members || group.members.length === 0) {
+                return '<div style="text-align:center;color:#999;font-size:13px;padding:16px;">暂无群成员</div>';
+            }
+            return group.members.map((m, i) => {
+                const avatarHtml = m.avatar
+                    ? `<img src="${this.escapeHtml(m.avatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                    : `<span style="font-size:14px;color:#666;">${(m.name || '?').charAt(0)}</span>`;
+                return `<div class="gc-member-item" data-member-index="${i}" data-member-id="${m.id}">
+                    <div class="gc-member-avatar">${avatarHtml}</div>
+                    <div class="gc-member-info">
+                        <div class="gc-member-name">${this.escapeHtml(m.name)}</div>
+                        ${m.description ? `<div class="gc-member-desc">${this.escapeHtml(m.description).substring(0, 30)}</div>` : ''}
+                    </div>
+                    <button class="gc-member-kick-btn" data-member-index="${i}" title="移出群聊">
+                        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>`;
+            }).join('');
+        },
+
+        /**
+         * 绑定群聊设置事件
+         */
+        bindGroupSettingsEvents: function(chat) {
+            const self = this;
+            const group = (window.AppState.groups || []).find(g => g.id === chat.id);
+            if (!group) return;
+
+            // 踢出成员
+            document.querySelectorAll('.gc-member-kick-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.dataset.memberIndex);
+                    const member = group.members[idx];
+                    if (!member) return;
+
+                    // QQ风格确认弹窗
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:999999;display:flex;align-items:center;justify-content:center;';
+                    overlay.innerHTML = `
+                        <div style="background:#fff;border-radius:16px;width:280px;overflow:hidden;animation:cgModalIn 0.2s ease;">
+                            <div style="padding:24px 20px 16px;text-align:center;">
+                                <div style="font-size:15px;color:#333;line-height:1.5;">确定将 <strong>${self.escapeHtml(member.name)}</strong> 移出群聊吗？</div>
+                            </div>
+                            <div style="display:flex;border-top:0.5px solid #f0f0f0;">
+                                <button id="gc-kick-cancel" style="flex:1;padding:14px;border:none;background:none;font-size:15px;color:#666;cursor:pointer;">取消</button>
+                                <button id="gc-kick-confirm" style="flex:1;padding:14px;border:none;background:none;font-size:15px;color:#f44;cursor:pointer;border-left:0.5px solid #f0f0f0;">移出</button>
+                            </div>
+                        </div>`;
+                    document.body.appendChild(overlay);
+
+                    document.getElementById('gc-kick-cancel').addEventListener('click', function() { overlay.remove(); });
+                    document.getElementById('gc-kick-confirm').addEventListener('click', function() {
+                        group.members.splice(idx, 1);
+                        group.memberCount = group.members.length;
+                        if (typeof saveToStorage === 'function') saveToStorage();
+                        overlay.remove();
+                        // 刷新成员列表
+                        const listEl = document.getElementById('gc-member-list');
+                        if (listEl) {
+                            listEl.innerHTML = self.renderGroupMemberList(group);
+                            self.bindGroupSettingsEvents(chat); // 重新绑定
+                        }
+                        // 更新成员数显示
+                        const headerSpan = document.querySelector('.gc-member-list')?.closest('.settings-card')?.querySelector('.card-header span span');
+                        if (headerSpan) headerSpan.textContent = `(${group.members.length}人)`;
+                        showToast(member.name + ' 已移出群聊');
+                    });
+                });
+            });
+
+            // 邀请新成员按钮
+            const inviteBtn = document.getElementById('gc-invite-member-btn');
+            if (inviteBtn) {
+                const newInviteBtn = inviteBtn.cloneNode(true);
+                inviteBtn.parentNode.replaceChild(newInviteBtn, inviteBtn);
+                newInviteBtn.addEventListener('click', function() {
+                    self.showInviteMemberModal(chat, group);
+                });
+            }
+        },
+
+        /**
+         * 显示邀请成员弹窗（从好友列表选择 + 自定义添加）
+         */
+        showInviteMemberModal: function(chat, group) {
+            const self = this;
+            const friends = (window.AppState.friends || []);
+            // 过滤掉已在群里的好友
+            const existingIds = group.members.map(m => m.id);
+            const availableFriends = friends.filter(f => !existingIds.includes(f.id));
+
+            const overlay = document.createElement('div');
+            overlay.id = 'gc-invite-modal';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;';
+            overlay.innerHTML = `
+                <div style="background:#fff;border-radius:16px;width:100%;max-width:360px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;animation:cgModalIn 0.25s ease;">
+                    <div style="padding:16px;font-size:16px;font-weight:600;color:#333;text-align:center;border-bottom:0.5px solid #f0f0f0;">邀请新成员</div>
+                    <div style="flex:1;overflow-y:auto;padding:12px;">
+                        ${availableFriends.length > 0 ? `
+                            <div style="font-size:12px;color:#999;margin-bottom:8px;">从好友中选择</div>
+                            ${availableFriends.map(f => {
+                                const av = f.avatar ? `<img src="${self.escapeHtml(f.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `<span>${(f.name||'?').charAt(0)}</span>`;
+                                return `<div class="gc-invite-friend-item" data-friend-id="${f.id}" style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:0.5px solid #f5f5f5;cursor:pointer;">
+                                    <div style="width:22px;height:22px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;flex-shrink:0;" class="gc-invite-check"></div>
+                                    <div style="width:36px;height:36px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${av}</div>
+                                    <div style="font-size:14px;color:#333;">${self.escapeHtml(f.remark || f.name)}</div>
+                                </div>`;
+                            }).join('')}
+                        ` : '<div style="text-align:center;color:#999;font-size:13px;padding:16px;">所有好友都已在群中</div>'}
+                        <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #f0f0f0;">
+                            <div style="font-size:12px;color:#999;margin-bottom:8px;">或添加自定义角色</div>
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <input type="text" id="gc-invite-custom-name" placeholder="角色名称（必填）" style="padding:10px 12px;border:1px solid #e8e8e8;border-radius:8px;font-size:14px;outline:none;">
+                                <input type="text" id="gc-invite-custom-avatar" placeholder="头像URL（可选）" style="padding:8px 12px;border:1px solid #e8e8e8;border-radius:8px;font-size:12px;outline:none;">
+                                <textarea id="gc-invite-custom-desc" placeholder="角色设定（可选）" rows="2" style="padding:8px 12px;border:1px solid #e8e8e8;border-radius:8px;font-size:12px;outline:none;resize:none;font-family:inherit;"></textarea>
+                                <button id="gc-invite-custom-add" style="padding:10px;border:1px dashed #ddd;border-radius:8px;background:none;color:#888;font-size:13px;cursor:pointer;">+ 添加此角色</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;border-top:0.5px solid #f0f0f0;">
+                        <button id="gc-invite-cancel" style="flex:1;padding:14px;border:none;background:none;font-size:15px;color:#666;cursor:pointer;">取消</button>
+                        <button id="gc-invite-confirm" style="flex:1;padding:14px;border:none;background:none;font-size:15px;color:#ffd5e0;font-weight:600;cursor:pointer;border-left:0.5px solid #f0f0f0;">确认邀请</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+
+            let selectedFriendIds = [];
+
+            // 好友选择
+            overlay.querySelectorAll('.gc-invite-friend-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    const fid = this.dataset.friendId;
+                    const check = this.querySelector('.gc-invite-check');
+                    const idx = selectedFriendIds.indexOf(fid);
+                    if (idx >= 0) {
+                        selectedFriendIds.splice(idx, 1);
+                        check.style.background = '';
+                        check.style.borderColor = '#ddd';
+                        check.innerHTML = '';
+                    } else {
+                        selectedFriendIds.push(fid);
+                        check.style.background = '#ffd5e0';
+                        check.style.borderColor = '#ffd5e0';
+                        check.innerHTML = '<span style="color:#fff;font-size:12px;font-weight:bold;">✓</span>';
+                    }
+                });
+            });
+
+            // 自定义角色添加
+            const customAddBtn = document.getElementById('gc-invite-custom-add');
+            if (customAddBtn) {
+                customAddBtn.addEventListener('click', function() {
+                    const name = document.getElementById('gc-invite-custom-name').value.trim();
+                    const avatar = document.getElementById('gc-invite-custom-avatar').value.trim();
+                    const desc = document.getElementById('gc-invite-custom-desc').value.trim();
+                    if (!name) { showToast('请输入角色名称'); return; }
+
+                    group.members.push({
+                        id: 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                        name: name,
+                        avatar: avatar,
+                        description: desc,
+                        isCustom: true
+                    });
+                    group.memberCount = group.members.length;
+                    if (typeof saveToStorage === 'function') saveToStorage();
+
+                    // 清空输入
+                    document.getElementById('gc-invite-custom-name').value = '';
+                    document.getElementById('gc-invite-custom-avatar').value = '';
+                    document.getElementById('gc-invite-custom-desc').value = '';
+                    showToast(name + ' 已加入群聊');
+                });
+            }
+
+            // 取消
+            document.getElementById('gc-invite-cancel').addEventListener('click', function() { overlay.remove(); });
+
+            // 确认邀请
+            document.getElementById('gc-invite-confirm').addEventListener('click', function() {
+                // 添加选中的好友
+                selectedFriendIds.forEach(function(fid) {
+                    const f = friends.find(fr => fr.id === fid);
+                    if (f) {
+                        group.members.push({
+                            id: f.id,
+                            name: f.name,
+                            avatar: f.avatar || '',
+                            description: f.description || '',
+                            isCustom: false
+                        });
+                    }
+                });
+                group.memberCount = group.members.length;
+                if (typeof saveToStorage === 'function') saveToStorage();
+                overlay.remove();
+
+                // 刷新成员列表
+                const listEl = document.getElementById('gc-member-list');
+                if (listEl) {
+                    listEl.innerHTML = self.renderGroupMemberList(group);
+                    self.bindGroupSettingsEvents(chat);
+                }
+                if (selectedFriendIds.length > 0) showToast('已邀请 ' + selectedFriendIds.length + ' 位好友加入群聊');
+            });
+
+            // 点击背景关闭
+            overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+        },
+
+        /**
+         * 保存群聊特有设置
+         */
+        saveGroupSettings: function(chatId) {
+            const group = (window.AppState.groups || []).find(g => g.id === chatId);
+            const conv = (window.AppState.conversations || []).find(c => c.id === chatId);
+            if (!group || !conv) return;
+
+            // 群名称（char-name-input 已在 saveCharacterSettings 中处理）
+            const nameInput = document.getElementById('char-name-input');
+            if (nameInput) {
+                group.name = nameInput.value.trim() || group.name;
+                conv.name = group.name;
+            }
+
+            // 群公告
+            const announcementInput = document.getElementById('gc-announcement-input');
+            if (announcementInput) {
+                group.announcement = announcementInput.value.trim();
+            }
+
+            // 我在本群的昵称
+            const nicknameInput = document.getElementById('gc-my-nickname');
+            if (nicknameInput) {
+                group.myNickname = nicknameInput.value.trim();
+                // 同时更新 conv 的 userNameForChar
+                conv.userNameForChar = group.myNickname || (window.AppState.user && window.AppState.user.name);
             }
         },
 

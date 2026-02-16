@@ -1,0 +1,489 @@
+/* ===== 创建群聊页面 ===== */
+.create-group-page {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #fff5f9 0%, #f8f0f4 100%);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.create-group-page.open {
+    transform: translateX(0);
+}
+
+.create-group-content {
+    padding: 0 16px 100px;
+}
+
+/* 创建群聊页 - 头像区域使用全局 char-avatar-section 样式 */
+.create-group-content .char-avatar-section {
+    margin-top: 12px;
+}
+
+/* 创建群聊页 - 卡片间距 */
+.create-group-content .settings-card {
+    margin-top: 16px;
+}
+
+/* 好友选择列表 */
+.cg-friend-list {
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.cg-friend-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 4px;
+    gap: 10px;
+    border-bottom: 1px solid #fff0f5;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.cg-friend-item:last-child {
+    border-bottom: none;
+}
+.cg-friend-item:active {
+    background: #fff5f9;
+}
+.cg-friend-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #ffe4ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+.cg-friend-item.selected .cg-friend-check {
+    background: linear-gradient(135deg, #ffd5e0, #ffb6c8);
+    border-color: #ffb6c8;
+    box-shadow: 0 2px 8px rgba(255, 182, 200, 0.3);
+}
+.cg-friend-item.selected .cg-friend-check::after {
+    content: '✓';
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+}
+.cg-friend-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffe4ed 0%, #ffd4e0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.15);
+}
+.cg-friend-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.cg-friend-name {
+    font-size: 14px;
+    color: #555;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+.cg-friend-empty {
+    text-align: center;
+    color: #c0a0b0;
+    font-size: 13px;
+    padding: 24px 0;
+}
+
+/* 已选成员预览条 */
+.cg-selected-bar {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 12px 16px;
+    margin-top: 16px;
+    box-shadow: 0 4px 16px rgba(255, 182, 193, 0.12);
+    border: 1px solid #ffe9f3;
+}
+.cg-selected-avatars {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.cg-selected-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #fff5f9, #ffeff5);
+    border-radius: 16px;
+    padding: 4px 10px 4px 4px;
+    font-size: 12px;
+    color: #c08090;
+    border: 1px solid #ffe9f3;
+}
+.cg-selected-tag-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd4e0, #ffb6c8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    overflow: hidden;
+}
+.cg-selected-tag-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 自定义角色卡片 */
+.cg-custom-members {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.cg-custom-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: #fffbfc;
+    border-radius: 12px;
+    border: 1px solid #ffe9f3;
+    transition: all 0.2s;
+}
+.cg-custom-card-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd4e0 0%, #ffb6c8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
+}
+.cg-custom-card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.cg-custom-card-info {
+    flex: 1;
+    min-width: 0;
+}
+.cg-custom-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+.cg-custom-card-desc {
+    font-size: 12px;
+    color: #c0a0b0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cg-custom-card-remove {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: #ddb;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+.cg-custom-card-remove:active {
+    color: #f66;
+    background: #fff0f0;
+}
+
+/* 添加自定义角色按钮 */
+.cg-add-custom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border: 2px dashed #ffe4ed;
+    border-radius: 12px;
+    background: #fffbfc;
+    color: #ffb6c8;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+.cg-add-custom-btn:active {
+    background: #fff5f9;
+    border-color: #ffb6c8;
+    color: #ff9db8;
+}
+
+/* 底部按钮 */
+.cg-btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-bottom: 30px;
+}
+.cg-cancel-btn {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid #ffe4ed;
+    border-radius: 14px;
+    background: #fff;
+    color: #ffb6c8;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.cg-cancel-btn:active {
+    background: #fff5f9;
+}
+.cg-submit-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ffd5e0, #ffb6c8);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(255, 182, 200, 0.35);
+    letter-spacing: 0.5px;
+}
+.cg-submit-btn:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+}
+
+/* 自定义角色弹窗 */
+.cg-custom-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.cg-custom-modal-content {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 360px;
+    overflow: hidden;
+    animation: cgModalIn 0.25s ease;
+    box-shadow: 0 16px 48px rgba(255, 182, 193, 0.25);
+    border: 1px solid #ffe9f3;
+}
+@keyframes cgModalIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.cg-custom-modal-header {
+    padding: 18px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ff9db8;
+    text-align: center;
+    background: linear-gradient(135deg, #fff5f9 0%, #ffeff5 100%);
+    border-bottom: 2px solid #ffe4ed;
+    letter-spacing: 0.3px;
+}
+.cg-custom-modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.cg-custom-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.cg-custom-avatar-preview {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd4e0 0%, #ffb6c8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.25);
+    transition: all 0.3s ease;
+}
+.cg-custom-avatar-preview:active {
+    transform: scale(0.95);
+}
+.cg-custom-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.cg-custom-modal-footer {
+    display: flex;
+    gap: 0;
+    border-top: 2px solid #ffe4ed;
+}
+.cg-custom-modal-footer .cg-cancel-btn,
+.cg-custom-modal-footer .cg-submit-btn {
+    border-radius: 0;
+    border: none;
+    padding: 15px;
+    box-shadow: none;
+}
+.cg-custom-modal-footer .cg-cancel-btn {
+    border-right: 1px solid #ffe4ed;
+}
+
+/* ===== 群聊聊天页面适配 ===== */
+
+/* 群聊消息中的发送者名称 - 显示在气泡内容上方 */
+.group-msg-sender-name {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 3px;
+    padding-left: 2px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* 群聊中隐藏心声按钮 */
+.chat-page.group-chat-mode #chat-mind-btn {
+    display: none !important;
+}
+
+/* 群聊工具栏中占位的按钮样式 */
+.more-item.group-placeholder {
+    opacity: 0.5;
+    pointer-events: auto;
+}
+
+/* ===== 群聊设置页面 ===== */
+
+/* 群头像编辑行 */
+.gc-avatar-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.gc-avatar-preview {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    font-size: 18px;
+    color: #999;
+}
+.gc-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.gc-avatar-edit-row .form-input {
+    flex: 1;
+}
+
+/* 群成员列表 */
+.gc-member-list {
+    max-height: 300px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.gc-member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 4px;
+    border-bottom: 0.5px solid #f5f5f5;
+}
+.gc-member-item:last-child {
+    border-bottom: none;
+}
+.gc-member-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.gc-member-info {
+    flex: 1;
+    min-width: 0;
+}
+.gc-member-name {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+.gc-member-desc {
+    font-size: 11px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+.gc-member-kick-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #f5f5f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: #ccc;
+    transition: all 0.2s;
+}
+.gc-member-kick-btn:active {
+    background: #fee;
+    color: #f44;
+}
