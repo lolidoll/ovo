@@ -24,16 +24,18 @@ function parseRedisUrl(url) {
  * 优先使用 UPSTASH_REDIS_URL/TOKEN，回退到 REDIS_URL（兼容 rediss:// 格式）
  */
 function getRedisClient() {
-  // 优先使用专用的 UPSTASH 环境变量
-  if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-    return new Redis({
-      url: process.env.UPSTASH_REDIS_URL,
-      token: process.env.UPSTASH_REDIS_TOKEN,
-    });
+  // 兼容多种环境变量命名：UPSTASH_REDIS_REST_URL 或 UPSTASH_REDIS_URL
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_TOKEN;
+
+  if (url && token) {
+    console.log(`Redis连接: 使用 UPSTASH url=${url.substring(0, 30)}...`);
+    return new Redis({ url, token });
   }
   // 回退到 REDIS_URL（支持 rediss:// 格式）
-  const { url, token } = parseRedisUrl(process.env.REDIS_URL);
-  return new Redis({ url, token });
+  const parsed = parseRedisUrl(process.env.REDIS_URL);
+  console.log(`Redis连接: 回退到 REDIS_URL, 解析后 url=${parsed.url?.substring(0, 30)}...`);
+  return new Redis({ url: parsed.url, token: parsed.token });
 }
 
 export default async function handler(req, res) {
@@ -70,7 +72,8 @@ export default async function handler(req, res) {
 
     // 1. 检查是否已使用
     const isUsed = await redis.get(`key:used:${key}`);
-    if (isUsed === 'true') {
+    console.log(`密钥使用检查: key=${key}, isUsed=${isUsed}(${typeof isUsed})`);
+    if (isUsed === 'true' || isUsed === true || isUsed === 1) {
       return res.status(403).json({
         error: '密钥已使用',
         code: 'KEY_ALREADY_USED',
@@ -78,9 +81,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. 检查是否在有效库
-    const isValid = await redis.sismember('keys:valid', key);
-    if (!isValid) {
+    // 2. 检查密钥是否有效
+    //    密钥可能在 keys:valid（未被领取）或 keys:issued（已被Bot发出但未使用）
+    const inValidRaw = await redis.sismember('keys:valid', key);
+    const inIssuedRaw = await redis.sismember('keys:issued', key);
+    
+    // sismember 可能返回 0/1(数字)、true/false(布尔)、"0"/"1"(字符串)，统一处理
+    const inValid = inValidRaw === 1 || inValidRaw === true || inValidRaw === '1';
+    const inIssued = inIssuedRaw === 1 || inIssuedRaw === true || inIssuedRaw === '1';
+    
+    console.log(`密钥检查: key=${key}, inValidRaw=${inValidRaw}(${typeof inValidRaw}), inIssuedRaw=${inIssuedRaw}(${typeof inIssuedRaw}), inValid=${inValid}, inIssued=${inIssued}`);
+    
+    if (!inValid && !inIssued) {
       return res.status(404).json({
         error: '密钥不存在',
         code: 'INVALID_KEY',
@@ -97,6 +109,7 @@ export default async function handler(req, res) {
 
     await redis.set(`key:used:${key}`, 'true');
     await redis.srem('keys:valid', key);
+    await redis.srem('keys:issued', key);
     await redis.set(`key:info:${key}`, JSON.stringify(useInfo));
     await redis.lpush('key:usage:log', JSON.stringify({
       key: key.substring(0, 4) + '***',
