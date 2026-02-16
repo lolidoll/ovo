@@ -1,10 +1,40 @@
 import { Redis } from '@upstash/redis';
 
-// 这是修复后的正确连接方式，和你的 Bot 完全一致
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL,
-  token: process.env.UPSTASH_REDIS_TOKEN,
-});
+/**
+ * 解析 Upstash Redis 连接 URL
+ * 支持 rediss:// 和 https:// 格式
+ */
+function parseRedisUrl(url) {
+  if (!url) return { url: undefined, token: undefined };
+
+  // rediss://default:TOKEN@HOST:6379 格式
+  if (url.includes('rediss://')) {
+    const match = url.match(/rediss:\/\/default:([^@]+)@([^:]+):\d+/);
+    if (match) {
+      return { url: `https://${match[2]}`, token: match[1] };
+    }
+  }
+
+  // https:// 格式，token 可能在 URL 中或单独配置
+  return { url, token: process.env.REDIS_TOKEN || process.env.UPSTASH_REDIS_TOKEN };
+}
+
+/**
+ * 延迟初始化 Upstash Redis 客户端
+ * 优先使用 UPSTASH_REDIS_URL/TOKEN，回退到 REDIS_URL（兼容 rediss:// 格式）
+ */
+function getRedisClient() {
+  // 优先使用专用的 UPSTASH 环境变量
+  if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+    return new Redis({
+      url: process.env.UPSTASH_REDIS_URL,
+      token: process.env.UPSTASH_REDIS_TOKEN,
+    });
+  }
+  // 回退到 REDIS_URL（支持 rediss:// 格式）
+  const { url, token } = parseRedisUrl(process.env.REDIS_URL);
+  return new Redis({ url, token });
+}
 
 export default async function handler(req, res) {
   const headers = {
@@ -36,6 +66,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    const redis = getRedisClient();
+
     // 1. 检查是否已使用
     const isUsed = await redis.get(`key:used:${key}`);
     if (isUsed === 'true') {
