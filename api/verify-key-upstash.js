@@ -101,10 +101,39 @@ export default async function handler(req, res) {
     }
 
     // 3. 验证成功，标记使用
+    const rawUA = req.headers['user-agent'] || 'unknown';
+    
+    // 解析 User-Agent 为详细设备信息
+    const parseUA = (ua) => {
+      let os = 'unknown', browser = 'unknown', device = 'unknown';
+      
+      // 操作系统
+      if (/iPhone/.test(ua)) { os = 'iOS ' + (ua.match(/iPhone OS (\d+[_\.]\d+)/)?.[1]?.replace('_', '.') || ''); device = 'iPhone'; }
+      else if (/iPad/.test(ua)) { os = 'iPadOS ' + (ua.match(/CPU OS (\d+[_\.]\d+)/)?.[1]?.replace('_', '.') || ''); device = 'iPad'; }
+      else if (/Android/.test(ua)) { os = 'Android ' + (ua.match(/Android (\d+[\.\d]*)/)?.[1] || ''); device = ua.match(/;\s*([^;)]+)\s*Build/)?.[1]?.trim() || 'Android Device'; }
+      else if (/Windows NT/.test(ua)) { const v = ua.match(/Windows NT (\d+\.\d+)/)?.[1]; os = v === '10.0' ? 'Windows 10/11' : 'Windows ' + (v || ''); device = 'PC'; }
+      else if (/Mac OS X/.test(ua)) { os = 'macOS ' + (ua.match(/Mac OS X (\d+[_\.]\d+)/)?.[1]?.replace(/_/g, '.') || ''); device = 'Mac'; }
+      else if (/Linux/.test(ua)) { os = 'Linux'; device = 'PC'; }
+      
+      // 浏览器
+      if (/MicroMessenger/.test(ua)) browser = '微信 ' + (ua.match(/MicroMessenger\/([\d.]+)/)?.[1] || '');
+      else if (/QQ\//.test(ua)) browser = 'QQ浏览器';
+      else if (/Edg\//.test(ua)) browser = 'Edge ' + (ua.match(/Edg\/([\d.]+)/)?.[1] || '');
+      else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome ' + (ua.match(/Chrome\/([\d.]+)/)?.[1] || '');
+      else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = 'Safari ' + (ua.match(/Version\/([\d.]+)/)?.[1] || '');
+      else if (/Firefox\//.test(ua)) browser = 'Firefox ' + (ua.match(/Firefox\/([\d.]+)/)?.[1] || '');
+      
+      return { os: os.trim(), browser: browser.trim(), device: device.trim() };
+    };
+    
+    const parsed = parseUA(rawUA);
     const useInfo = {
       usedAt: new Date().toISOString(),
       ip: req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown',
-      userAgent: req.headers['user-agent'] || 'unknown'
+      userAgent: rawUA,
+      os: parsed.os,
+      browser: parsed.browser,
+      device: parsed.device
     };
 
     await redis.set(`key:used:${key}`, 'true');
