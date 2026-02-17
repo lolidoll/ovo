@@ -2402,45 +2402,23 @@
             showToast('好友添加成功');
         }
 
-        // 创建群聊页面
+        // 创建群聊页面 - 委托给 GroupChat 模块
         function openCreateGroupPage() {
-            document.getElementById('create-group-page').classList.add('open');
+            if (window.GroupChat) {
+                window.GroupChat.openCreateGroupPage();
+            }
         }
 
         function closeCreateGroupPage() {
-            document.getElementById('create-group-page').classList.remove('open');
-            document.getElementById('group-name-input').value = '';
-            document.getElementById('group-avatar-input').value = '';
-            document.getElementById('group-desc-input').value = '';
+            if (window.GroupChat) {
+                window.GroupChat.closeCreateGroupPage();
+            }
         }
 
         function submitCreateGroup() {
-            const name = document.getElementById('group-name-input').value.trim();
-            const avatar = document.getElementById('group-avatar-input').value.trim();
-            const desc = document.getElementById('group-desc-input').value.trim();
-            
-            if (!name) {
-                showToast('请输入群聊名称');
-                return;
+            if (window.GroupChat) {
+                window.GroupChat.submitCreateGroup();
             }
-            
-            const group = {
-                id: 'group_' + Date.now(),
-                name:  name,
-                avatar: avatar,
-                description: desc,
-                memberCount: 1,
-                members: [],
-                createdAt: new Date().toISOString()
-            };
-            
-            AppState.groups.push(group);
-            saveToStorage();
-            renderGroups();
-            closeCreateGroupPage();
-            
-            // 自动打开聊天
-            openChatWithGroup(group);
         }
 
         // 导入角色卡页面
@@ -3028,16 +3006,13 @@
             
             // 获取该对话的状态并正确显示打字状态
             const convState = getConversationState(conv.id);
-            const chatTypingStatus = document.getElementById('chat-typing-status');
             const chatTitle = document.getElementById('chat-title');
+            const typingIndicator = document.getElementById('chat-typing-indicator');
             
-            // 根据该对话是否在进行API调用来显示相应的UI
-            if (convState.isTyping) {
-                if (chatTypingStatus) chatTypingStatus.style.display = 'inline-block';
-                if (chatTitle) chatTitle.style.display = 'none';
-            } else {
-                if (chatTypingStatus) chatTypingStatus.style.display = 'none';
-                if (chatTitle) chatTitle.style.display = 'inline';
+            // 标题始终显示，打字状态用输入框上方的三点动画表示
+            if (chatTitle) chatTitle.style.display = 'inline';
+            if (typingIndicator) {
+                typingIndicator.style.display = convState.isTyping ? 'flex' : 'none';
             }
             
             // 应用聊天背景图片（从conversation中读取）
@@ -3110,6 +3085,11 @@
             // 更新心声按钮显示
             MindStateManager.updateMindStateButton(conv);
             
+            // 群聊模式适配（隐藏心声按钮、显示成员数等）
+            if (window.GroupChat) {
+                window.GroupChat.applyGroupChatMode(conv);
+            }
+            
             // 异步渲染消息和保存数据（避免阻塞UI）
             requestAnimationFrame(() => {
                 renderChatMessagesDebounced();
@@ -3168,6 +3148,7 @@
                     type: 'group',
                     name: group.name,
                     avatar: group.avatar,
+                    description: group.description || '',
                     userAvatar: '',  // 该对话的用户头像
                     lastMsg: '',
                     time: formatTime(new Date()),
@@ -3196,7 +3177,13 @@
             const toolbar = document.getElementById('msg-multi-select-toolbar');
             if (toolbar) toolbar.remove();
             
-            document.getElementById('chat-page').classList.remove('open');
+            const chatPage = document.getElementById('chat-page');
+            chatPage.classList.remove('open');
+            chatPage.classList.remove('group-chat-mode');
+            
+            // 移除群聊成员数显示
+            const memberCount = chatPage.querySelector('.group-chat-member-count');
+            if (memberCount) memberCount.remove();
             
             // 不清除AppState.currentChat，让打字状态保持为该对话的状态
             // 这样当用户返回时，打字状态会被正确恢复
@@ -3393,9 +3380,23 @@
                         ? `<img src="${userAvatar}" alt="">`
                         : AppState.user.name.charAt(0);
                 } else {
-                    avatarContent = AppState.currentChat.avatar
-                        ? `<img src="${AppState.currentChat.avatar}" alt="">`
-                        : AppState.currentChat.name.charAt(0);
+                    // 群聊：使用对应成员的头像
+                    if (AppState.currentChat.type === 'group' && msg.groupSenderName && window.GroupChat) {
+                        const memberAvatar = window.GroupChat.getGroupMemberAvatar(AppState.currentChat, msg.groupSenderName);
+                        avatarContent = memberAvatar
+                            ? `<img src="${memberAvatar}" alt="">`
+                            : (msg.groupSenderName ? msg.groupSenderName.charAt(0) : '?');
+                    } else {
+                        avatarContent = AppState.currentChat.avatar
+                            ? `<img src="${AppState.currentChat.avatar}" alt="">`
+                            : AppState.currentChat.name.charAt(0);
+                    }
+                }
+                
+                // 群聊发送者名称标记（用于在气泡上方显示）
+                let groupSenderNameHtml = '';
+                if (AppState.currentChat.type === 'group' && !isSentMessage && msg.groupSenderName) {
+                    groupSenderNameHtml = `<div class="group-msg-sender-name">${msg.groupSenderName}</div>`;
                 }
                 
                 let textContent = `<div class="chat-text">`;
@@ -3950,6 +3951,31 @@
                         <div class="chat-avatar">${avatarContent}</div>
                         ${textContent}
                     `;
+                }
+                
+                // 群聊：在received消息中包裹内容区域并添加发送者名称
+                if (groupSenderNameHtml) {
+                    const avatarEl = bubble.querySelector('.chat-avatar');
+                    if (avatarEl) {
+                        // 收集avatar之后的所有子节点
+                        const contentNodes = [];
+                        let sibling = avatarEl.nextSibling;
+                        while (sibling) {
+                            contentNodes.push(sibling);
+                            sibling = sibling.nextSibling;
+                        }
+                        // 创建包裹容器
+                        const wrapper = document.createElement('div');
+                        wrapper.style.cssText = 'display:flex;flex-direction:column;min-width:0;';
+                        // 添加发送者名称
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'group-msg-sender-name';
+                        nameDiv.textContent = msg.groupSenderName;
+                        wrapper.appendChild(nameDiv);
+                        // 移动内容节点到wrapper
+                        contentNodes.forEach(function(node) { wrapper.appendChild(node); });
+                        bubble.appendChild(wrapper);
+                    }
                 }
                 
                 // 添加时间戳和已读/未读状态显示（直接添加到bubble，作为bubble的子元素）
@@ -7502,8 +7528,88 @@
         // 当前API调用回合ID（全局，在每次API调用时更新）
         let currentApiCallRound = null;
 
+        // ===== 群聊消息解析 =====
+        // 解析AI群聊回复中的【角色名】消息内容 格式
+        function parseGroupChatResponse(text) {
+            const results = [];
+            // 先清理心声标记
+            let cleaned = text.replace(/【心声】[\s\S]*?【\/心声】/g, '').trim();
+            // 清理[MSG]标签
+            cleaned = cleaned.replace(/\[MSG\d+\]/g, '').replace(/\[\/MSG\d+\]/g, '').replace(/\[WAIT:[0-9.]+\]/g, '');
+            
+            // 匹配【角色名】消息内容 格式
+            const regex = /【([^【】/]{1,20})】([^【]*?)(?=【[^【】/]{1,20}】|$)/gs;
+            let match;
+            while ((match = regex.exec(cleaned)) !== null) {
+                const senderName = match[1].trim();
+                const content = match[2].trim();
+                // 排除系统标签（如【红包】【转账】等）
+                if (content && !['红包', '转账', '领取红包', '退还红包', '确认收款', '退还转账', '语音条', '地理位置', '图片描述', '撤回', '心声', '对话状态', '开场白', '角色名'].includes(senderName)) {
+                    results.push({ senderName: senderName, content: content });
+                }
+            }
+            return results;
+        }
+
+        // 添加群聊消息（带发送者名称）
+        function appendGroupMessage(convId, senderName, content) {
+            if (!AppState.messages[convId]) {
+                AppState.messages[convId] = [];
+            }
+            const aiMsg = {
+                id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                type: 'received',
+                content: content,
+                groupSenderName: senderName,
+                time: new Date().toISOString(),
+                apiCallRound: currentApiCallRound,
+                readByUser: !!(AppState.currentChat && AppState.currentChat.id === convId)
+            };
+            AppState.messages[convId].push(aiMsg);
+
+            // 更新会话
+            const conv = AppState.conversations.find(c => c.id === convId);
+            if (conv) {
+                conv.lastMsg = senderName + ': ' + content.substring(0, 30);
+                conv.time = formatTime(new Date());
+                conv.lastMessageTime = aiMsg.time;
+            }
+        }
+
         function appendAssistantMessage(convId, text) {
             console.log('📝 appendAssistantMessage 被调用 - convId:', convId, 'currentChat:', AppState.currentChat?.id);
+            
+            // ========== 群聊模式：解析角色名标记 ==========
+            const conv = AppState.conversations.find(c => c.id === convId);
+            if (conv && conv.type === 'group') {
+                // 提取心声数据（群聊也需要）
+                MindStateManager.handleMindStateSave(convId, text);
+                
+                // 解析【角色名】消息内容 格式
+                const groupMessages = parseGroupChatResponse(text);
+                if (groupMessages.length > 0) {
+                    let delay = 0;
+                    groupMessages.forEach(function(gm) {
+                        setTimeout(function() {
+                            appendGroupMessage(convId, gm.senderName, gm.content);
+                            // 每条消息添加后立即渲染
+                            saveToStorage();
+                            renderChatMessagesDebounced();
+                        }, delay);
+                        delay += 800; // 每条消息间隔800ms
+                    });
+                    // 最后更新会话列表
+                    setTimeout(function() {
+                        renderConversations();
+                        // 更新心声按钮
+                        if (AppState.currentChat && AppState.currentChat.id === convId) {
+                            MindStateManager.updateMindStateButton(conv);
+                        }
+                    }, delay);
+                    return;
+                }
+                // 如果没有解析到角色名标记，按普通消息处理（使用群名作为发送者）
+            }
             
             // ========== 第一步：提前提取并保存心声数据（无论单消息还是多消息） ==========
             MindStateManager.handleMindStateSave(convId, text);
@@ -7531,17 +7637,17 @@
             }
             
             // ========== 第四步：更新心声按钮 ==========
-            const conv = AppState.conversations.find(c => c.id === convId);
-            if (AppState.currentChat && AppState.currentChat.id === convId && conv) {
-                MindStateManager.updateMindStateButton(conv);
+            const convForUpdate = AppState.conversations.find(c => c.id === convId);
+            if (AppState.currentChat && AppState.currentChat.id === convId && convForUpdate) {
+                MindStateManager.updateMindStateButton(convForUpdate);
             }
             
             // ========== 第五步：触发自动生成朋友圈 ==========
-            if (typeof MomentsGroupInteraction !== 'undefined' && conv) {
+            if (typeof MomentsGroupInteraction !== 'undefined' && convForUpdate) {
                 // 异步触发，不阻塞主流程
                 setTimeout(() => {
                     try {
-                        MomentsGroupInteraction.checkAndTriggerAutoMoments(conv.id, conv.name);
+                        MomentsGroupInteraction.checkAndTriggerAutoMoments(convForUpdate.id, convForUpdate.name);
                     } catch (e) {
                         console.error('触发自动生成朋友圈失败:', e);
                     }
@@ -9036,13 +9142,11 @@
             }
         }
 
-        // 加载状态函数 - 显示状态栏
+        // 加载状态函数 - 显示输入框上方的三点动画
         function setLoadingStatus(loading) {
-            const statusEl = document.getElementById('chat-typing-status');
-            if (loading) {
-                statusEl.style.display = 'block';
-            } else {
-                statusEl.style.display = 'none';
+            const indicator = document.getElementById('chat-typing-indicator');
+            if (indicator) {
+                indicator.style.display = loading ? 'flex' : 'none';
             }
         }
 

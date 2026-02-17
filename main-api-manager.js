@@ -158,14 +158,11 @@ const MainAPIManager = {
         
         setLoadingStatus(true);
         
-        // 只在当前对话仍打开时显示正在打字中
+        // 只在当前对话仍打开时显示打字指示器
         const updateTypingStatus = () => {
             if (this.AppState.currentChat && this.AppState.currentChat.id === convId) {
-                const chatTitle = document.getElementById('chat-title');
-                const chatTypingStatus = document.getElementById('chat-typing-status');
-                if (chatTypingStatus) chatTypingStatus.style.display = 'block';
-                // QQ风格：角色名始终显示，"正在打字中"显示在下方
-                // if (chatTitle) chatTitle.style.display = 'none';
+                const indicator = document.getElementById('chat-typing-indicator');
+                if (indicator) indicator.style.display = 'flex';
             }
         };
         updateTypingStatus();
@@ -434,12 +431,8 @@ const MainAPIManager = {
         
         // 只在当前对话仍打开时恢复UI
         if (this.AppState.currentChat && this.AppState.currentChat.id === convId) {
-            const chatTitle = document.getElementById('chat-title');
-            const chatTypingStatus = document.getElementById('chat-typing-status');
-            if (chatTypingStatus) chatTypingStatus.style.display = 'none';
-            // QQ风格：角色名始终显示，无需切换
-            // if (chatTitle) chatTitle.style.display = 'inline';
-            // appendAssistantMessage 内部已经处理了渲染，无需重复调用
+            const indicator = document.getElementById('chat-typing-indicator');
+            if (indicator) indicator.style.display = 'none';
         }
         
         setLoadingStatus(false);
@@ -553,6 +546,8 @@ const MainAPIManager = {
         // 思维链语言指令（必须放在最前面）
         systemPrompts.push('CRITICAL: All reasoning/thinking content (within <think>, <thinking>, <reasoning> tags or similar) MUST be written in Chinese (中文), matching the conversation language.');
         
+        // 单角色对话的角色信息（群聊在后面的群聊模式中统一处理）
+        if (conv.type !== 'group') {
         // 强制AI读取角色名称和性别
         if (conv.name) {
             systemPrompts.push(`You will role-play as a human named "${conv.name}", and absolutely must not go out of character.`);
@@ -582,6 +577,7 @@ const MainAPIManager = {
             const replacedPersonality = this.replaceNamePlaceholders(this.AppState.user.personality, userNameToUse, charName);
             systemPrompts.push(`用户设定：${replacedPersonality}`);
         }
+        } // end if (conv.type !== 'group')
         
         // 空历史对话提示：让 AI 主动打招呼（系统级提示）
         if (lastNonSystemRole === null) {
@@ -593,13 +589,14 @@ const MainAPIManager = {
             systemPrompts.push('【对话状态】上一条非 system 消息来自你（角色）。用户尚未回复，请不要当作用户已回复来继续对话。请继续主动发送下一条消息或自然等待。');
         }
         
-        // 添加心声相关的提示 - 使用 MindStateManager 的统一提示词
-        if (typeof MindStateManager !== 'undefined' && MindStateManager.getMindStateSystemPrompt) {
+        // 添加心声相关的提示（群聊不使用心声系统）
+        if (conv.type !== 'group' && typeof MindStateManager !== 'undefined' && MindStateManager.getMindStateSystemPrompt) {
             systemPrompts.push(MindStateManager.getMindStateSystemPrompt() + '\n\n严格按照这个格式输出,系统会自动提取和清理这一行,用户看不到这个内容。');
         }
         
         // 注入最近一次的心声记录作为上下文参考
-        if (conv.mindStates && Array.isArray(conv.mindStates) && conv.mindStates.length > 0) {
+        // 注入最近一次的心声记录作为上下文参考（群聊不使用）
+        if (conv.type !== 'group' && conv.mindStates && Array.isArray(conv.mindStates) && conv.mindStates.length > 0) {
             const lastMindState = conv.mindStates[conv.mindStates.length - 1];
             
             // 检查是否有有效的心声数据（排除失败的记录）
@@ -952,6 +949,157 @@ This mindset beats memorizing 100 rules.`);
 - 不要每次都使用这些功能,根据对话情境自然地选择
 - 可以和普通文字消息结合使用,先发文字再发语音/位置/红包/转账/图片描述,或反之`);
         
+        // ===== 非群聊模式：添加该角色所在群聊的上下文 =====
+        if (conv.type !== 'group' && this.AppState.groups && this.AppState.groups.length > 0) {
+            // 找到该角色加入的所有群聊
+            const charGroups = this.AppState.groups.filter(g => 
+                g.members && g.members.some(m => m.id === conv.id)
+            );
+            
+            if (charGroups.length > 0) {
+                systemPrompts.push(`【群聊上下文】${charName}还加入了以下群聊：`);
+                
+                charGroups.forEach((group, groupIdx) => {
+                    systemPrompts.push(`\n━━━ 群聊 ${groupIdx + 1}：${group.name} ━━━`);
+                    
+                    // 群基本信息和公告
+                    if (group.announcement) {
+                        systemPrompts.push(`群公告：${group.announcement}`);
+                    }
+                    
+                    // 群成员列表
+                    if (group.members && group.members.length > 0) {
+                        systemPrompts.push(`群成员：${group.members.map(m => m.name).join('、')}`);
+                    }
+                    
+                    // 该群聊的最新50条消息
+                    if (this.AppState.messages[group.id]) {
+                        const groupMsgs = this.AppState.messages[group.id];
+                        if (groupMsgs.length > 0) {
+                            const recentGroupMsgs = groupMsgs.slice(-50);
+                            systemPrompts.push(`\n【该群聊的最新消息记录（${recentGroupMsgs.length}条）】`);
+                            recentGroupMsgs.forEach(msg => {
+                                if (msg.type === 'system' || msg.isRetracted) return;
+                                
+                                let senderName = '';
+                                if (msg.groupSenderName) {
+                                    senderName = msg.groupSenderName;
+                                } else if (msg.type === 'sent' || msg.sender === 'sent') {
+                                    senderName = group.myNickname || userNameToUse || '用户';
+                                } else {
+                                    // 尝试从成员列表找到发送者名称
+                                    const member = group.members.find(m => m.id === msg.senderId);
+                                    senderName = member ? member.name : (msg.senderName || '成员');
+                                }
+                                
+                                const content = msg.content || '';
+                                if (content) {
+                                    systemPrompts.push(`${senderName}：${content.substring(0, 150)}`);
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 该群聊对话的所有总结记录
+                    const groupConv = this.AppState.conversations.find(c => c.id === group.id);
+                    if (groupConv && groupConv.summaries && groupConv.summaries.length > 0) {
+                        systemPrompts.push(`\n【该群聊的对话总结】`);
+                        groupConv.summaries.forEach((s, idx) => {
+                            const type = s.isAutomatic ? '自动总结' : '手动总结';
+                            const time = new Date(s.timestamp).toLocaleString('zh-CN');
+                            systemPrompts.push(`${type} #${idx + 1}（${time}，基于${s.messageCount}条消息）：${s.content.substring(0, 200)}`);
+                        });
+                    }
+                });
+                
+                systemPrompts.push(`\n【群聊上下文使用说明】\n上述群聊消息和总结仅供参考，帮助理解${charName}在不同群聊环境中的表现和关系。当前是私聊对话，请聚焦于当前的${charName}与用户的一对一交流。`);
+            }
+        }
+        
+        // ===== 群聊模式：注入完整群聊上下文 =====
+        if (conv.type === 'group') {
+            const group = this.AppState.groups.find(g => g.id === convId);
+            if (group && group.members && group.members.length > 0) {
+                // --- 1. 群基本信息 ---
+                let groupPrompt = `【群聊模式】这是一个群聊对话。\n群名称："${group.name}"`;
+                if (group.announcement) {
+                    groupPrompt += `\n群公告：${group.announcement}`;
+                }
+               
+
+                // --- 2. 用户信息 ---
+                const groupNickname = group.myNickname || userNameToUse || '用户';
+                const realUserName = userNameToUse || (this.AppState.user && this.AppState.user.name) || '用户';
+                groupPrompt += `\n\n【用户信息】`;
+                groupPrompt += `\n用户真名：${realUserName}`;
+                if (group.myNickname && group.myNickname !== realUserName) {
+                    groupPrompt += `\n用户在本群的昵称（网名）：${groupNickname}（群成员看到的是这个昵称）`;
+                }
+                if (this.AppState.user && this.AppState.user.personality) {
+                    groupPrompt += `\n用户人设：${this.AppState.user.personality}`;
+                }
+
+                // --- 3. 群成员详细信息（含角色设定 + 绑定世界书 + 最近对话） ---
+                groupPrompt += `\n\n【群成员详细资料】共 ${group.members.length} 人`;
+                
+                group.members.forEach((m, i) => {
+                    groupPrompt += `\n\n━━━ 成员 ${i + 1}：${m.name} ━━━`;
+                    
+                    // 角色设定
+                    if (m.description) {
+                        groupPrompt += `\n角色设定：${m.description}`;
+                    }
+                    
+                    // 查找该角色的单独对话（如果是好友角色）
+                    const memberConv = this.AppState.conversations.find(c => c.id === m.id);
+                    
+                    // 绑定的世界书内容
+                    if (memberConv && memberConv.boundWorldbooks && memberConv.boundWorldbooks.length > 0) {
+                        const memberWbs = this.AppState.worldbooks.filter(w => memberConv.boundWorldbooks.includes(w.id));
+                        if (memberWbs.length > 0) {
+                            groupPrompt += `\n${m.name}的世界书：`;
+                            memberWbs.forEach(w => {
+                                const wbContent = this.replaceNamePlaceholders(w.content, realUserName, m.name);
+                                groupPrompt += `\n【${w.name}】${wbContent}`;
+                            });
+                        }
+                    }
+                    
+                    // 该角色在单独聊天中的最近50条对话
+                    if (m.id && this.AppState.messages[m.id]) {
+                        const memberMsgs = this.AppState.messages[m.id];
+                        if (memberMsgs.length > 0) {
+                            const recent = memberMsgs.slice(-50);
+                            groupPrompt += `\n${m.name}与用户的最近私聊记录（${recent.length}条）：`;
+                            recent.forEach(msg => {
+                                if (msg.type === 'system' || msg.isRetracted) return;
+                                const sender = (msg.type === 'sent' || msg.sender === 'sent') ? realUserName : m.name;
+                                const content = msg.content || '';
+                                if (content) {
+                                    groupPrompt += `\n  ${sender}：${content.substring(0, 200)}`;
+                                }
+                            });
+                        }
+                    }
+                });
+
+                // --- 4. 群聊回复规则 ---
+                groupPrompt += `\n\n【群聊回复规则】
+1. 你同时扮演群里的所有角色（${group.members.map(m => m.name).join('、')}），根据对话情境决定哪些角色回复
+2. 每条回复必须在开头标注发言角色，格式：【角色名】消息内容
+3. 多个角色回复时，每个角色的消息用换行分隔，示例：
+   【${group.members[0]?.name || '角色A'}】哈哈，我也觉得
+   【${group.members.length > 1 ? group.members[1].name : '角色B'}】嗯嗯，同意
+4. 不是每个角色都需要每次都发言，根据话题相关性和角色性格自然选择
+5. 每个角色的语气、用词、性格必须符合其角色设定，彼此有明显区分
+6. 角色之间也可以互相对话、互动、争论，不一定只回复用户
+7. 参考每个角色与用户的私聊记录来保持角色的一致性和连贯性
+8. 用户在群里的昵称（网名）是"${groupNickname}"`;
+
+                systemPrompts.push(groupPrompt);
+            }
+        }
+        
         // 合并所有系统提示
         if (systemPrompts.length > 0) {
             out.push({ role: 'system', content: systemPrompts.join('\n') });
@@ -994,7 +1142,7 @@ This mindset beats memorizing 100 rules.`);
                     const replacedContent = replaceNamePlaceholders(w.content, userNameToUse, charName);
                     return `【${w.name}】\n${replacedContent}`;
                 }).join('\n\n');
-                worldbookParts.push('角色补充背景:\n' + boundWorldbookContent);
+                worldbookParts.push('补充背景:\n' + boundWorldbookContent);
             }
         }
 
@@ -1297,10 +1445,20 @@ This mindset beats memorizing 100 rules.`);
                 roleToUse = 'assistant';
             }
             
-            // 检查连续的相同角色
+            // 检查连续的相同角色（群聊中连续assistant消息是正常的，合并它们）
             if (out.length > 0) {
                 const lastMsgInOut = out[out.length - 1];
                 if (lastMsgInOut.role === roleToUse && lastMsgInOut.role !== 'system') {
+                    // 群聊中连续的assistant消息：合并为一条（用换行分隔）
+                    if (conv.type === 'group' && roleToUse === 'assistant') {
+                        // 先给当前消息加上角色名前缀
+                        if (m.groupSenderName && typeof messageContent === 'string') {
+                            messageContent = `【${m.groupSenderName}】${messageContent}`;
+                        }
+                        lastMsgInOut.content = lastMsgInOut.content + '\n' + messageContent;
+                        return; // 跳过push，已合并到上一条
+                    }
+                    
                     // 安全地获取content预览（处理字符串和数组两种情况）
                     const getPrevContentPreview = () => {
                         if (Array.isArray(lastMsgInOut.content)) {
@@ -1324,6 +1482,11 @@ This mindset beats memorizing 100 rules.`);
                         currMsg: { type: m.type, content: getCurrContentPreview() }
                     });
                 }
+            }
+            
+            // 群聊消息：为received消息添加发送者角色名前缀
+            if (conv.type === 'group' && roleToUse === 'assistant' && m.groupSenderName && typeof messageContent === 'string') {
+                messageContent = `【${m.groupSenderName}】${messageContent}`;
             }
             
             out.push({ role: roleToUse, content: messageContent });
