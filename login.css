@@ -717,6 +717,53 @@ body {
     .pixel-deco.top-right {
         display: none;
     }
+    
+    /* ===== 密钥输入框手机适配 ===== */
+    .key-modal {
+        padding: 45px 24px 28px;
+        max-width: 95%;
+        width: 95%;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    
+    .key-modal .cat-ears {
+        display: none;
+    }
+    
+    .key-modal-title {
+        font-size: 20px !important;
+    }
+    
+    .key-modal-desc {
+        font-size: 12px !important;
+    }
+    
+    .key-input-wrapper {
+        margin: 16px 0;
+    }
+    
+    .key-input {
+        font-size: 14px !important;
+        padding: 12px 10px !important;
+    }
+    
+    .key-toggle-btn {
+        font-size: 16px !important;
+    }
+    
+    .key-modal-buttons {
+        gap: 10px;
+    }
+    
+    .key-modal-btn {
+        padding: 14px 16px !important;
+        font-size: 12px !important;
+    }
+    
+    .key-modal-footer {
+        font-size: 11px !important;
+    }
 }
 
 @media (max-width: 360px) {
@@ -736,6 +783,31 @@ body {
     
     .logo-icon {
         font-size: 32px;
+    }
+    
+    /* ===== 密钥输入框超小屏幕适配 ===== */
+    .key-modal {
+        padding: 40px 16px 24px;
+        max-width: 100%;
+        width: calc(100% - 20px);
+    }
+    
+    .key-modal-title {
+        font-size: 18px !important;
+    }
+    
+    .key-modal-desc {
+        font-size: 11px !important;
+    }
+    
+    .key-input {
+        font-size: 13px !important;
+        padding: 10px 8px !important;
+    }
+    
+    .key-modal-btn {
+        padding: 12px 14px !important;
+        font-size: 11px !important;
     }
 }
 

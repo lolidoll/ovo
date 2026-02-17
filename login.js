@@ -90,8 +90,8 @@ class DiscordAuthManager {
     // 启动登录流程
     async initiateLogin() {
         try {
-            // 检查密钥是否已验证（由 KeyAuthManager 处理）
-            const keyVerified = localStorage.getItem(this.STORAGE_KEYS.KEY_VERIFIED);
+            // 检查密钥是否已验证（检查'true'值以与key-auth.js一致）
+            const keyVerified = localStorage.getItem(this.STORAGE_KEYS.KEY_VERIFIED) === 'true';
 
             if (!keyVerified) {
                 console.warn('⚠️ 密钥未验证，请先验证密钥');
@@ -170,6 +170,9 @@ class DiscordAuthManager {
                 
                 <!-- 描述 -->
                 <p class="key-modal-desc">请输入登录密钥以继续 ~</p>
+                <p style="font-size: 12px; color: #8888aa; margin: 8px 0 16px 0; text-align: center;">
+                    ⚠️ 密钥只能与领取时的Discord账号使用
+                </p>
                 
                 <!-- 输入框容器 -->
                 <div class="key-input-container">
@@ -329,10 +332,18 @@ class DiscordAuthManager {
     // 在模态框中验证密钥
     async verifyKeyInModal(key, modal, showError) {
         try {
+            // 获取当前登录的Discord用户ID（如果有）
+            const currentUser = this.getCurrentUser();
+            const currentDiscordId = currentUser ? currentUser.id : null;
+            
             const response = await fetch(`${this.CONFIG.KEY_API}?action=verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key })
+                body: JSON.stringify({ 
+                    key,
+                    // 传递当前Discord ID用于绑定验证
+                    discord_id: currentDiscordId
+                })
             });
 
             const data = await response.json();
@@ -344,12 +355,24 @@ class DiscordAuthManager {
                 const iconWrapper = modal.querySelector('.icon-wrapper');
                 iconWrapper.innerHTML = '<span style="color: #6bc96b; font-size: 36px;">✓</span>';
                 
-                localStorage.setItem(this.STORAGE_KEYS.KEY_VERIFIED, key);
-                console.log('✅ 密钥验证成功');
+                // 存储验证状态 - 使用'true'与key-auth.js保持一致
+                localStorage.setItem(this.STORAGE_KEYS.KEY_VERIFIED, 'true');
+                // 单独存储实际的密钥用于后续绑定验证
+                localStorage.setItem('key_verified_actual', key);
+                if (currentDiscordId) {
+                    localStorage.setItem('key_discord_binding', JSON.stringify({
+                        key: key,
+                        discord_id: currentDiscordId,
+                        verified_at: new Date().toISOString()
+                    }));
+                }
+                console.log('✅ 密钥验证成功' + (currentDiscordId ? `，已绑定Discord ID: ${currentDiscordId}` : ''));
                 return true;
             } else {
                 if (data.used) {
                     showError('该密钥已被使用，已永久失效 ~');
+                } else if (data.error && data.error.includes('Discord')) {
+                    showError('❌ ' + data.error);
                 } else {
                     showError('无效的密钥，请检查是否正确 ~');
                 }
@@ -365,37 +388,6 @@ class DiscordAuthManager {
     // 原有的 verifyKey 方法保留用于其他地方
     async verifyKey(key) {
         return await this.verifyKeyInModal(key, { classList: { add: () => {} }, querySelector: () => ({innerHTML: ''}) }, () => {});
-    }
-
-    // 验证密钥
-    async verifyKey(key) {
-        try {
-            const response = await fetch(`${this.CONFIG.KEY_API}?action=verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key })
-            });
-
-            const data = await response.json();
-
-            if (data.valid) {
-                // 标记密钥已验证
-                localStorage.setItem(this.STORAGE_KEYS.KEY_VERIFIED, key);
-                console.log('✅ 密钥验证成功');
-                return true;
-            } else {
-                if (data.used) {
-                    alert('❌ 该密钥已被使用，已永久失效！\n请联系小奶芙获取新密钥。');
-                } else {
-                    alert('❌ 无效的密钥！\n请检查密钥是否正确。');
-                }
-                return false;
-            }
-        } catch (error) {
-            console.error('密钥验证失败:', error);
-            alert('❌ 密钥验证失败，请稍后重试');
-            return false;
-        }
     }
     
     // 处理授权回调
@@ -422,13 +414,15 @@ class DiscordAuthManager {
         }
     }
     
-    // 交换授权码获取 Token
+    // 交换授权码获取 Token（带Discord账号验证）
     async exchangeCodeForToken(code) {
         try {
-            // 获取已验证的密钥
-            const verifiedKey = localStorage.getItem(this.STORAGE_KEYS.KEY_VERIFIED);
+            // 获取已验证的密钥（从单独存储的实际密钥值中获取）
+            const verifiedKey = localStorage.getItem('key_verified_actual');
             
-            // 调用 Vercel API 进行 token 交换
+            // 先获取Discord用户信息（临时token）来获得user id用于验证
+            // 这里需要从授权返回的user信息中获取
+            // 调用 Vercel API 进行 token 交换，并传递密钥用于Discord账号绑定验证
             const response = await fetch(this.CONFIG.TOKEN_ENDPOINT, {
                 method: 'POST',
                 headers: {
@@ -437,7 +431,9 @@ class DiscordAuthManager {
                 body: JSON.stringify({ 
                     code: code,
                     client_id: this.CONFIG.CLIENT_ID,
-                    verified_key: verifiedKey
+                    verified_key: verifiedKey,
+                    // 添加验证标识
+                    verify_key_binding: true
                 })
             });
             
@@ -452,12 +448,29 @@ class DiscordAuthManager {
             const data = await response.json();
             console.log('Token 交换成功:', data.user ? data.user.username : '用户数据');
             
-            if (data.access_token) {
-                // 清除已验证密钥的临时存储
+            // 检查密钥绑定和Discord账号验证
+            if (data.error && data.error.includes('Discord')) {
+                // Discord账号不匹配
+                console.error('❌ Discord账号验证失败:', data.error);
+                alert('❌ 登录失败\n\n密钥绑定的Discord账号与当前登录账号不一致！\n\n'
+                    + '解决方案：\n'
+                    + '1. 使用与密钥关联的Discord账号登录\n'
+                    + '2. 或者先注销当前账号，再用关联的账号重新登录\n'
+                    + '3. 密钥已失效，请联系管理员');
+                // 清除验证的密钥（彻底清除验证状态）
                 localStorage.removeItem(this.STORAGE_KEYS.KEY_VERIFIED);
+                localStorage.removeItem('key_verified_actual');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            if (data.access_token) {
+                // 不清除KEY_VERIFIED，以保持验证状态（用于session）
+                // KEY_VERIFIED将在logout时清除
                 
                 this.saveAuthToken(data.access_token, data.expires_in || 3600);
-                await this.fetchUserData(data.access_token);
+                // 传递Discord用户ID给fetch
+                await this.fetchUserData(data.access_token, data.discord_id || null);
             } else if (data.error) {
                 throw new Error(data.error);
             } else {
@@ -478,7 +491,7 @@ class DiscordAuthManager {
     }
     
     // 获取用户数据
-    async fetchUserData(accessToken) {
+    async fetchUserData(accessToken, discordId = null) {
         try {
             const response = await fetch('https://discord.com/api/users/@me', {
                 headers: {
@@ -491,12 +504,29 @@ class DiscordAuthManager {
             }
             
             const userData = await response.json();
+            
+            // 验证Discord ID是否一致（如果提供了验证ID）
+            if (discordId && userData.id !== discordId) {
+                console.error('❌ Discord账号验证失败:', {
+                    expected: discordId,
+                    actual: userData.id
+                });
+                throw new Error(`Discord账号不匹配！登录账号(${userData.id})与密钥关联账号(${discordId})不一致`);
+            }
+            
+            // 保存Discord ID用于后续检查
+            userData.discord_verified = true;
+            
             this.saveUserData(userData);
             this.redirectToApp();
             
         } catch (error) {
             console.error('获取用户数据失败:', error);
-            alert('获取用户信息失败，请重新登录');
+            if (error.message.includes('账号不匹配')) {
+                alert('❌ 登录失败\n\n' + error.message + '\n\n请使用关联的Discord账号登录');
+            } else {
+                alert('获取用户信息失败，请重新登录');
+            }
             this.clearAuthData();
             window.location.href = 'login.html';
         }
@@ -543,7 +573,16 @@ class DiscordAuthManager {
     
     // 获取 Token
     getAuthToken() {
-        return localStorage.getItem(this.STORAGE_KEYS.TOKEN);
+        const token = localStorage.getItem(this.STORAGE_KEYS.TOKEN);
+        const expiry = localStorage.getItem(this.STORAGE_KEYS.EXPIRY);
+        
+        // 如果令牌过期，清除数据并返回null
+        if (token && expiry && Date.now() > parseInt(expiry)) {
+            this.clearAuthData();
+            return null;
+        }
+        
+        return token;
     }
     
     // 清除认证数据
@@ -552,8 +591,18 @@ class DiscordAuthManager {
         localStorage.removeItem(this.STORAGE_KEYS.USER);
         localStorage.removeItem(this.STORAGE_KEYS.EXPIRY);
         localStorage.removeItem(this.STORAGE_KEYS.STATE);
-        localStorage.removeItem(this.STORAGE_KEYS.ADMIN_AUTH);
-        localStorage.removeItem(this.STORAGE_KEYS.ADMIN_USER);
+        localStorage.removeItem(this.STORAGE_KEYS.KEY_VERIFIED);
+        localStorage.removeItem('key_verified_actual');
+        localStorage.removeItem('key_discord_binding');
+        localStorage.removeItem('local_mode');
+        // 如果有管理员相关KEY
+        if (this.STORAGE_KEYS.ADMIN_AUTH) {
+            localStorage.removeItem(this.STORAGE_KEYS.ADMIN_AUTH);
+        }
+        if (this.STORAGE_KEYS.ADMIN_USER) {
+            localStorage.removeItem(this.STORAGE_KEYS.ADMIN_USER);
+        }
+        console.log('✅ 认证数据已清除');
     }
     
     // 管理员密钥登录
@@ -591,6 +640,16 @@ class DiscordAuthManager {
         if (container) {
             container.style.display = 'flex';
         }
+    }
+    
+    // 注销登录
+    logout() {
+        console.log('🚪 用户开始注销...');
+        this.clearAuthData();
+        // 重定向到登陆页面
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 500);
     }
     
     // 重定向到应用
