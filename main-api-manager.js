@@ -383,8 +383,9 @@ const MainAPIManager = {
                 }
 
                 if (data) {
-                    // 使用 APIUtils 提取文本
-                    let assistantText = window.APIUtils.extractTextFromResponse(data);
+                    // 使用自定义字段映射或标准提取 (支持用户自定义API响应格式)
+                    const customFieldPaths = api.customResponseFieldPaths ? api.customResponseFieldPaths.split('\n').filter(p => p.trim()) : [];
+                    let assistantText = window.APIUtils.extractTextWithCustomMapping(data, customFieldPaths);
 
                     if (assistantText && assistantText.trim()) {
                         console.log('✨ 成功提取文本回复:', assistantText.substring(0, 100) + (assistantText.length > 100 ? '...' : ''));
@@ -398,9 +399,45 @@ const MainAPIManager = {
                         // appendAssistantMessage 内部已经处理了渲染，无需重复调用
                     } else {
                         lastError = '未在返回中找到文本回复';
-                        console.error('❌ 无法从主API响应中提取文本。完整响应数据:');
-                        console.error(JSON.stringify(data, null, 2));
-                        console.error('响应keys:', Object.keys(data));
+                        
+                        // 详细的诊断信息
+                        console.error('═════════════════════════════════════════════════════');
+                        console.error('❌ 无法从主API响应中提取文本 - 完整诊断信息');
+                        console.error('═════════════════════════════════════════════════════');
+                        console.error('📊 响应顶级结构:');
+                        console.error('  - keys:', Object.keys(data));
+                        console.error('  - hasChoices:', !!data.choices);
+                        console.error('  - hasCandidates:', !!data.candidates);
+                        console.error('  - choicesCount:', Array.isArray(data.choices) ? data.choices.length : 'N/A');
+                        
+                        // 详细检查choices结构
+                        if (Array.isArray(data.choices) && data.choices.length > 0) {
+                            console.error('📋 Choices第一项的结构:');
+                            const firstChoice = data.choices[0];
+                            console.error('  - keys:', Object.keys(firstChoice));
+                            console.error('  - hasMessage:', !!firstChoice.message);
+                            console.error('  - hasText:', !!firstChoice.text);
+                            if (firstChoice.message) {
+                                console.error('  - message.keys:', Object.keys(firstChoice.message));
+                                console.error('  - message.content:', typeof firstChoice.message.content, firstChoice.message.content ? (typeof firstChoice.message.content === 'object' ? Object.keys(firstChoice.message.content) : firstChoice.message.content.substring(0, 50)) : 'null/undefined');
+                            }
+                        }
+                        
+                        // 详细检查candidates结构（Gemini格式）
+                        if (Array.isArray(data.candidates) && data.candidates.length > 0) {
+                            console.error('🎯 Candidates第一项的结构:');
+                            const firstCandidate = data.candidates[0];
+                            console.error('  - keys:', Object.keys(firstCandidate));
+                            console.error('  - hasContent:', !!firstCandidate.content);
+                            if (firstCandidate.content) {
+                                console.error('  - content.keys:', Object.keys(firstCandidate.content));
+                                console.error('  - content.parts:', Array.isArray(firstCandidate.content.parts) ? firstCandidate.content.parts.length + ' items' : 'not an array');
+                            }
+                        }
+                        
+                        console.error('📄 完整响应数据 (前2000字符):');
+                        console.error(JSON.stringify(data, null, 2).substring(0, 2000) + (JSON.stringify(data, null, 2).length > 2000 ? '\n...[截断]' : ''));
+                        console.error('═════════════════════════════════════════════════════');
                     }
                 }
             }
