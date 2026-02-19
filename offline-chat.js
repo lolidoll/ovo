@@ -160,7 +160,6 @@
             <div class="st-messages" id="st-messages"></div>
             <div class="st-typing" id="st-typing">
                 <div class="st-typing-dots"><span></span><span></span><span></span></div>
-                <span>正在输入...</span>
             </div>
             <div class="st-input-area">
                 <div class="st-input-actions">
@@ -207,7 +206,7 @@
 
         // 空消息提示
         if (!msgs.length) {
-            container.innerHTML = `<div class="st-empty-hint">发送消息开始对话，或点击下方"代入"让AI以你的身份开场</div>`;
+            container.innerHTML = `<div class="st-empty-hint">开始对话吧</div>`;
             return;
         }
 

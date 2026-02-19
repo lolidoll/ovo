@@ -4031,13 +4031,15 @@
         
         <!-- 聊天输入框（居中，往上移动） -->
         <div class="video-chat-input-wrapper" id="video-chat-input-wrapper">
+            <!-- AI回复中的三点加载指示器 -->
+            <div class="video-chat-typing-indicator" id="video-chat-typing-indicator">
+                <div class="video-chat-typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
             <div class="video-chat-input-container">
                 <input type="text" id="video-chat-input" class="video-chat-input" placeholder="" />
-                <button class="video-chat-send-btn" id="video-chat-send-btn" onclick="if(window.VideoCallSystem) window.VideoCallSystem.sendMessage()">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor"/>
-                    </svg>
-                </button>
+                <button class="video-chat-send-btn" id="video-chat-send-btn" onclick="if(window.VideoCallSystem) window.VideoCallSystem.sendMessage()"></button>
             </div>
         </div>
         

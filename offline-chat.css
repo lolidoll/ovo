@@ -1227,7 +1227,7 @@
 
 /* 正在输入 */
 .st-typing { display: none; padding: 8px 16px; color: var(--st-text-secondary); font-size: 13px; }
-.st-typing.show { display: flex; align-items: center; gap: 8px; }
+.st-typing.show { display: flex; align-items: center; justify-content: center; }
 .st-typing-dots { display: flex; gap: 4px; }
 .st-typing-dots span {
     width: 6px; height: 6px; background: var(--st-text-tertiary); border-radius: 50%;
