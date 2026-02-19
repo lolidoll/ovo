@@ -182,7 +182,7 @@
 /* ========== 顶部工具栏 ========== */
 .video-call-header {
     position: absolute;
-    top: 0;
+    top: env(safe-area-inset-top);
     left: 0;
     right: 0;
     height: 60px;
@@ -190,7 +190,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
+    padding: env(safe-area-inset-top) 20px 0 20px;
     z-index: 10;
 }
 

@@ -294,9 +294,10 @@ ${messagesText}
             throw new Error('请先在设置中配置API密钥');
         }
         
-        // 规范化endpoint（与其他文件保持一致）
-        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
-        const endpoint = baseEndpoint + '/v1/chat/completions';
+        // 规范化endpoint（确保包含/v1）
+        const normalized = api.endpoint.replace(/\/+$/, '');
+        const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+        const endpoint = baseEndpoint + '/chat/completions';
         
         const body = {
             model: api.selectedModel,

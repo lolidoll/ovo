@@ -390,9 +390,10 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
+    padding-top: max(8px, env(safe-area-inset-top));
     background: var(--st-bg-secondary);
     border-bottom: 1px solid var(--st-border-color);
-    height: 48px;
+    min-height: calc(48px + env(safe-area-inset-top));
     gap: 12px;
 }
 .st-char-info { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }

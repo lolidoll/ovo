@@ -383,9 +383,10 @@ ${conversationSummary}
         console.log('完整提示词:', prompt);
         console.log('========================');
 
-        // 调用API（规范化endpoint，与备忘录保持一致）
-        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
-        const endpoint = baseEndpoint + '/v1/chat/completions';
+        // 调用API（规范化endpoint，确保包含/v1）
+        const normalized = api.endpoint.replace(/\/+$/, '');
+        const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+        const endpoint = baseEndpoint + '/chat/completions';
         const apiKey = api.apiKey || '';
 
         const requestBody = {

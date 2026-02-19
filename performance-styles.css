@@ -1,14 +1,76 @@
 /**
- * 性能优化样式表
+ * 性能优化样式表 - 移动端增强版
  * 包含针对聊天界面的CSS性能优化
  * 
  * @module PerformanceStyles
- * @version 1.0.0
+ * @version 2.0.0
  */
+
+/* ========== 全局移动端优化 ========== */
+
+* {
+    /* 移除点击高亮延迟 */
+    -webkit-tap-highlight-color: transparent;
+    /* 禁用文本选择（除输入框外） */
+    -webkit-user-select: none;
+    user-select: none;
+    /* 禁用默认触摸行为 */
+    -webkit-touch-callout: none;
+}
+
+/* 输入框允许文本选择 */
+input, textarea, select, [contenteditable="true"] {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+    touch-callout: default !important;
+}
+
+/* ========== 可点击元素优化 ========== */
+
+.clickable-optimized,
+button,
+.btn,
+[role="button"],
+.tab-item,
+.msg-item,
+.friend-item,
+.menu-item,
+.func-item {
+    /* 优化触摸响应 */
+    touch-action: manipulation;
+    /* GPU加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* 减少合成层 */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* 告知浏览器属性变化 */
+    will-change: transform;
+    /* 禁用文本选择 */
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+/* 点击反馈动画 */
+.clickable-optimized:active,
+button:active,
+.btn:active,
+.tab-item:active {
+    opacity: 0.7;
+    transform: translateZ(0) scale(0.98);
+    transition: transform 0.05s ease, opacity 0.05s ease;
+}
 
 /* ========== 滚动容器优化 ========== */
 
-.chat-messages {
+.chat-messages,
+.msg-list,
+.friend-list,
+.menu-list,
+.moments-list,
+.shopping-list {
     /* 启用GPU加速 */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
@@ -27,6 +89,9 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     perspective: 1000px;
+    
+    /* 防止过度滚动 */
+    overscroll-behavior-y: contain;
 }
 
 /* ========== 消息气泡优化 ========== */
@@ -36,7 +101,7 @@
     contain: layout style;
     
     /* 只在需要时通知浏览器属性变化 */
-    will-change: transform, opacity;
+    will-change: transform;
     
     /* 硬件加速 */
     transform: translateZ(0);
@@ -54,7 +119,9 @@
 
 /* ========== 头像优化 ========== */
 
-.chat-avatar {
+.chat-avatar,
+.msg-avatar,
+.friend-avatar {
     contain: layout style;
     will-change: transform;
     transform: translateZ(0);
@@ -74,11 +141,7 @@
 
 /* ========== 消息内容优化 ========== */
 
-.message-content {
-    contain: layout style;
-    will-change: auto;
-}
-
+.message-content,
 .message-text {
     contain: layout style;
     will-change: auto;
@@ -86,7 +149,10 @@
 
 /* ========== 图片优化 ========== */
 
-.message-image {
+.message-image,
+.chat-avatar img,
+.msg-avatar img,
+.friend-avatar img {
     contain: layout;
     will-change: opacity;
     transform: translateZ(0);
@@ -110,7 +176,7 @@
 }
 
 .chat-bubble.new-message {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.2s ease-out;
     will-change: transform, opacity;
 }
 
@@ -125,38 +191,104 @@
 }
 
 .chat-bubble.highlight-message {
-    animation: highlightPulse 2s ease-in-out;
+    animation: highlightPulse 1.5s ease-in-out;
     contain: layout style;
 }
 
-/* ========== 文本选择优化 ========== */
+/* ========== 页面切换优化 ========== */
 
-.chat-bubble {
-    /* 改进文本选择性能 */
-    -webkit-user-select: text;
-    user-select: text;
-    -webkit-touch-callout: default;
-    touch-callout: default;
+.main-content {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint;
 }
 
-/* ========== 触摸交互优化 ========== */
+.main-content.active {
+    display: flex;
+    animation: fadeIn 0.15s ease-out;
+}
 
-.chat-messages {
-    /* 优化触摸响应 */
-    touch-action: pan-y;
-    -webkit-tap-highlight-color: transparent;
+/* ========== 底部标签栏优化 ========== */
+
+.tab-bar {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style;
+    position: relative;
+    isolation: isolate;
+}
+
+.tab-item {
+    touch-action: manipulation;
+    will-change: opacity, transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    position: relative;
+    isolation: isolate;
+    transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+.tab-item:active {
+    opacity: 0.6;
+    transform: translateZ(0) scale(0.95);
+}
+
+.tab-item.active {
+    opacity: 1;
+}
+
+/* ========== 侧边栏优化 ========== */
+/* 注意：不覆盖原始的 slide 动画效果，只添加性能优化 */
+
+.side-menu {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style;
+}
+
+/* 遮罩层优化 */
+.mask {
+    transform: translateZ(0);
+    will-change: opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint;
+}
+
+/* ========== 子页面优化 ========== */
+
+.sub-page,
+.add-popup {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint;
 }
 
 /* ========== 列表渲染优化 ========== */
 
 /* 使用CSS Containment优化大量消息渲染 */
-.chat-messages > * {
+.chat-messages > *,
+.msg-list > *,
+.friend-list > * {
     contain: layout style;
 }
 
 /* 减少重排的伪元素 */
 .chat-bubble::before,
-.chat-bubble::after {
+.chat-bubble::after,
+.msg-item::before,
+.msg-item::after,
+.friend-item::before,
+.friend-item::after {
     contain: layout;
 }
 
@@ -217,9 +349,18 @@
 
 /* ========== 消息时间戳优化 ========== */
 
-.message-time {
+.message-time,
+.msg-time {
     contain: layout;
     will-change: opacity;
+}
+
+/* ========== 防止过度滚动 ========== */
+
+body, html, #app-container {
+    overscroll-behavior: none;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: none;
 }
 
 /* ========== 工具类 ========== */
@@ -233,6 +374,18 @@
 }
 
 /* 限制重排重绘 */
+.contain-layout {
+    contain: layout;
+}
+
+.contain-style {
+    contain: style;
+}
+
+.contain-paint {
+    contain: paint;
+}
+
 .contain-all {
     contain: layout style paint;
 }
@@ -242,6 +395,63 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     will-change: scroll-position;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ========== 移动端特定优化 ========== */
+
+@media (max-width: 768px) {
+    /* 移动端减少阴影效果 */
+    .msg-item,
+    .friend-item,
+    .chat-bubble {
+        box-shadow: none;
+    }
+    
+    /* 简化动画 */
+    .chat-bubble.new-message {
+        animation: none;
+    }
+    
+    /* 减少模糊效果 */
+    .mask {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+/* ========== iOS Safari 特定优化 ========== */
+
+@supports (-webkit-touch-callout: none) {
+    /* iOS Safari 滚动优化 */
+    .chat-messages,
+    .msg-list,
+    .friend-list {
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+    }
+    
+    /* iOS Safari 按钮优化 */
+    button,
+    .btn,
+    .tab-item {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+}
+
+/* ========== Android Chrome 特定优化 ========== */
+
+@supports (not (-webkit-touch-callout: none)) and (pointer: coarse) {
+    /* Android Chrome 滚动优化 */
+    .chat-messages,
+    .msg-list,
+    .friend-list {
+        overscroll-behavior: contain;
+        overflow-scrolling: touch;
+    }
 }
 
 /* ========== 打印样式优化 ========== */
@@ -249,6 +459,10 @@
 @media print {
     .chat-messages {
         contain: none;
+        transform: none;
+    }
+    
+    .clickable-optimized {
         transform: none;
     }
 }

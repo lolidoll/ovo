@@ -608,6 +608,94 @@
                         </div>
                     </div>
 
+                    <!-- UI颜色设置 - 公主风格卡片 -->
+                    <div class="settings-card ui-color-card">
+                        <div class="card-header">
+                            <svg viewBox="0 0 24 24" class="card-icon">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 8v8"></path>
+                                <path d="M8 12h8"></path>
+                            </svg>
+                            <span>聊天界面颜色</span>
+                        </div>
+                        <div class="card-body">
+                            <!-- 好感度填充颜色 -->
+                            <div class="bubble-section">
+                                <label class="bubble-label">好感度填充颜色</label>
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="affinity-r" min="0" max="255" value="${chat.uiColors?.affinity?.r ?? 255}" class="bubble-slider">
+                                            <input type="number" id="affinity-r-input" min="0" max="255" value="${chat.uiColors?.affinity?.r ?? 255}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="affinity-g" min="0" max="255" value="${chat.uiColors?.affinity?.g ?? 182}" class="bubble-slider">
+                                            <input type="number" id="affinity-g-input" min="0" max="255" value="${chat.uiColors?.affinity?.g ?? 182}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="affinity-b" min="0" max="255" value="${chat.uiColors?.affinity?.b ?? 193}" class="bubble-slider">
+                                            <input type="number" id="affinity-b-input" min="0" max="255" value="${chat.uiColors?.affinity?.b ?? 193}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-preview-box" style="background-color:rgb(${chat.uiColors?.affinity?.r ?? 255}, ${chat.uiColors?.affinity?.g ?? 182}, ${chat.uiColors?.affinity?.b ?? 193});" id="affinity-preview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 发送按钮颜色 -->
+                            <div class="bubble-section" style="margin-top: 20px;">
+                                <label class="bubble-label">发送按钮渐变色</label>
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="sendbtn-r" min="0" max="255" value="${chat.uiColors?.sendBtn?.r ?? 255}" class="bubble-slider">
+                                            <input type="number" id="sendbtn-r-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.r ?? 255}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="sendbtn-g" min="0" max="255" value="${chat.uiColors?.sendBtn?.g ?? 182}" class="bubble-slider">
+                                            <input type="number" id="sendbtn-g-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.g ?? 182}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="sendbtn-b" min="0" max="255" value="${chat.uiColors?.sendBtn?.b ?? 193}" class="bubble-slider">
+                                            <input type="number" id="sendbtn-b-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.b ?? 193}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-preview-box" style="background:linear-gradient(135deg, rgb(${chat.uiColors?.sendBtn?.r ?? 255}, ${chat.uiColors?.sendBtn?.g ?? 182}, ${chat.uiColors?.sendBtn?.b ?? 193}) 0%, rgb(${Math.min(255, (chat.uiColors?.sendBtn?.r ?? 255) + 10)}, ${Math.min(255, (chat.uiColors?.sendBtn?.g ?? 182) + 10)}, ${Math.min(255, (chat.uiColors?.sendBtn?.b ?? 193) + 10)}) 100%);" id="sendbtn-preview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 已读圆圈颜色 -->
+                            <div class="bubble-section" style="margin-top: 20px;">
+                                <label class="bubble-label">已读状态圆圈颜色</label>
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="readcircle-r" min="0" max="255" value="${chat.uiColors?.readCircle?.r ?? 255}" class="bubble-slider">
+                                            <input type="number" id="readcircle-r-input" min="0" max="255" value="${chat.uiColors?.readCircle?.r ?? 255}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="readcircle-g" min="0" max="255" value="${chat.uiColors?.readCircle?.g ?? 182}" class="bubble-slider">
+                                            <input type="number" id="readcircle-g-input" min="0" max="255" value="${chat.uiColors?.readCircle?.g ?? 182}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="readcircle-b" min="0" max="255" value="${chat.uiColors?.readCircle?.b ?? 193}" class="bubble-slider">
+                                            <input type="number" id="readcircle-b-input" min="0" max="255" value="${chat.uiColors?.readCircle?.b ?? 193}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-preview-box" style="background-color:rgb(${chat.uiColors?.readCircle?.r ?? 255}, ${chat.uiColors?.readCircle?.g ?? 182}, ${chat.uiColors?.readCircle?.b ?? 193});" id="readcircle-preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 操作按钮 - 公主风格 -->
                     <div class="action-buttons">
                         <button id="save-char-settings-btn" class="btn-save">
@@ -1252,8 +1340,160 @@
             if (userTextRInput) userTextRInput.addEventListener('change', updateUserTextFromInput);
             if (userTextGInput) userTextGInput.addEventListener('change', updateUserTextFromInput);
             if (userTextBInput) userTextBInput.addEventListener('change', updateUserTextFromInput);
+
+            // UI颜色控制
+            const affinityR = document.getElementById('affinity-r');
+            const affinityG = document.getElementById('affinity-g');
+            const affinityB = document.getElementById('affinity-b');
+            const affinityRInput = document.getElementById('affinity-r-input');
+            const affinityGInput = document.getElementById('affinity-g-input');
+            const affinityBInput = document.getElementById('affinity-b-input');
+            const affinityPreview = document.getElementById('affinity-preview');
             
-            // 防止在锁定状态下通过滑块修改
+            const sendBtnR = document.getElementById('sendbtn-r');
+            const sendBtnG = document.getElementById('sendbtn-g');
+            const sendBtnB = document.getElementById('sendbtn-b');
+            const sendBtnRInput = document.getElementById('sendbtn-r-input');
+            const sendBtnGInput = document.getElementById('sendbtn-g-input');
+            const sendBtnBInput = document.getElementById('sendbtn-b-input');
+            const sendBtnPreview = document.getElementById('sendbtn-preview');
+            
+            const readCircleR = document.getElementById('readcircle-r');
+            const readCircleG = document.getElementById('readcircle-g');
+            const readCircleB = document.getElementById('readcircle-b');
+            const readCircleRInput = document.getElementById('readcircle-r-input');
+            const readCircleGInput = document.getElementById('readcircle-g-input');
+            const readCircleBInput = document.getElementById('readcircle-b-input');
+            const readCirclePreview = document.getElementById('readcircle-preview');
+            
+            // 更新好感度颜色预览
+            const updateAffinityPreview = () => {
+                if (isLocked) return;
+                const r = affinityR.value;
+                const g = affinityG.value;
+                const b = affinityB.value;
+                
+                affinityRInput.value = r;
+                affinityGInput.value = g;
+                affinityBInput.value = b;
+                
+                affinityPreview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            const updateAffinityFromInput = () => {
+                if (isLocked) return;
+                const r = Math.max(0, Math.min(255, parseInt(affinityRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(affinityGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(affinityBInput.value) || 0));
+                
+                affinityR.value = r;
+                affinityG.value = g;
+                affinityB.value = b;
+                
+                affinityRInput.value = r;
+                affinityGInput.value = g;
+                affinityBInput.value = b;
+                
+                affinityPreview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            // 更新发送按钮颜色预览
+            const updateSendBtnPreview = () => {
+                if (isLocked) return;
+                const r = parseInt(sendBtnR.value);
+                const g = parseInt(sendBtnG.value);
+                const b = parseInt(sendBtnB.value);
+                
+                sendBtnRInput.value = r;
+                sendBtnGInput.value = g;
+                sendBtnBInput.value = b;
+                
+                const r2 = Math.min(255, r + 10);
+                const g2 = Math.min(255, g + 10);
+                const b2 = Math.min(255, b + 10);
+                
+                sendBtnPreview.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}) 0%, rgb(${r2}, ${g2}, ${b2}) 100%)`;
+            };
+            
+            const updateSendBtnFromInput = () => {
+                if (isLocked) return;
+                const r = Math.max(0, Math.min(255, parseInt(sendBtnRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(sendBtnGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(sendBtnBInput.value) || 0));
+                
+                sendBtnR.value = r;
+                sendBtnG.value = g;
+                sendBtnB.value = b;
+                
+                sendBtnRInput.value = r;
+                sendBtnGInput.value = g;
+                sendBtnBInput.value = b;
+                
+                const r2 = Math.min(255, r + 10);
+                const g2 = Math.min(255, g + 10);
+                const b2 = Math.min(255, b + 10);
+                
+                sendBtnPreview.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}) 0%, rgb(${r2}, ${g2}, ${b2}) 100%)`;
+            };
+            
+            // 更新已读圆圈颜色预览
+            const updateReadCirclePreview = () => {
+                if (isLocked) return;
+                const r = readCircleR.value;
+                const g = readCircleG.value;
+                const b = readCircleB.value;
+                
+                readCircleRInput.value = r;
+                readCircleGInput.value = g;
+                readCircleBInput.value = b;
+                
+                readCirclePreview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            const updateReadCircleFromInput = () => {
+                if (isLocked) return;
+                const r = Math.max(0, Math.min(255, parseInt(readCircleRInput.value) || 0));
+                const g = Math.max(0, Math.min(255, parseInt(readCircleGInput.value) || 0));
+                const b = Math.max(0, Math.min(255, parseInt(readCircleBInput.value) || 0));
+                
+                readCircleR.value = r;
+                readCircleG.value = g;
+                readCircleB.value = b;
+                
+                readCircleRInput.value = r;
+                readCircleGInput.value = g;
+                readCircleBInput.value = b;
+                
+                readCirclePreview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            };
+            
+            // 绑定UI颜色滑块事件监听器
+            if (affinityR) affinityR.addEventListener('input', updateAffinityPreview);
+            if (affinityG) affinityG.addEventListener('input', updateAffinityPreview);
+            if (affinityB) affinityB.addEventListener('input', updateAffinityPreview);
+            
+            if (sendBtnR) sendBtnR.addEventListener('input', updateSendBtnPreview);
+            if (sendBtnG) sendBtnG.addEventListener('input', updateSendBtnPreview);
+            if (sendBtnB) sendBtnB.addEventListener('input', updateSendBtnPreview);
+            
+            if (readCircleR) readCircleR.addEventListener('input', updateReadCirclePreview);
+            if (readCircleG) readCircleG.addEventListener('input', updateReadCirclePreview);
+            if (readCircleB) readCircleB.addEventListener('input', updateReadCirclePreview);
+            
+            // 绑定UI颜色输入框事件监听器
+            if (affinityRInput) affinityRInput.addEventListener('change', updateAffinityFromInput);
+            if (affinityGInput) affinityGInput.addEventListener('change', updateAffinityFromInput);
+            if (affinityBInput) affinityBInput.addEventListener('change', updateAffinityFromInput);
+            
+            if (sendBtnRInput) sendBtnRInput.addEventListener('change', updateSendBtnFromInput);
+            if (sendBtnGInput) sendBtnGInput.addEventListener('change', updateSendBtnFromInput);
+            if (sendBtnBInput) sendBtnBInput.addEventListener('change', updateSendBtnFromInput);
+            
+            if (readCircleRInput) readCircleRInput.addEventListener('change', updateReadCircleFromInput);
+            if (readCircleGInput) readCircleGInput.addEventListener('change', updateReadCircleFromInput);
+            if (readCircleBInput) readCircleBInput.addEventListener('change', updateReadCircleFromInput);
+            
+            // 防止在锁定状态下通过滑块修改（包括UI颜色）
             const preventLockedChange = (e) => {
                 if (isLocked) {
                     e.preventDefault();
@@ -1265,7 +1505,9 @@
             };
             
             [charR, charG, charB, charAlpha, userR, userG, userB, userAlpha,
-             charTextR, charTextG, charTextB, userTextR, userTextG, userTextB].forEach(el => {
+             charTextR, charTextG, charTextB, userTextR, userTextG, userTextB,
+             affinityR, affinityG, affinityB, sendBtnR, sendBtnG, sendBtnB,
+             readCircleR, readCircleG, readCircleB].forEach(el => {
                 if (el) {
                     el.addEventListener('mousedown', preventLockedChange);
                     el.addEventListener('touchstart', preventLockedChange);
@@ -1762,6 +2004,46 @@
                 };
             }
 
+            // 保存UI颜色设置
+            const affinityR = document.getElementById('affinity-r');
+            const affinityG = document.getElementById('affinity-g');
+            const affinityB = document.getElementById('affinity-b');
+            
+            const sendBtnR = document.getElementById('sendbtn-r');
+            const sendBtnG = document.getElementById('sendbtn-g');
+            const sendBtnB = document.getElementById('sendbtn-b');
+            
+            const readCircleR = document.getElementById('readcircle-r');
+            const readCircleG = document.getElementById('readcircle-g');
+            const readCircleB = document.getElementById('readcircle-b');
+            
+            if (affinityR && affinityG && affinityB) {
+                conv.uiColors = conv.uiColors || {};
+                conv.uiColors.affinity = {
+                    r: parseInt(affinityR.value),
+                    g: parseInt(affinityG.value),
+                    b: parseInt(affinityB.value)
+                };
+            }
+            
+            if (sendBtnR && sendBtnG && sendBtnB) {
+                conv.uiColors = conv.uiColors || {};
+                conv.uiColors.sendBtn = {
+                    r: parseInt(sendBtnR.value),
+                    g: parseInt(sendBtnG.value),
+                    b: parseInt(sendBtnB.value)
+                };
+            }
+            
+            if (readCircleR && readCircleG && readCircleB) {
+                conv.uiColors = conv.uiColors || {};
+                conv.uiColors.readCircle = {
+                    r: parseInt(readCircleR.value),
+                    g: parseInt(readCircleG.value),
+                    b: parseInt(readCircleB.value)
+                };
+            }
+
             // 保存消息显示设置
             const showTimestampCheckbox = document.getElementById('show-message-timestamp');
             const showReadStatusCheckbox = document.getElementById('show-message-read-status');
@@ -1867,7 +2149,7 @@
         },
 
         /**
-         * 应用消息气泡颜色和字体颜色到聊天页面
+         * 应用消息气泡颜色、字体颜色和UI颜色到聊天页面
          */
         applyBubbleColors: function(conv) {
             if (!conv) return;
@@ -1924,8 +2206,51 @@
                 `;
             }
             
+            // 发送按钮颜色
+            if (conv.uiColors && conv.uiColors.sendBtn) {
+                const { r, g, b } = conv.uiColors.sendBtn;
+                const r2 = Math.min(255, r + 10);
+                const g2 = Math.min(255, g + 10);
+                const b2 = Math.min(255, b + 10);
+                css += `
+                    .chat-send-btn {
+                        background: linear-gradient(135deg, rgb(${r}, ${g}, ${b}) 0%, rgb(${r2}, ${g2}, ${b2}) 100%) !important;
+                        box-shadow: 0 2px 8px rgba(${r}, ${g}, ${b}, 0.4) !important;
+                    }
+                    .chat-send-btn:hover {
+                        box-shadow: 0 3px 12px rgba(${r}, ${g}, ${b}, 0.5) !important;
+                    }
+                    .chat-send-btn:active {
+                        box-shadow: 0 1px 4px rgba(${r}, ${g}, ${b}, 0.4) !important;
+                    }
+                    .chat-send-btn {
+                        -webkit-tap-highlight-color: rgba(${r}, ${g}, ${b}, 0.3) !important;
+                    }
+                `;
+            }
+            
+            // 已读圆圈颜色
+            if (conv.uiColors && conv.uiColors.readCircle) {
+                const { r, g, b } = conv.uiColors.readCircle;
+                const color = `rgb(${r}, ${g}, ${b})`;
+                // 使用CSS变量来存储已读圆圈颜色，以便在消息渲染时使用
+                css += `
+                    :root {
+                        --read-circle-color: ${color};
+                    }
+                `;
+            }
+            
             style.textContent = css;
             document.head.appendChild(style);
+            
+            // 存储已读圆圈颜色到全局，供消息渲染使用
+            if (conv.uiColors && conv.uiColors.readCircle) {
+                const { r, g, b } = conv.uiColors.readCircle;
+                window.currentReadCircleColor = `rgb(${r}, ${g}, ${b})`;
+            } else {
+                window.currentReadCircleColor = null;
+            }
         },
 
         /**

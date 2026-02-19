@@ -38,13 +38,17 @@ const MindStateManager = (function() {
         
         if (!heartSvg || !fillRect || !affinityText) return;
         
-        // 获取最新的好感度数据
+        // 获取最新的好感度数据（只从成功的记录中获取）
         let affinity = 0;
         if (conv && conv.mindStates && conv.mindStates.length > 0) {
-            // 从最后一条心声记录中获取好感度
-            const lastMindState = conv.mindStates[conv.mindStates.length - 1];
-            if (lastMindState && typeof lastMindState.affinity === 'number') {
-                affinity = Math.max(0, Math.min(100, lastMindState.affinity)); // 限制在0-100之间
+            // 从后往前查找最近一次有效的好感度记录
+            for (let i = conv.mindStates.length - 1; i >= 0; i--) {
+                const mindState = conv.mindStates[i];
+                // 跳过失败记录和没有好感度数据的记录
+                if (!mindState.failed && typeof mindState.affinity === 'number') {
+                    affinity = Math.max(0, Math.min(100, mindState.affinity)); // 限制在0-100之间
+                    break;
+                }
             }
         }
         
@@ -56,14 +60,25 @@ const MindStateManager = (function() {
         // 更新好感度数值显示
         affinityText.textContent = String(affinity);
         
-        // 使用固定颜色（发送按钮颜色）
-        const fillColor = '#FFB6C1'; // 发送按钮渐变的起始颜色
+        // 使用当前聊天设置的好感度颜色，如果没有则使用默认颜色
+        let fillColor = '#FFB6C1'; // 默认颜色
+        if (conv && conv.uiColors && conv.uiColors.affinity) {
+            const { r, g, b } = conv.uiColors.affinity;
+            fillColor = `rgb(${r}, ${g}, ${b})`;
+        }
         const textColor = '#fff';
         
-        // 更新填充路径的颜色
+        // 更新填充路径的颜色（包括填充和外壳）
         const fillPath = heartSvg.querySelector('path[clip-path]');
         if (fillPath) {
             fillPath.setAttribute('fill', fillColor);
+        }
+        
+        // 更新爱心外壳轮廓颜色
+        const outlinePath = heartSvg.querySelector('path[stroke]');
+        if (outlinePath) {
+            // 使用稍微深一点的颜色作为外壳颜色
+            outlinePath.setAttribute('stroke', fillColor);
         }
         
         // 更新文字颜色
@@ -191,11 +206,20 @@ const MindStateManager = (function() {
                 
                 // 特殊处理数值字段
                 if (fieldDef.key === 'affinity' || fieldDef.key === 'affinityChange') {
-                    // 尝试提取数字
+                    // 尝试提取数字 - 支持多种格式："100", "100/100", "100(满分)" 等
                     const numberMatch = value.match(/(-?\d+)/);
                     if (numberMatch) {
-                        mindState[fieldDef.key] = parseInt(numberMatch[1]);
+                        let extractedValue = parseInt(numberMatch[1]);
+                        // 对好感度进行范围限制，确保在0-100之间
+                        if (fieldDef.key === 'affinity') {
+                            extractedValue = Math.max(0, Math.min(100, extractedValue));
+                            console.log(`  ✓ ${fieldDef.key}: 提取值=${numberMatch[1]}, 限制后=${extractedValue}`);
+                        } else {
+                            console.log(`  ✓ ${fieldDef.key}: ${extractedValue}`);
+                        }
+                        mindState[fieldDef.key] = extractedValue;
                     } else {
+                        console.warn(`  ⚠️ ${fieldDef.key}: 无法从"${value}"中提取数字`);
                         mindState[fieldDef.key] = null;
                     }
                 } else {
@@ -850,12 +874,18 @@ const MindStateManager = (function() {
             
             // 自动计算好感度变化
             if (typeof mindStateData.affinity === 'number') {
-                // 获取上一次的好感度
+                // 获取上一次的好感度（只从成功的记录中获取）
                 let previousAffinity = 50; // 默认初始好感度
                 if (conv.mindStates.length > 0) {
-                    const lastMindState = conv.mindStates[conv.mindStates.length - 1];
-                    if (typeof lastMindState.affinity === 'number') {
-                        previousAffinity = lastMindState.affinity;
+                    // 从后往前查找最近一次有效的好感度记录
+                    for (let i = conv.mindStates.length - 1; i >= 0; i--) {
+                        const lastMindState = conv.mindStates[i];
+                        // 跳过失败记录和没有好感度数据的记录
+                        if (!lastMindState.failed && typeof lastMindState.affinity === 'number') {
+                            previousAffinity = lastMindState.affinity;
+                            console.log(`💕 从第 ${i + 1} 条记录获取到上次好感度: ${previousAffinity}`);
+                            break;
+                        }
                     }
                 }
                 
@@ -872,6 +902,9 @@ const MindStateManager = (function() {
                     change = -3;
                     mindStateData.affinity = previousAffinity - 3;
                 }
+                
+                // 确保最终的好感度在0-100范围内
+                mindStateData.affinity = Math.max(0, Math.min(100, mindStateData.affinity));
                 
                 mindStateData.affinityChange = change;
                 

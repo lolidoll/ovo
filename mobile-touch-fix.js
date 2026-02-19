@@ -27,37 +27,30 @@
     
     /**
      * 修复输入框点击问题
+     * 注意：iOS设备由ios-input-fix.js处理，此处跳过
      */
     function fixInputFocus() {
         const chatInput = document.getElementById('chat-input');
         if (!chatInput) return;
         
+        // iOS设备由专用模块处理，跳过此处修复避免冲突
+        if (isIOS) {
+            console.log('📱 iOS设备输入框由ios-input-fix.js处理，跳过mobile-touch-fix修复');
+            return;
+        }
+        
         // 确保输入框可以接收触摸事件
         chatInput.style.pointerEvents = 'auto';
         chatInput.style.touchAction = 'manipulation';
         
-        // iOS特殊处理：防止输入框失焦
-        if (isIOS) {
-            chatInput.addEventListener('blur', function(e) {
-                // 如果是因为点击其他元素导致失焦，延迟重新聚焦
-                setTimeout(() => {
-                    if (document.activeElement !== chatInput && 
-                        !document.activeElement.classList.contains('chat-send-btn')) {
-                        // 不自动重新聚焦，避免干扰用户操作
-                    }
-                }, 100);
-            });
-        }
-        
         // 添加触摸事件监听，确保点击能触发聚焦
+        // 注意：不使用stopPropagation，避免干扰正常事件流
         chatInput.addEventListener('touchstart', function(e) {
-            e.stopPropagation(); // 防止事件冒泡
             this.focus();
         }, { passive: true });
         
         // 添加click事件作为后备方案（某些浏览器可能不触发touchstart）
         chatInput.addEventListener('click', function(e) {
-            e.stopPropagation();
             this.focus();
         });
         
@@ -76,28 +69,47 @@
         let touchStartY = 0;
         let touchMoved = false;
         let targetBubble = null;
+        let longPressTriggered = false;
         
-        // 使用事件委托处理所有消息气泡
+        // 使用事件委托处理所有消息气泡（包括普通消息和撤回消息）
         chatMessages.addEventListener('touchstart', function(e) {
-            // 查找最近的消息气泡
-            targetBubble = e.target.closest('.chat-bubble');
+            // 查找最近的消息气泡（包括普通消息和撤回消息）
+            targetBubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
             if (!targetBubble) return;
+            
+            // 检查是否在多选模式
+            if (window.AppState && window.AppState.isSelectMode) {
+                // 多选模式下不设置长按定时器，让正常的点击事件处理选择逻辑
+                return;
+            }
             
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
             touchMoved = false;
+            longPressTriggered = false;
             
             // 设置长按定时器（500ms）
             longPressTimer = setTimeout(() => {
                 if (!touchMoved && targetBubble) {
+                    longPressTriggered = true;
                     // 触发长按事件
                     console.log('📱 长按消息气泡触发');
                     
-                    // 触发原有的长按处理逻辑
-                    if (window.openMessageContextMenu && typeof window.openMessageContextMenu === 'function') {
-                        const messageId = targetBubble.dataset.messageId;
-                        if (messageId) {
-                            window.openMessageContextMenu(messageId, e);
+                    // 防止系统自动选择文本
+                    if (window.getSelection) {
+                        window.getSelection().removeAllRanges();
+                    }
+                    
+                    // 获取消息ID
+                    const msgId = targetBubble.dataset.msgId || targetBubble.dataset.messageId;
+                    
+                    // 查找消息对象
+                    if (window.showMessageContextMenu && typeof window.showMessageContextMenu === 'function' && msgId) {
+                        // 从AppState中查找消息
+                        const messages = window.AppState?.messages?.[window.AppState?.currentChat?.id] || [];
+                        const msg = messages.find(m => m.id === msgId);
+                        if (msg) {
+                            window.showMessageContextMenu(msg, null, targetBubble);
                         }
                     }
                     
@@ -130,18 +142,25 @@
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
+            // 只有在长按触发时才阻止默认行为
+            if (longPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            longPressTriggered = false;
             targetBubble = null;
-        }, { passive: true });
+        }, { passive: false });
         
         chatMessages.addEventListener('touchcancel', function(e) {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
+            longPressTriggered = false;
             targetBubble = null;
         }, { passive: true });
         
-        console.log('✅ 长按消息气泡修复已应用');
+        console.log('✅ 长按消息气泡修复已应用（支持多选模式）');
     }
     
     /**
@@ -153,6 +172,15 @@
             const contextMenu = document.querySelector('.message-context-menu');
             if (!contextMenu) return;
             
+            // 检查是否在多选模式下点击消息气泡
+            if (window.AppState && window.AppState.isSelectMode) {
+                const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
+                if (bubble) {
+                    // 多选模式下点击消息气泡，不关闭菜单（因为菜单应该已经关闭了）
+                    return;
+                }
+            }
+            
             // 检查是否点击在菜单外部
             if (!contextMenu.contains(e.target) && !e.target.closest('.chat-bubble')) {
                 // 关闭菜单
@@ -161,9 +189,8 @@
             }
         };
         
+        // 使用 touchstart 而不是 click，避免干扰多选模式的点击事件
         document.addEventListener('touchstart', handleMenuClose, { passive: true });
-        // 添加click事件作为后备
-        document.addEventListener('click', handleMenuClose);
         
         console.log('✅ 长按菜单外部关闭已应用');
     }
@@ -224,6 +251,40 @@
     }
     
     /**
+     * 修复多选工具栏按钮点击问题
+     */
+    function fixMultiSelectToolbar() {
+        const toolbar = document.getElementById('msg-multi-select-toolbar');
+        if (!toolbar) return;
+        
+        const buttons = toolbar.querySelectorAll('button');
+        buttons.forEach(btn => {
+            // 确保按钮可以接收触摸事件
+            btn.style.pointerEvents = 'auto';
+            btn.style.touchAction = 'manipulation';
+            btn.style.webkitTapHighlightColor = 'rgba(0,0,0,0.05)';
+            btn.style.userSelect = 'none';
+            btn.style.webkitUserSelect = 'none';
+            btn.style.cursor = 'pointer';
+            
+            // 添加触摸反馈
+            btn.addEventListener('touchstart', function() {
+                this.style.opacity = '0.6';
+            }, { passive: true });
+            
+            btn.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            }, { passive: true });
+            
+            btn.addEventListener('touchcancel', function() {
+                this.style.opacity = '1';
+            }, { passive: true });
+        });
+        
+        console.log(`✅ 多选工具栏按钮触摸修复已应用 (${buttons.length}个按钮)`);
+    }
+    
+    /**
      * 修复表情库交互
      */
     function fixEmojiLibrary() {
@@ -263,9 +324,8 @@
             }
         };
         
+        // 使用 touchstart 而不是 click，避免干扰多选模式的点击事件
         document.addEventListener('touchstart', handleEmojiClose, { passive: true });
-        // 添加click事件作为后备
-        document.addEventListener('click', handleEmojiClose);
         
         console.log('✅ 表情库外部关闭已应用');
     }
@@ -330,9 +390,8 @@
             }
         };
         
+        // 使用 touchstart 而不是 click，避免干扰多选模式的点击事件
         document.addEventListener('touchstart', handleOutsideClick, { passive: true });
-        // 添加click事件作为后备（某些浏览器可能不触发touchstart）
-        document.addEventListener('click', handleOutsideClick);
         
         console.log('✅ 更多面板外部关闭已应用');
     }
@@ -346,13 +405,30 @@
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function(e) {
             const now = Date.now();
+            
+            // 检查是否在多选模式下点击消息气泡
+            if (window.AppState && window.AppState.isSelectMode) {
+                const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
+                if (bubble) {
+                    // 多选模式下点击消息气泡，不阻止默认行为
+                    return;
+                }
+            }
+            
+            // 检查是否在多选工具栏上点击
+            const toolbar = document.getElementById('msg-multi-select-toolbar');
+            if (toolbar && toolbar.contains(e.target)) {
+                // 多选工具栏上，不阻止默认行为
+                return;
+            }
+            
             if (now - lastTouchEnd <= 300) {
                 e.preventDefault();
             }
             lastTouchEnd = now;
         }, { passive: false });
         
-        console.log('✅ iOS双击缩放已禁用');
+        console.log('✅ iOS双击缩放已禁用（多选模式下保留点击功能）');
     }
     
     /**
@@ -375,6 +451,7 @@
         fixLongPressMenuClose();
         fixToolbarButtons();
         fixSendButton();
+        fixMultiSelectToolbar();
         fixEmojiLibrary();
         fixEmojiLibraryClose();
         fixMoreButton();
@@ -395,6 +472,7 @@
                             fixLongPress();
                             fixToolbarButtons();
                             fixSendButton();
+                            fixMultiSelectToolbar();
                             fixEmojiLibrary();
                         }, 100);
                     }
@@ -406,6 +484,21 @@
         if (chatPage) {
             observer.observe(chatPage, { attributes: true });
         }
+        
+        // 监听多选工具栏的动态添加
+        const toolbarObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.id === 'msg-multi-select-toolbar') {
+                        console.log('🔄 多选工具栏添加，应用触摸修复');
+                        fixMultiSelectToolbar();
+                    }
+                });
+            });
+        });
+        
+        // 监听body的变化以检测动态添加的多选工具栏
+        toolbarObserver.observe(document.body, { childList: true });
     }
     
     // 启动修复
@@ -418,6 +511,7 @@
         fixLongPressMenuClose,
         fixToolbarButtons,
         fixSendButton,
+        fixMultiSelectToolbar,
         fixEmojiLibrary,
         fixEmojiLibraryClose,
         fixMoreButton,

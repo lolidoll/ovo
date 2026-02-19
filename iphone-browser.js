@@ -360,9 +360,10 @@ ${conversationSummary || '暂无对话记录'}
 
         console.log('✅ 提示词构建完成');
 
-        // 规范化API端点（参考备忘录）
-        const baseEndpoint = api.endpoint.replace(/\/+$/, '');
-        const endpoint = baseEndpoint + '/v1/chat/completions';
+        // 规范化API端点（确保包含/v1）
+        const normalized = api.endpoint.replace(/\/+$/, '');
+        const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+        const endpoint = baseEndpoint + '/chat/completions';
         const apiKey = api.apiKey || '';
 
         console.log('🌐 API端点:', endpoint);

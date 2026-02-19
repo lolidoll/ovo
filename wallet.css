@@ -7,14 +7,13 @@
 
 /* ==================== 顶部导航栏 ==================== */
 #wallet-page .wallet-header {
-    height: 56px !important;
+    height: calc(56px + env(safe-area-inset-top)) !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #fff;
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-end !important;
     justify-content: space-between !important;
-    padding: 0 16px !important;
-    padding-top: calc(0px + env(safe-area-inset-top)) !important;
+    padding: env(safe-area-inset-top) 16px 0 16px !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;

@@ -483,8 +483,10 @@
             render();
             scrollBottom();
             
-            // 流式请求
-            const endpoint = api.endpoint.replace(/\/$/, '') + '/v1/chat/completions';
+            // 流式请求（规范化endpoint，确保包含/v1）
+            const normalized = api.endpoint.replace(/\/$/, '');
+            const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+            const endpoint = baseEndpoint + '/chat/completions';
             const requestBody = {
                 model: api.selectedModel,
                 messages: apiMsgs.filter(m => m.content?.trim()),
@@ -1112,7 +1114,10 @@
                 '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。';
 
             try {
-                const endpoint = window.AppState.apiSettings.secondaryEndpoint.replace(/\/$/, '') + '/v1/chat/completions';
+                // 规范化副API endpoint，确保包含/v1
+                const normalized = window.AppState.apiSettings.secondaryEndpoint.replace(/\/$/, '');
+                const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+                const endpoint = baseEndpoint + '/chat/completions';
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {

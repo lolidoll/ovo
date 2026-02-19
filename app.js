@@ -475,11 +475,34 @@
                 });
             }
 
-            // 底部标签栏
+            // 底部标签栏 - 移动端性能优化
             document.querySelectorAll('.tab-item').forEach(function(tab) {
-                tab.addEventListener('click', function() {
+                let lastClickTime = 0;
+                
+                tab.addEventListener('click', function(e) {
+                    const now = Date.now();
+                    // 防止重复点击和过快点击
+                    if (now - lastClickTime < 150) {
+                        e.preventDefault();
+                        return;
+                    }
+                    lastClickTime = now;
                     switchTab(this.dataset.tab);
-                });
+                }, { passive: false });
+
+                // iOS Safari 特殊处理 - 确保触摸事件能触发
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    tab.addEventListener('touchend', function(e) {
+                        const now = Date.now();
+                        if (now - lastClickTime < 150) {
+                            e.preventDefault();
+                            return;
+                        }
+                        lastClickTime = now;
+                        e.preventDefault();
+                        switchTab(this.dataset.tab);
+                    }, { passive: false });
+                }
             });
 
             // 好友分组折叠
@@ -1164,11 +1187,24 @@
         }
 
 
-        // 渲染会话列表
+        // 渲染会话列表 - 移动端性能优化版
         function renderConversations() {
+            // 防抖：防止频繁渲染
+            if (renderConversations._timer) {
+                clearTimeout(renderConversations._timer);
+            }
+            renderConversations._timer = setTimeout(() => {
+                _renderConversationsImpl();
+            }, 16); // 约60fps
+        }
+
+        // 实际渲染会话列表的实现
+        function _renderConversationsImpl() {
             const msgList = document.getElementById('msg-list');
             const emptyState = document.getElementById('msg-empty');
             
+            if (!msgList) return;
+
             // 根据搜索词过滤对话（支持搜索备注和名称）
             let filteredConversations = AppState.conversations;
             if (AppState.searchQuery) {
@@ -1181,18 +1217,17 @@
             }
             
             if (filteredConversations.length === 0) {
-                emptyState.style.display = 'flex';
+                if (emptyState) emptyState.style.display = 'flex';
                 // 清除旧的会话项
                 const oldItems = msgList.querySelectorAll('.msg-item');
                 oldItems.forEach(item => item.remove());
                 return;
             }
             
-            emptyState.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'none';
             
-            // 清除旧的会话项
-            const oldItems = msgList.querySelectorAll('.msg-item');
-            oldItems.forEach(item => item.remove());
+            // 使用 DocumentFragment 批量插入
+            const fragment = document.createDocumentFragment();
             
             // 按最后消息时间排序（最新的在前）
             filteredConversations.sort(function(a, b) {
@@ -1200,15 +1235,20 @@
                 const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
                 return bTime - aTime;
             });
+
+            // 清除旧的会话项
+            const oldItems = msgList.querySelectorAll('.msg-item');
+            oldItems.forEach(item => item.remove());
             
-            filteredConversations.forEach(function(conv) {
+            // 限制最大渲染数量，移动端只渲染前50条
+            const maxItems = Math.min(filteredConversations.length, 50);
+            
+            for (let i = 0; i < maxItems; i++) {
+                const conv = filteredConversations[i];
                 const item = document.createElement('div');
-                item.className = 'msg-item';
+                item.className = 'msg-item clickable-optimized';
                 item.dataset.id = conv.id;
                 item.dataset.type = conv.type;
-                item.style.position = 'relative';
-                item.style.overflow = 'hidden';
-                item.style.cursor = 'pointer';
                 
                 const avatarContent = conv.avatar
                     ? `<img src="${conv.avatar}" alt="">`
@@ -1233,18 +1273,39 @@
                     </div>
                 `;
                 
+                // 使用节流优化点击事件
+                let lastClickTime = 0;
                 item.addEventListener('click', function(e) {
+                    const now = Date.now();
+                    if (now - lastClickTime < 200) return;
+                    lastClickTime = now;
                     openChat(conv);
-                });
+                }, { passive: true });
                 
-                msgList.insertBefore(item, emptyState);
-            });
+                fragment.appendChild(item);
+            }
+            
+            // 批量插入DOM
+            msgList.appendChild(fragment);
         }
 
-        // 渲染好友列表
+        // 渲染好友列表 - 移动端性能优化版
         function renderFriends() {
+            // 防抖：防止频繁渲染
+            if (renderFriends._timer) {
+                clearTimeout(renderFriends._timer);
+            }
+            renderFriends._timer = setTimeout(() => {
+                _renderFriendsImpl();
+            }, 16); // 约60fps
+        }
+
+        // 实际渲染好友列表的实现
+        function _renderFriendsImpl() {
             const friendList = document.querySelector('.friend-list[data-group="common"]');
             const count = document.querySelector('.group-header[data-group="common"] .group-count');
+            
+            if (!friendList) return;
             
             // 将好友分配到分组中
             let groupedFriends = {};
@@ -1478,29 +1539,55 @@
             });
         }
 
-        // 切换标签页
+        // 切换标签页 - 移动端性能优化版
         function switchTab(tabId) {
-            // 更新标签栏
-            document.querySelectorAll('.tab-item').forEach(function(tab) {
-                tab.classList.remove('active');
-            });
-            document.querySelector(`.tab-item[data-tab="${tabId}"]`).classList.add('active');
-            
-            // 更新内容区域
-            document.querySelectorAll('.main-content').forEach(function(page) {
-                page.classList.remove('active');
-            });
-            document.getElementById(tabId).classList.add('active');
-            
-            // 更新顶部导航栏显示
-            const topNav = document.getElementById('top-nav');
-            if (tabId === 'dynamic-page') {
-                topNav.style.display = 'none';
-            } else {
-                topNav.style.display = 'flex';
+            // 防止重复切换
+            if (AppState.currentTab === tabId) {
+                return;
             }
-            
-            AppState.currentTab = tabId;
+
+            // 防抖：防止过快切换
+            const now = Date.now();
+            if (switchTab._lastSwitchTime && now - switchTab._lastSwitchTime < 100) {
+                return;
+            }
+            switchTab._lastSwitchTime = now;
+
+            // 使用 requestAnimationFrame 优化渲染
+            requestAnimationFrame(() => {
+                // 更新标签栏
+                document.querySelectorAll('.tab-item').forEach(function(tab) {
+                    tab.classList.remove('active');
+                });
+                const activeTab = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
+                if (activeTab) {
+                    activeTab.classList.add('active');
+                }
+                
+                // 更新内容区域
+                document.querySelectorAll('.main-content').forEach(function(page) {
+                    page.classList.remove('active');
+                });
+                const targetPage = document.getElementById(tabId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
+                }
+                
+                // 更新顶部导航栏显示
+                const topNav = document.getElementById('top-nav');
+                if (tabId === 'dynamic-page') {
+                    topNav.style.display = 'none';
+                } else {
+                    topNav.style.display = 'flex';
+                }
+                
+                AppState.currentTab = tabId;
+
+                // 震动反馈（如果支持）
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+            });
         }
 
         // 关闭侧边栏
@@ -1519,42 +1606,57 @@
             document.getElementById('add-popup').classList.remove('show');
         }
 
-        // 打开子页面
+        // 打开子页面 - 移动端性能优化版
         function openSubPage(pageId) {
-            document.getElementById(pageId).classList.add('open');
-            // 打开API设置页面时重新初始化UI
-            if (pageId === 'api-settings-page') {
-                setTimeout(function() {
-                    initApiSettingsUI();
-                }, 100);
+            // 防止重复打开
+            const page = document.getElementById(pageId);
+            if (!page || page.classList.contains('open')) {
+                return;
             }
-            // 打开世界书页面时，渲染世界书列表
-            if (pageId === 'worldbook-page') {
-                setTimeout(function() {
-                    renderWorldbooks();
-                }, 100);
-            }
-            // 打开朋友圈页面时，立即刷新好友和分组数据
-            if (pageId === 'moments-page') {
-                setTimeout(function() {
-                    try {
-                        // 确保selectbox中的好友和分组数据最新
-                        if (typeof initCharacterSelect === 'function') {
-                            initCharacterSelect();
+
+            // 使用 requestAnimationFrame 优化动画
+            requestAnimationFrame(() => {
+                page.classList.add('open');
+                
+                // 打开API设置页面时重新初始化UI
+                if (pageId === 'api-settings-page') {
+                    setTimeout(function() {
+                        initApiSettingsUI();
+                    }, 100);
+                }
+                // 打开世界书页面时，渲染世界书列表
+                if (pageId === 'worldbook-page') {
+                    setTimeout(function() {
+                        renderWorldbooks();
+                    }, 100);
+                }
+                // 打开朋友圈页面时，立即刷新好友和分组数据
+                if (pageId === 'moments-page') {
+                    setTimeout(function() {
+                        try {
+                            // 确保selectbox中的好友和分组数据最新
+                            if (typeof initCharacterSelect === 'function') {
+                                initCharacterSelect();
+                            }
+                            if (typeof initGroupSelect === 'function') {
+                                initGroupSelect();
+                            }
+                        } catch (e) {
+                            console.log('moments page initialization error:', e.message);
                         }
-                        if (typeof initGroupSelect === 'function') {
-                            initGroupSelect();
-                        }
-                    } catch (e) {
-                        console.log('moments page initialization error:', e.message);
-                    }
-                }, 50);
-            }
+                    }, 50);
+                }
+            });
         }
 
-        // 关闭子页面
+        // 关闭子页面 - 移动端性能优化版
         function closeSubPage(pageId) {
-            document.getElementById(pageId).classList.remove('open');
+            const page = document.getElementById(pageId);
+            if (!page) return;
+
+            requestAnimationFrame(() => {
+                page.classList.remove('open');
+            });
         }
 
         // 打开情侣空间
@@ -4022,6 +4124,9 @@
                             ? msg.sender === 'sent'
                             : msg.type === 'sent';
                         
+                        // 获取当前聊天的已读圆圈颜色
+                        const readCircleColor = window.currentReadCircleColor || '#FFB6C1';
+                        
                         if (isSentMessage) {
                             hasInfo = true;
                             const readStatusSpan = document.createElement('span');
@@ -4030,7 +4135,7 @@
                             
                             if (msg.readByAI) {
                                 readStatusSpan.innerHTML = `
-                                    <svg viewBox="0 0 16 16" width="12" height="12" style="fill: #FFB6C1;">
+                                    <svg viewBox="0 0 16 16" width="12" height="12" style="fill: ${readCircleColor};">
                                         <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.41 4.93L6.64 9.7l-2.05-2.05-.71.71 2.76 2.76 5.48-5.48-.71-.71z"/>
                                     </svg>
                                     <span>已读</span>
@@ -4053,7 +4158,7 @@
                             
                             if (msg.readByUser) {
                                 readStatusSpan.innerHTML = `
-                                    <svg viewBox="0 0 16 16" width="12" height="12" style="fill: #FFB6C1;">
+                                    <svg viewBox="0 0 16 16" width="12" height="12" style="fill: ${readCircleColor};">
                                         <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.41 4.93L6.64 9.7l-2.05-2.05-.71.71 2.76 2.76 5.48-5.48-.71-.71z"/>
                                     </svg>
                                     <span>已读</span>
@@ -4179,7 +4284,8 @@
                     const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
                     if (bubble) {
                         e.stopPropagation();
-                        const msgId = bubble.dataset.msgId;
+                        // 支持普通消息(data-msg-id)和撤回消息(data-message-id)
+                        const msgId = bubble.dataset.msgId || bubble.dataset.messageId;
                         if (msgId) {
                             toggleMessageSelection(msgId);
                         }

@@ -103,7 +103,12 @@
                     temperature: requestBody.temperature
                 });
                 
-                fetch(AppState.apiSettings.endpoint + '/chat/completions', {
+                // 规范化endpoint（确保包含/v1）
+                const normalized = window.APIUtils?.normalizeEndpoint?.(AppState.apiSettings.endpoint) ||
+                    (AppState.apiSettings.endpoint.replace(/\/$/, '').endsWith('/v1') ?
+                     AppState.apiSettings.endpoint.replace(/\/$/, '') :
+                     AppState.apiSettings.endpoint.replace(/\/+$/, '') + '/v1');
+                fetch(normalized + '/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

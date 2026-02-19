@@ -32,6 +32,7 @@
             --safe-area-inset-bottom: env(safe-area-inset-bottom);
             --safe-area-inset-left: env(safe-area-inset-left);
             --safe-area-inset-right: env(safe-area-inset-right);
+            --global-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
         }
         
         /* 等比缩放 - 应用到html元素，影响所有内容包括fixed元素 */
@@ -57,11 +58,25 @@
             --nav-safe-top: var(--safe-area-inset-top);
         }
 
+        /* iOS全屏模式：顶部导航栏从安全区域之后开始 */
+        .ios-standalone .top-nav {
+            top: env(safe-area-inset-top);
+            padding-top: 0;
+        }
+
+        /* 通用全屏模式适配（包括Edge、Android等） */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            html:not(.is-ios) .top-nav {
+                top: env(safe-area-inset-top);
+                padding-top: 0;
+            }
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            font-family: var(--global-font-family);
             -webkit-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
@@ -159,12 +174,22 @@
             z-index: 100;
         }
         
-        /* Opera浏览器全屏模式下的顶部导航栏适配 */
+        /* 全屏模式下的顶部导航栏适配 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .top-nav {
+            /* 非iOS设备：默认位置，使用env(safe-area-inset-top)作为兼容方案 */
+            html:not(.is-ios) .top-nav {
                 position: fixed;
                 top: 0;
                 display: flex;
+            }
+            /* iOS设备：从安全区域之后开始，避免被刘海遮挡 */
+            html.is-ios .top-nav {
+                position: fixed;
+                top: env(safe-area-inset-top);
+                display: flex;
+                padding-top: 0;
+                height: var(--nav-height);
+                min-height: var(--nav-height);
             }
         }
         
@@ -1962,12 +1987,31 @@ input[type="range"]::-ms-fill-upper {
     display:flex;
     align-items:center;
     vertical-align:middle;
-    pointer-events:auto;
-    touch-action:manipulation;
-    -webkit-user-select:text;
-    user-select:text;
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+    -webkit-user-select:text !important;
+    user-select:text !important;
     -webkit-tap-highlight-color:rgba(0,0,0,0.05);
     cursor:text;
+    -webkit-touch-callout:default !important;
+    touch-callout:default !important;
+}
+
+/* iOS Safari 特殊优化 */
+@supports (-webkit-touch-callout: default) {
+    .chat-input {
+        -webkit-user-select:text !important;
+        user-select:text !important;
+        -webkit-touch-callout:default !important;
+        touch-callout:default !important;
+        pointer-events:auto !important;
+        touch-action:manipulation !important;
+    }
+    
+    .chat-input-area {
+        pointer-events:auto !important;
+        touch-action:manipulation !important;
+    }
 }
 
 .chat-input::placeholder {
@@ -5402,7 +5446,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .char-settings-nav .back-arrow {
-    border-color: #fff;
+    display: none;
 }
 
 .char-settings-nav .sub-title {
@@ -6180,6 +6224,23 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .text-preview:hover {
     box-shadow: inset 0 1px 3px rgba(255, 228, 237, 0.3),
                 0 3px 6px rgba(255, 228, 237, 0.4);
+}
+
+.color-preview-box {
+    width: 100%;
+    height: 50px;
+    border-radius: 12px;
+    border: 2px solid #ffe4ed;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(255, 228, 237, 0.3);
+    transition: all 0.3s ease;
+}
+
+.color-preview-box:hover {
+    box-shadow: 0 3px 6px rgba(255, 228, 237, 0.4);
 }
 
 /* 响应式调整 */

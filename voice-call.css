@@ -37,11 +37,11 @@
    顶部栏
 ======================================== */
 .call-header {
-    height: 56px;
-    min-height: 56px;
-    padding: 0 16px;
+    height: calc(56px + env(safe-area-inset-top));
+    min-height: calc(56px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 16px 0 16px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);

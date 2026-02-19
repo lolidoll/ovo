@@ -1348,8 +1348,9 @@
             }
             
             const apiKey = api.apiKey || '';
-            const baseEndpoint = api.endpoint.replace(/\/+$/, '');
-            const endpoint = baseEndpoint + '/v1/chat/completions';
+            const normalized = api.endpoint.replace(/\/+$/, '');
+            const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
+            const endpoint = baseEndpoint + '/chat/completions';
             
             const body = {
                 model: api.selectedModel,

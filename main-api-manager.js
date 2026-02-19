@@ -597,10 +597,19 @@ const MainAPIManager = {
         // 注入最近一次的心声记录作为上下文参考
         // 注入最近一次的心声记录作为上下文参考（群聊不使用）
         if (conv.type !== 'group' && conv.mindStates && Array.isArray(conv.mindStates) && conv.mindStates.length > 0) {
-            const lastMindState = conv.mindStates[conv.mindStates.length - 1];
+            // 从后往前查找最近一次有效的心声记录
+            let lastMindState = null;
+            for (let i = conv.mindStates.length - 1; i >= 0; i--) {
+                const state = conv.mindStates[i];
+                // 跳过失败记录和空记录
+                if (state && !state.failed && Object.keys(state).length > 0) {
+                    lastMindState = state;
+                    break;
+                }
+            }
             
             // 检查是否有有效的心声数据（排除失败的记录）
-            if (lastMindState && !lastMindState.failed && Object.keys(lastMindState).length > 0) {
+            if (lastMindState) {
                 // 构建心声上下文摘要
                 const mindStateContext = [];
                 mindStateContext.push('【上一次心声记录】以下是你上一次回复时的心声状态，作为生成当前心声内容的参考：');

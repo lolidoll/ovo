@@ -272,7 +272,7 @@
 
             // 更新标题显示成员数（放在群名称后面同一行）
             var group = AppState.groups.find(function(g) { return g.id === conv.id; });
-            var memberCount = group ? group.members.length : 0;
+            var memberCount = group ? group.members.length + 1 : 1; // +1 把用户自己算上
             var chatTitle = document.getElementById('chat-title');
             if (chatTitle) {
                 var displayName = conv.remark || conv.name;

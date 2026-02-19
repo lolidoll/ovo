@@ -9,7 +9,7 @@ const FontManager = {
         console.log('字体管理器初始化...');
         await this.initIndexedDB();
         await this.loadFonts();
-        this.applyStoredFont();
+        await this.applyStoredFont();
     },
     
     // 初始化IndexedDB
@@ -232,9 +232,11 @@ const FontManager = {
             // 添加到document
             document.fonts.add(fontFace);
             
-            // 应用到全局CSS
-            document.documentElement.style.setProperty('--custom-font', `"${font.name}"`);
-            document.body.style.fontFamily = `"${font.name}", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+            // 通过修改CSS变量来全局应用字体（优先级最高）
+            document.documentElement.style.setProperty('--global-font-family', `"${font.name}", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif`);
+            
+            // 同时设置body的fontFamily作为备份
+            document.body.style.fontFamily = `"${font.name}", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif`;
             
             // 更新激活状态
             this.fonts.forEach(f => f.isActive = false);
@@ -243,6 +245,9 @@ const FontManager = {
             
             // 保存到localStorage
             localStorage.setItem('activeFontId', fontId);
+            
+            // 保存字体名称到localStorage（用于页面刷新后恢复）
+            localStorage.setItem('activeFontName', font.name);
             
             // 更新IndexedDB
             await this.saveFont(font);
@@ -257,8 +262,10 @@ const FontManager = {
     
     // 移除全局字体
     removeGlobalFont() {
-        document.documentElement.style.removeProperty('--custom-font');
-        document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        // 恢复默认字体
+        document.documentElement.style.setProperty('--global-font-family', '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif');
+        document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif';
+        localStorage.removeItem('activeFontName');
         console.log('已移除全局字体');
     },
     
@@ -268,7 +275,27 @@ const FontManager = {
             const font = this.fonts.find(f => f.id === this.currentFontId);
             if (font) {
                 try {
-                    await this.applyFont(this.currentFontId);
+                    // 创建@font-face规则
+                    const fontFace = new FontFace(
+                        font.name,
+                        `url(data:font/ttf;base64,${font.data})`,
+                        { style: 'normal', weight: 'normal' }
+                    );
+                    
+                    // 加载字体
+                    await fontFace.load();
+                    
+                    // 添加到document
+                    document.fonts.add(fontFace);
+                    
+                    // 通过修改CSS变量来全局应用字体
+                    document.documentElement.style.setProperty('--global-font-family', `"${font.name}", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif`);
+                    document.body.style.fontFamily = `"${font.name}", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif`;
+                    
+                    // 更新激活状态
+                    this.fonts.forEach(f => f.isActive = false);
+                    font.isActive = true;
+                    
                     console.log('已应用存储的字体:', font.name);
                 } catch (error) {
                     console.error('应用存储字体失败:', error);
