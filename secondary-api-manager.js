@@ -103,14 +103,29 @@ const SecondaryAPIManager = (function() {
                 firstChoicePreview: data.choices && data.choices[0] ? String(data.choices[0]).substring(0, 100) : null
             });
             
-            // 使用 APIUtils 提取文本
-            const result = window.APIUtils.extractTextFromResponse(data);
+            // 使用自定义字段映射或标准提取 (支持用户自定义API响应格式)
+            const customFieldPaths = api.secondaryCustomResponseFieldPaths ? api.secondaryCustomResponseFieldPaths.split('\n').filter(p => p.trim()) : [];
+            const result = window.APIUtils.extractTextWithCustomMapping(data, customFieldPaths);
             
             if (result && result.trim()) {
                 console.log('✨ 副API成功返回内容，长度:', result.length);
                 if (onSuccess) onSuccess(result);
             } else {
-                console.error('❌ 响应数据结构异常:', data);
+                // 详细的诊断信息
+                console.error('═════════════════════════════════════════════════════');
+                console.error('❌ 副API - 无法从响应中提取文本 - 完整诊断信息');
+                console.error('═════════════════════════════════════════════════════');
+                console.error('📊 响应顶级结构:');
+                console.error('  - keys:', Object.keys(data));
+                console.error('  - hasChoices:', !!data.choices);
+                console.error('  - hasCandidates:', !!data.candidates);
+                console.error('  - choicesCount:', Array.isArray(data.choices) ? data.choices.length : 'N/A');
+                if (Array.isArray(data.choices) && data.choices.length > 0) {
+                    const firstChoice = data.choices[0];
+                    console.error('📋 Choices第一项的结构:', Object.keys(firstChoice));
+                }
+                console.error('📄 完整响应数据 (前2000字符):', JSON.stringify(data, null, 2).substring(0, 2000));
+                console.error('═════════════════════════════════════════════════════');
                 throw new Error('响应格式错误：无法找到有效内容');
             }
         })
@@ -213,8 +228,9 @@ const SecondaryAPIManager = (function() {
         .then(data => {
             console.log('✅ 副API返回数据 [' + promptType + ']');
             
-            // 使用 APIUtils 提取文本
-            const result = window.APIUtils.extractTextFromResponse(data);
+            // 使用自定义字段映射或标准提取 (支持用户自定义API响应格式)
+            const customFieldPaths = api.secondaryCustomResponseFieldPaths ? api.secondaryCustomResponseFieldPaths.split('\n').filter(p => p.trim()) : [];
+            const result = window.APIUtils.extractTextWithCustomMapping(data, customFieldPaths);
             
             if (result && result.trim()) {
                 console.log('✨ 副API成功返回内容，长度:', result.length);

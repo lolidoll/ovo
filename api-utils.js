@@ -45,25 +45,40 @@ const APIUtils = {
      * @returns {string} 提取的文本内容
      */
     extractTextFromResponse(data) {
-        // 辅助函数：从嵌套对象中提取第一个非空字符串
-        function extractFirstString(obj, maxDepth = 5) {
+        // 辅助函数：从嵌套对象中提取第一个非空字符串（智能搜索）
+        function extractFirstString(obj, maxDepth = 5, priorityFields = ['content', 'text', 'message', 'reply', 'output', 'result']) {
             if (typeof obj === 'string' && obj.trim()) return obj;
             if (maxDepth <= 0 || !obj || typeof obj !== 'object') return '';
             
             // 需要跳过的字段（这些字段不是实际的消息内容）
-            const skipFields = ['id', 'object', 'created', 'model', 'usage', 'system_fingerprint', 'role'];
+            const skipFields = ['id', 'object', 'created', 'model', 'usage', 'system_fingerprint', 'role', 'index', 'finish_reason', 'stop_reason'];
             
+            // 首先优先查找可能包含有效内容的字段
+            for (let fieldName of priorityFields) {
+                if (fieldName in obj) {
+                    const val = obj[fieldName];
+                    if (typeof val === 'string' && val.trim()) {
+                        return val;
+                    }
+                    if (typeof val === 'object' && val !== null) {
+                        const nested = extractFirstString(val, maxDepth - 1, priorityFields);
+                        if (nested) return nested;
+                    }
+                }
+            }
+            
+            // 然后遍历其他字段
             for (let key in obj) {
-                // 跳过已知的非内容字段
-                if (skipFields.includes(key)) {
+                // 跳过已知的非内容字段和已检查的字段
+                if (skipFields.includes(key) || priorityFields.includes(key)) {
                     continue;
                 }
                 
                 if (typeof obj[key] === 'string' && obj[key].trim()) {
                     return obj[key];
                 }
-                if (typeof obj[key] === 'object') {
-                    const nested = extractFirstString(obj[key], maxDepth - 1);
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    const nested = extractFirstString(obj[key], maxDepth - 1, priorityFields);
                     if (nested) return nested;
                 }
             }
@@ -73,60 +88,92 @@ const APIUtils = {
         let assistantText = '';
         
         // 尝试多种可能的响应格式（按优先级排序）
-        if (data.choices && Array.isArray(data.choices) && data.choices[0]) {
-            const choice = data.choices[0];
-            // OpenAI格式：message.content
-            if (choice.message?.content) {
-                assistantText = choice.message.content;
+        if (data.choices && Array.isArray(data.choices)) {
+            // 尝试从choices数组的每一项提取（通常是第一项，但如果失败则尝试其他项）
+            for (let i = 0; i < data.choices.length; i++) {
+                const choice = data.choices[i];
+                if (!choice) continue;
+                
+                // OpenAI格式：message.content
+                if (choice.message?.content && typeof choice.message.content === 'string' && choice.message.content.trim()) {
+                    assistantText = choice.message.content;
+                    break;
+                }
+                // Anthropic格式 (text字段)
+                else if (choice.text && typeof choice.text === 'string' && choice.text.trim()) {
+                    assistantText = choice.text;
+                    break;
+                }
+                // 其他消息格式（可能是字符串或对象）
+                else if (choice.message) {
+                    if (typeof choice.message === 'string' && choice.message.trim()) {
+                        assistantText = choice.message;
+                        break;
+                    } else if (typeof choice.message === 'object' && choice.message.content && typeof choice.message.content === 'string' && choice.message.content.trim()) {
+                        assistantText = choice.message.content;
+                        break;
+                    }
+                }
             }
-            // Anthropic格式 (text字段)
-            else if (choice.text) {
-                assistantText = choice.text;
-            }
-            // 其他消息格式（可能是字符串或对象）
-            else if (choice.message) {
-                assistantText = typeof choice.message === 'string'
-                    ? choice.message
-                    : (choice.message.content || extractFirstString(choice.message));
-            }
-            // 尝试从整个choice对象中提取文本
-            else {
-                assistantText = extractFirstString(choice);
+            
+            // 如果从choices数组中没有找到，尝试深度搜索
+            if (!assistantText) {
+                for (let i = 0; i < data.choices.length; i++) {
+                    const choice = data.choices[i];
+                    if (choice) {
+                        assistantText = extractFirstString(choice);
+                        if (assistantText) break;
+                    }
+                }
             }
         }
+        
         // Google Gemini格式
-        else if (data.candidates && Array.isArray(data.candidates) && data.candidates[0]) {
-            const candidate = data.candidates[0];
-            if (candidate.content?.parts?.[0]?.text) {
-                assistantText = candidate.content.parts[0].text;
-            } else {
-                assistantText = extractFirstString(candidate);
+        if (!assistantText && data.candidates && Array.isArray(data.candidates)) {
+            for (let i = 0; i < data.candidates.length; i++) {
+                const candidate = data.candidates[i];
+                if (!candidate) continue;
+                
+                if (candidate.content?.parts && Array.isArray(candidate.content.parts)) {
+                    for (let j = 0; j < candidate.content.parts.length; j++) {
+                        const part = candidate.content.parts[j];
+                        if (part && part.text && typeof part.text === 'string' && part.text.trim()) {
+                            assistantText = part.text;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!assistantText && candidate.content && typeof candidate.content === 'string' && candidate.content.trim()) {
+                    assistantText = candidate.content;
+                }
+                
+                if (assistantText) break;
             }
         }
-        // 其他常见的一级字段
-        else if (data.output && typeof data.output === 'string') {
-            assistantText = data.output;
+        
+        // 尝试其他可能的一级字段（按优先级）
+        if (!assistantText) {
+            const fieldsToTry = [
+                'output', 'result', 'reply', 'content', 'text', 'message', 'response', 'data',
+                'answer', 'completion', 'generated_text', 'result_text', 'answer_text'
+            ];
+            
+            for (let field of fieldsToTry) {
+                if (data[field]) {
+                    if (typeof data[field] === 'string' && data[field].trim()) {
+                        assistantText = data[field];
+                        break;
+                    } else if (typeof data[field] === 'object') {
+                        assistantText = extractFirstString(data[field]);
+                        if (assistantText) break;
+                    }
+                }
+            }
         }
-        else if (data.result && typeof data.result === 'string') {
-            assistantText = data.result;
-        }
-        else if (data.reply && typeof data.reply === 'string') {
-            assistantText = data.reply;
-        }
-        else if (data.content && typeof data.content === 'string') {
-            assistantText = data.content;
-        }
-        else if (data.text && typeof data.text === 'string') {
-            assistantText = data.text;
-        }
-        else if (data.message && typeof data.message === 'string') {
-            assistantText = data.message;
-        }
-        else if (data.response && typeof data.response === 'string') {
-            assistantText = data.response;
-        }
+        
         // 最后的兜底方案：深度搜索第一个有效的字符串
-        else {
+        if (!assistantText) {
             assistantText = extractFirstString(data);
         }
 
@@ -286,7 +333,57 @@ const APIUtils = {
         if (timeoutId) {
             clearTimeout(timeoutId);
         }
+    },
+
+    /**
+     * 从响应中按照指定路径提取值 (支持深层路径)
+     * 例如：getValueByPath(data, 'choices.0.message.content')
+     * @param {Object} obj - 源对象
+     * @param {string} path - 点分路径 (如 'a.b.0.c')
+     * @returns {string|null} 提取的值或null
+     */
+    getValueByPath(obj, path) {
+        if (!path || typeof path !== 'string') return null;
+        
+        const keys = path.split('.');
+        let current = obj;
+        
+        for (let key of keys) {
+            if (current === null || current === undefined) return null;
+            
+            // 处理数组索引（如 choices.0.message）
+            if (/^\d+$/.test(key)) {
+                current = current[parseInt(key)];
+            } else {
+                current = current[key];
+            }
+        }
+        
+        return (typeof current === 'string' && current.trim()) ? current : null;
+    },
+
+    /**
+     * 使用自定义字段映射提取文本 - 用于特殊的API格式
+     * @param {Object} data - API响应数据
+     * @param {Array<string>} customPaths - 自定义路径数组，例如 ['data.result', 'response.text']
+     * @returns {string} 提取的文本或空字符串
+     */
+    extractTextWithCustomMapping(data, customPaths = []) {
+        // 如果提供了自定义路径，优先尝试
+        if (Array.isArray(customPaths) && customPaths.length > 0) {
+            for (let path of customPaths) {
+                const value = this.getValueByPath(data, path);
+                if (value) {
+                    console.log('✅ 使用自定义字段映射成功提取:', path);
+                    return value;
+                }
+            }
+        }
+        
+        // 回退到标准提取方式
+        return this.extractTextFromResponse(data);
     }
+
 };
 
 // 导出模块（支持多种模块系统）
@@ -294,5 +391,24 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = APIUtils;
 }
 if (typeof window !== 'undefined') {
+    // 标准导出
     window.APIUtils = APIUtils;
+
+    // 兼容性别名：一些旧代码或拼写错误可能使用小写或错误拼写的引用
+    // 将常见变体映射到同一对象，避免运行时 "is not a function" 错误
+    try {
+        window.apiutils = window.apiutils || APIUtils;
+
+        // 常见大小写变体（全部小写）
+        window.apiutils.extractTextFromResponse = APIUtils.extractTextFromResponse;
+        window.apiutils.extractTextWithCustomMapping = APIUtils.extractTextWithCustomMapping;
+
+        // 常见拼写错误别名（例如 extratextwithcostommapping）
+        window.apiutils.extratextwithcostommapping = APIUtils.extractTextWithCustomMapping;
+        window.apiutils.extracttextwithcustommapping = APIUtils.extractTextWithCustomMapping;
+        window.apiutils.getValueByPath = APIUtils.getValueByPath;
+    } catch (e) {
+        // 忽略在非浏览器环境下的赋值错误
+        console.warn('APIUtils 兼容性别名设置失败:', e);
+    }
 }

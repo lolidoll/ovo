@@ -20,7 +20,7 @@
             homescreen: 'https://image.uglycat.cc/d2r7d4.jpg'
         },
         display: {
-            showDynamicIsland: true
+            showDynamicIsland: false
         },
         icons: {
             app0: { url: '', name: '备忘录' },

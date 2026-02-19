@@ -744,8 +744,6 @@
         if (!list || !preset) return;
         
         list.innerHTML = preset.prompts.map((p, i) => {
-            const posLabel = p.position === 'top' ? '↑' : p.position === 'bottom' ? '↓' : `D${p.injection_depth ?? p.depth ?? 0}`;
-            const orderLabel = (p.injection_order && p.injection_order !== DEFAULT_ORDER) ? ` O${p.injection_order}` : '';
             const sysTag = p.system_prompt ? '<span class="st-prompt-sys-tag">SYS</span>' : '';
             return `
             <div class="st-prompt-item" data-idx="${i}" draggable="true">
@@ -754,8 +752,6 @@
                     <div class="st-prompt-toggle ${p.enabled ? 'on' : ''}" data-field="enabled"></div>
                     ${sysTag}
                     <span class="st-prompt-name-display">${esc(p.name) || '未命名'}</span>
-                    <span class="st-prompt-pos">${posLabel}${orderLabel}</span>
-                    <span class="st-prompt-tokens">${estimateTokens(p.content)}t</span>
                     <button class="st-prompt-edit-btn" data-action="edit">编辑</button>
                     <button class="st-prompt-delete" data-action="delete">×</button>
                 </div>

@@ -1251,6 +1251,9 @@
         // 设置锁
         isVideoAIResponding = true;
         
+        // 显示三点加载指示器
+        showVideoTypingIndicator();
+        
         try {
             // 检查API设置
             const api = window.AppState?.apiSettings || {};
@@ -1428,6 +1431,28 @@ ${initiatorInfo}
             console.error('[VideoCall] AI回复失败:', error);
         } finally {
             isVideoAIResponding = false;
+            // 隐藏三点加载指示器
+            hideVideoTypingIndicator();
+        }
+    }
+    
+    /**
+     * 显示视频通话三点加载指示器
+     */
+    function showVideoTypingIndicator() {
+        const indicator = document.getElementById('video-chat-typing-indicator');
+        if (indicator) {
+            indicator.classList.add('show');
+        }
+    }
+    
+    /**
+     * 隐藏视频通话三点加载指示器
+     */
+    function hideVideoTypingIndicator() {
+        const indicator = document.getElementById('video-chat-typing-indicator');
+        if (indicator) {
+            indicator.classList.remove('show');
         }
     }
     
@@ -2012,15 +2037,7 @@ ${initiatorInfo}
                     clearTimeout(mainPressTimer);
                     mainPressTimer = null;
                 }
-                // 如果没有移动且没有长按，则切换大小屏
-                if (!mainIsMoved) {
-                    // 短按延迟，避免与长按冲突
-                    setTimeout(() => {
-                        if (!document.querySelector('.video-photo-quick-selector')) {
-                            switchMainAndSmallScreen();
-                        }
-                    }, 100);
-                }
+                // 大屏点击不切换大小屏
             });
             
             // 鼠标事件（PC端）
@@ -2035,6 +2052,7 @@ ${initiatorInfo}
                     clearTimeout(mainPressTimer);
                     mainPressTimer = null;
                 }
+                // 大屏点击不切换大小屏
             });
             
             mainScreen.addEventListener('mouseleave', (e) => {
