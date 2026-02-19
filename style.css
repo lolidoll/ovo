@@ -4141,17 +4141,19 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .voice-bubble {
     max-width: 300px;
-    padding: 10px 14px;
-    border-radius: 12px;
+    padding: 12px 16px;
+    border-radius: 18px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: text;
-    background: #e8e8e8;
+    background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
     color: #333;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .voice-waveform {
@@ -4186,23 +4188,31 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .voice-bubble-user {
-    background: #e8e8e8;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
     color: #333;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 6px;
+    border: 1px solid #e0e0e0;
 }
 
 .voice-bubble-user:hover {
-    background: #ddd;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+    border-color: #d8d8d8;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
 }
 
 .voice-bubble-ai {
-    background: #f5f5f5;
+    background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
     color: #333;
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius: 6px;
+    border: 1px solid #e8e8e8;
 }
 
 .voice-bubble-ai:hover {
-    background: #efefef;
+    background: linear-gradient(135deg, #f0f0f0 0%, #ebebeb 100%);
+    border-color: #e0e0e0;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
 }
 
 .voice-bubble-header {
@@ -4243,10 +4253,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .wave {
-    width: 2px;
+    width: 3px;
     height: 12px;
-    background: #999;
-    border-radius: 1px;
+    background: linear-gradient(180deg, #999 0%, #ccc 100%);
+    border-radius: 2px;
     animation: voiceWave 0.6s ease-in-out infinite;
 }
 

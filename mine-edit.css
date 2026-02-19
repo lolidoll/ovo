@@ -35,6 +35,19 @@
     border-bottom: 1px solid #eee;
 }
 
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .mine-edit-header {
+        padding-top: calc(16px + env(safe-area-inset-top));
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .mine-edit-header,
+.is-standalone .mine-edit-header {
+    padding-top: calc(16px + env(safe-area-inset-top));
+}
+
 .mine-edit-title {
     font-size: 16px;
     font-weight: bold;

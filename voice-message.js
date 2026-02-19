@@ -92,9 +92,6 @@ const VoiceMessageModule = (function() {
                         <label for="voice-duration-input">时长（秒）：</label>
                         <input type="number" id="voice-duration-input" min="1" max="300" value="6" class="voice-duration-input">
                     </div>
-                    <div class="voice-tips">
-                        <div class="voice-tip-item">按 Ctrl+Enter 快速发送</div>
-                    </div>
                 </div>
                 <div class="voice-modal-footer">
                     <button class="voice-cancel-btn">取消</button>

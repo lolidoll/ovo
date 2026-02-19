@@ -103,7 +103,6 @@ window.LocationMessageModule = (function() {
                         <div style="font-size:11px;color:#666;margin-top:4px;">提示：表示你距离该位置的大概距离</div>
                     </div>
                     <div class="location-tips">
-                        <div class="location-tip-item">按 Ctrl+Enter 快速发送</div>
                     </div>
                 </div>
                 <div class="location-modal-footer">

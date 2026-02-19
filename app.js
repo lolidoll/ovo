@@ -3945,15 +3945,15 @@
                             <div style="
                                 display: flex;
                                 align-items: center;
-                                gap: 6px;
+                                gap: 4px;
                                 margin-bottom: 8px;
-                                padding-bottom: 8px;
+                                padding-bottom: 6px;
                                 border-bottom: 1px solid #f0f0f0;
                             ">
-                                <svg viewBox="0 0 24 24" width="16" height="16" style="fill: #666;">
+                                <svg viewBox="0 0 24 24" width="10" height="10" style="fill: #999;">
                                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
                                 </svg>
-                                <span style="font-size: 12px; color: #666; font-weight: 500;">图片描述</span>
+                                <span style="font-size: 9px; color: #999; font-weight: 400;">图片描述</span>
                             </div>
                             <div style="
                                 font-size: 12px;

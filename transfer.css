@@ -52,6 +52,19 @@
     color: #fff;
 }
 
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .transfer-header {
+        padding-top: calc(30px + env(safe-area-inset-top));
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .transfer-header,
+.is-standalone .transfer-header {
+    padding-top: calc(30px + env(safe-area-inset-top));
+}
+
 .transfer-title {
     font-size: 20px;
     font-weight: 600;
@@ -175,6 +188,8 @@
 .transfer-card {
     position: relative;
     width: 187px;
+    min-width: 187px;
+    max-width: none;
     background: #FFB900;
     border: none;
     border-radius: 12px;
@@ -183,6 +198,9 @@
     cursor: pointer;
     transition: all 0.3s ease;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 74px;
 }
 
 .transfer-card:hover {
@@ -223,17 +241,27 @@
 }
 
 .transfer-card-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 500;
     color: #fff;
-    line-height: 1;
-    margin-bottom: 3px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    min-width: 0;
 }
 
 .transfer-card-note {
-    font-size: 9px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 400;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    min-width: 0;
 }
 
 .transfer-card-divider {
@@ -491,12 +519,32 @@
     }
     
     .transfer-card {
-        width: 260px;
+        width: 187px;
+        min-width: 187px;
+        max-width: none;
     }
     
     .transfer-amount-input {
         font-size: 40px;
         width: 180px;
+    }
+}
+
+/* 小屏设备适配（iPhone SE等） */
+@media screen and (max-width: 375px) {
+    .transfer-card {
+        width: 187px;
+        min-width: 187px;
+        max-width: none;
+    }
+}
+
+/* 超小屏设备适配 */
+@media screen and (max-width: 320px) {
+    .transfer-card {
+        width: 187px;
+        min-width: 187px;
+        max-width: none;
     }
 }
 

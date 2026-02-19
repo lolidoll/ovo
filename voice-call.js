@@ -180,7 +180,6 @@
                             <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
                         </svg>
                     </button>
-                    <span class="call-status-text">语音通话中</span>
                     <button class="call-ringtone-btn" id="call-ringtone-btn" title="设置铃声">
                         <svg viewBox="0 0 24 24" width="20" height="20">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
@@ -202,13 +201,17 @@
                     <!-- 通话内聊天框 -->
                     <div class="call-chat-container">
                         <div class="call-chat-messages" id="call-chat-messages"></div>
+                        
+                        <!-- AI回复中的三点加载指示器 -->
+                        <div class="call-typing-indicator" id="call-typing-indicator">
+                            <div class="call-typing-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        
                         <div class="call-chat-input-area">
                             <input type="text" class="call-chat-input" id="call-chat-input" placeholder="">
-                            <button class="call-chat-send-btn" id="call-chat-send-btn">
-                                <svg viewBox="0 0 24 24" width="20" height="20">
-                                    <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor"/>
-                                </svg>
-                            </button>
+                            <button class="call-chat-send-btn" id="call-chat-send-btn"></button>
                         </div>
                     </div>
                 </div>
@@ -623,9 +626,6 @@
         // 开始计时
         startCallTimer();
         
-        // 添加系统消息
-        addCallSystemMessage('通话已接通');
-        
         showToast('语音通话已接通');
         
         // AI主动打招呼
@@ -690,9 +690,6 @@
         
         // 开始计时
         startCallTimer();
-        
-        // 添加系统消息
-        addCallSystemMessage('通话已接通');
         
         showToast('语音通话已接通');
         
@@ -1053,8 +1050,8 @@
             const convId = currentChat.id;
             const conversation = window.AppState?.conversations?.find(c => c.id === convId);
             
-            // 显示AI正在说话
-            addCallMessage('ai', '正在说话...');
+            // 显示三点加载指示器
+            showTypingIndicator();
             
             // 构建API消息数组
             const messages = [];
@@ -1278,11 +1275,27 @@ ${initiatorInfo}
     }
     
     /**
-     * 移除"正在说话"指示器
+     * 显示三点加载指示器
+     */
+    function showTypingIndicator() {
+        const indicator = document.getElementById('call-typing-indicator');
+        if (indicator) {
+            indicator.style.display = 'flex';
+        }
+    }
+
+    /**
+     * 移除三点加载指示器
      */
     function removeTypingIndicator() {
+        const indicator = document.getElementById('call-typing-indicator');
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+        
+        // 同时移除可能存在的旧的"正在说话"消息（兼容旧版本）
         const messagesContainer = document.getElementById('call-chat-messages');
-        const lastMessage = messagesContainer.lastElementChild;
+        const lastMessage = messagesContainer?.lastElementChild;
         if (lastMessage && lastMessage.textContent.includes('正在说话')) {
             lastMessage.remove();
         }
@@ -1488,9 +1501,6 @@ ${initiatorInfo}
         
         // 开始计时
         startCallTimer();
-        
-        // 添加系统消息
-        addCallSystemMessage('通话已接通');
         
         showToast('语音通话已接通');
         

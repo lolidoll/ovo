@@ -37,11 +37,11 @@
    顶部栏
 ======================================== */
 .call-header {
-    height: calc(56px + env(safe-area-inset-top));
-    min-height: calc(56px + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) 16px 0 16px;
+    height: calc(48px + env(safe-area-inset-top));
+    min-height: calc(48px + env(safe-area-inset-top));
+    padding: calc(env(safe-area-inset-top) + 4px) 16px 8px 16px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
@@ -51,18 +51,18 @@
 /* PWA全屏模式适配 - 所有设备统一处理 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     .call-header {
-        height: calc(56px + env(safe-area-inset-top));
-        min-height: calc(56px + env(safe-area-inset-top));
-        padding: env(safe-area-inset-top) 16px 0 16px;
+        height: calc(48px + env(safe-area-inset-top));
+        min-height: calc(48px + env(safe-area-inset-top));
+        padding: calc(env(safe-area-inset-top) + 4px) 16px 8px 16px;
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa .call-header,
 .is-standalone .call-header {
-    height: calc(56px + env(safe-area-inset-top));
-    min-height: calc(56px + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) 16px 0 16px;
+    height: calc(48px + env(safe-area-inset-top));
+    min-height: calc(48px + env(safe-area-inset-top));
+    padding: calc(env(safe-area-inset-top) + 4px) 16px 8px 16px;
 }
 
 .call-minimize-btn,
@@ -165,11 +165,11 @@
 
 .call-chat-messages {
     flex: 1;
-    padding: 20px;
+    padding: 12px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     position: relative;
 }
 
@@ -188,12 +188,12 @@
 
 .call-chat-message {
     display: flex;
-    max-width: 75%;
-    padding: 12px 16px;
-    border-radius: 18px;
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 14px;
     word-wrap: break-word;
-    font-size: 15px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.4;
     animation: messageSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
     backdrop-filter: blur(40px) saturate(180%);
@@ -262,8 +262,8 @@
         rgba(255, 182, 193, 0.15) 0%,
         rgba(255, 218, 225, 0.1) 100%
     );
-    border-radius: 18px;
-    border-bottom-right-radius: 6px;
+    border-radius: 14px;
+    border-bottom-right-radius: 4px;
     pointer-events: none;
     opacity: 0.6;
 }
@@ -296,8 +296,8 @@
         rgba(200, 200, 200, 0.08) 0%,
         rgba(180, 180, 180, 0.05) 100%
     );
-    border-radius: 18px;
-    border-bottom-left-radius: 6px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
     pointer-events: none;
     opacity: 0.5;
 }
@@ -309,8 +309,8 @@
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(0, 0, 0, 0.1);
     color: #666;
-    font-size: 12px;
-    padding: 6px 14px;
+    font-size: 11px;
+    padding: 4px 10px;
     max-width: 85%;
 }
 
@@ -319,13 +319,13 @@
 }
 
 .call-chat-system-text {
-    font-size: 12px;
+    font-size: 11px;
     color: #666;
 }
 
 .call-chat-text {
-    font-size: 15px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.4;
     position: relative;
     z-index: 1;
 }
@@ -334,34 +334,22 @@
 .call-chat-input-area {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 5px 10px;
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
-    border-radius: 30px;
-    margin: 12px;
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    margin: 10px;
     transition: all 0.3s ease;
-}
-
-.call-chat-input-area:focus-within {
-    background: rgba(255, 255, 255, 0.18);
-    box-shadow:
-        0 12px 40px rgba(255, 105, 180, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        0 0 0 1px rgba(255, 179, 217, 0.3);
 }
 
 .call-chat-input {
     flex: 1;
     border: none;
     background: transparent;
-    padding: 8px 4px;
-    font-size: 15px;
+    padding: 4px 2px;
+    font-size: 14px;
     outline: none;
     color: #333;
 }
@@ -371,8 +359,8 @@
 }
 
 .call-chat-send-btn {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     border: none;
     background: linear-gradient(135deg, #ffb3c1 0%, #ff9eaf 100%);
     border-radius: 50%;
@@ -393,6 +381,39 @@
 
 .call-chat-send-btn:active {
     transform: scale(0.95);
+}
+
+/* ========================================
+   AI回复中 - 三点加载动画（输入框上方）
+======================================== */
+.call-typing-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+    flex-shrink: 0;
+}
+
+.call-typing-dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.call-typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: rgba(212, 103, 138, 0.6);
+    border-radius: 50%;
+    animation: callTypingDot 1.4s infinite;
+}
+
+.call-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.call-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes callTypingDot {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+    30% { opacity: 1; transform: scale(1); }
 }
 
 /* ========================================

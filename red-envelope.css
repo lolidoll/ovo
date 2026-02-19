@@ -51,6 +51,19 @@
     color: #fff;
 }
 
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .red-envelope-header {
+        padding-top: calc(30px + env(safe-area-inset-top));
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .red-envelope-header,
+.is-standalone .red-envelope-header {
+    padding-top: calc(30px + env(safe-area-inset-top));
+}
+
 .red-envelope-title {
     font-size: 20px;
     font-weight: 600;
@@ -206,6 +219,7 @@
 .red-envelope-card {
     position: relative;
     width: 187px;
+    min-width: 187px;
     background: #FFB900;
     border-radius: 12px;
     padding: 12px 15px;
@@ -216,6 +230,7 @@
     display: flex;
     flex-direction: column;
     min-height: 74px;
+    max-width: none;
 }
 
 .red-envelope-card:hover {
@@ -260,6 +275,11 @@
     font-weight: 500;
     line-height: 1.4;
     margin-bottom: 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    min-width: 0;
 }
 
 .red-envelope-card-divider {
@@ -692,5 +712,29 @@
     .red-envelope-input,
     .red-envelope-message-input {
         font-size: 16px !important;
+    }
+    
+    .red-envelope-card {
+        width: 187px;
+        min-width: 187px;
+        max-width: none;
+    }
+}
+
+/* 小屏设备适配（iPhone SE等） */
+@media screen and (max-width: 375px) {
+    .red-envelope-card {
+        width: 187px;
+        min-width: 187px;
+        max-width: none;
+    }
+}
+
+/* 超小屏设备适配 */
+@media screen and (max-width: 320px) {
+    .red-envelope-card {
+        width: 187px;
+        min-width: 187px;
+        max-width: none;
     }
 }
