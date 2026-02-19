@@ -28,10 +28,10 @@
             --nav-safe-top: 0px;
             --nav-total-height: calc(var(--nav-height) + var(--nav-safe-top));
             --page-scale: 1;
-            --safe-area-inset-top: env(safe-area-inset-top);
-            --safe-area-inset-bottom: env(safe-area-inset-bottom);
-            --safe-area-inset-left: env(safe-area-inset-left);
-            --safe-area-inset-right: env(safe-area-inset-right);
+            --safe-area-inset-top: 0px;
+            --safe-area-inset-bottom: 0px;
+            --safe-area-inset-left: 0px;
+            --safe-area-inset-right: 0px;
             --global-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
         }
         
@@ -53,45 +53,29 @@
             }
         }
         
-        /* iOS PWA 顶部安全区（仅全屏/桌面模式） */
+        /* 通用全屏模式适配（包括所有iPhone型号、所有安卓手机、Edge等所有设备） */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            /* 在全屏模式下，重新定义safe-area变量 - 所有设备统一处理 */
+            :root {
+                --safe-area-inset-top: env(safe-area-inset-top);
+                --safe-area-inset-bottom: env(safe-area-inset-bottom);
+                --safe-area-inset-left: env(safe-area-inset-left);
+                --safe-area-inset-right: env(safe-area-inset-right);
+                --nav-safe-top: var(--safe-area-inset-top);
+                --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
+            }
+        }
+        
+        /* PWA模式统一样式 - 所有设备（iOS、Android、Edge等） */
+        .is-pwa,
+        .is-standalone {
+            --nav-safe-top: var(--safe-area-inset-top);
+            --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
+        }
+        
+        /* iOS PWA 顶部安全区（保持向后兼容） */
         .ios-standalone {
             --nav-safe-top: var(--safe-area-inset-top);
-        }
-
-        /* iOS全屏模式：顶部导航栏从安全区域之后开始 */
-        .ios-standalone .top-nav {
-            top: env(safe-area-inset-top);
-            padding-top: 0;
-            height: var(--nav-height);
-            min-height: var(--nav-height);
-        }
-
-        /* 通用全屏模式适配（包括所有iPhone型号、Edge、Android等） */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* iOS设备（包括刘海屏、灵动岛、Face ID机型）：从安全区域之后开始，避免被刘海/灵动岛遮挡 */
-            html.is-ios .top-nav {
-                position: fixed;
-                top: env(safe-area-inset-top);
-                display: flex;
-                padding-top: 0;
-                height: var(--nav-height);
-                min-height: var(--nav-height);
-            }
-            
-            /* iOS设备：更新导航栏总高度 */
-            html.is-ios .top-nav {
-                height: calc(var(--nav-height) + env(safe-area-inset-top));
-                min-height: calc(var(--nav-height) + env(safe-area-inset-top));
-                padding-top: env(safe-area-inset-top);
-            }
-            
-            /* 非iOS设备：默认位置，也使用safe-area作为兼容方案 */
-            html:not(.is-ios) .top-nav {
-                position: fixed;
-                top: env(safe-area-inset-top);
-                display: flex;
-                padding-top: 0;
-            }
         }
 
         * {
@@ -161,9 +145,13 @@
             padding-right: var(--safe-area-inset-right);
         }
         
-        /* iOS模式：使用safe-area */
+        /* iOS模式和PWA模式：使用safe-area - 所有设备统一处理 */
         [data-adapt-mode="ios"] #app-container,
-        [data-adapt-mode="auto"].is-ios #app-container {
+        [data-adapt-mode="auto"].is-ios #app-container,
+        [data-adapt-mode="auto"].is-pwa #app-container,
+        [data-adapt-mode="auto"].is-standalone #app-container,
+        .is-pwa #app-container,
+        .is-standalone #app-container {
             padding-top: var(--nav-total-height);
         }
 
@@ -600,11 +588,19 @@
             transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0s;
         }
         
-        /* 全屏模式下侧边栏和遮罩层适配 */
+        /* 全屏模式下侧边栏和遮罩层适配 - 所有设备统一处理 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            html.is-ios .side-menu {
+            html.is-ios .side-menu,
+            html.is-android .side-menu,
+            html:not(.is-ios):not(.is-android) .side-menu {
                 padding-top: env(safe-area-inset-top);
             }
+        }
+        
+        /* 通过class添加的额外适配 - 确保所有设备都能正确适配 */
+        .is-pwa .side-menu,
+        .is-standalone .side-menu {
+            padding-top: env(safe-area-inset-top) !important;
         }
 
         /* 主内容区域 */
@@ -633,10 +629,14 @@
             margin-top: 0;
         }
         
-        /* 全屏模式适配 - 修复所有iPhone型号（刘海屏、灵动岛等）顶部栏重叠问题 */
+        /* 全屏模式适配 - 修复所有iPhone和所有安卓手机导航栏适配问题 - 统一处理 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* iOS设备（包括刘海屏、灵动岛、Face ID机型）：顶部导航栏从安全区域之后开始 */
-            html.is-ios .top-nav {
+            /* 所有设备（iOS、Android、Edge等）：顶部导航栏从安全区域之后开始 */
+            html.is-ios .top-nav,
+            html.is-android .top-nav,
+            html:not(.is-ios):not(.is-android) .top-nav,
+            .is-pwa .top-nav,
+            .is-standalone .top-nav {
                 position: fixed !important;
                 top: env(safe-area-inset-top) !important;
                 left: 0 !important;
@@ -647,32 +647,39 @@
                 padding-top: env(safe-area-inset-top) !important;
             }
             
-            /* 非iOS设备：也使用safe-area作为兼容方案 */
-            html:not(.is-ios) .top-nav {
-                position: fixed !important;
-                top: env(safe-area-inset-top) !important;
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 101 !important;
-            }
-            
-            /* 搜索栏固定在顶部导航栏下方 */
-            .msg-page .search-bar,
-            .friend-page .search-bar {
-                position: fixed !important;
-                top: var(--nav-total-height) !important;
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
-                z-index: 100 !important;
+            /* 全屏模式下，搜索栏保持相对定位，在文档流中正常显示 */
+            .search-bar {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                width: auto !important;
+                z-index: 10 !important;
                 margin-top: 0 !important;
             }
             
-            /* 消息列表和好友内容预留搜索栏空间 */
+            /* 消息页面和好友页面：不需要额外padding，因为#app-container已经处理了 */
+            .msg-page,
+            .friend-page {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+            
+            /* msg-list和friend-content保持正常 */
             .msg-page .msg-list,
             .friend-page .friend-content {
-                padding-top: 56px !important;
+                padding-top: 0 !important;
             }
+        }
+        
+        /* 通过class添加的额外适配 - 确保所有设备都能正确适配 */
+        .is-pwa .top-nav,
+        .is-standalone .top-nav {
+            position: fixed !important;
+            top: env(safe-area-inset-top) !important;
+            height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
+            min-height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
+            padding-top: env(safe-area-inset-top) !important;
         }
         .search-input {
             width: 100%;
@@ -1181,9 +1188,22 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        /* iOS PWA 顶部安全区 - 子页面导航 */
+        /* PWA模式顶部安全区 - 子页面导航 - 所有设备统一处理 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            html.is-ios .sub-nav,
+            html.is-android .sub-nav,
+            html:not(.is-ios):not(.is-android) .sub-nav {
+                padding-top: var(--safe-area-inset-top);
+                height: calc(56px + var(--safe-area-inset-top));
+                min-height: calc(56px + var(--safe-area-inset-top));
+            }
+        }
+        
+        /* 通过class添加的适配 - 确保所有设备都能正确适配 */
         .ios-standalone .sub-nav,
-        [data-adapt-mode="ios"] .sub-nav {
+        [data-adapt-mode="ios"] .sub-nav,
+        .is-pwa .sub-nav,
+        .is-standalone .sub-nav {
             padding-top: var(--safe-area-inset-top);
             height: calc(56px + var(--safe-area-inset-top));
             min-height: calc(56px + var(--safe-area-inset-top));
@@ -1244,9 +1264,20 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* iOS PWA 顶部安全区 - 朋友圈页头部 */
+        /* PWA模式顶部安全区 - 朋友圈页头部 - 所有设备统一处理 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            html.is-ios #moments-page .moments-top-bar,
+            html.is-android #moments-page .moments-top-bar,
+            html:not(.is-ios):not(.is-android) #moments-page .moments-top-bar {
+                padding-top: calc(15px + var(--safe-area-inset-top)) !important;
+            }
+        }
+        
+        /* 通过class添加的适配 - 确保所有设备都能正确适配 */
         .ios-standalone #moments-page .moments-top-bar,
-        [data-adapt-mode="ios"] #moments-page .moments-top-bar {
+        [data-adapt-mode="ios"] #moments-page .moments-top-bar,
+        .is-pwa #moments-page .moments-top-bar,
+        .is-standalone #moments-page .moments-top-bar {
             padding-top: calc(15px + var(--safe-area-inset-top)) !important;
         }
         
@@ -2670,9 +2701,22 @@ input[type="range"]::-ms-fill-upper {
             isolation: isolate;
         }
 
-        /* iOS PWA 顶部安全区 - 聊天页导航 */
+        /* PWA模式顶部安全区 - 聊天页导航 - 所有设备统一处理 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            html.is-ios .chat-nav,
+            html.is-android .chat-nav,
+            html:not(.is-ios):not(.is-android) .chat-nav {
+                padding-top: var(--safe-area-inset-top);
+                height: calc(50px + var(--safe-area-inset-top));
+                min-height: calc(50px + var(--safe-area-inset-top));
+            }
+        }
+        
+        /* 通过class添加的适配 - 确保所有设备都能正确适配 */
         .ios-standalone .chat-nav,
-        [data-adapt-mode="ios"] .chat-nav {
+        [data-adapt-mode="ios"] .chat-nav,
+        .is-pwa .chat-nav,
+        .is-standalone .chat-nav {
             padding-top: var(--safe-area-inset-top);
             height: calc(50px + var(--safe-area-inset-top));
             min-height: calc(50px + var(--safe-area-inset-top));
@@ -5998,52 +6042,6 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     position: relative;
 }
 
-.bubble-lock-btn {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border: 2px solid #ffe4ed;
-    border-radius: 20px;
-    background: #fffbfc;
-    cursor: pointer;
-    font-size: 12px;
-    color: #ffb6c8;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.bubble-lock-btn:hover {
-    background: #fff5f9;
-    border-color: #ffb6c8;
-}
-
-/* 移动端锁定按钮改为内联显示，防止掉到底部 */
-@media (max-width: 768px) {
-    .bubble-color-card .card-header {
-        /* 保持原有的 flex 布局，不改变 flex-direction */
-    }
-    
-    .bubble-lock-btn {
-        position: static;
-        transform: none;
-        margin-left: auto;
-        flex-shrink: 0;
-    }
-}
-
-.lock-icon {
-    width: 16px;
-    height: 16px;
-    stroke: currentColor;
-    stroke-width: 2;
-    fill: none;
-}
-
 .bubble-section {
     margin-bottom: 20px;
     padding: 16px;
@@ -6287,23 +6285,6 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     
     .card-body {
         padding: 16px;
-    }
-    
-    /* 消息气泡卡片锁定按钮在手机端改为内联显示 */
-    .bubble-color-card .card-header {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        padding-right: 100px;
-    }
-    
-    .bubble-lock-btn {
-        position: relative;
-        right: auto;
-        top: auto;
-        transform: none;
-        margin-left: auto;
     }
 }
 

@@ -102,10 +102,13 @@
             const isAndroid = /Android/.test(navigator.userAgent);
             const isEdgeAndroid = isEdge && isAndroid;
             
-            // 检测是否为全屏模式（PWA模式）
+            // 检测是否为全屏模式（PWA模式）- 统一检测所有设备
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                                  window.matchMedia('(display-mode: fullscreen)').matches ||
-                                 window.navigator.standalone;
+                                 window.navigator.standalone === true;
+            
+            // 统一的PWA模式标识 - 用于CSS样式控制
+            const isPWA = isStandalone;
             
             function setViewportHeight() {
                 // 获取真实的视口高度
@@ -122,12 +125,8 @@
                 switch(adaptMode) {
                     case 'auto':
                         // 自动模式：根据设备和浏览器自动选择
-                        if (isIOS && isIOSStandalone) {
-                            topPadding = 0; // iOS全屏模式使用safe-area
-                        } else if (isEdgeAndroid && isStandalone) {
-                            topPadding = 0; // Edge Android全屏模式
-                        } else if (isStandalone) {
-                            topPadding = 0; // 其他全屏模式
+                        if (isPWA) {
+                            topPadding = 0; // 所有设备PWA模式都使用safe-area
                         } else {
                             topPadding = 45; // 标准浏览器模式
                         }
@@ -157,21 +156,28 @@
                     document.documentElement.style.height = '-webkit-fill-available';
                 }
                 
-                // 标记设备类型
+                // 标记设备类型 - 统一的设备标识
                 if (isIOS) {
                     document.documentElement.classList.add('is-ios');
-                    if (isIOSStandalone) {
-                        document.documentElement.classList.add('ios-standalone');
-                    }
                 }
                 
-                if (isEdgeAndroid && isStandalone) {
-                    document.documentElement.classList.add('edge-standalone');
+                if (isAndroid) {
                     document.documentElement.classList.add('is-android');
                 }
                 
-                if (isStandalone) {
+                if (isEdge) {
+                    document.documentElement.classList.add('is-edge');
+                }
+                
+                // PWA模式统一标识 - 所有设备共用
+                if (isPWA) {
+                    document.documentElement.classList.add('is-pwa');
                     document.documentElement.classList.add('is-standalone');
+                    
+                    // iOS特殊标识（保持兼容性）
+                    if (isIOS) {
+                        document.documentElement.classList.add('ios-standalone');
+                    }
                 }
                 
                 // 标记适配模式

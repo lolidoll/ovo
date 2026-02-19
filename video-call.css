@@ -194,6 +194,21 @@
     z-index: 10;
 }
 
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .video-call-header {
+        top: env(safe-area-inset-top);
+        padding: env(safe-area-inset-top) 20px 0 20px;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .video-call-header,
+.is-standalone .video-call-header {
+    top: env(safe-area-inset-top);
+    padding: env(safe-area-inset-top) 20px 0 20px;
+}
+
 .video-call-minimize-btn {
     width: 40px;
     height: 40px;

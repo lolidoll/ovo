@@ -48,6 +48,23 @@
     box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
 }
 
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .call-header {
+        height: calc(56px + env(safe-area-inset-top));
+        min-height: calc(56px + env(safe-area-inset-top));
+        padding: env(safe-area-inset-top) 16px 0 16px;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .call-header,
+.is-standalone .call-header {
+    height: calc(56px + env(safe-area-inset-top));
+    min-height: calc(56px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 16px 0 16px;
+}
+
 .call-minimize-btn,
 .call-ringtone-btn {
     width: 32px;

@@ -24,6 +24,36 @@
     flex-direction: row !important;
 }
 
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #wallet-page .wallet-header {
+        height: calc(56px + env(safe-area-inset-top)) !important;
+        padding: env(safe-area-inset-top) 16px 0 16px !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #wallet-page .wallet-header,
+.is-standalone #wallet-page .wallet-header {
+    height: calc(56px + env(safe-area-inset-top)) !important;
+    padding: env(safe-area-inset-top) 16px 0 16px !important;
+}
+
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #wallet-page .wallet-header {
+        height: calc(56px + env(safe-area-inset-top)) !important;
+        padding: env(safe-area-inset-top) 16px 0 16px !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #wallet-page .wallet-header,
+.is-standalone #wallet-page .wallet-header {
+    height: calc(56px + env(safe-area-inset-top)) !important;
+    padding: env(safe-area-inset-top) 16px 0 16px !important;
+}
+
 #wallet-page .header-left {
     display: flex !important;
     align-items: center !important;

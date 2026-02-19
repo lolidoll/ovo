@@ -426,13 +426,6 @@
                                 <line x1="15" y1="9" x2="15.01" y2="9"></line>
                             </svg>
                             <span>消息气泡颜色</span>
-                            <button id="bubble-color-lock-btn" class="bubble-lock-btn locked" title="锁定防止误触" style="background: #fff3cd; border-color: #ffc107; color: #ff6b00;">
-                                <svg id="bubble-lock-icon" viewBox="0 0 24 24" class="lock-icon">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M12 6v6m0 0l-3-3m3 3l3-3"></path>
-                                </svg>
-                                <span id="bubble-lock-text">已锁定</span>
-                            </button>
                         </div>
                         <div class="card-body">
                         <!-- 角色消息气泡（左侧） -->
@@ -1042,32 +1035,6 @@
          * 绑定消息气泡颜色控制事件
          */
         bindBubbleColorEvents: function(chatId) {
-            // 锁定状态管理 - 默认为锁定状态
-            let isLocked = true;
-            const lockBtn = document.getElementById('bubble-color-lock-btn');
-            const lockIcon = document.getElementById('bubble-lock-icon');
-            const lockText = document.getElementById('bubble-lock-text');
-            
-            // 锁定按钮事件
-            if (lockBtn) {
-                lockBtn.addEventListener('click', () => {
-                    isLocked = !isLocked;
-                    if (isLocked) {
-                        lockBtn.style.background = '#fff3cd';
-                        lockBtn.style.borderColor = '#ffc107';
-                        lockBtn.style.color = '#ff6b00';
-                        lockText.textContent = '已锁定';
-                        lockIcon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6m0 0l-3-3m3 3l3-3"></path>';
-                    } else {
-                        lockBtn.style.background = '#fff';
-                        lockBtn.style.borderColor = '#ddd';
-                        lockBtn.style.color = '#666';
-                        lockText.textContent = '解锁';
-                        lockIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>';
-                    }
-                });
-            }
-            
             // 角色气泡颜色控制
             const charR = document.getElementById('char-bubble-r');
             const charG = document.getElementById('char-bubble-g');
@@ -1092,7 +1059,6 @@
             
             // 更新角色气泡预览
             const updateCharPreview = () => {
-                if (isLocked) return;
                 const r = charR.value;
                 const g = charG.value;
                 const b = charB.value;
@@ -1113,7 +1079,6 @@
             
             // 更新用户气泡预览
             const updateUserPreview = () => {
-                if (isLocked) return;
                 const r = userR.value;
                 const g = userG.value;
                 const b = userB.value;
@@ -1134,7 +1099,6 @@
             
             // 从输入框更新滑块（角色）
             const updateCharFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(charRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(charGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(charBInput.value) || 0));
@@ -1160,7 +1124,6 @@
             
             // 从输入框更新滑块（用户）
             const updateUserFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(userRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(userGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(userBInput.value) || 0));
@@ -1225,7 +1188,6 @@
             
             // 更新角色字体颜色预览
             const updateCharTextPreview = () => {
-                if (isLocked) return;
                 const r = charTextR.value;
                 const g = charTextG.value;
                 const b = charTextB.value;
@@ -1248,7 +1210,6 @@
             
             // 更新用户字体颜色预览
             const updateUserTextPreview = () => {
-                if (isLocked) return;
                 const r = userTextR.value;
                 const g = userTextG.value;
                 const b = userTextB.value;
@@ -1271,7 +1232,6 @@
             
             // 从输入框更新滑块（角色字体）
             const updateCharTextFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(charTextRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(charTextGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(charTextBInput.value) || 0));
@@ -1298,7 +1258,6 @@
             
             // 从输入框更新滑块（用户字体）
             const updateUserTextFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(userTextRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(userTextGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(userTextBInput.value) || 0));
@@ -1368,7 +1327,6 @@
             
             // 更新好感度颜色预览
             const updateAffinityPreview = () => {
-                if (isLocked) return;
                 const r = affinityR.value;
                 const g = affinityG.value;
                 const b = affinityB.value;
@@ -1381,7 +1339,6 @@
             };
             
             const updateAffinityFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(affinityRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(affinityGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(affinityBInput.value) || 0));
@@ -1399,7 +1356,6 @@
             
             // 更新发送按钮颜色预览
             const updateSendBtnPreview = () => {
-                if (isLocked) return;
                 const r = parseInt(sendBtnR.value);
                 const g = parseInt(sendBtnG.value);
                 const b = parseInt(sendBtnB.value);
@@ -1416,7 +1372,6 @@
             };
             
             const updateSendBtnFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(sendBtnRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(sendBtnGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(sendBtnBInput.value) || 0));
@@ -1438,7 +1393,6 @@
             
             // 更新已读圆圈颜色预览
             const updateReadCirclePreview = () => {
-                if (isLocked) return;
                 const r = readCircleR.value;
                 const g = readCircleG.value;
                 const b = readCircleB.value;
@@ -1451,7 +1405,6 @@
             };
             
             const updateReadCircleFromInput = () => {
-                if (isLocked) return;
                 const r = Math.max(0, Math.min(255, parseInt(readCircleRInput.value) || 0));
                 const g = Math.max(0, Math.min(255, parseInt(readCircleGInput.value) || 0));
                 const b = Math.max(0, Math.min(255, parseInt(readCircleBInput.value) || 0));
@@ -1492,27 +1445,6 @@
             if (readCircleRInput) readCircleRInput.addEventListener('change', updateReadCircleFromInput);
             if (readCircleGInput) readCircleGInput.addEventListener('change', updateReadCircleFromInput);
             if (readCircleBInput) readCircleBInput.addEventListener('change', updateReadCircleFromInput);
-            
-            // 防止在锁定状态下通过滑块修改（包括UI颜色）
-            const preventLockedChange = (e) => {
-                if (isLocked) {
-                    e.preventDefault();
-                    e.target.style.opacity = '0.5';
-                    setTimeout(() => {
-                        e.target.style.opacity = '1';
-                    }, 200);
-                }
-            };
-            
-            [charR, charG, charB, charAlpha, userR, userG, userB, userAlpha,
-             charTextR, charTextG, charTextB, userTextR, userTextG, userTextB,
-             affinityR, affinityG, affinityB, sendBtnR, sendBtnG, sendBtnB,
-             readCircleR, readCircleG, readCircleB].forEach(el => {
-                if (el) {
-                    el.addEventListener('mousedown', preventLockedChange);
-                    el.addEventListener('touchstart', preventLockedChange);
-                }
-            });
         },
 
         /**
