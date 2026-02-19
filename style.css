@@ -62,12 +62,34 @@
         .ios-standalone .top-nav {
             top: env(safe-area-inset-top);
             padding-top: 0;
+            height: var(--nav-height);
+            min-height: var(--nav-height);
         }
 
-        /* 通用全屏模式适配（包括Edge、Android等） */
+        /* 通用全屏模式适配（包括所有iPhone型号、Edge、Android等） */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            html:not(.is-ios) .top-nav {
+            /* iOS设备（包括刘海屏、灵动岛、Face ID机型）：从安全区域之后开始，避免被刘海/灵动岛遮挡 */
+            html.is-ios .top-nav {
+                position: fixed;
                 top: env(safe-area-inset-top);
+                display: flex;
+                padding-top: 0;
+                height: var(--nav-height);
+                min-height: var(--nav-height);
+            }
+            
+            /* iOS设备：更新导航栏总高度 */
+            html.is-ios .top-nav {
+                height: calc(var(--nav-height) + env(safe-area-inset-top));
+                min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+                padding-top: env(safe-area-inset-top);
+            }
+            
+            /* 非iOS设备：默认位置，也使用safe-area作为兼容方案 */
+            html:not(.is-ios) .top-nav {
+                position: fixed;
+                top: env(safe-area-inset-top);
+                display: flex;
                 padding-top: 0;
             }
         }
@@ -133,7 +155,7 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            padding-top: var(--nav-height); /* 固定为顶部导航栏高度 */
+            padding-top: var(--nav-total-height); /* 包含safe-area的顶部导航栏总高度 */
             padding-bottom: var(--safe-area-inset-bottom);
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
@@ -174,24 +196,7 @@
             z-index: 100;
         }
         
-        /* 全屏模式下的顶部导航栏适配 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* 非iOS设备：默认位置，使用env(safe-area-inset-top)作为兼容方案 */
-            html:not(.is-ios) .top-nav {
-                position: fixed;
-                top: 0;
-                display: flex;
-            }
-            /* iOS设备：从安全区域之后开始，避免被刘海遮挡 */
-            html.is-ios .top-nav {
-                position: fixed;
-                top: env(safe-area-inset-top);
-                display: flex;
-                padding-top: 0;
-                height: var(--nav-height);
-                min-height: var(--nav-height);
-            }
-        }
+        /* 全屏模式下的顶部导航栏适配 - 移除重复规则，使用上面的统一处理 */
         
         .user-info {
             display: flex;
@@ -274,6 +279,7 @@
             flex-direction: column;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12), 2px 0 8px rgba(0, 0, 0, 0.08);
             visibility: hidden;
+            padding-top: env(safe-area-inset-top);
         }
         .side-menu.open {
             transform: translateX(0);
@@ -593,6 +599,13 @@
             visibility: visible;
             transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0s;
         }
+        
+        /* 全屏模式下侧边栏和遮罩层适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            html.is-ios .side-menu {
+                padding-top: env(safe-area-inset-top);
+            }
+        }
 
         /* 主内容区域 */
         .main-content {
@@ -620,12 +633,24 @@
             margin-top: 0;
         }
         
-        /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
+        /* 全屏模式适配 - 修复所有iPhone型号（刘海屏、灵动岛等）顶部栏重叠问题 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* 顶部导航栏保持固定在最顶部 */
-            .top-nav {
+            /* iOS设备（包括刘海屏、灵动岛、Face ID机型）：顶部导航栏从安全区域之后开始 */
+            html.is-ios .top-nav {
                 position: fixed !important;
-                top: 0 !important;
+                top: env(safe-area-inset-top) !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 101 !important;
+                height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
+                min-height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
+                padding-top: env(safe-area-inset-top) !important;
+            }
+            
+            /* 非iOS设备：也使用safe-area作为兼容方案 */
+            html:not(.is-ios) .top-nav {
+                position: fixed !important;
+                top: env(safe-area-inset-top) !important;
                 left: 0 !important;
                 right: 0 !important;
                 z-index: 101 !important;
@@ -634,7 +659,7 @@
             /* 搜索栏固定在顶部导航栏下方 */
             .search-bar {
                 position: fixed !important;
-                top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
+                top: var(--nav-total-height) !important; /* 顶部导航栏总高度 */
                 left: 0 !important;
                 right: 0 !important;
                 width: 100% !important;
@@ -645,7 +670,8 @@
             .msg-page,
             .friend-page {
                 margin-top: 0 !important;
-                padding-top: 56px !important; /* 搜索栏高度: 10px(padding上) + 36px(输入框) + 10px(padding下) */
+                /* padding-top = 导航栏高度 + 搜索栏高度(56px) */
+                padding-top: calc(var(--nav-total-height) + 56px) !important;
             }
             
             /* msg-list和friend-content不需要额外的padding-top，因为页面本身已经有padding-top了 */
@@ -6006,11 +6032,30 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     font-size: 12px;
     color: #ffb6c8;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .bubble-lock-btn:hover {
     background: #fff5f9;
     border-color: #ffb6c8;
+}
+
+/* 移动端锁定按钮改为内联显示，防止掉到底部 */
+@media (max-width: 768px) {
+    .bubble-color-card .card-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+    }
+    
+    .bubble-lock-btn {
+        position: static;
+        transform: none;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
 }
 
 .lock-icon {
@@ -6264,6 +6309,23 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     
     .card-body {
         padding: 16px;
+    }
+    
+    /* 消息气泡卡片锁定按钮在手机端改为内联显示 */
+    .bubble-color-card .card-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding-right: 100px;
+    }
+    
+    .bubble-lock-btn {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        margin-left: auto;
     }
 }
 

@@ -77,16 +77,17 @@
             targetBubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
             if (!targetBubble) return;
             
-            // 检查是否在多选模式
-            if (window.AppState && window.AppState.isSelectMode) {
-                // 多选模式下不设置长按定时器，让正常的点击事件处理选择逻辑
-                return;
-            }
-            
+            // 记录起始位置
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
             touchMoved = false;
             longPressTriggered = false;
+            
+            // 检查是否在多选模式
+            if (window.AppState && window.AppState.isSelectMode) {
+                // 多选模式下不设置长按定时器
+                return;
+            }
             
             // 设置长按定时器（500ms）
             longPressTimer = setTimeout(() => {
@@ -138,20 +139,42 @@
         }, { passive: true });
         
         chatMessages.addEventListener('touchend', function(e) {
+            if (!targetBubble) return;
+            
+            // 检查是否在多选模式
+            const isSelectMode = window.AppState && window.AppState.isSelectMode;
+            
+            // 清理长按定时器
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
-            // 只有在长按触发时才阻止默认行为
+            
+            // 如果是长按触发，阻止默认行为
             if (longPressTriggered) {
                 e.preventDefault();
                 e.stopPropagation();
+            } else if (isSelectMode && !touchMoved) {
+                // 多选模式下，短按时手动触发选择逻辑
+                e.preventDefault();
+                const msgId = targetBubble.dataset.msgId || targetBubble.dataset.messageId;
+                if (msgId && window.toggleMessageSelection && typeof window.toggleMessageSelection === 'function') {
+                    console.log('📱 多选模式下点击消息:', msgId);
+                    window.toggleMessageSelection(msgId);
+                    // 震动反馈
+                    if (navigator.vibrate) {
+                        navigator.vibrate(30);
+                    }
+                }
             }
+            
             longPressTriggered = false;
             targetBubble = null;
         }, { passive: false });
         
         chatMessages.addEventListener('touchcancel', function(e) {
+            if (!targetBubble) return;
+            
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
@@ -406,13 +429,10 @@
         document.addEventListener('touchend', function(e) {
             const now = Date.now();
             
-            // 检查是否在多选模式下点击消息气泡
+            // 检查是否在多选模式下
             if (window.AppState && window.AppState.isSelectMode) {
-                const bubble = e.target.closest('.chat-bubble, .retracted-message-wrapper');
-                if (bubble) {
-                    // 多选模式下点击消息气泡，不阻止默认行为
-                    return;
-                }
+                // 多选模式下，完全禁用双击缩放防护，让所有点击正常触发
+                return;
             }
             
             // 检查是否在多选工具栏上点击

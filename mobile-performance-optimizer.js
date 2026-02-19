@@ -155,9 +155,8 @@
                     transition: transform 0.05s ease;
                 }
 
-                /* 侧边栏优化 */
+                /* 侧边栏优化 - 不覆盖原始滑入滑出动画 */
                 .side-menu {
-                    transform: translateZ(0);
                     will-change: transform;
                     backface-visibility: hidden;
                 }

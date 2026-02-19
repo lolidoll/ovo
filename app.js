@@ -11940,3 +11940,15 @@
         window.getEmojiInstructions = getEmojiInstructions;
         window.renderChatMessages = renderChatMessages;
         window.renderConversations = renderConversations;
+        
+        // 暴露多选相关函数到 window 对象
+        window.toggleMessageSelection = toggleMessageSelection;
+        window.enterMessageMultiSelect = enterMessageMultiSelect;
+        window.exitMultiSelectMode = exitMultiSelectMode;
+        window.selectAllMessages = selectAllMessages;
+        window.deleteSelectedMessages = deleteSelectedMessages;
+        window.forwardSelectedMessages = forwardSelectedMessages;
+        
+        // 暴露消息菜单相关函数到 window 对象
+        window.showMessageContextMenu = showMessageContextMenu;
+        window.closeMessageContextMenu = closeMessageContextMenu;
