@@ -4250,6 +4250,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     display: flex;
     gap: 2px;
     align-items: center;
+    height: 16px; /* 固定高度，防止动画影响布局 */
 }
 
 .wave {
@@ -4258,6 +4259,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     background: linear-gradient(180deg, #999 0%, #ccc 100%);
     border-radius: 2px;
     animation: voiceWave 0.6s ease-in-out infinite;
+    transform-origin: center; /* 从中心缩放 */
 }
 
 .voice-bubble-user .wave {
@@ -4276,10 +4278,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 @keyframes voiceWave {
     0%, 100% {
-        height: 8px;
+        transform: scaleY(0.67);
     }
     50% {
-        height: 16px;
+        transform: scaleY(1.33);
     }
 }
 
