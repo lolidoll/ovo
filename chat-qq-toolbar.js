@@ -443,7 +443,12 @@
     }
     
     function handleListen() {
-        showToast('一起听功能尚未实现');
+        closeMorePanel();
+        if (window.ListenTogether) {
+            window.ListenTogether.open();
+        } else {
+            showToast('一起听功能加载中');
+        }
     }
     
     // handlePhone 已移除，由iphone-simulator.js处理

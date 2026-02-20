@@ -396,6 +396,21 @@
     min-height: calc(48px + env(safe-area-inset-top));
     gap: 12px;
 }
+
+/* PWA全屏模式适配 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .st-nav {
+        padding-top: max(8px, env(safe-area-inset-top));
+        min-height: calc(48px + env(safe-area-inset-top));
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .st-nav,
+.is-standalone .st-nav {
+    padding-top: max(8px, env(safe-area-inset-top));
+    min-height: calc(48px + env(safe-area-inset-top));
+}
 .st-char-info { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }
 .st-char-avatar-small {
     width: 36px; height: 36px; border-radius: 50%;
