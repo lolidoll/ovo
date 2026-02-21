@@ -32,77 +32,65 @@
         const html = `
         <div class="listen-together-modal" id="listen-together-modal">
             <div class="listen-container">
-                <div class="listen-header">
-                    <button class="listen-header-btn" id="listen-minimize" title="最小化"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M19 13H5v-2h14v2z"/></svg></button>
-                    <button class="listen-header-btn" id="listen-close" title="关闭"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-                </div>
-                <div class="listen-couple">
-                    <div class="listen-avatar-wrap">
-                        <div class="listen-avatar-glow"></div>
-                        <img class="listen-avatar" src="${userAvatar}" onerror="this.src='${PLACEHOLDER}'">
-                    </div>
-                    <div class="listen-link">
-                        <div class="listen-link-dot"></div>
-                        <div class="listen-link-dot"></div>
-                        <div class="listen-link-dot"></div>
-                    </div>
-                    <div class="listen-avatar-wrap">
-                        <div class="listen-avatar-glow"></div>
-                        <img class="listen-avatar" src="${aiAvatar}" onerror="this.src='${PLACEHOLDER}'">
+                <div class="listen-topbar">
+                    <button class="listen-close" id="listen-close">×</button>
+                    <div class="listen-topbar-info" id="listen-topbar-info">
+                        <span class="listen-topbar-song" id="listen-topbar-song">选一首歌</span>
+                        <span class="listen-topbar-artist" id="listen-topbar-artist">一起听</span>
                     </div>
                 </div>
-                <div class="listen-main-swiper" id="listen-main-swiper">
-                    <div class="listen-page listen-page-player">
-                        <div class="listen-now-playing">
-                            <div class="listen-cover-wrap">
-                                <div class="listen-cover-ring"></div>
-                                <img class="listen-now-cover" id="listen-now-cover" src="${PLACEHOLDER}">
-                            </div>
-                            <div class="listen-now-title" id="listen-now-title">选一首歌</div>
-                            <div class="listen-now-artist" id="listen-now-artist">一起听</div>
-                        </div>
-                    </div>
-                    <div class="listen-page listen-page-lyric">
-                        <div class="listen-lyric" id="listen-lyric">暂无歌词</div>
-                    </div>
-                </div>
-                <div class="listen-page-dots">
-                    <div class="listen-dot active"></div>
-                    <div class="listen-dot"></div>
-                </div>
-                <div class="listen-player">
-                    <div class="listen-progress">
-                        <span id="listen-current-time">0:00</span>
-                        <div class="listen-progress-bar" id="listen-progress-bar">
-                            <div class="listen-progress-fill" id="listen-progress-fill"></div>
-                        </div>
-                        <span id="listen-duration">0:00</span>
-                    </div>
-                    <div class="listen-controls">
-                        <button class="listen-ctrl-btn" id="listen-mode" title="播放模式"><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
-                        <button class="listen-ctrl-btn" id="listen-prev"><svg viewBox="0 0 24 24"><path d="M19 20L9 12l10-8v16zM5 19V5h2v14H5z"/></svg></button>
-                        <button class="listen-ctrl-btn" id="listen-play"><svg viewBox="0 0 24 24" id="listen-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
-                        <button class="listen-ctrl-btn" id="listen-next"><svg viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zm12 0h2v16h-2V4z"/></svg></button>
-                        <button class="listen-ctrl-btn" id="listen-fav" title="喜欢"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-                    </div>
-                </div>
-                <div class="listen-bottom-panel" id="listen-bottom-panel">
-                    <div class="listen-panel-handle" id="listen-panel-handle">
-                        <div class="listen-handle-bar"></div>
-                    </div>
-                    <div class="listen-panel-content">
-                        <div class="listen-tabs">
-                            <button class="listen-tab active" id="listen-tab-search">搜索</button>
-                            <button class="listen-tab" id="listen-tab-fav">我的喜欢</button>
-                        </div>
-                        <div class="listen-search" id="listen-search-area">
-                            <div class="listen-search-box">
-                                <input type="text" id="listen-search-input" placeholder="搜索想一起听的歌...">
-                                <button class="listen-search-btn" id="listen-search-btn">搜索</button>
-                            </div>
+                <div class="listen-body">
+                    <div class="listen-search-panel" id="listen-search-panel" style="display:none;">
+                        <div class="listen-search-box">
+                            <input type="text" id="listen-search-input" placeholder="搜索歌曲...">
+                            <button class="listen-search-btn" id="listen-search-btn">搜索</button>
                         </div>
                         <div class="listen-songs" id="listen-songs"></div>
                     </div>
+                    <div class="listen-fav-panel" id="listen-fav-panel" style="display:none;">
+                        <div class="listen-fav-songs" id="listen-fav-songs"></div>
+                    </div>
+                    <div class="listen-player" id="listen-player">
+                        <div style="overflow:hidden;">
+                            <div class="listen-swiper" id="listen-swiper">
+                                <div class="listen-page">
+                                    <div class="listen-now-playing">
+                                        <div class="listen-cover-wrap">
+                                            <div class="listen-cover-ring"></div>
+                                            <img class="listen-now-cover" id="listen-now-cover" src="${PLACEHOLDER}">
+                                        </div>
+                                        <div class="listen-now-title" id="listen-now-title">选一首歌</div>
+                                        <div class="listen-now-artist" id="listen-now-artist">一起听</div>
+                                    </div>
+                                </div>
+                                <div class="listen-page">
+                                    <div class="listen-lyric-page">
+                                        <div class="listen-lyric" id="listen-lyric">暂无歌词</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="listen-page-dots">
+                            <div class="listen-page-dot active" id="listen-dot-0"></div>
+                            <div class="listen-page-dot" id="listen-dot-1"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="listen-progress">
+                    <span id="listen-current-time">0:00</span>
+                    <div class="listen-progress-bar" id="listen-progress-bar">
+                        <div class="listen-progress-fill" id="listen-progress-fill"></div>
+                    </div>
+                    <span id="listen-duration">0:00</span>
+                </div>
+                <div class="listen-controls">
+                    <button class="listen-ctrl-btn" id="listen-tab-search" title="搜索"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></button>
+                    <button class="listen-ctrl-btn" id="listen-mode" title="顺序播放"><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
+                    <button class="listen-ctrl-btn" id="listen-prev"><svg viewBox="0 0 24 24"><path d="M19 20L9 12l10-8v16zM5 19V5h2v14H5z"/></svg></button>
+                    <button class="listen-ctrl-btn play-btn" id="listen-play"><svg viewBox="0 0 24 24" id="listen-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
+                    <button class="listen-ctrl-btn" id="listen-next"><svg viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zm12 0h2v16h-2V4z"/></svg></button>
+                    <button class="listen-ctrl-btn" id="listen-fav" title="喜欢"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+                    <button class="listen-ctrl-btn" id="listen-tab-fav" title="我的喜欢"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg></button>
                 </div>
             </div>
         </div>`;
@@ -111,9 +99,10 @@
         bindEvents();
     }
     
+    let swiperPage = 0;
+    
     function bindEvents() {
         document.getElementById('listen-close').onclick = close;
-        document.getElementById('listen-minimize').onclick = minimize;
         document.getElementById('listen-search-btn').onclick = search;
         document.getElementById('listen-search-input').onkeypress = e => e.key === 'Enter' && search();
         document.getElementById('listen-play').onclick = togglePlay;
@@ -122,20 +111,22 @@
         document.getElementById('listen-progress-bar').onclick = seek;
         document.getElementById('listen-mode').onclick = toggleMode;
         document.getElementById('listen-fav').onclick = toggleFavorite;
-        document.getElementById('listen-tab-search').onclick = () => switchView('search');
-        document.getElementById('listen-tab-fav').onclick = () => switchView('favorites');
-        document.getElementById('listen-panel-handle').onclick = togglePanel;
+        document.getElementById('listen-tab-search').onclick = toggleSearchPanel;
+        document.getElementById('listen-tab-fav').onclick = toggleFavPanel;
         
-        const swiper = document.getElementById('listen-main-swiper');
+        // 滑动切换页面
+        const swiper = document.getElementById('listen-swiper');
         let startX = 0;
-        swiper.ontouchstart = e => startX = e.touches[0].clientX;
-        swiper.ontouchmove = e => {
-            const diff = e.touches[0].clientX - startX;
-            if (Math.abs(diff) > 50) {
-                swipePage(diff > 0 ? -1 : 1);
-                startX = e.touches[0].clientX;
-            }
-        };
+        swiper.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive:true});
+        swiper.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - startX;
+            if (Math.abs(dx) > 40) setSwiperPage(dx > 0 ? 0 : 1);
+        }, {passive:true});
+        swiper.addEventListener('mousedown', e => startX = e.clientX);
+        swiper.addEventListener('mouseup', e => {
+            const dx = e.clientX - startX;
+            if (Math.abs(dx) > 40) setSwiperPage(dx > 0 ? 0 : 1);
+        });
         
         audio.ontimeupdate = () => { updateProgress(); updateLyric(); };
         audio.onended = playNext;
@@ -143,22 +134,11 @@
         audio.onpause = () => { isPlaying = false; updateUI(); };
     }
     
-    let currentPage = 0;
-    let panelOpen = false;
-    
-    function swipePage(dir) {
-        currentPage = Math.max(0, Math.min(1, currentPage + dir));
-        const swiper = document.getElementById('listen-main-swiper');
-        swiper.style.transform = `translateX(-${currentPage * 100}%)`;
-        document.querySelectorAll('.listen-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === currentPage);
-        });
-    }
-    
-    function togglePanel() {
-        panelOpen = !panelOpen;
-        const panel = document.getElementById('listen-bottom-panel');
-        panel.classList.toggle('open', panelOpen);
+    function setSwiperPage(page) {
+        swiperPage = page;
+        document.getElementById('listen-swiper').style.transform = `translateX(-${page * 50}%)`;
+        document.getElementById('listen-dot-0').classList.toggle('active', page === 0);
+        document.getElementById('listen-dot-1').classList.toggle('active', page === 1);
     }
     
     async function search() {
@@ -200,7 +180,7 @@
             container.innerHTML = '<div class="listen-empty">暂无歌曲</div>';
             return;
         }
-        container.innerHTML = validSongs.slice(0, 8).map((s, i) => {
+        container.innerHTML = validSongs.map((s, i) => {
             let name = s.name || s.title || '未知';
             let artist = s.artist || s.author || '未知';
             if (Array.isArray(name)) name = name[0] || '未知';
@@ -217,7 +197,11 @@
         }).join('');
         
         container.querySelectorAll('.listen-song-item').forEach(item => {
-            item.onclick = () => playSong(parseInt(item.dataset.idx));
+            item.onclick = () => {
+                playSong(parseInt(item.dataset.idx));
+                document.getElementById('listen-search-panel').style.display = 'none';
+                document.getElementById('listen-player').style.display = '';
+            };
         });
     }
     
@@ -234,6 +218,8 @@
         console.log('播放歌曲:', name, artist, song);
         document.getElementById('listen-now-title').textContent = name;
         document.getElementById('listen-now-artist').textContent = artist;
+        document.getElementById('listen-topbar-song').textContent = name;
+        document.getElementById('listen-topbar-artist').textContent = artist;
         const cover = document.getElementById('listen-now-cover');
         const pic = song.pic || song.cover || PLACEHOLDER;
         cover.src = pic;
@@ -368,49 +354,98 @@
         if (currentIdx === null || !songs[currentIdx]) return;
         const song = songs[currentIdx];
         const idx = favorites.findIndex(f => f && f.title === song.title && f.author === song.author);
-        const btn = document.getElementById('listen-fav');
         if (idx >= 0) {
-            favorites.splice(idx, 1);
-            btn.style.fill = 'none';
+            if (confirm('确认从我的喜欢中移除？')) {
+                favorites.splice(idx, 1);
+                localStorage.setItem('listen-favorites', JSON.stringify(favorites));
+                updateFavBtn();
+            }
         } else {
             favorites.push(song);
-            btn.style.fill = '#ff6682';
+            localStorage.setItem('listen-favorites', JSON.stringify(favorites));
+            updateFavBtn();
         }
-        localStorage.setItem('listen-favorites', JSON.stringify(favorites));
     }
     
-    function switchView(view) {
-        currentView = view;
-        const searchBtn = document.getElementById('listen-tab-search');
-        const favBtn = document.getElementById('listen-tab-fav');
-        const container = document.getElementById('listen-songs');
-        const searchArea = document.getElementById('listen-search-area');
-        
-        if (view === 'search') {
-            searchBtn.classList.add('active');
-            favBtn.classList.remove('active');
-            searchArea.style.display = '';
-            container.innerHTML = '<div class="listen-empty">搜索歌曲</div>';
-        } else {
-            songs = favorites.filter(f => f);
-            searchBtn.classList.remove('active');
-            favBtn.classList.add('active');
-            searchArea.style.display = 'none';
-            renderSongs();
+    function updateFavBtn() {
+        const btn = document.getElementById('listen-fav');
+        if (!btn) return;
+        let isFav = false;
+        if (currentIdx !== null && songs[currentIdx]) {
+            const song = songs[currentIdx];
+            isFav = favorites.some(f => f && f.title === song.title && f.author === song.author);
         }
+        btn.style.color = isFav ? '#ff4466' : '';
+        btn.querySelector('svg').style.fill = isFav ? '#ff4466' : '';
+    }
+    
+    function toggleSearchPanel() {
+        const sp = document.getElementById('listen-search-panel');
+        const fp = document.getElementById('listen-fav-panel');
+        const pl = document.getElementById('listen-player');
+        if (sp.style.display !== 'none') {
+            sp.style.display = 'none';
+            pl.style.display = '';
+        } else {
+            sp.style.display = '';
+            fp.style.display = 'none';
+            pl.style.display = 'none';
+        }
+    }
+    
+    function toggleFavPanel() {
+        const sp = document.getElementById('listen-search-panel');
+        const fp = document.getElementById('listen-fav-panel');
+        const pl = document.getElementById('listen-player');
+        if (fp.style.display !== 'none') {
+            fp.style.display = 'none';
+            pl.style.display = '';
+        } else {
+            fp.style.display = '';
+            sp.style.display = 'none';
+            pl.style.display = 'none';
+            renderFavSongs();
+        }
+    }
+    
+    function renderFavSongs() {
+        const container = document.getElementById('listen-fav-songs');
+        const validFavs = favorites.filter(f => f);
+        if (!validFavs.length) {
+            container.innerHTML = '<div class="listen-empty">暂无收藏</div>';
+            return;
+        }
+        container.innerHTML = validFavs.map((s, i) => {
+            let name = s.name || s.title || '未知';
+            let artist = s.artist || s.author || '未知';
+            if (Array.isArray(name)) name = name[0] || '未知';
+            if (Array.isArray(artist)) artist = artist.join('/') || '未知';
+            const pic = s.pic || s.cover || PLACEHOLDER;
+            return `
+            <div class="listen-song-item" data-fav-idx="${i}">
+                <img class="listen-song-cover" src="${pic}" onerror="this.src='${PLACEHOLDER}'">
+                <div class="listen-song-info">
+                    <div class="listen-song-name">${name}</div>
+                    <div class="listen-song-artist">${artist}</div>
+                </div>
+            </div>`;
+        }).join('');
+        container.querySelectorAll('.listen-song-item').forEach(item => {
+            item.onclick = () => {
+                songs = favorites.filter(f => f);
+                playSong(parseInt(item.dataset.favIdx));
+                document.getElementById('listen-fav-panel').style.display = 'none';
+                document.getElementById('listen-player').style.display = '';
+            };
+        });
     }
     
     function updateUI() {
         const icon = document.getElementById('listen-play-icon');
         const cover = document.getElementById('listen-now-cover');
-        const favBtn = document.getElementById('listen-fav');
         icon.innerHTML = isPlaying ? '<path d="M6 4h4v16H6zm8 0h4v16h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
         cover.classList.toggle('playing', isPlaying);
-        if (currentIdx !== null && songs[currentIdx]) {
-            const song = songs[currentIdx];
-            const isFav = favorites.some(f => f && f.title === song.title && f.author === song.author);
-            favBtn.style.fill = isFav ? '#ff6682' : 'none';
-        }
+        updateFavBtn();
     }
     
     function updateProgress() {
@@ -437,19 +472,7 @@
     
     function close() {
         document.getElementById('listen-together-modal')?.classList.remove('show');
-        document.getElementById('listen-floating')?.remove();
         audio.pause();
-    }
-    
-    function minimize() {
-        document.getElementById('listen-together-modal')?.classList.remove('show');
-        if (document.getElementById('listen-floating')) return;
-        const div = document.createElement('div');
-        div.id = 'listen-floating';
-        div.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9999;width:52px;height:52px;border-radius:50%;background:rgba(28,28,35,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
-        div.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="rgba(255,100,130,0.9)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>';
-        div.onclick = () => { div.remove(); open(); };
-        document.body.appendChild(div);
     }
     
     window.ListenTogether = { open, close };
