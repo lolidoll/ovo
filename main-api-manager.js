@@ -581,7 +581,7 @@ const MainAPIManager = {
         const systemPrompts = [];
         
         // 思维链语言指令（必须放在最前面）
-        systemPrompts.push('CRITICAL: All reasoning/thinking content (within <think>, <thinking>, <reasoning> tags or similar) MUST be written in Chinese (中文), matching the conversation language.');
+        systemPrompts.push('CRITICAL: All reasoning/thinking content (within 、<thinking>, <reasoning> tags or similar) MUST be written in Chinese (中文), matching the conversation language.');
         
         // 单角色对话的角色信息（群聊在后面的群聊模式中统一处理）
         if (conv.type !== 'group') {
@@ -624,6 +624,19 @@ const MainAPIManager = {
         // 对话状态提示：最后一条为 assistant 时，强调用户未回复
         if (lastNonSystemRole === 'assistant') {
             systemPrompts.push('【对话状态】上一条非 system 消息来自你（角色）。用户尚未回复，请不要当作用户已回复来继续对话。请继续主动发送下一条消息或自然等待。');
+        }
+        
+        // 检查是否有用户发送的未回复邀请 - 只有这种情况下才允许使用接受/拒绝指令
+        const userInvitationWithoutAnswer = msgs.find(m => 
+            m && m.type === 'listen_invite' && m.sender === 'received' && m.isInvitationToListen && !m.isInvitationAnswered
+        );
+        
+        // 只有当用户发送了未回复的邀请时，才在系统提示中告诉AI可以使用接受/拒绝指令
+        if (userInvitationWithoutAnswer) {
+            systemPrompts.push(`【一起听邀请】用户邀请你加入一起听音乐。根据当前对话上下文和你的角色设定，自主决定是否接受：
+- 接受时使用：[ACCEPT_LISTEN_INVITATION]
+- 拒绝时使用：[REJECT_LISTEN_INVITATION]
+注意：这两个指令不需要跟随任何理由文本，仅做为接受/拒绝的操作标记。你可以在指令前或指令后用正常对话表达你的想法。`);
         }
         
         // 添加心声相关的提示（群聊不使用心声系统）
@@ -679,9 +692,6 @@ const MainAPIManager = {
                 if (lastMindState.shoppingCart) {
                     mindStateContext.push(`购物车：${lastMindState.shoppingCart}`);
                 }
-                if (lastMindState.musicPlayer) {
-                    mindStateContext.push(`随身听：${lastMindState.musicPlayer}`);
-                }
                 if (lastMindState.content) {
                     mindStateContext.push(`心声：${lastMindState.content}`);
                 }
@@ -710,6 +720,228 @@ const MainAPIManager = {
                 }
             }
         }
+        
+        // 添加一起听状态信息
+        if (window.ListenTogether && window.ListenTogether.getState) {
+            const listenState = window.ListenTogether.getState();
+            
+            // 检查是否有未回复的一起听邀请（用户发来的）
+            const unrepliedUserInvitation = msgs.find(m => 
+                m && m.type === 'listen_invite' && m.sender === 'sent' && m.isInvitationToListen && !m.isInvitationAnswered
+            );
+            
+            // 检查是否有未回复的AI邀请（AI发来的）
+            const unrepliedAIInvitation = msgs.find(m => 
+                m && m.type === 'listen_invite' && m.sender === 'received' && m.isInvitationToListen && !m.isInvitationAnswered
+            );
+            
+            const hasUnrepliedUserInvitation = !!unrepliedUserInvitation;
+            const hasUnrepliedAIInvitation = !!unrepliedAIInvitation;
+            
+            if (listenState.isActive || hasUnrepliedUserInvitation || hasUnrepliedAIInvitation) {
+                const listenContext = [];
+                if (listenState.isActive) {
+                    listenContext.push('【远程一起听音乐】目前你和用户在手机聊天应用的"一起听"功能中同步播放音乐。这是一个虚拟音乐分享功能，不是在物理位置一起听，而是通过手机应用进行音乐同步分享。请自然地在对话中提及这首歌。');
+                } else if (hasUnrepliedUserInvitation) {
+                    const invitedSongName = unrepliedUserInvitation.songName || '一首歌';
+                    listenContext.push(`【一起听邀请】用户邀请你加入一起听功能，一起听：${invitedSongName}。这是用户在手机聊天应用中发起的虚拟音乐分享邀请。根据对话上下文和你的角色设定，自主决定是否接受。你可以用[ACCEPT_LISTEN_INVITATION]接受或[REJECT_LISTEN_INVITATION]拒绝。`);
+                } else if (hasUnrepliedAIInvitation) {
+                    const aiInvitedSongName = unrepliedAIInvitation.songName || '一首歌';
+                    listenContext.push(`【你的一起听邀请状态】你已向用户发出邀请，邀请他一起听：${aiInvitedSongName}。用户可以在卡片上选择同意或拒绝，等待用户的响应。`);
+                }
+                
+                if (listenState.initiator === 'user') {
+                    listenContext.push('- 谁发起的：用户邀请你加入一起听功能');
+                } else if (listenState.initiator === 'ai') {
+                    listenContext.push('- 谁发起的：你邀请用户通过一起听功能一起听');
+                }
+                
+                // 获取歌曲信息（优先从listenState，其次从邀请卡片）
+                let songName = '', artist = '';
+                if (listenState.currentSong) {
+                    songName = listenState.currentSong.name || listenState.currentSong.title || '';
+                    artist = listenState.currentSong.artist || listenState.currentSong.author || '';
+                } else if (unrepliedUserInvitation && unrepliedUserInvitation.songName) {
+                    songName = unrepliedUserInvitation.songName;
+                } else if (unrepliedAIInvitation && unrepliedAIInvitation.songName) {
+                    songName = unrepliedAIInvitation.songName;
+                }
+                
+                if (songName) {
+                    if (artist) {
+                        listenContext.push(`- 当前播放歌曲：${songName} - ${artist}`);
+                    } else {
+                        listenContext.push(`- 当前播放歌曲：${songName}`);
+                    }
+
+                    
+                    // 添加专辑封面信息
+                    if (listenState.currentSong && (listenState.currentSong.pic || listenState.currentSong.cover)) {
+                        listenContext.push(`- 专辑封面：${listenState.currentSong.pic || listenState.currentSong.cover}`);
+                    }
+                }
+                
+                if (listenState.isActive) {
+                    if (listenState.isPlaying) {
+                        listenContext.push('- 播放状态：正在播放');
+                    } else {
+                        listenContext.push('- 播放状态：已暂停');
+                    }
+                    
+                    // 添加播放时长信息
+                    if (listenState.startTime) {
+                        const duration = Math.floor((Date.now() - listenState.startTime) / 1000);
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = duration % 60;
+                        listenContext.push(`- 一起听时长：${minutes}分${seconds}秒`);
+                    }
+                    
+                    if (listenState.allLyrics && listenState.allLyrics.length > 0) {
+                        listenContext.push('- 【当前播放的歌词上下文】这是当前正在播放的歌曲的歌词，帮助你理解歌曲的主题、情感和意境：');
+                        
+                        // 计算要显示的歌词范围（当前歌词上下各10条）
+                        const currentLyricIndex = listenState.currentLyricIndex || Math.floor(listenState.allLyrics.length / 2);
+                        const startIndex = Math.max(0, currentLyricIndex - 10);
+                        const endIndex = Math.min(listenState.allLyrics.length, currentLyricIndex + 11);
+                        
+                        // 显示上下文歌词
+                        if (startIndex > 0) {
+                            listenContext.push(`  ...（前${startIndex}行歌词省略）`);
+                        }
+                        
+                        for (let i = startIndex; i < endIndex; i++) {
+                            const lyric = listenState.allLyrics[i];
+                            if (i === currentLyricIndex) {
+                                // 标记当前播放的歌词
+                                listenContext.push(`  ▶ ${lyric}  【← 正在播放】`);
+                            } else {
+                                listenContext.push(`    ${lyric}`);
+                            }
+                        }
+                        
+                        if (endIndex < listenState.allLyrics.length) {
+                            listenContext.push(`  ...（后${listenState.allLyrics.length - endIndex}行歌词省略）`);
+                        }
+                    }
+                }
+                
+                listenContext.push('\n你可以（无论是邀请状态还是正在播放）：');
+                listenContext.push('1. 评论正在播放的歌曲和歌词');
+                listenContext.push('2. 基于歌词内容展开对话话题');
+                listenContext.push('3. 主动切歌（用[CHANGE_SONG]指令或在对话中自然地表达，如"我想换一首歌"）');
+                listenContext.push('4. 主动收藏歌曲（用[ADD_FAVORITE_SONG]指令表达你对某首歌的喜爱）');
+                listenContext.push('5. 邀请用户点歌');
+                listenContext.push('6. 分享你对这首歌的感受和想法');
+                listenContext.push('7. 讨论音乐风格、歌手背景等相关话题');
+                listenContext.push('8. 根据当前歌词内容展开对话，自然地融入音乐话题');
+                listenContext.push('9. 注意观察用户对音乐的反应，适时做出回应');
+                listenContext.push('10. 不要频繁切歌，只有在用户明确表达不满或歌曲快结束时才考虑');
+                listenContext.push('11. 可以主动询问用户对歌曲的感受，引导互动');
+                
+                // 根据当前播放的音乐类型调整对话风格
+                if (songName) {
+                    // 简单的音乐类型分析（基于关键词）
+                    const musicKeywords = {
+                        '轻快': ['轻松', '愉快', '快乐', '欢快', '明媚'],
+                        '伤感': ['伤感', '悲伤', '忧郁', '忧郁', '思念'],
+                        '浪漫': ['浪漫', '甜蜜', '爱情', '柔情', '温馨'],
+                        '励志': ['励志', '坚强', '勇敢', '奋斗', '向上'],
+                        '安静': ['安静', '舒缓', '平和', '宁静', '放松']
+                    };
+                    
+                    let detectedMood = '未知';
+                    for (const [mood, keywords] of Object.entries(musicKeywords)) {
+                        if (keywords.some(keyword => songName.includes(keyword) || artist.includes(keyword))) {
+                            detectedMood = mood;
+                            break;
+                        }
+                    }
+                    
+                    listenContext.push(`- 音乐氛围：${detectedMood}`);
+                    listenContext.push(`- 可以围绕${detectedMood}的氛围展开对话`);
+                }
+                
+                systemPrompts.push(listenContext.join('\n'));
+            } else {
+                // 检查是否有一起听刚刚结束的事件
+                if (window.ListenTogether && window.ListenTogether.getLastEvent) {
+                    const lastEvent = window.ListenTogether.getLastEvent();
+                    if (lastEvent && lastEvent.type === 'listenTogetherEnded') {
+                        systemPrompts.push('【一起听状态】刚刚结束了一首音乐，用户关闭了一起听功能。');
+                    }
+                }
+            }
+        }
+        
+        // 添加一起听功能指令
+        // 构建一起听功能指令说明
+        let listenInstructionsText = `【一起听功能指令】
+你可以在适当时候主动邀请用户一起听音乐、切歌、或收藏歌曲。所有决定都应基于对话上下文和用户的真实需求，而不是固定规则。
+
+可用指令及用法：
+
+- [CHANGE_SONG]歌曲名
+  * 【重要】指令后面必须紧跟歌曲名，不要跟其他描述！
+  * 【格式】[CHANGE_SONG]《歌曲名》 或 [CHANGE_SONG]歌曲名
+  * 如果要表达理由或描述，在指令前或后用正常对话方式，不要放在指令后面
+  * 例如：我想换一首舒缓的，[CHANGE_SONG]稻香（理由在指令前）
+  * 例如：[CHANGE_SONG]平凡之路，这首歌很治愈（指令和歌名在前，理由在后）
+  * 系统会根据你指定的歌曲名称从喜欢库中查找并播放；如果没有找到，会自动搜索并添加
+
+- [ADD_FAVORITE_SONG]歌曲名
+  * 【重要】指令后面必须紧跟歌曲名，不要跟其他描述！
+  * 【格式】[ADD_FAVORITE_SONG]《歌曲名》 或 [ADD_FAVORITE_SONG]歌曲名
+  * 如果要表达理由或描述，在指令前或后用正常对话方式，不要放在指令后面
+  * 例如：这首歌太好听了，[ADD_FAVORITE_SONG]稻香（理由在指令前）
+  * 例如：[ADD_FAVORITE_SONG]平凡之路，我很喜欢这首歌（指令和歌名在前，理由在后）
+  * 系统会自动搜索这首歌曲并添加到你的喜欢库
+`;
+
+        // 只有当不处于一起听状态时，才允许使用邀请指令
+        // 获取一起听状态
+        let listenStateForInstructions = null;
+        if (window.ListenTogether && window.ListenTogether.getState) {
+            listenStateForInstructions = window.ListenTogether.getState();
+        }
+        
+        if (listenStateForInstructions && !listenStateForInstructions.isActive) {
+            listenInstructionsText += `
+- [INVITE_LISTEN]邀请理由
+  * 【格式要求】[INVITE_LISTEN]后面跟邀请的理由或描述
+  * 【重要】邀请理由必须是简洁的理由说明，而非额外的对话
+  * 例如：[INVITE_LISTEN]我有一首很好听的歌想和你分享
+  * 例如：[INVITE_LISTEN]听说你心情不太好，想和你一起听点舒缓的音乐
+  * 如果要在指令前后进行额外对话，在指令外进行
+`;
+        }
+
+        // 只有当用户发送了未回复的邀请时，才告诉AI可以使用接受/拒绝指令
+        if (userInvitationWithoutAnswer) {
+            listenInstructionsText += `
+- [ACCEPT_LISTEN_INVITATION]（直接使用，无需参数）
+  * 接受用户的一起听邀请
+  * 【重要】这个指令本身就表示接受，无需在后面跟随理由文本
+  * 你可以在指令前或后用正常对话方式表达你的想法
+
+- [REJECT_LISTEN_INVITATION]（直接使用，无需参数）
+  * 拒绝用户的一起听邀请
+  * 【重要】这个指令本身就表示拒绝，无需在后面跟随理由文本
+  * 你可以在指令前或后用正常对话方式解释你的原因或想法
+`;
+        }
+
+        listenInstructionsText += `
+使用原则：
+1. 不要生硬地使用指令，要保持自然的对话风格
+2. [CHANGE_SONG]和[ADD_FAVORITE_SONG]后面需要指定歌曲名称，但[ACCEPT_LISTEN_INVITATION]和[REJECT_LISTEN_INVITATION]不需要参数
+3. 不要依赖预设文本，根据当前对话自主思考和回应
+4. 只有在一对一对话中（非群聊）才能使用这些功能
+5. 【重要】不要频繁使用指令，只在真正有意义的时候使用（如真心想切歌或真心喜欢某首歌）
+6. 【关键】在[CHANGE_SONG]和[ADD_FAVORITE_SONG]后指定歌曲名称时，应该是你根据上下文**主动选择**的歌曲，而不是用户当前播放的歌曲`;
+
+        systemPrompts.push(listenInstructionsText);
+        
+        
         // 添加用户消息类型识别说明
         systemPrompts.push(`【用户内容识别规则】用户可能发送以下类型的内容,你需要正确识别并做出相应回应：
 
@@ -737,7 +969,7 @@ const MainAPIManager = {
    - 你可以看到商品的名称、价格和详细描述
    - 根据对话情境,自然地回应用户分享商品的行为
 
-4. 【普通文字消息】这是用户的正常对话文字
+5. 【普通文字消息】这是用户的正常对话文字
    - 直接理解和回应用户的文字内容
 
 5. 【视频通话消息】AI可以发起视频通话请求

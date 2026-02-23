@@ -3334,9 +3334,14 @@
             
             // 处理单条消息的渲染逻辑
             {
-                // 系统消息不显示给用户
+                // 系统消息通常不显示给用户
                 if (msg.type === 'system') {
                     return;
+                }
+                
+                // 一起听邀请消息用listen_invite类型处理（卡片样式）
+                if (msg.type === 'listen_invite') {
+                    // 继续走正常消息流程，在messageContent中显示卡片样式
                 }
                 
                 // 撤回消息：显示为中心提示，包含原始内容
@@ -3460,7 +3465,7 @@
                 const bubble = document.createElement('div');
                 const isSelected = AppState.selectedMessages.includes(msg.id);
                 // 对于语音、地理位置、通话、红包、转账和商品卡片消息，使用sender属性来设置样式（sent/received）；其他消息使用type
-                let bubbleClass = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card') ? msg.sender : msg.type;
+                let bubbleClass = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card' || msg.type === 'listen_invite') ? msg.sender : msg.type;
                 let className = 'chat-bubble ' + bubbleClass;
                 if (isSelected) {
                     className += ' selected';
@@ -3471,7 +3476,7 @@
                 
                 let avatarContent;
                 // 对于语音、地理位置、通话、红包、转账和商品卡片消息，使用sender属性判断；其他消息使用type
-                const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card')
+                const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card' || msg.type === 'listen_invite')
                     ? msg.sender === 'sent'
                     : msg.type === 'sent';
                 
@@ -3540,6 +3545,20 @@
                 } else if (msg.type === 'goods_card') {
                     // 商品卡片消息：显示商品卡片
                     textContent = ``; // 清空，由下面的bubble.innerHTML处理
+                } else if (msg.type === 'listen_invite') {
+                    // 一起听邀请卡片消息
+                    textContent = ``; // 清空，由下面的bubble.innerHTML处理
+                } else if (msg.musicCard) {
+                    // 音乐分享卡片
+                    const mc = msg.musicCard;
+                    textContent = `<div class="music-share-card" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,0,0,0.03);border-radius:10px;min-width:200px;max-width:260px;cursor:pointer;">
+                        <img src="${mc.pic || ''}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;background:#eee;" onerror="this.style.background='#ddd'">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(mc.name || '')}</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(mc.artist || '')}</div>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="#ec4141"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                    </div>`;
                 } else if (msg.isImage && msg.imageData) {
                     // 图片消息：清空textContent，将由下面的bubble.innerHTML处理
                     textContent = ``;
@@ -3928,6 +3947,195 @@
                         </div>
                     `;
                     bubble.classList.add('goods-card-bubble');
+                } else if (msg.type === 'listen_invite') {
+                    // 一起听邀请卡片消息渲染 - 毛玻璃风格
+                    const isSent = msg.sender === 'sent';
+                    const cursorStyle = isSent ? 'default' : 'pointer';
+                    const songName = msg.songName || '正在听音乐';
+                    
+                    // 获取邀请的响应状态
+                    const convId = AppState.currentChat.id;
+                    const msgs = AppState.messages[convId] || [];
+                    let responseStatus = null;
+                    let responseText = null;
+                    
+                    // 检查是否已关闭（一起听页面被关闭）
+                    if (msg.isListenTogetherClosed) {
+                        responseStatus = 'closed';
+                    } else if (msg.isInvitationAnswered) {
+                        responseStatus = msg.invitationStatus || null;
+                    } else if (isSent) {
+                        // 如果是用户邀请（sent），检查是否有AI的明确响应
+                        // 【修复】只检查有明确响应标记的消息，不要错误地认为普通回复是同意
+                        for (let i = msgs.length - 1; i >= 0; i--) {
+                            const m = msgs[i];
+                            if (m.type === 'received' && m.isRejectionMessage) {
+                                responseStatus = 'rejected';
+                                responseText = m.content;
+                                break;
+                            } else if (m.type === 'received' && m.isAcceptListenInvitation) {
+                                // 【修复】只有明确标记为接受的消息才算同意
+                                responseStatus = 'accepted';
+                                responseText = m.content;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 确定状态文本和颜色
+                    let statusText, statusColor;
+                    if (responseStatus === 'closed') {
+                        statusText = '已关闭';
+                        statusColor = '#999';
+                    } else if (responseStatus === 'accepted') {
+                        statusText = '已同意';
+                        statusColor = '#4a90e2';
+                    } else if (responseStatus === 'rejected') {
+                        statusText = '已拒绝';
+                        statusColor = '#e74c3c';
+                    } else {
+                        statusText = '等待回应...';
+                        statusColor = '#999';
+                    }
+                    
+                    // 未回复时显示按钮，已回复时显示状态
+                    // 【用户邀请AI】时：按钮禁用（AI应自主决定，不通过按钮强制）
+                    // 【AI邀请用户】时：按钮启用
+                    const shouldDisableButtons = isSent; // 用户邀请AI时禁用
+                    const buttonHtml = !responseStatus ? `
+                        <div style="
+                            display: flex;
+                            gap: 8px;
+                            margin-top: 14px;
+                            justify-content: center;
+                            opacity: ${shouldDisableButtons ? '0.5' : '1'};
+                            pointer-events: ${shouldDisableButtons ? 'none' : 'auto'};
+                        ">
+                            <button class="listen-invite-accept-btn" style="
+                                flex: 1;
+                                padding: 8px 12px;
+                                background: #4a90e2;
+                                color: white;
+                                border: none;
+                                border-radius: 16px;
+                                cursor: ${shouldDisableButtons ? 'not-allowed' : 'pointer'};
+                                font-size: 12px;
+                                font-weight: 500;
+                                transition: all 0.2s;
+                                user-select: none;
+                            ">同意</button>
+                            <button class="listen-invite-reject-btn" style="
+                                flex: 1;
+                                padding: 8px 12px;
+                                background: #e74c3c;
+                                color: white;
+                                border: none;
+                                border-radius: 16px;
+                                cursor: ${shouldDisableButtons ? 'not-allowed' : 'pointer'};
+                                font-size: 12px;
+                                font-weight: 500;
+                                transition: all 0.2s;
+                                user-select: none;
+                            ">拒绝</button>
+                        </div>
+                    ` : `
+                        <div style="
+                            font-size: 12px;
+                            color: ${statusColor};
+                            text-align: center;
+                            font-weight: 500;
+                            margin-top: 14px;
+                        ">${statusText}</div>
+                    `;
+                    
+                    bubble.innerHTML = `
+                        <div class="chat-avatar">${avatarContent}</div>
+                        <div class="listen-invite-card" style="
+                            background: rgba(255, 255, 255, 0.95);
+                            backdrop-filter: blur(10px);
+                            -webkit-backdrop-filter: blur(10px);
+                            border: 1px solid rgba(200, 210, 230, 0.5);
+                            border-radius: 20px;
+                            padding: 18px 16px;
+                            max-width: 260px;
+                            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+                            color: #1a1a1a;
+                            user-select: none;
+                            transition: all 0.3s ease;
+                        ">
+                            <div style="
+                                font-size: 36px;
+                                text-align: center;
+                                margin-bottom: 12px;
+                                line-height: 1;
+                            ">♪</div>
+                            <div style="
+                                font-size: 15px;
+                                font-weight: 600;
+                                color: #1a1a1a;
+                                text-align: center;
+                                margin-bottom: 8px;
+                            ">${isSent ? '邀请加入一起听' : '要一起来听音乐吗'}</div>
+                            <div style="
+                                font-size: 13px;
+                                color: #666;
+                                text-align: center;
+                                margin-bottom: 12px;
+                                line-height: 1.4;
+                            ">${escapeHtml(songName)}</div>
+                            ${buttonHtml}
+                        </div>
+                    `;
+                    bubble.classList.add('listen-invite-bubble');
+                    bubble.dataset.msgId = msg.id;
+                    
+                    // 添加按钮事件监听（仅当AI邀请用户时启用）
+                    if (!responseStatus && !isSent) {
+                        // 只在AI邀请用户时添加按钮事件（isSent为false时）
+                        const acceptBtn = bubble.querySelector('.listen-invite-accept-btn');
+                        const rejectBtn = bubble.querySelector('.listen-invite-reject-btn');
+                        
+                        if (acceptBtn) {
+                            acceptBtn.addEventListener('mouseenter', function() {
+                                this.style.background = '#357abd';
+                            });
+                            acceptBtn.addEventListener('mouseleave', function() {
+                                this.style.background = '#4a90e2';
+                            });
+                            acceptBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                handleListenInvitationResponse(msg, 'accept', isSent);
+                            });
+                        }
+                        
+                        if (rejectBtn) {
+                            rejectBtn.addEventListener('mouseenter', function() {
+                                this.style.background = '#c73f2d';
+                            });
+                            rejectBtn.addEventListener('mouseleave', function() {
+                                this.style.background = '#e74c3c';
+                            });
+                            rejectBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                handleListenInvitationResponse(msg, 'reject', isSent);
+                            });
+                        }
+                    }
+                    
+                    // AI邀请卡片添加悬停效果
+                    if (!isSent) {
+                        const listenCardEl = bubble.querySelector('.listen-invite-card');
+                        if (listenCardEl && responseStatus) {
+                            listenCardEl.addEventListener('mouseenter', () => {
+                                listenCardEl.style.transform = 'translateY(-2px)';
+                                listenCardEl.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.12)';
+                            });
+                            listenCardEl.addEventListener('mouseleave', () => {
+                                listenCardEl.style.transform = 'translateY(0)';
+                                listenCardEl.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)';
+                            });
+                        }
+                    }
                 } else if (msg.isPhotoDescription) {
                     // 图片描述消息 - 文字卡片形式
                     const photoDesc = escapeHtml(msg.photoDescription || msg.content || '');
@@ -4120,7 +4328,7 @@
                     
                     // 显示已读/未读状态
                     if (showMessageReadStatus) {
-                        const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card')
+                        const isSentMessage = (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card' || msg.type === 'listen_invite')
                             ? msg.sender === 'sent'
                             : msg.type === 'sent';
                         
@@ -6069,6 +6277,375 @@
             );
         }
 
+        // ========== 一起听功能特殊指令处理 ==========
+        
+        // 统一处理邀请响应（用户点击卡片按钮）
+        // 注意：只有AI邀请用户时，用户才能点击按钮（isUserSent=false时）
+        // 用户邀请AI时（isUserSent=true），按钮已禁用，此函数不会被调用
+        function handleListenInvitationResponse(invitationMsg, response, isUserSent) {
+            const convId = AppState.currentChat.id;
+            
+            // 标记邀请消息为已回复
+            invitationMsg.isInvitationAnswered = true;
+            invitationMsg.invitationStatus = response === 'accept' ? 'accepted' : 'rejected';
+            
+            if (response === 'accept') {
+                // 用户接受AI的邀请
+                // 传入false表示不再发送邀请卡片（因为已经有了AI的邀请卡片）
+                if (window.ListenTogether) {
+                    window.ListenTogether.open(false);
+                    
+                    // 播放AI喜欢库中的随机歌曲
+                    setTimeout(() => {
+                        if (window.ListenTogether && window.ListenTogether.getState) {
+                            const state = window.ListenTogether.getState();
+                            state.initiator = 'ai';
+                            state.isActive = true;
+                        }
+                    }, 300);
+                }
+            }
+            // 否则用户拒绝了（不需要额外处理，卡片会显示状态）
+            
+            // 刷新UI
+            saveToStorage();
+            renderChatMessagesDebounced();
+        }
+        
+        // 结束一起听状态，标记相关邀请卡片为已关闭
+        function endListenTogetherAndMarkClosed() {
+            const convId = AppState.currentChat.id;
+            if (!AppState.messages[convId]) return;
+            
+            // 【修复】标记所有未关闭的邀请卡片为已关闭
+            // 注意：这个标记是临时的，重新打开一起听时会清除，以允许再次发送邀请卡片
+            AppState.messages[convId].forEach(msg => {
+                if (msg.type === 'listen_invite' && !msg.isListenTogetherClosed) {
+                    msg.isListenTogetherClosed = true;
+                }
+            });
+            
+            // 保存状态到存储
+            saveToStorage();
+            
+            // 重新渲染消息，显示"已关闭"状态
+            if (renderChatMessagesDebounced) {
+                renderChatMessagesDebounced(true);
+            }
+        }
+        
+        function processListenTogetherCommands(text) {
+            if (!text) return null;
+            
+            // 处理接受邀请指令 [ACCEPT_LISTEN_INVITATION]
+            if (text.includes('[ACCEPT_LISTEN_INVITATION]')) {
+                const acceptText = text.replace('[ACCEPT_LISTEN_INVITATION]', '').trim();
+                handleAcceptListenInvitation(acceptText);
+                return { type: 'ACCEPT_LISTEN_INVITATION' };
+            }
+            
+            // 处理拒绝邀请指令 [REJECT_LISTEN_INVITATION]
+            if (text.includes('[REJECT_LISTEN_INVITATION]')) {
+                const rejectText = text.replace('[REJECT_LISTEN_INVITATION]', '').trim();
+                handleRejectListenInvitation(rejectText);
+                return { type: 'REJECT_LISTEN_INVITATION' };
+            }
+            
+            // 处理邀请一起听指令 [INVITE_LISTEN]
+            if (text.includes('[INVITE_LISTEN]')) {
+                const invitationText = text.replace('[INVITE_LISTEN]', '').trim();
+                handleListenTogetherInvitation(invitationText);
+                return { type: 'INVITE_LISTEN' };
+            }
+            
+            // 处理切歌指令 [CHANGE_SONG]
+            if (text.includes('[CHANGE_SONG]')) {
+                const changeText = text.replace('[CHANGE_SONG]', '').trim();
+                handleSongChange(changeText);
+                return { type: 'CHANGE_SONG' };
+            }
+            
+            return null;
+        }
+        
+        // 处理接受一起听邀请
+        // 注意：此函数只在用户发送邀请时被AI的[ACCEPT_LISTEN_INVITATION]指令触发
+        // 不需要理由文本，仅做为操作标记
+        function handleAcceptListenInvitation() {
+            const convId = AppState.currentChat.id;
+            
+            // 标记原始邀请消息为已回复
+            if (AppState.messages[convId]) {
+                const invitationMsg = AppState.messages[convId].find(m => 
+                    m.type === 'listen_invite' && m.sender === 'received' && !m.isInvitationAnswered
+                );
+                if (invitationMsg) {
+                    invitationMsg.isInvitationAnswered = true;
+                    invitationMsg.invitationStatus = 'accepted';
+                }
+            }
+            
+            // 更新一起听状态：用户已加入
+            if (window.ListenTogether && window.ListenTogether.setState) {
+                window.ListenTogether.setState({
+                    userAcceptedInvitation: true,
+                    userJoinedAt: Date.now()
+                });
+            }
+            
+            saveToStorage();
+            renderChatMessagesDebounced();
+        }
+        
+        // 处理拒绝一起听邀请
+        // 注意：当用户邀请AI时，按钮已禁用，不会调用此函数
+        // 此函数仅在AI邀请用户，用户点击"拒绝"按钮时调用
+        function handleRejectListenInvitation() {
+            const convId = AppState.currentChat.id;
+            
+            // 标记原始邀请消息为已回复
+            if (AppState.messages[convId]) {
+                const invitationMsg = AppState.messages[convId].find(m => 
+                    m.type === 'listen_invite' && m.sender === 'received' && !m.isInvitationAnswered
+                );
+                if (invitationMsg) {
+                    invitationMsg.isInvitationAnswered = true;
+                    invitationMsg.invitationStatus = 'rejected';
+                }
+            }
+            
+            saveToStorage();
+            renderChatMessagesDebounced();
+        }
+
+        // 处理一起听邀请
+        function handleListenTogetherInvitation(invitationText) {
+            if (window.ListenTogether && window.ListenTogether.getState) {
+                const listenState = window.ListenTogether.getState();
+                if (listenState.isActive) {
+                    // 如果已经在一起听，只显示AI的想法，不生成预设消息
+                    // invitationText已经包含了AI自主生成的想法，直接使用
+                    // 不需要添加系统消息
+                } else {
+                    // AI邀请用户一起听
+                    showListenTogetherInvitation(invitationText);
+                }
+            }
+        }
+        
+        // 处理用户邀请加入一起听的逻辑
+        function handleUserListenInvitation(userInviteMsg) {
+            if (!window.ListenTogether || !window.ListenTogether.getState) return;
+            
+            const listenState = window.ListenTogether.getState();
+            const convId = AppState.currentChat.id;
+            
+            if (listenState.isActive) {
+                // 【场景1】已经处于一起听状态 → 直接打开一起听页面（不显示邀请卡片）
+                // 将该邀请标记为已回复（已接受）
+                userInviteMsg.isInvitationAnswered = true;
+                userInviteMsg.invitationStatus = 'accepted';
+                
+                // 直接打开一起听页面
+                if (window.ListenTogether) {
+                    window.ListenTogether.open(false);
+                }
+            } else {
+                // 【场景2】不处于一起听状态 → 显示邀请卡片，让AI自主决定
+                // 邀请卡片已由其他逻辑创建，这里仅需保证状态正确
+            }
+            
+            saveToStorage();
+        }
+
+        // 智能一起听邀请 - 根据上下文决定是否邀请
+        // 显示一起听邀请界面
+        function showListenTogetherInvitation(invitationText, skipRender = false) {
+            const convId = AppState.currentChat.id;
+            const aiName = AppState.currentCharacter?.name || '角色';
+            
+            // 获取当前播放的歌曲信息
+            let songName = '正在听音乐';
+            if (window.ListenTogether && window.ListenTogether.getState) {
+                const listenState = window.ListenTogether.getState();
+                if (listenState.currentSong) {
+                    songName = listenState.currentSong.name || listenState.currentSong.title || '正在听音乐';
+                }
+            }
+            
+            // AI邀请用户加入一起听（毛玻璃卡片样式，显示在左侧）
+            const invitationMsg = {
+                id: 'msg_' + Date.now(),
+                type: 'listen_invite',
+                sender: 'received',  // received表示AI发送，显示在左侧
+                content: invitationText || '要一起来听音乐吗',
+                songName: songName,
+                time: new Date().toISOString(),
+                isListenTogetherInvite: true,
+                isInvitationToListen: true,
+                isInvitationAnswered: false,
+                readByUser: false
+            };
+            
+            if (!AppState.messages[convId]) {
+                AppState.messages[convId] = [];
+            }
+            AppState.messages[convId].push(invitationMsg);
+            
+            AppState.currentChat.lastMsg = invitationMsg.content;
+            AppState.currentChat.time = formatTime(new Date());
+            AppState.currentChat.lastMessageTime = invitationMsg.time;
+            
+            saveToStorage();
+            
+            // 只有在不跳过渲染时才立即渲染（外部调用时）
+            // 在appendAssistantMessage中会传入true以避免重复渲染
+            if (!skipRender) {
+                renderChatMessagesDebounced();
+            }
+        }
+
+        // 播放下一首歌
+        function handleSongChange(songName) {
+            if (!songName || !songName.trim()) {
+                console.log('⚠️ 未指定要切换的歌曲');
+                return;
+            }
+            
+            if (window.ListenTogether && window.ListenTogether.getState) {
+                const listenState = window.ListenTogether.getState();
+                const convId = AppState.currentChat.id;
+                
+                // 检查是否在一起听状态中或有待回复的邀请
+                const hasUnrepliedInvitation = AppState.messages[convId] && AppState.messages[convId].some(m =>
+                    m && m.type === 'listen_invite' && !m.isInvitationAnswered
+                );
+                
+                if (listenState.isActive || hasUnrepliedInvitation) {
+                    let songQuery = songName.trim();
+                    console.log(`🎵 切歌指令: ${songQuery}`);
+                    
+                    // 如果包含书名号《》，提取其中的歌曲名
+                    const bookMarkMatch = songQuery.match(/[《『「]([^》』」]+)[》』」]/);
+                    if (bookMarkMatch && bookMarkMatch[1]) {
+                        songQuery = bookMarkMatch[1].trim();
+                        console.log(`📍 从书名号中提取歌曲名: ${songQuery}`);
+                    }
+                    
+                    // 先尝试从喜欢库中播放
+                    let success = playSongByName(songQuery);
+                    
+                    if (!success) {
+                        // 如果喜欢库中没有，则搜索并添加
+                        if (window.ListenTogether && window.ListenTogether.searchAndAddFavorite) {
+                            window.ListenTogether.searchAndAddFavorite(songQuery).then(addSuccess => {
+                                if (addSuccess) {
+                                    // 添加成功，500ms后再次尝试播放
+                                    setTimeout(() => {
+                                        const playSuccess = playSongByName(songQuery);
+                                        if (playSuccess) {
+                                            console.log(`✅ 已切歌到: ${songQuery}`);
+                                            saveToStorage();
+                                            renderChatMessagesDebounced();
+                                        }
+                                    }, 500);
+                                } else {
+                                    // 搜索失败，降级到下一首
+                                    console.log(`⚠️ 搜索"${songQuery}"失败，切到下一首`);
+                                    playNextSong();
+                                }
+                            }).catch(err => {
+                                console.error('搜索歌曲出错:', err);
+                                playNextSong();
+                            });
+                        } else {
+                            // ListenTogether未就绪，降级到下一首
+                            console.log('⚠️ ListenTogether模块未就绪');
+                            playNextSong();
+                        }
+                    } else {
+                        // 在喜欢库中找到并播放成功
+                        console.log(`✅ 已切歌到: ${songQuery}`);
+                        saveToStorage();
+                        renderChatMessagesDebounced();
+                    }
+                }
+            }
+        }
+
+        // 【改进2】处理AI收藏歌曲指令
+        // 注意：AI通过[ADD_FAVORITE_SONG]指令来收藏歌曲
+        // 指令后直接跟歌曲名，通过搜索功能找到歌曲，然后添加到喜欢库
+        function handleAIAddFavoriteSong(songName) {
+            if (!songName || !songName.trim()) {
+                console.log('⚠️ 未指定要收藏的歌曲');
+                return;
+            }
+            
+            let songQuery = songName.trim();
+            console.log(`💾 收藏歌曲指令: ${songQuery}`);
+            
+            // 如果包含书名号《》，提取其中的歌曲名
+            const bookMarkMatch = songQuery.match(/[《『「]([^》』」]+)[》』」]/);
+            if (bookMarkMatch && bookMarkMatch[1]) {
+                songQuery = bookMarkMatch[1].trim();
+                console.log(`📍 从书名号中提取歌曲名: ${songQuery}`);
+            }
+            
+            // 调用listen-together中的搜索并收藏方法
+            if (window.ListenTogether && window.ListenTogether.searchAndAddFavorite) {
+                window.ListenTogether.searchAndAddFavorite(songQuery).then(success => {
+                    if (success) {
+                        console.log(`✅ 已收藏歌曲: ${songQuery}`);
+                    } else {
+                        console.log(`⚠️ 收藏歌曲失败: ${songQuery}`);
+                    }
+                    
+                    // 刷新UI
+                    saveToStorage();
+                    renderChatMessagesDebounced();
+                }).catch(err => {
+                    console.error('收藏歌曲出错:', err);
+                });
+            } else {
+                console.log('⚠️ ListenTogether模块未就绪');
+            }
+        }
+
+        // 智能切歌 - 根据上下文决定是否切歌
+        // 播放下一首歌
+        // 播放下一首歌（队列中的下一首）
+        function playNextSong() {
+            if (window.ListenTogether && window.ListenTogether.playNext) {
+                try {
+                    window.ListenTogether.playNext();
+                    return true;
+                } catch (e) {
+                    console.error('切歌失败:', e);
+                    return false;
+                }
+            }
+            return false;
+        }
+        
+        // 根据歌曲名称从喜欢库中查找并播放
+        function playSongByName(songQuery) {
+            if (!window.ListenTogether || !window.ListenTogether.playSongByName) {
+                // 降级到playNext
+                return playNextSong();
+            }
+            
+            try {
+                // 调用listen-together.js中的playSongByName方法
+                const success = window.ListenTogether.playSongByName(songQuery);
+                return success;
+            } catch (e) {
+                console.error('播放指定歌曲失败:', e);
+                // 降级到playNext
+                return playNextSong();
+            }
+        }
+
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const content = input.value.trim();
@@ -7559,6 +8136,14 @@
             
             if (!text || typeof text !== 'string') return text;
             
+            // 【第-1层】清理一起听指令标记（仅删除标记，保留文本内容）
+            // 指令标记是系统控制信号，但用户需要看到指令后的AI对话内容
+            text = text.replace(/\[ACCEPT_LISTEN_INVITATION\]/g, '');
+            text = text.replace(/\[REJECT_LISTEN_INVITATION\]/g, '');
+            text = text.replace(/\[INVITE_LISTEN\]/g, '');
+            text = text.replace(/\[CHANGE_SONG\]/g, '');
+            text = text.replace(/\[ADD_FAVORITE_SONG\]/g, '');
+            
             // 第零层：移除API角色标记（如assistant, user等）
             text = text.replace(/^(assistant|system|user)[:：\s]*/gi, '');
             text = text.replace(/[\s\n](assistant|system|user)[:：\s]*/gi, '\n');
@@ -7577,36 +8162,23 @@
             // 第二层：移除所有带【】标记的系统信息
             // 包括心声、思维链、思考、系统、指令等，但保留红包相关标记
             // 修复：只在【...】闭合标签对时才移除，避免误删除消息内容
-            text = text.replace(/【([^】]{0,20})】[\s\S]*?(?=(?:【[^】]{0,20}】|$))/g, function(match) {
-                const content = match.match(/【([^】]*)】/);
-                if (!content) return '';
-                
-                // 保留红包相关标记
-                if (content[1].includes('红包') || content[1].includes('领取红包') || content[1].includes('退还红包')) {
-                    return match;
-                }
-                
-                // 保留图片描述卡片标记
-                if (content[1].includes('图片描述')) {
-                    return match;
-                }
-                
-                const tags = ['心声', '思维链', '思考', '系统', '指令', '提示', '缓冲', '内部', '调试', '日志'];
-                if (tags.some(tag => content[1].includes(tag))) {
-                    return '';
-                }
-                return match;
-            });
+            text = text.replace(/【(心声|思维链|思考|系统|指令|提示|缓冲|内部|调试|日志)】[\s\S]*?【\/\1】/g, '');
+            
+            // 也清理可能没有闭合标签的版本（【标签】内容格式）
+            text = text.replace(/【(心声|思维链|思考|系统|指令|提示|缓冲|内部|调试|日志)】/g, '');
+            
+            // 保留红包相关标记的处理（不删除）
+            // 保留图片描述卡片标记的处理（不删除）
             
             // 第三层：移除所有包含"thinking"、"thought"的标记（防止AI用英文绕过）
             text = text.replace(/\n?\[.*?(thinking|thought|mindstate|internal|debug|system|instruction|assistant|role).*?\][\s\S]*?(?=\n|$)/gi, '');
             text = text.replace(/\n?\{.*?(thinking|thought|mindstate|internal|debug|system|instruction|assistant|role).*?\}[\s\S]*?(?=\n|$)/gi, '');
             
             // 第四层：移除类似"穿搭："、"心情："等结构化数据（包含所有新字段，使用AI实际输出的标签名）
-            text = text.replace(/\n?(位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|随身听|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|jealousy|jealousyTrigger|excitement|excitementDesc|bodyTrait|items|shoppingCart|musicPlayer|content|hiddenMeaning|affinity|affinityChange|affinityReason)[:：][\s\S]*?(?=\n(?:位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|随身听|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|jealousy|jealousyTrigger|excitement|excitementDesc|bodyTrait|items|shoppingCart|musicPlayer|content|hiddenMeaning|affinity|affinityChange|affinityReason)|$)/gi, '');
+            text = text.replace(/\n?(位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|jealousy|jealousyTrigger|excitement|excitementDesc|bodyTrait|items|shoppingCart|content|hiddenMeaning|affinity|affinityChange|affinityReason)[:：][\s\S]*?(?=\n(?:位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|jealousy|jealousyTrigger|excitement|excitementDesc|bodyTrait|items|shoppingCart|content|hiddenMeaning|affinity|affinityChange|affinityReason)|$)/gi, '');
 
             // 第五层：移除任何看起来像JSON或YAML的结构化数据块
-            text = text.replace(/\n?\{[\s\S]*?"(位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|随身听|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|jealousy|jealousyTrigger|excitement|excitementDesc|bodyTrait|items|shoppingCart|musicPlayer|content|hiddenMeaning|affinity|affinityChange|affinityReason)"[\s\S]*?\}(?=\n|$)/g, '');
+            text = text.replace(/\n?\{[\s\S]*?"(位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|心声|潜台词|真意|好感度|好感度变化|好感度原因|location|outfit|jealousy|jealousyTrigger|excitement|excitementDesc|bodyTrait|items|shoppingCart|content|hiddenMeaning|affinity|affinityChange|affinityReason)"[\s\S]*?\}(?=\n|$)/g, '');
             text = text.replace(/\n?---[\s\S]*?---(?=\n|$)/g, '');
             
             // 第六层：移除基础指标、情感羁绊、欲望等分组标题
@@ -7615,7 +8187,6 @@
             text = text.replace(/\n?\[?欲望\]?[:：]?/gi, '');
             text = text.replace(/\n?\[?随身物品\]?[:：]?/gi, '');
             text = text.replace(/\n?\[?购物车\]?[:：]?/gi, '');
-            text = text.replace(/\n?\[?随身听\]?[:：]?/gi, '');
             text = text.replace(/\n?\[?此时此刻的心声\]?[:：]?/gi, '');
             
             // 第七层：移除时间戳和日期信息
@@ -7685,6 +8256,126 @@
         function appendAssistantMessage(convId, text) {
             console.log('📝 appendAssistantMessage 被调用 - convId:', convId, 'currentChat:', AppState.currentChat?.id);
             
+            // ========== 第一步：提取所有一起听相关指令（新增完善的指令提取）==========
+            const directives = [];
+            const textWithoutDirectives = text.slice();
+            
+            // 提取所有指令（保持顺序）
+            const instructionPatterns = [
+                // ACCEPT/REJECT无参数
+                { pattern: /\[ACCEPT_LISTEN_INVITATION\]/s, type: 'ACCEPT_LISTEN_INVITATION', removePattern: /\[ACCEPT_LISTEN_INVITATION\]/ },
+                { pattern: /\[REJECT_LISTEN_INVITATION\]/s, type: 'REJECT_LISTEN_INVITATION', removePattern: /\[REJECT_LISTEN_INVITATION\]/ },
+                // INVITE_LISTEN: 提取到下一个【或[为止
+                { pattern: /\[INVITE_LISTEN\](.*?)(?=\[|【|$)/s, type: 'INVITE_LISTEN', removePattern: /\[INVITE_LISTEN\][^\[\n]*/ },
+                // CHANGE_SONG: 只提取歌曲名（到逗号、句号或下一个[为止）
+                { pattern: /\[CHANGE_SONG\]([^\[\n,，。.]*?)(?=[,，。.\[]|$)/s, type: 'CHANGE_SONG', removePattern: /\[CHANGE_SONG\][^\[\n,，。.]*/ },
+                // ADD_FAVORITE_SONG: 只提取歌曲名（到逗号、句号或下一个[为止）
+                { pattern: /\[ADD_FAVORITE_SONG\]([^\[\n,，。.]*?)(?=[,，。.\[]|$)/s, type: 'ADD_FAVORITE_SONG', removePattern: /\[ADD_FAVORITE_SONG\][^\[\n,，。.]*/ }
+            ];
+            
+            // 找到所有指令及其内容
+            for (const {pattern, type} of instructionPatterns) {
+                const match = textWithoutDirectives.match(pattern);
+                if (match) {
+                    directives.push({
+                        type: type,
+                        content: match[1].trim()
+                    });
+                }
+            }
+            
+            // 处理邀请响应指令（优先级最高）
+            // 但只有在用户发送了未回复的邀请时才处理
+            const unrepliedUserInvitation = AppState.messages[convId] && AppState.messages[convId].find(m => 
+                m && m.type === 'listen_invite' && m.sender === 'received' && !m.isInvitationAnswered
+            );
+            
+            const invitationResponses = directives.filter(d => 
+                d.type === 'ACCEPT_LISTEN_INVITATION' || d.type === 'REJECT_LISTEN_INVITATION'
+            );
+            
+            for (const response of invitationResponses) {
+                // 只有当用户发送了未回复的邀请时，才处理接受/拒绝指令
+                if (unrepliedUserInvitation) {
+                    if (response.type === 'ACCEPT_LISTEN_INVITATION') {
+                        handleAcceptListenInvitation();
+                    } else if (response.type === 'REJECT_LISTEN_INVITATION') {
+                        handleRejectListenInvitation();
+                    }
+                } else {
+                    // 如果没有用户邀请，则将这些指令作为普通文本保留
+                    console.log('⚠️ 使用了接受/拒绝邀请指令，但用户没有发送邀请，指令被忽略');
+                }
+            }
+            
+            // 处理其他一起听指令
+            const otherDirectives = directives.filter(d => 
+                d.type === 'INVITE_LISTEN' || d.type === 'CHANGE_SONG' || d.type === 'ADD_FAVORITE_SONG'
+            );
+            
+            for (const directive of otherDirectives) {
+                if (directive.type === 'INVITE_LISTEN') {
+                    showListenTogetherInvitation(directive.content, true); // 传入true跳过立即渲染
+                } else if (directive.type === 'CHANGE_SONG') {
+                    handleSongChange(directive.content);
+                } else if (directive.type === 'ADD_FAVORITE_SONG') {
+                    handleAIAddFavoriteSong(directive.content);
+                }
+            }
+            
+            // 移除所有指令标记，保留指令后的文本内容（AI自然对话）
+            let cleanText = text;
+            
+            // 【处理规则】
+            // ACCEPT/REJECT: 仅删除指令标记
+            // INVITE_LISTEN: 删除指令和其内容（邀请理由不显示在消息中）
+            // CHANGE_SONG/ADD_FAVORITE_SONG: 删除指令、歌曲名和后面的逗号，保留逗号后的内容
+            
+            // 1. 删除接受/拒绝指令标记（无内容）
+            cleanText = cleanText.replace(/\[ACCEPT_LISTEN_INVITATION\]/g, '');
+            cleanText = cleanText.replace(/\[REJECT_LISTEN_INVITATION\]/g, '');
+            
+            // 2. 删除邀请指令及其理由（不在消息中显示邀请理由）
+            cleanText = cleanText.replace(/\[INVITE_LISTEN\][^\[\n]*?(?=\[|$)/gs, '');
+            
+            // 3. 删除切歌指令、歌曲名和后面的逗号，保留逗号后的内容
+            // 匹配: [CHANGE_SONG]歌曲名（任何非[,\n,逗号句号的字符）[,，。.可选]
+            // 但要保留后续内容
+            cleanText = cleanText.replace(/\[CHANGE_SONG\][^\[\n,，。.]*[,，。.]?\s*/g, '');
+            
+            // 4. 删除收藏指令、歌曲名和后面的逗号，保留逗号后的内容
+            cleanText = cleanText.replace(/\[ADD_FAVORITE_SONG\][^\[\n,，。.]*[,，。.]?\s*/g, '');
+            
+            // 5. 移除多余的空格和换行
+            cleanText = cleanText.trim();
+            
+            // 如果处理了指令但没有其他内容，直接返回
+            if (directives.length > 0 && !cleanText) {
+                return;
+            }
+            
+            // 使用cleanText继续后续处理
+            text = cleanText;
+            
+            // ========== 【改进】智能一起听行为逻辑（当处于一起听时）==========
+            if (window.ListenTogether) {
+                const listenState = window.ListenTogether.getState();
+                
+                // 在一起听活跃状态下，根据AI消息内容智能判断
+                if (listenState.isActive && listenState.currentSong) {
+                    // 智能判断是否应该收藏当前歌曲
+                    // 已移除预设规则，由AI自主决定收藏时机
+                    
+                    // 智能判断是否应该切歌
+                    // 已移除预设规则，由AI自主决定切歌时机
+                }
+                
+                // 不处于一起听状态，智能判断是否应该邀请用户
+                // 已移除预设规则，由AI自主决定邀请时机
+            }
+            
+
+            
             // ========== 群聊模式：解析角色名标记 ==========
             const conv = AppState.conversations.find(c => c.id === convId);
             if (conv && conv.type === 'group') {
@@ -7722,15 +8413,16 @@
             
             // ========== 第二步：处理AI图片生成指令 ==========
             if (window.AIImageGenerator) {
-                text = AIImageGenerator.removeImageTags(text);
+                cleanText = AIImageGenerator.removeImageTags(cleanText);
                 // 异步处理图片生成，不阻塞消息显示
-                AIImageGenerator.processImageInstructions(convId, text).catch(err => {
+                AIImageGenerator.processImageInstructions(convId, cleanText).catch(err => {
                     console.error('处理图片生成指令失败:', err);
                 });
             }
             
             // ========== 第三步：检查是否包含思考过程格式 ==========
-            const thinkingData = parseThinkingProcess(text);
+            // 使用cleanText来检测思考过程，确保指令已被移除
+            const thinkingData = parseThinkingProcess(cleanText);
             
             if (thinkingData) {
                 // 存在思考过程，分批添加消息
@@ -7739,7 +8431,7 @@
             } else {
                 // 普通消息，按原有逻辑处理
                 console.log('💬 普通消息，调用 appendSingleAssistantMessage');
-                appendSingleAssistantMessage(convId, text, true); // 传递skipMindStateExtraction=true，避免重复提取
+                appendSingleAssistantMessage(convId, cleanText, true); // 传递skipMindStateExtraction=true，避免重复提取
             }
             
             // ========== 第四步：更新心声按钮 ==========
@@ -7772,8 +8464,26 @@
         }
         
         function appendSingleAssistantMessage(convId, text, skipMindStateExtraction = false) {
+            // ========== 第-1步：清理所有一起听指令标记（仅删除标记，保留文本内容） ==========
+            // 指令标记只是系统信号，但后面的文本是AI的真实对话用户需要看到
+            
+            // 【修复】检查是否包含接受邀请指令，用于后续卡片状态判断
+            const hasAcceptInvitation = text.includes('[ACCEPT_LISTEN_INVITATION]');
+            
+            text = text.replace(/\[ACCEPT_LISTEN_INVITATION\]/g, '');
+            text = text.replace(/\[REJECT_LISTEN_INVITATION\]/g, '');
+            text = text.replace(/\[INVITE_LISTEN\]/g, '');
+            text = text.replace(/\[CHANGE_SONG\]/g, '');
+            text = text.replace(/\[ADD_FAVORITE_SONG\]/g, '');
+            
+            text = text.trim();
+            
+            // 如果所有内容都是指令，则无需继续处理
+            if (!text) {
+                return;
+            }
+            
             // ========== 第0步：提前处理红包相关指令（在拆分消息之前） ==========
-            // 1. 处理AI发送红包：【红包】金额|留言【/红包】
             const sendEnvelopeRegex = /【红包】([0-9.]+)\|([^【】]*)【\/红包】/g;
             const sendEnvelopeMatches = [...text.matchAll(sendEnvelopeRegex)];
             for (const match of sendEnvelopeMatches) {
@@ -8171,7 +8881,9 @@
                     isEmoji: emojiUrl ? true : false,
                     time: new Date().toISOString(),
                     apiCallRound: currentApiCallRound,
-                    readByUser: false  // 默认未读，用户打开聊天后设为true
+                    readByUser: false,  // 默认未读，用户打开聊天后设为true
+                    // 【修复】如果包含接受邀请指令，标记为接受邀请的消息
+                    isAcceptListenInvitation: hasAcceptInvitation
                 };
                 AppState.messages[convId].push(aiMsg);
             } else if (!isVoice && !isLocation && emojiUrl) {
@@ -8184,7 +8896,9 @@
                     isEmoji: true,
                     time: new Date().toISOString(),
                     apiCallRound: currentApiCallRound,
-                    readByUser: false  // 默认未读
+                    readByUser: false,  // 默认未读
+                    // 【修复】如果包含接受邀请指令，标记为接受邀请的消息
+                    isAcceptListenInvitation: hasAcceptInvitation
                 };
                 AppState.messages[convId].push(aiMsg);
             }
@@ -11952,3 +12666,4 @@
         // 暴露消息菜单相关函数到 window 对象
         window.showMessageContextMenu = showMessageContextMenu;
         window.closeMessageContextMenu = closeMessageContextMenu;
+        window.endListenTogetherAndMarkClosed = endListenTogetherAndMarkClosed;

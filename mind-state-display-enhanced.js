@@ -64,14 +64,6 @@ function openCharacterMindStateEnhanced(chat) {
             ]
         },
         {
-            title: '随身听',
-            icon: '🎵',
-            color: '#ffabc0',
-            items: [
-                { key: 'musicPlayer', label: '随身听' }
-            ]
-        },
-        {
             title: '内心独白',
             icon: '💭',
             color: '#ff85a6',
@@ -177,8 +169,8 @@ function openCharacterMindStateEnhanced(chat) {
                         ` : ''}
                     </div>
                 `;
-            } else if (item.key === 'bodyTrait' || item.key === 'bodyInstinct' || item.key === 'coreItem' || item.key === 'consumable' || item.key === 'hiddenItem' || item.key === 'items' || item.key === 'shoppingCart' || item.key === 'musicPlayer') {
-                // 身体反应、随身物品、购物车、随身听字段：列表显示
+            } else if (item.key === 'bodyTrait' || item.key === 'bodyInstinct' || item.key === 'coreItem' || item.key === 'consumable' || item.key === 'hiddenItem' || item.key === 'items' || item.key === 'shoppingCart') {
+                // 身体反应、随身物品、购物车字段：列表显示
                 if (value !== null && value !== undefined && value !== '') {
                     let displayContent = '';
                     
@@ -199,22 +191,6 @@ function openCharacterMindStateEnhanced(chat) {
                             const isDeleted = item.includes('删除') || item.includes('已删除') || item.includes('移除');
                             return `<div style="margin-bottom:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(255,228,235,0.4),rgba(255,240,245,0.3));border-radius:8px;border-left:3px solid ${group.color};font-size:clamp(12px,3vw,13px);color:#9b7a9f;line-height:1.6;${isDeleted ? 'text-decoration:line-through;opacity:0.6;' : ''}">${escapeHtml(item)}</div>`;
                         }).join('');
-                    }
-                    // 处理随身听：分开显示歌曲名和歌词（无小标题）
-                    else if (item.key === 'musicPlayer') {
-                        const text = String(value);
-                        // 尝试分离歌曲名和歌词（格式：歌曲名 - 歌手 / 歌词）
-                        const match = text.match(/^(.+?)\s*\/\s*(.+)$/);
-                        if (match) {
-                            displayContent = `
-                                <div style="margin-bottom:8px;padding:10px 12px;background:rgba(255,228,235,0.3);border-radius:8px;border-left:3px solid ${group.color};">
-                                    <div style="font-size:clamp(12px,3vw,13px);color:#ff85a6;font-weight:600;margin-bottom:6px;">${escapeHtml(match[1])}</div>
-                                    <div style="font-size:clamp(11px,2.8vw,12px);color:#b08ba6;line-height:1.6;font-style:italic;">"${escapeHtml(match[2])}"</div>
-                                </div>
-                            `;
-                        } else {
-                            displayContent = `<div style="margin-bottom:8px;padding:10px 12px;background:rgba(255,228,235,0.3);border-radius:8px;border-left:3px solid ${group.color};font-size:clamp(12px,3vw,13px);color:#9b7a9f;line-height:1.6;">${escapeHtml(text)}</div>`;
-                        }
                     }
                     // 其他列表字段：显示小标题 + 列表内容
                     else {

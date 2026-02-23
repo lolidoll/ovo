@@ -133,8 +133,6 @@ const MindStateManager = (function() {
             { key: 'items', labels: ['随身物品', 'Items'] },
             // 购物车
             { key: 'shoppingCart', labels: ['购物车', 'Shopping Cart'] },
-            // 随身听
-            { key: 'musicPlayer', labels: ['随身听', 'Music Player'] },
             // 心声内容
             { key: 'content', labels: ['心声', 'Inner Voice', 'Mind Voice'] },
             { key: 'hiddenMeaning', labels: ['潜台词', '真意', 'Subtext'] },
@@ -153,7 +151,7 @@ const MindStateManager = (function() {
                 // 创建更灵活的匹配模式
                 const patterns = [
                     // 模式1：标签：内容（多行优先，匹配到下一个字段标签或分组标题）- 用于多行字段
-                    new RegExp(`${label}[：:]\\s*([\\s\\S]*?)(?=\\n\\s*(?:位置|穿搭|醋意值触发|醋意值|兴奋度描述|兴奋度|身体反应|随身物品|购物车|随身听|心声|潜台词|真意|好感度变化|好感度原因|好感度)[：:]|\\n\\s*\\[|$)`, 'i'),
+                    new RegExp(`${label}[：:]\\s*([\\s\\S]*?)(?=\\n\\s*(?:位置|穿搭|醋意值触发|醋意值|兴奋度描述|兴奋度|身体反应|随身物品|购物车|心声|潜台词|真意|好感度变化|好感度原因|好感度)[：:]|\\n\\s*\\[|$)`, 'i'),
                     // 模式2：标签：内容（单行，匹配到换行符）- 用于简单字段
                     new RegExp(`${label}[：:]+\\s*([^\\n]+)`, 'i')
                 ];
@@ -173,7 +171,7 @@ const MindStateManager = (function() {
                             // 清理多余的空行，但保留单个换行
                             value = value.replace(/\n{3,}/g, '\n\n').trim();
                             // 移除可能混入的其他字段标签或分组标题
-                            value = value.split(/\n(?=位置|穿搭|醋意值|兴奋度|身体反应|随身物品|购物车|随身听|心声|潜台词|好感度|\[)/)[0].trim();
+                            value = value.split(/\n(?=位置|穿搭|醋意值|兴奋度|身体反应|随身物品|购物车|心声|潜台词|好感度|\[)/)[0].trim();
                             
                             // 清理每行前后的空白，但保留换行结构
                             value = value.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n');
@@ -280,7 +278,6 @@ const MindStateManager = (function() {
 某某品牌的茉莉味按摩精油(她上次说过喜欢这个味道的，正好存货快用完了，下次亲手给她按摩用)
 某某品牌黑色蕾丝款丝袜(这个品牌的丝袜质量差，一撕就破，买几双备用着，让外卖员明天就送货上门)
 
-随身听：推荐1首符合情境的中文歌曲。格式"歌曲名 - 歌手 / 歌词片段"。
 
 心声：角色不为人知的内心独白，包含停顿、喘息或语气词
 潜台词：揭露内心最卑微或狂乱的祈求，建议用第二人称"你"
@@ -293,7 +290,7 @@ const MindStateManager = (function() {
 ✓ 购物车：1-3个商品，每个单独一行
 ✓ 所有15个字段都必须填写，不得遗漏
 
-**必须包含全部15个字段：位置、穿搭、醋意值、醋意值触发、兴奋度、兴奋度描述、身体反应、随身物品、购物车、随身听、心声、潜台词、好感度、好感度变化、好感度原因**
+**必须包含全部14个字段：位置、穿搭、醋意值、醋意值触发、兴奋度、兴奋度描述、身体反应、随身物品、购物车、心声、潜台词、好感度、好感度变化、好感度原因**
 `;
     }
 
@@ -332,7 +329,6 @@ const MindStateManager = (function() {
             { key: 'bodyTrait', label: '身体反应' },
             { key: 'items', label: '随身物品' },
             { key: 'shoppingCart', label: '购物车' },
-            { key: 'musicPlayer', label: '随身听' },
             { key: 'content', label: '心声' },
             { key: 'hiddenMeaning', label: '潜台词' }
         ];
@@ -370,9 +366,6 @@ const MindStateManager = (function() {
             ],
             '购物车': [
                 { key: 'shoppingCart', label: '购物车', icon: '🛒' }
-            ],
-            '随身听': [
-                { key: 'musicPlayer', label: '随身听', icon: '🎧' }
             ],
             '内心独白': [
                 { key: 'content', label: '心声', icon: '💬' },
@@ -538,7 +531,7 @@ const MindStateManager = (function() {
             }
             
             // 检查字段值是否被污染（包含其他标签的内容）
-            const hasOtherLabels = /位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|随身听|心声|潜台词|真意|好感度|好感度变化|好感度原因/.test(String(value));
+            const hasOtherLabels = /位置|穿搭|醋意值|醋意值触发|兴奋度|兴奋度描述|身体反应|随身物品|购物车|心声|潜台词|真意|好感度|好感度变化|好感度原因/.test(String(value));
             
             // 对于多行字段，需要特殊处理显示
             let finalDisplayValue;
@@ -665,7 +658,6 @@ const MindStateManager = (function() {
                                 'bodyTrait': '身体反应',
                                 'items': '随身物品',
                                 'shoppingCart': '购物车',
-                                'musicPlayer': '随身听',
                                 'content': '心声',
                                 'hiddenMeaning': '潜台词'
                             };
