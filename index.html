@@ -33,6 +33,9 @@
     <title>喵机1号</title>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="fiction-styles-v2.css">
+    <link rel="stylesheet" href="fiction-reader.css">
+    <link rel="stylesheet" href="fiction-comments.css">
     <link rel="stylesheet" href="moments.css">
     <link rel="stylesheet" href="login.css">
     <link rel="stylesheet" href="auth-modal.css">
@@ -263,6 +266,11 @@
     <script src="st-preset-manager.js" defer></script>
     <script src="offline-chat.js" defer></script>
     <script src="chat-qq-toolbar.js" defer></script>
+    <script src="cors-proxy-fallback.js" defer></script>
+    <script src="cors-proxy-smart-client.js" defer></script>
+    <script src="fiction-reader.js" defer></script>
+    <script src="fiction-comments.js" defer></script>
+    <script src="fiction-module-v2.js" defer></script>
     <script src="group-chat.js" defer></script>
     <script src="performance-utils.js" defer></script>
     <script src="chat-render-optimizer.js" defer></script>
@@ -3601,6 +3609,12 @@
                                     <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 0 0-9 9v3a9 9 0 0 0 18 0v-3a9 9 0 0 0-9-9z"></path><path d="M6 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path><path d="M16 14v5a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-5"></path></svg>
                                 </div>
                                 <span>一起听</span>
+                            </button>
+                            <button class="more-item" id="more-fiction" title="同人文">
+                                <div class="more-item-icon">
+                                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="8" x2="15" y2="8"></line><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="11" y2="16"></line></svg>
+                                </div>
+                                <span>同人文</span>
                             </button>
                             <button class="more-item" id="more-diary" title="日记">
                                 <div class="more-item-icon">

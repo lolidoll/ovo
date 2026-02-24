@@ -17,6 +17,293 @@
     z-index: 0;
 }
 
+/* 同人文模态框 - 借鉴番茄小说风格 */
+.fiction-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+}
+
+.fiction-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.fiction-modal-overlay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.fiction-modal-container {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+.fiction-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+}
+
+.fiction-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.fiction-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.fiction-modal-close:hover {
+    background: #f0f0f0;
+}
+
+.fiction-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(85vh - 80px);
+}
+
+.fiction-character-info {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.character-section, .user-section {
+    margin-bottom: 16px;
+}
+
+.character-section:last-child, .user-section:last-child {
+    margin-bottom: 0;
+}
+
+.character-section h4, .user-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.character-name, .user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.character-desc, .user-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.fiction-category-section {
+    margin-bottom: 24px;
+}
+
+.fiction-category-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.category-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.category-tab {
+    padding: 8px 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.category-tab.active {
+    background: #ff6b6b;
+    color: white;
+    border-color: #ff6b6b;
+}
+
+.category-tab:hover:not(.active) {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.fiction-genre-section {
+    margin-bottom: 24px;
+}
+
+.fiction-genre-section h4 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.genre-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.genre-category {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.genre-category h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.genre-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.genre-options label {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+}
+
+.genre-options input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.fiction-controls {
+    text-align: center;
+}
+
+.fiction-btn-create {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.fiction-btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.fiction-btn-create:active {
+    transform: translateY(0);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .fiction-modal-container {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .genre-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fiction-modal-body {
+        padding: 16px;
+    }
+    
+    .fiction-character-info {
+        padding: 12px;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .fiction-modal-container {
+        background: #1a1a1a;
+        color: white;
+    }
+    
+    .character-section h4, 
+    .user-section h4,
+    .fiction-category-section h4,
+    .fiction-genre-section h4,
+    .genre-category h5 {
+        color: #ccc;
+    }
+    
+    .character-name, .user-name {
+        color: white;
+    }
+    
+    .character-desc, .user-desc {
+        color: #aaa;
+    }
+    
+    .genre-options label {
+        color: #ccc;
+    }
+}
+
 .listen-container {
     position: relative; z-index: 1;
     width: 100%; height: 100%;

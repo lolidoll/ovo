@@ -1,0 +1,268 @@
+/* 同人文页面样式 */
+.fiction-page {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #F7F8FA;
+  z-index: 999;
+}
+
+.fiction-page.active {
+  display: block;
+}
+
+/* 顶部 */
+.fiction-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  z-index: 1000;
+}
+
+.fiction-logo {
+  font-size: 19px;
+  font-weight: bold;
+  color: #FF4A7E;
+}
+
+.fiction-search {
+  font-size: 14px;
+  color: #666;
+}
+
+.fiction-close {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 页面容器 */
+.fiction-container {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  bottom: 60px;
+  overflow: hidden;
+}
+
+.fiction-content {
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.fiction-content.active {
+  display: block;
+}
+
+/* 空页面 */
+.fiction-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 15px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 书库页面 */
+.fiction-bookstore {
+  padding: 12px;
+  overflow-y: auto;
+  background: #F7F8FA;
+}
+
+.fiction-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.fiction-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fiction-section-title::before {
+  content: "";
+  width: 3px;
+  height: 16px;
+  background: #FF4A7E;
+  border-radius: 2px;
+}
+
+.fiction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.fiction-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.fiction-cover {
+  width: 100%;
+  aspect-ratio: 75/100;
+  background: #EDEEF2;
+  border-radius: 10px;
+}
+
+.fiction-title {
+  font-size: 12px;
+  color: #333;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 分类页 */
+.fiction-category {
+  display: flex;
+  height: 100%;
+  background: #F7F8FA;
+}
+
+.fiction-cat-left {
+  width: 95px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #eee;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: 20px !important;
+}
+
+.fiction-cat-left::-webkit-scrollbar {
+  width: 3px;
+}
+
+.fiction-cat-left::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 3px;
+}
+
+.fiction-cat-left-item {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #333;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.fiction-cat-left-item.active {
+  background: #F7F8FA;
+  border-color: #FF4A7E;
+  color: #FF4A7E;
+  font-weight: 500;
+}
+
+.fiction-cat-right {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.fiction-cat-content {
+  display: none;
+}
+
+.fiction-cat-content.active {
+  display: block;
+}
+
+.fiction-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.fiction-tag {
+  padding: 4px 8px;
+  background: #F5F5F7;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 底部导航 */
+.fiction-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 -1px 4px rgba(0,0,0,0.06);
+}
+
+.fiction-tab {
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.fiction-tab.active {
+  color: #FF4A7E;
+}
+
+/* 滚动优化 */
+.fiction-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+.fiction-cat-left {
+  scrollbar-width: thin;
+}
+
+/* 移动端优化 */
+@media (max-width: 320px) {
+  .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .fiction-cat-left {
+    width: 80px;
+  }
+  
+  .fiction-cat-left-item {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,1045 @@
+/* 同人文页面样式 v2 */
+.fiction-page {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #F7F8FA;
+  z-index: 1000;
+}
+
+.fiction-page.active {
+  display: block;
+}
+
+/* 顶部 */
+.fiction-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  z-index: 1001;
+}
+
+/* 当显示详情页时隐藏顶部导航 */
+#fiction-detail.active ~ .fiction-header {
+  display: none;
+}
+
+.fiction-logo {
+  font-size: 19px;
+  font-weight: bold;
+  color: #FF4A7E;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.fiction-logo:active {
+  background: #fff0f5;
+  opacity: 0.8;
+}
+
+.fiction-close-btn:active {
+  opacity: 0.6;
+}
+
+/* 页面容器：严格计算中间区域高度 */
+.fiction-container {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  bottom: 60px;
+  overflow: hidden;
+}
+
+.fiction-content {
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+}
+
+.fiction-content.active {
+  display: flex;
+}
+
+/* 详情页容器 */
+#fiction-detail {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 1100;
+}
+
+#fiction-detail.active {
+  display: flex;
+}
+
+#fiction-detail-content {
+  display: none;
+}
+
+/* 分类页 */
+.fiction-category {
+  display: flex;
+  height: 100%;
+  background: #F7F8FA;
+}
+
+.fiction-cat-left {
+  width: 95px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #eee;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: 20px !important;
+  scrollbar-width: thin;
+}
+
+.fiction-cat-left::-webkit-scrollbar {
+  width: 3px;
+}
+
+.fiction-cat-left::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 3px;
+}
+
+.fiction-cat-left-item {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #333;
+  border-left: 3px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fiction-cat-left-item.active {
+  background: #F7F8FA;
+  border-color: #FF4A7E;
+  color: #FF4A7E;
+  font-weight: 500;
+}
+
+.fiction-cat-right {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: #F7F8FA;
+}
+
+.fiction-cat-content {
+  display: none;
+}
+
+.fiction-cat-content.active {
+  display: block;
+}
+
+.fiction-generate-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0 0 0 8px;
+}
+
+.fiction-generate-btn {
+  padding: 4px 12px;
+  background: #FF4A7E;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: none;
+  white-space: nowrap;
+  height: 24px;
+  line-height: 16px;
+}
+
+.fiction-generate-btn:hover {
+  opacity: 0.9;
+}
+
+.fiction-generate-btn:active {
+  opacity: 0.8;
+  transform: scale(0.95);
+}
+
+.fiction-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fiction-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fiction-tag-group .fiction-generate-btn-container {
+  margin-bottom: 0;
+  margin-left: auto;
+}
+
+.fiction-tag {
+  padding: 4px 8px;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 书卡片网格 */
+.fiction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.fiction-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  /* 卡片最大宽度约110px，让占位和生成的卡片完全一致 */
+  max-width: 110px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.fiction-card:active {
+  transform: scale(0.95);
+}
+
+.fiction-cover {
+  width: 100%;
+  aspect-ratio: 75/100;
+  background: #EDEEF2;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.fiction-title {
+  font-size: 12px;
+  color: #333;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 书库页 */
+.fiction-bookstore {
+  padding: 12px;
+  overflow-y: auto;
+  background: #F7F8FA;
+  height: 100%;
+}
+
+.fiction-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.fiction-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fiction-section-title::before {
+  content: "";
+  width: 3px;
+  height: 16px;
+  background: #FF4A7E;
+  border-radius: 2px;
+}
+
+/* 空页面 */
+.fiction-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 15px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 书籍详情页 */
+.fiction-detail-header {
+  position: relative;
+  background: #fff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+  height: 50px;
+  box-sizing: border-box;
+  order: 1;
+}
+
+.fiction-back-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #FF4A7E;
+  cursor: pointer;
+  padding: 0 8px;
+  min-width: 40px;
+  text-align: center;
+  font-weight: 500;
+  position: absolute;
+  left: 16px;
+  line-height: 1;
+}
+
+.fiction-detail-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fiction-detail-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  order: 2;
+}
+
+.fiction-detail-cover-section {
+  width: 100%;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.fiction-detail-cover-section img {
+  max-width: 200px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.fiction-detail-cover {
+  width: 100%;
+  aspect-ratio: 75/100;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.fiction-detail-info {
+  background: #F7F8FA;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.fiction-info-row {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.fiction-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.fiction-label {
+  font-weight: 600;
+  color: #333;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.fiction-value {
+  color: #666;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.fiction-intro-row {
+  flex-direction: column;
+}
+
+.fiction-intro {
+  color: #666;
+  line-height: 1.8;
+  word-break: break-word;
+  text-align: justify;
+}
+
+/* 章节列表 */
+.fiction-chapters-list {
+  margin-bottom: 20px;
+}
+
+.fiction-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 4px;
+  border-left: 3px solid #FF4A7E;
+}
+
+.fiction-chapter {
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid #eee;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.fiction-chapter:active {
+  background: #f9f9f9;
+  border-color: #FF4A7E;
+}
+
+.fiction-chapter-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.fiction-chapter-preview {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fiction-no-chapters {
+  text-align: center;
+  color: #999;
+  padding: 30px 20px;
+  font-size: 14px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* 写作按钮 */
+.fiction-write-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #FF4A7E, #FF6B9D);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 74, 126, 0.3);
+}
+
+.fiction-write-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+/* 收藏按钮 */
+.fiction-collect-btn {
+  padding: 14px;
+  background: linear-gradient(135deg, #FF4A7E, #FF6B9D);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 74, 126, 0.3);
+}
+
+.fiction-collect-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.fiction-collect-btn[data-collected="true"] {
+  background: linear-gradient(135deg, #FFB3D9, #FFC9E3);
+  color: #FF4A7E;
+}
+
+/* 其他操作按钮（评论、开始阅读） */
+.fiction-action-btn {
+  padding: 14px;
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.fiction-action-btn:active {
+  background: #e8e8e8;
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+/* 开始阅读按钮 - 主色 */
+.fiction-action-btn-primary {
+  background: linear-gradient(135deg, #FF4A7E, #FF6B9D);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 74, 126, 0.3);
+}
+
+.fiction-action-btn-primary:active {
+  background: linear-gradient(135deg, #FF4A7E, #FF6B9D);
+}
+
+/* 底部导航 */
+.fiction-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 -1px 4px rgba(0,0,0,0.06);
+  z-index: 1001;
+}
+
+.fiction-tab {
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  flex: 1;
+  height: 100%;
+  justify-content: center;
+}
+
+.fiction-tab.active {
+  color: #FF4A7E;
+}
+/* ===== 我的页面样式 ===== */
+
+.fiction-mine-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #F7F8FA;
+  padding-top: 12px;
+}
+
+/* 用户信息卡片 */
+.fiction-user-card {
+  margin: 0 12px 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #FF4A7E 0%, #FF6B9D 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(255, 74, 126, 0.2);
+  color: white;
+}
+
+.fiction-user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.fiction-avatar-text {
+  color: white;
+}
+
+.fiction-user-info {
+  flex: 1;
+}
+
+.fiction-user-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.fiction-user-level {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.fiction-user-badge {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.fiction-user-edit-btn {
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.fiction-user-edit-btn:active {
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0.8;
+}
+
+/* 统计数据网格 */
+.fiction-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 0 12px 20px;
+}
+
+.fiction-stat-item {
+  padding: 16px 12px;
+  background: white;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.fiction-stat-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(255, 74, 126, 0.15);
+}
+
+.fiction-stat-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #FF4A7E;
+  margin-bottom: 4px;
+}
+
+.fiction-stat-label {
+  font-size: 11px;
+  color: #999;
+  line-height: 1;
+}
+
+/* 菜单部分 */
+.fiction-menu-section {
+  margin-bottom: 20px;
+}
+
+.fiction-menu-title {
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+  padding: 0 16px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fiction-menu-list {
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fiction-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 12px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fiction-menu-item:last-child {
+  border-bottom: none;
+}
+
+.fiction-menu-item:active {
+  background: #f9f9f9;
+}
+
+.fiction-menu-icon {
+  font-size: 24px;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.fiction-menu-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.fiction-menu-main {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.fiction-menu-sub {
+  font-size: 12px;
+  color: #999;
+  line-height: 1;
+}
+
+.fiction-menu-arrow {
+  font-size: 20px;
+  color: #ddd;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* 底部按钮区域 */
+.fiction-mine-footer {
+  padding: 20px 16px;
+  margin-top: auto;
+}
+
+.fiction-mine-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.fiction-mine-logout-btn {
+  background: white;
+  color: #FF4A7E;
+  border: 1.5px solid #FF4A7E;
+}
+
+.fiction-mine-logout-btn:active {
+  background: #fff0f5;
+  opacity: 0.8;
+}
+
+/* 编辑模态框 */
+.fiction-edit-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+
+.fiction-edit-modal.active {
+  display: flex;
+}
+
+.fiction-edit-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+.fiction-edit-modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fiction-edit-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.fiction-edit-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fiction-edit-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.fiction-edit-item {
+  margin-bottom: 16px;
+}
+
+.fiction-edit-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.fiction-edit-input,
+.fiction-edit-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #333;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.fiction-edit-input:focus,
+.fiction-edit-textarea:focus {
+  outline: none;
+  border-color: #FF4A7E;
+  box-shadow: 0 0 0 2px rgba(255, 74, 126, 0.1);
+}
+
+.fiction-edit-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.fiction-edit-avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fiction-avatar-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF4A7E, #FF6B9D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  flex-shrink: 0;
+  border: 2px solid #f0f0f0;
+}
+
+.fiction-edit-upload-btn {
+  padding: 8px 16px;
+  background: #FF4A7E;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fiction-edit-upload-btn:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+.fiction-edit-radio-group {
+  display: flex;
+  gap: 16px;
+}
+
+.fiction-edit-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.fiction-edit-radio input[type="radio"] {
+  cursor: pointer;
+}
+
+.fiction-edit-modal-footer {
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.fiction-edit-cancel-btn,
+.fiction-edit-save-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fiction-edit-cancel-btn {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.fiction-edit-cancel-btn:active {
+  background: #e0e0e0;
+}
+
+.fiction-edit-save-btn {
+  background: linear-gradient(135deg, #FF4A7E, #FF6B9D);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 74, 126, 0.3);
+}
+
+.fiction-edit-save-btn:active {
+  opacity: 0.8;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .fiction-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 0 8px 16px;
+  }
+
+  .fiction-user-card {
+    margin: 0 8px 16px;
+    padding: 16px;
+  }
+
+  .fiction-stat-item {
+    padding: 12px 8px;
+  }
+
+  .fiction-menu-item {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .fiction-menu-icon {
+    font-size: 20px;
+    width: 32px;
+  }
+
+  .fiction-mine-footer {
+    padding: 16px 12px;
+  }
+
+  .fiction-mine-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
