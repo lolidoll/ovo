@@ -284,6 +284,7 @@
             'more-takeout': handleTakeout,
             'more-offline': handleOffline,
             'more-listen': handleListen,
+            'more-fiction': handleFiction,
             'more-diary': handleDiary,
             'more-memo': handleMemo,
             'more-frog': handleFrog,
@@ -448,6 +449,20 @@
             window.ListenTogether.open();
         } else {
             showToast('一起听功能加载中');
+        }
+    }
+    
+    function handleFiction() {
+        openFiction();
+    }
+    
+    function openFiction() {
+        // 检查是否已加载同人文模块
+        if (window.FictionModule && typeof window.FictionModule.open === 'function') {
+            window.FictionModule.open();
+        } else {
+            console.warn('⚠️ 同人文模块未初始化');
+            showToast('同人文功能加载中，请稍后再试');
         }
     }
     
