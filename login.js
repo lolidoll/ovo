@@ -336,19 +336,19 @@ class DiscordAuthManager {
             const currentUser = this.getCurrentUser();
             const currentDiscordId = currentUser ? currentUser.id : null;
             
-            const response = await fetch(`${this.CONFIG.KEY_API}?action=verify`, {
+            // 使用POST方法传递discord_id用于绑定验证
+            const response = await fetch(`${this.CONFIG.KEY_API}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     key,
-                    // 传递当前Discord ID用于绑定验证
                     discord_id: currentDiscordId
                 })
             });
 
             const data = await response.json();
 
-            if (data.valid) {
+            if (data.valid || data.success) {
                 // 显示成功状态
                 modal.classList.add('success');
                 // 更新图标
@@ -371,8 +371,10 @@ class DiscordAuthManager {
             } else {
                 if (data.used) {
                     showError('该密钥已被使用，已永久失效 ~');
-                } else if (data.error && data.error.includes('Discord')) {
-                    showError('❌ ' + data.error);
+                } else if (data.discord_error || (data.error && data.error.includes('Discord'))) {
+                    showError('❌ ' + (data.message || data.error || '密钥绑定的Discord账号不匹配'));
+                } else if (data.error) {
+                    showError(data.message || '无效的密钥，请检查是否正确 ~');
                 } else {
                     showError('无效的密钥，请检查是否正确 ~');
                 }
@@ -420,8 +422,6 @@ class DiscordAuthManager {
             // 获取已验证的密钥（从单独存储的实际密钥值中获取）
             const verifiedKey = localStorage.getItem('key_verified_actual');
             
-            // 先获取Discord用户信息（临时token）来获得user id用于验证
-            // 这里需要从授权返回的user信息中获取
             // 调用 Vercel API 进行 token 交换，并传递密钥用于Discord账号绑定验证
             const response = await fetch(this.CONFIG.TOKEN_ENDPOINT, {
                 method: 'POST',
@@ -431,9 +431,7 @@ class DiscordAuthManager {
                 body: JSON.stringify({ 
                     code: code,
                     client_id: this.CONFIG.CLIENT_ID,
-                    verified_key: verifiedKey,
-                    // 添加验证标识
-                    verify_key_binding: true
+                    verified_key: verifiedKey  // 传递密钥供后端验证Discord账号
                 })
             });
             
@@ -449,7 +447,7 @@ class DiscordAuthManager {
             console.log('Token 交换成功:', data.user ? data.user.username : '用户数据');
             
             // 检查密钥绑定和Discord账号验证
-            if (data.error && data.error.includes('Discord')) {
+            if (data.error && data.discord_error) {
                 // Discord账号不匹配
                 console.error('❌ Discord账号验证失败:', data.error);
                 alert('❌ 登录失败\n\n密钥绑定的Discord账号与当前登录账号不一致！\n\n'
@@ -465,14 +463,12 @@ class DiscordAuthManager {
             }
             
             if (data.access_token) {
-                // 不清除KEY_VERIFIED，以保持验证状态（用于session）
-                // KEY_VERIFIED将在logout时清除
+                // 保存 token 和用户数据
+                this.saveAuthToken(data.access_token, data.expires_in);
+                this.saveUserData(data.user);
                 
-                this.saveAuthToken(data.access_token, data.expires_in || 3600);
-                // 传递Discord用户ID给fetch
-                await this.fetchUserData(data.access_token, data.discord_id || null);
-            } else if (data.error) {
-                throw new Error(data.error);
+                // 成功登录，跳转到主页面
+                window.location.href = 'index.html';
             } else {
                 throw new Error('未获取到访问令牌');
             }

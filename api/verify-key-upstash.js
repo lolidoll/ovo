@@ -55,11 +55,14 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'GET') {
+  // 支持 GET 和 POST 方法
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { key } = req.query;
+  // 从 query 或 body 获取参数
+  const { key, discord_id } = req.method === 'GET' ? req.query : req.body;
+  
   if (!key) {
     return res.status(400).json({
       error: '缺少密钥参数',
@@ -82,15 +85,13 @@ export default async function handler(req, res) {
     }
 
     // 2. 检查密钥是否有效
-    //    密钥可能在 keys:valid（未被领取）或 keys:issued（已被Bot发出但未使用）
     const inValidRaw = await redis.sismember('keys:valid', key);
     const inIssuedRaw = await redis.sismember('keys:issued', key);
     
-    // sismember 可能返回 0/1(数字)、true/false(布尔)、"0"/"1"(字符串)，统一处理
     const inValid = inValidRaw === 1 || inValidRaw === true || inValidRaw === '1';
     const inIssued = inIssuedRaw === 1 || inIssuedRaw === true || inIssuedRaw === '1';
     
-    console.log(`密钥检查: key=${key}, inValidRaw=${inValidRaw}(${typeof inValidRaw}), inIssuedRaw=${inIssuedRaw}(${typeof inIssuedRaw}), inValid=${inValid}, inIssued=${inIssued}`);
+    console.log(`密钥检查: key=${key}, inValid=${inValid}, inIssued=${inIssued}`);
     
     if (!inValid && !inIssued) {
       return res.status(404).json({
@@ -100,11 +101,38 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. 验证成功，标记使用
+    // 3. ✅ 新增：检查Discord账号绑定验证
+    // 获取密钥的owner信息
+    const ownerData = await redis.get(`key:owner:${key}`);
+    if (ownerData) {
+      try {
+        const owner = typeof ownerData === 'string' ? JSON.parse(ownerData) : ownerData;
+        const ownerDiscordId = owner.discordId || owner.uid;
+        
+        // 如果前端传了discord_id，进行绑定验证
+        if (discord_id && discord_id !== ownerDiscordId) {
+          console.error(`❌ Discord账号不匹配: 密钥owner=${ownerDiscordId}, 验证用户=${discord_id}`);
+          return res.status(403).json({
+            error: '密钥绑定的Discord账号不匹配',
+            code: 'DISCORD_MISMATCH',
+            message: `此密钥仅限于Discord账号 ${ownerDiscordId.substring(0, 8)}... 使用`,
+            discord_error: true
+          });
+        }
+        
+        // 记录owner信息用于后续使用日志
+        console.log(`✅ Discord账号验证通过: owner=${ownerDiscordId}`);
+      } catch (e) {
+        console.error('owner数据解析错误:', e);
+      }
+    }
+
+    // 4. 验证成功，标记使用
     const useInfo = {
       usedAt: new Date().toISOString(),
       ip: req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown',
-      userAgent: req.headers['user-agent'] || 'unknown'
+      userAgent: req.headers['user-agent'] || 'unknown',
+      discordId: discord_id  // 记录验证时的Discord ID
     };
 
     await redis.set(`key:used:${key}`, 'true');
@@ -114,11 +142,13 @@ export default async function handler(req, res) {
     await redis.lpush('key:usage:log', JSON.stringify({
       key: key.substring(0, 4) + '***',
       usedAt: useInfo.usedAt,
-      ip: useInfo.ip
+      ip: useInfo.ip,
+      discordId: discord_id
     }));
     await redis.ltrim('key:usage:log', 0, 99);
 
     return res.status(200).json({
+      valid: true,
       success: true,
       code: 'KEY_VALID',
       message: '密钥验证成功'
