@@ -32,6 +32,8 @@
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='90' fill='%23333'>喵</text></svg>">
     <title>喵机1号</title>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 移动端全面适配CSS -->
+    <link rel="stylesheet" href="mobile-responsive.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="fiction-styles-v2.css">
     <link rel="stylesheet" href="fiction-reader.css">
@@ -233,6 +235,12 @@
             }
         })();
     </script>
+    <!-- 移动端全面适配系统 -->
+    <script src="mobile-responsive-adapter.js"></script>
+    <!-- 浏览器兼容性修复 -->
+    <script src="browser-compatibility-fix.js"></script>
+    <!-- 移动端适配验证工具 -->
+    <script src="mobile-adaptation-validator.js"></script>
     <script src="background-keep-alive.js"></script>
     <script src="key-auth.js"></script>
     <script src="auth-modal.js" defer></script>
@@ -3612,15 +3620,15 @@
                             </button>
                             <button class="more-item" id="more-fiction" title="同人文">
                                 <div class="more-item-icon">
-                                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="8" x2="15" y2="8"></line><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="11" y2="16"></line></svg>
+                                    <svg viewBox="0 0 24 24"><path d="M6 4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h6V4H6z"></path><path d="M12 4h6c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2h-6V4z"></path><line x1="12" y1="4" x2="12" y2="20"></line><line x1="8" y1="8" x2="10" y2="8"></line><line x1="8" y1="11" x2="10" y2="11"></line><line x1="8" y1="14" x2="10" y2="14"></line><line x1="14" y1="8" x2="16" y2="8"></line><line x1="14" y1="11" x2="16" y2="11"></line><line x1="14" y1="14" x2="16" y2="14"></line></svg>
                                 </div>
                                 <span>同人文</span>
                             </button>
-                            <button class="more-item" id="more-diary" title="日记">
+                            <button class="more-item" id="more-diary" title="情书">
                                 <div class="more-item-icon">
-                                    <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><line x1="8" y1="2" x2="8" y2="6"></line><line x1="16" y1="2" x2="16" y2="6"></line><line x1="4" y1="10" x2="20" y2="10"></line></svg>
+                                    <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M2 6l10 7 10-7"></path></svg>
                                 </div>
-                                <span>日记</span>
+                                <span>情书</span>
                             </button>
                             <button class="more-item" id="more-memo" title="备忘录">
                                 <div class="more-item-icon">

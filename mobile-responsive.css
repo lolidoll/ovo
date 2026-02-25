@@ -1,0 +1,526 @@
+/**
+ * 移动端全面CSS适配
+ * 支持所有手机浏览器、平板、PWA全屏模式
+ */
+
+/* ============================================
+   1. 基础视口和安全区域配置
+   ============================================ */
+
+:root {
+    /* 视口高度变量 */
+    --vh: 1vh;
+    --window-height: 100vh;
+    --screen-height: 100vh;
+    --app-height: 100vh;
+    
+    /* 导航栏配置 */
+    --nav-height: 45px;
+    --nav-safe-top: 0px;
+    --nav-total-height: calc(var(--nav-height) + var(--nav-safe-top));
+    
+    /* 安全区域 */
+    --safe-area-inset-top: 0px;
+    --safe-area-inset-bottom: 0px;
+    --safe-area-inset-left: 0px;
+    --safe-area-inset-right: 0px;
+    
+    /* 页面缩放 */
+    --page-scale: 1;
+    
+    /* 字体 */
+    --global-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+}
+
+/* 支持safe-area-inset的浏览器 */
+@supports (padding: max(0px)) {
+    :root {
+        --safe-area-inset-top: max(env(safe-area-inset-top), 0px);
+        --safe-area-inset-bottom: max(env(safe-area-inset-bottom), 0px);
+        --safe-area-inset-left: max(env(safe-area-inset-left), 0px);
+        --safe-area-inset-right: max(env(safe-area-inset-right), 0px);
+    }
+}
+
+/* PWA全屏模式 - 所有设备统一处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    :root {
+        --safe-area-inset-top: env(safe-area-inset-top);
+        --safe-area-inset-bottom: env(safe-area-inset-bottom);
+        --safe-area-inset-left: env(safe-area-inset-left);
+        --safe-area-inset-right: env(safe-area-inset-right);
+        --nav-safe-top: var(--safe-area-inset-top);
+        --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
+    }
+}
+
+/* PWA模式统一标识 */
+.is-pwa,
+.is-standalone {
+    --nav-safe-top: var(--safe-area-inset-top);
+    --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
+}
+
+/* ============================================
+   2. 全局元素重置
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--global-font-family);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    /* 防止移动端浏览器自动调整字体大小 */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* 输入框允许文本选择 */
+input, textarea, select, [contenteditable="true"] {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+    touch-callout: default !important;
+}
+
+/* ============================================
+   3. HTML和Body基础样式
+   ============================================ */
+
+html, body {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    min-height: -webkit-fill-available;
+    background-color: #ffffff;
+    color: #000000;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+html {
+    height: -webkit-fill-available;
+}
+
+body {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ============================================
+   4. 应用容器适配
+   ============================================ */
+
+#app-container {
+    width: 100vw;
+    width: 100%;
+    height: var(--app-height);
+    height: calc(var(--vh, 1vh) * 100);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    padding-top: var(--nav-total-height);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+}
+
+/* 页面缩放模式 */
+html.page-scaled {
+    transform: scale(var(--page-scale));
+    transform-origin: 0 0;
+    width: calc(100vw / var(--page-scale));
+    height: calc(100vh / var(--page-scale));
+    overflow: hidden;
+}
+
+/* ============================================
+   5. 导航栏适配
+   ============================================ */
+
+.chat-nav,
+.top-nav,
+[data-nav="true"] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: var(--nav-height);
+    padding-top: var(--nav-safe-top);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+    min-height: var(--nav-total-height);
+}
+
+/* PWA模式导航栏 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .chat-nav,
+    .top-nav,
+    [data-nav="true"] {
+        padding-top: env(safe-area-inset-top);
+        height: calc(var(--nav-height) + env(safe-area-inset-top));
+        min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+    }
+}
+
+/* iOS PWA模式 */
+.is-pwa.is-ios .chat-nav,
+.is-pwa.is-ios .top-nav,
+.is-pwa.is-ios [data-nav="true"] {
+    padding-top: env(safe-area-inset-top);
+    height: calc(var(--nav-height) + env(safe-area-inset-top));
+    min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+}
+
+/* ============================================
+   6. 底部输入框适配
+   ============================================ */
+
+.chat-input-area,
+.input-area,
+[data-input="true"] {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+}
+
+/* PWA模式底部输入框 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .chat-input-area,
+    .input-area,
+    [data-input="true"] {
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
+/* ============================================
+   7. 内容区域适配
+   ============================================ */
+
+.chat-content,
+.content-area,
+[data-content="true"] {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+}
+
+/* ============================================
+   8. 固定定位元素适配
+   ============================================ */
+
+/* 对话框、模态框等固定定位元素 */
+.modal, .dialog, .popup, [data-modal="true"] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    padding: var(--safe-area-inset-top) var(--safe-area-inset-right) var(--safe-area-inset-bottom) var(--safe-area-inset-left);
+}
+
+/* PWA模式模态框 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .modal, .dialog, .popup, [data-modal="true"] {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+}
+
+/* ============================================
+   9. 小屏手机优化 (≤375px)
+   ============================================ */
+
+@media (max-width: 375px) {
+    :root {
+        --nav-height: 44px;
+    }
+    
+    * {
+        font-size: 14px;
+    }
+    
+    .chat-nav, .top-nav {
+        height: var(--nav-height);
+    }
+    
+    /* 减少内边距 */
+    .chat-content, .content-area {
+        padding: 8px 12px;
+    }
+}
+
+/* ============================================
+   10. 中等手机优化 (375px - 414px)
+   ============================================ */
+
+@media (min-width: 376px) and (max-width: 414px) {
+    :root {
+        --nav-height: 45px;
+    }
+}
+
+/* ============================================
+   11. 大屏手机优化 (414px - 480px)
+   ============================================ */
+
+@media (min-width: 415px) and (max-width: 480px) {
+    :root {
+        --nav-height: 48px;
+    }
+}
+
+/* ============================================
+   12. 平板优化 (>480px)
+   ============================================ */
+
+@media (min-width: 481px) {
+    :root {
+        --nav-height: 50px;
+    }
+    
+    #app-container {
+        max-width: 100%;
+    }
+}
+
+/* ============================================
+   13. 横屏模式优化
+   ============================================ */
+
+@media (orientation: landscape) {
+    :root {
+        --nav-height: 40px;
+    }
+    
+    #app-container {
+        padding-top: calc(var(--nav-height) + var(--nav-safe-top));
+    }
+}
+
+/* ============================================
+   14. 竖屏模式优化
+   ============================================ */
+
+@media (orientation: portrait) {
+    :root {
+        --nav-height: 45px;
+    }
+}
+
+/* ============================================
+   15. 触摸设备优化
+   ============================================ */
+
+@media (hover: none) and (pointer: coarse) {
+    /* 增加可点击区域 */
+    button, a, [role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* 移除hover效果 */
+    button:hover, a:hover, [role="button"]:hover {
+        background-color: inherit;
+    }
+    
+    /* 添加active效果 */
+    button:active, a:active, [role="button"]:active {
+        opacity: 0.7;
+    }
+}
+
+/* ============================================
+   16. 高DPI屏幕优化
+   ============================================ */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* 边框优化 */
+    border {
+        border-width: 0.5px;
+    }
+}
+
+/* ============================================
+   17. 浏览器特定优化
+   ============================================ */
+
+/* iOS Safari */
+.is-ios {
+    /* 防止iOS Safari的一些问题 */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Android Chrome */
+.is-android {
+    /* Android特定优化 */
+}
+
+/* Edge浏览器 */
+.is-edge {
+    /* Edge特定优化 */
+}
+
+/* UC浏览器 */
+.is-uc {
+    /* UC浏览器特定优化 */
+}
+
+/* Vivo浏览器 */
+.is-vivo {
+    /* Vivo浏览器特定优化 */
+}
+
+/* ============================================
+   18. 显示模式特定优化
+   ============================================ */
+
+/* PWA模式 */
+.is-pwa, .is-standalone {
+    /* PWA模式下的优化 */
+}
+
+/* 全屏模式 */
+.is-fullscreen {
+    /* 全屏模式下的优化 */
+}
+
+/* ============================================
+   19. 防止常见问题
+   ============================================ */
+
+/* 防止双击缩放 */
+input, button, a {
+    touch-action: manipulation;
+}
+
+/* 防止输入框被键盘遮挡 */
+input:focus, textarea:focus {
+    scroll-margin-top: var(--nav-total-height);
+}
+
+/* 防止滚动穿透 */
+body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
+/* ============================================
+   20. 响应式字体大小
+   ============================================ */
+
+/* 小屏手机 */
+@media (max-width: 375px) {
+    body {
+        font-size: 14px;
+    }
+    
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 18px; }
+}
+
+/* 中等手机 */
+@media (min-width: 376px) and (max-width: 414px) {
+    body {
+        font-size: 15px;
+    }
+    
+    h1 { font-size: 26px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 19px; }
+}
+
+/* 大屏手机 */
+@media (min-width: 415px) and (max-width: 480px) {
+    body {
+        font-size: 16px;
+    }
+    
+    h1 { font-size: 28px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 20px; }
+}
+
+/* 平板 */
+@media (min-width: 481px) {
+    body {
+        font-size: 16px;
+    }
+    
+    h1 { font-size: 32px; }
+    h2 { font-size: 28px; }
+    h3 { font-size: 24px; }
+}
+
+/* ============================================
+   21. 刘海屏和异形屏适配
+   ============================================ */
+
+/* iPhone X及以上 */
+@supports (padding: max(0px)) {
+    body {
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+    }
+    
+    .chat-nav, .top-nav {
+        padding-top: max(0px, env(safe-area-inset-top));
+    }
+    
+    .chat-input-area, .input-area {
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+}
+
+/* ============================================
+   22. 键盘弹出时的适配
+   ============================================ */
+
+/* 当虚拟键盘弹出时 */
+@media (max-height: 500px) {
+    .chat-nav, .top-nav {
+        position: relative;
+    }
+    
+    .chat-input-area, .input-area {
+        position: relative;
+    }
+}
+
+/* ============================================
+   23. 打印样式
+   ============================================ */
+
+@media print {
+    .chat-nav, .top-nav, .chat-input-area, .input-area {
+        display: none;
+    }
+}
