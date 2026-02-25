@@ -1,17 +1,15 @@
 /**
- * 一起听模块 - 使用 Meting API
+ * 一起听模块 - 使用 GD音乐台API
  */
 (function() {
     'use strict';
     
-    // 多个API备选
+    // GD音乐台API（主要使用网易云源）
     let APIS = [
-        'https://api.injahow.cn/meting/',
-        'https://meting.qjqq.cn/',
-        'https://api.i-meto.com/meting/api'
+        'https://music-api.gdstudio.xyz/api.php'
     ];
     
-    // 【改进】从localStorage加载自定义API
+    // 【改进】从localStorage加载自定义API（保留备用功能）
     const savedAPIs = localStorage.getItem('listen-custom-apis');
     if (savedAPIs) {
         try {
@@ -47,6 +45,12 @@
     let currentLyrics = [];
     let currentView = 'search'; // search, favorites
     let cachedComments = JSON.parse(localStorage.getItem('listen-comments-cache') || '{}');
+    
+    // 【新增】音质选择 - 128, 320, 999(无损)
+    let musicQuality = localStorage.getItem('listen-music-quality') || '320';
+    
+    // 【新增】音乐源选择 - netease, kuwo, joox
+    let musicSource = localStorage.getItem('listen-music-source') || 'netease';
     
     // 默认占位图
     const PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCBmaWxsPSIjMzMzIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjUwIi8+PC9zdmc+';
@@ -240,29 +244,81 @@
         const container = document.getElementById('listen-songs');
         container.innerHTML = '<div class="listen-loading">搜索中...</div>';
         
-        // 【改进】尝试所有选中的API
+        // 【改进】使用GD音乐台API，带重试和超时
         const tryAPIs = selectedAPIIndices.map(idx => APIS[idx]);
+        const MAX_RETRIES = 3;
+        const TIMEOUT = 10000;  // 10秒超时
         
         for (const api of tryAPIs) {
-            try {
-                const url = `${api}?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
-                
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                console.log('搜索结果:', data);
-                
-                if (data && data.length) {
-                    songs = data;
-                    console.log('歌曲列表:', songs);
-                    renderSongs();
-                    return;
+            for (let retry = 1; retry <= MAX_RETRIES; retry++) {
+                try {
+                    console.log(`[搜索尝试] API: ${api.substring(0, 50)}... 重试: ${retry}/${MAX_RETRIES}`);
+                    
+                    // GD音乐台API格式：types=search&source=<source>&name=关键词
+                    const url = `${api}?types=search&source=${musicSource}&name=${encodeURIComponent(keyword)}&count=50`;
+                    
+                    // 【新增】添加超时控制
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+                    
+                    const res = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    // 【新增】检查HTTP状态
+                    if (!res.ok) {
+                        console.warn(`❌ HTTP ${res.status}，重试...`);
+                        continue;
+                    }
+                    
+                    const data = await res.json();
+                    
+                    console.log('✅ 搜索结果数量:', data ? data.length : 0);
+                    console.log('📊 第一条搜索结果完整数据:', data && data[0] ? JSON.stringify(data[0]) : '无数据');
+                    
+                    // 【改进】检查返回数据的有效性
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        songs = data.map((item, idx) => {
+                            console.log(`🎵 歌曲${idx + 1}:`, {
+                                id: item.id,
+                                pic_id: item.pic_id,
+                                lyric_id: item.lyric_id
+                            });
+                            return {
+                                id: item.id,
+                                name: item.name,
+                                title: item.name,
+                                artist: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
+                                author: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
+                                pic: item.pic_id ? `https://p2.music.126.net/${item.pic_id}?param=500y500` : (item.pic || null),
+                                pic_id: item.pic_id,
+                                cover: null,
+                                lrc: null,
+                                lyric_id: item.lyric_id,
+                                source: musicSource,
+                                url: null
+                            };
+                        });
+                        console.log('✅ 搜索成功，歌曲列表:', songs.length, '首歌曲');
+                        renderSongs();
+                        return;
+                    } else {
+                        console.warn('❌ API返回空数据，重试...');
+                        continue;
+                    }
+                    
+                } catch (e) {
+                    if (e.name === 'AbortError') {
+                        console.warn(`⏱️ 请求超时 (${TIMEOUT}ms)，重试...`);
+                    } else {
+                        console.warn(`❌ 错误: ${e.message}，重试...`);
+                    }
                 }
-            } catch (e) {
-                console.log('API失败，尝试下一个:', e);
             }
         }
-        container.innerHTML = '<div class="listen-empty">搜索失败，请重试</div>';
+        
+        // 所有API和重试都失败了
+        console.error('❌ 搜索完全失败');
+        container.innerHTML = '<div class="listen-empty">搜索失败，请检查网络或重试</div>';
     }
     
     function renderSongs() {
@@ -272,21 +328,35 @@
             container.innerHTML = '<div class="listen-empty">暂无歌曲</div>';
             return;
         }
+        console.log('📊 渲染歌曲数量:', validSongs.length);
         container.innerHTML = validSongs.map((s, i) => {
             let name = s.name || s.title || '未知';
             let artist = s.artist || s.author || '未知';
             if (Array.isArray(name)) name = name[0] || '未知';
             if (Array.isArray(artist)) artist = artist.join('/') || '未知';
-            const pic = s.pic || s.cover || PLACEHOLDER;
+            
+            // 使用GD返回的pic_id，通过后端代理获取图片
+            const pic = s.pic_id ? `http://localhost:3000/api/music/pic?pic_id=${s.pic_id}&size=300` : PLACEHOLDER;
+            console.log(`📍 歌曲${i}: ${name} - pic_id="${s.pic_id}" -> URL: ${pic}`);
+            
             return `
             <div class="listen-song-item${currentIdx === i ? ' active' : ''}" data-idx="${i}">
-                <img class="listen-song-cover" src="${pic}" onerror="this.src='${PLACEHOLDER}'">
+                <img class="listen-song-cover" src="${PLACEHOLDER}" data-src="${pic}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
                 <div class="listen-song-info">
                     <div class="listen-song-name">${name}</div>
                     <div class="listen-song-artist">${artist}</div>
                 </div>
             </div>`;
         }).join('');
+        
+        // 【优化】延迟加载图片 - 避免一次性加载所有图片导致卡顿
+        setTimeout(() => {
+            container.querySelectorAll('.listen-song-cover[data-src]').forEach((img, idx) => {
+                setTimeout(() => {
+                    img.src = img.dataset.src;
+                }, idx * 100);  // 每100ms加载一张，分散请求
+            });
+        }, 200);
         
         container.querySelectorAll('.listen-song-item').forEach(item => {
             item.onclick = () => {
@@ -314,72 +384,138 @@
         // 【改进】合并为一行显示：歌曲名-歌手名
         document.getElementById('listen-topbar-title').textContent = `${name} - ${artist}`;
         const cover = document.getElementById('listen-now-cover');
-        const pic = song.pic || song.cover || PLACEHOLDER;
+        
+        // GD音乐台API：使用pic_id + 后端代理获取图片
+        const pic = song.pic_id ? `http://localhost:3000/api/music/pic?pic_id=${song.pic_id}&size=500` : PLACEHOLDER;
+        
         cover.src = pic;
-        cover.onerror = () => cover.src = PLACEHOLDER;
+        cover.onerror = () => {
+            console.warn('⚠️ 图片加载失败');
+            cover.src = PLACEHOLDER;
+        };
         // 动态背景模糊
         document.getElementById('listen-together-modal').style.setProperty('--listen-bg', `url(${pic})`);
         
         renderSongs();
         loadLyric(song);
         
-        // 如果已有url直接播放
-        if (song.url) {
-            audio.src = song.url;
-            audio.play();
-            return;
-        }
+        // 获取播放URL - 使用GD音乐台API，带重试
+        const MAX_RETRIES = 3;
+        const TIMEOUT = 10000;
         
-        // 否则获取url
-        try {
-            const urlLink = song.url;
-            if (urlLink) {
-                const res = await fetch(urlLink);
+        for (let retry = 1; retry <= MAX_RETRIES; retry++) {
+            try {
+                console.log(`[获取URL] 重试: ${retry}/${MAX_RETRIES}`);
+                const api = APIS[selectedAPIIndices[0]] || APIS[0];
+                const urlPath = `${api}?types=url&source=${musicSource}&id=${song.id}&br=${musicQuality}`;
+                
+                // 【新增】超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+                
+                const res = await fetch(urlPath, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                // 【新增】检查HTTP状态
+                if (!res.ok) {
+                    console.warn(`❌ HTTP ${res.status}，重试...`);
+                    continue;
+                }
+                
                 const data = await res.json();
+                
                 if (data && data.url) {
+                    song.url = data.url;
                     audio.src = data.url;
                     audio.play();
+                    console.log('✅ 播放URL获取成功，音质:', data.br, 'kbps');
+                    return;
+                } else {
+                    console.warn('❌ 获取URL返回空数据，重试...');
+                    continue;
+                }
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    console.warn(`⏱️ 请求超时，重试...`);
+                } else {
+                    console.warn(`❌ 错误: ${e.message}，重试...`);
                 }
             }
-        } catch (e) {
-            console.error('播放失败:', e);
         }
+        
+        console.error('❌ 获取播放URL失败，已重试 ${MAX_RETRIES} 次');
     }
     
     async function loadLyric(song) {
         const lyricEl = document.getElementById('listen-lyric');
         currentLyrics = [];
-        if (!song || (!song.id && !song.lrc)) {
+        if (!song || (!song.id && !song.lyric_id)) {
             lyricEl.innerHTML = '<div style="opacity:0.5;">暂无歌词</div>';
             return;
         }
         lyricEl.innerHTML = '<div style="opacity:0.5;">加载中...</div>';
-        try {
-            const lrcUrl = song.lrc;
-            if (lrcUrl) {
-                const res = await fetch(lrcUrl);
-                const text = await res.text();
-                if (text) {
-                    currentLyrics = text.split('\n')
-                        .map(l => {
-                            const match = l.match(/\[(\d+):(\d+)\.?(\d*)\](.*)/);
-                            if (match) {
-                                const time = parseInt(match[1]) * 60 + parseInt(match[2]) + (match[3] ? parseInt(match[3]) / 1000 : 0);
-                                return { time, text: match[4].trim() };
-                            }
-                            return null;
-                        })
-                        .filter(l => l && l.text && !l.text.startsWith('by:') && !l.text.startsWith('ti:') && !l.text.startsWith('ar:'));
-                    renderLyrics();
-                } else {
-                    lyricEl.innerHTML = '<div style="opacity:0.5;">暂无歌词</div>';
+        
+        const MAX_RETRIES = 2;
+        const TIMEOUT = 5000;
+        
+        for (let retry = 1; retry <= MAX_RETRIES; retry++) {
+            try {
+                // GD音乐台API：types=lyric&source=<source>&id=歌词ID
+                const api = APIS[selectedAPIIndices[0]] || APIS[0];
+                const lyricId = song.lyric_id || song.id;
+                const lrcUrl = `${api}?types=lyric&source=${musicSource}&id=${lyricId}`;
+                
+                // 【新增】超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+                
+                const res = await fetch(lrcUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                // 【新增】检查HTTP状态
+                if (!res.ok) {
+                    console.warn(`❌ HTTP ${res.status}，重试...`);
+                    continue;
                 }
-            } else {
-                lyricEl.innerHTML = '<div style="opacity:0.5;">暂无歌词</div>';
+                
+                const data = await res.json();
+                
+                if (data && data.lyric) {
+                    const text = data.lyric;
+                    if (text) {
+                        currentLyrics = text.split('\n')
+                            .map(l => {
+                                const match = l.match(/\[(\d+):(\d+)\.?(\d*)\](.*)/);
+                                if (match) {
+                                    const time = parseInt(match[1]) * 60 + parseInt(match[2]) + (match[3] ? parseInt(match[3]) / 1000 : 0);
+                                    return { time, text: match[4].trim() };
+                                }
+                                return null;
+                            })
+                            .filter(l => l && l.text && !l.text.startsWith('by:') && !l.text.startsWith('ti:') && !l.text.startsWith('ar:'));
+                        renderLyrics();
+                        console.log('✅ 歌词加载成功，共', currentLyrics.length, '行');
+                        return;
+                    } else {
+                        console.warn('❌ 歌词内容为空');
+                        lyricEl.innerHTML = '<div style="opacity:0.5;">暂无歌词</div>';
+                        return;
+                    }
+                } else {
+                    console.warn(`❌ 歌词API返回无效数据，重试...`);
+                    continue;
+                }
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    console.warn(`⏱️ 歌词加载超时，重试...`);
+                } else {
+                    console.warn(`❌ 歌词加载错误: ${e.message}，重试...`);
+                }
             }
-        } catch (e) {
-            lyricEl.innerHTML = '<div style="opacity:0.5;">暂无歌词</div>';
         }
+        
+        console.error('❌ 歌词加载失败');
+        lyricEl.innerHTML = '<div style="opacity:0.5;">暂无歌词</div>';
     }
     
     function renderLyrics() {
@@ -526,21 +662,35 @@
             container.innerHTML = '<div class="listen-empty">暂无收藏</div>';
             return;
         }
+        console.log('💝 渲染收藏歌曲数量:', validFavs.length);
         container.innerHTML = validFavs.map((s, i) => {
             let name = s.name || s.title || '未知';
             let artist = s.artist || s.author || '未知';
             if (Array.isArray(name)) name = name[0] || '未知';
             if (Array.isArray(artist)) artist = artist.join('/') || '未知';
-            const pic = s.pic || s.cover || PLACEHOLDER;
+            
+            // 使用GD返回的pic_id，通过后端代理获取图片
+            const pic = s.pic_id ? `http://localhost:3000/api/music/pic?pic_id=${s.pic_id}&size=300` : PLACEHOLDER;
+            
             return `
             <div class="listen-song-item" data-fav-idx="${i}">
-                <img class="listen-song-cover" src="${pic}" onerror="this.src='${PLACEHOLDER}'">
+                <img class="listen-song-cover" src="${PLACEHOLDER}" data-src="${pic}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
                 <div class="listen-song-info">
                     <div class="listen-song-name">${name}</div>
                     <div class="listen-song-artist">${artist}</div>
                 </div>
             </div>`;
         }).join('');
+        
+        // 【优化】延迟加载图片 - 避免一次性加载所有图片导致卡顿
+        setTimeout(() => {
+            container.querySelectorAll('.listen-song-cover[data-src]').forEach((img, idx) => {
+                setTimeout(() => {
+                    img.src = img.dataset.src;
+                }, idx * 100);  // 每100ms加载一张，分散请求
+            });
+        }, 200);
+        
         container.querySelectorAll('.listen-song-item').forEach(item => {
             item.onclick = () => {
                 songs = favorites.filter(f => f);
@@ -1534,6 +1684,94 @@ ${recentChat.substring(0, 1500)}
             font-weight: 600;
             transition: all 0.2s;
         `;
+        
+        // 【新增】音质选择
+        const qualityLabel = document.createElement('div');
+        qualityLabel.style.cssText = `
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 8px;
+        `;
+        qualityLabel.textContent = '🎵 音质选择';
+        
+        const qualityContainer = document.createElement('div');
+        qualityContainer.style.cssText = `
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        `;
+        
+        const qualities = ['128', '320', '999'];
+        const qualityLabels = { '128': '128kbps', '320': '320kbps (推荐)', '999': '无损' };
+        qualities.forEach(q => {
+            const btn = document.createElement('button');
+            btn.textContent = qualityLabels[q];
+            btn.style.cssText = `
+                flex: 1;
+                padding: 10px;
+                border: 2px solid ${musicQuality === q ? '#ff3333' : '#ddd'};
+                background: ${musicQuality === q ? '#ffe0e0' : '#f9f9f9'};
+                color: ${musicQuality === q ? '#ff3333' : '#333'};
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: ${musicQuality === q ? '600' : '500'};
+                transition: all 0.2s;
+            `;
+            btn.addEventListener('click', () => {
+                musicQuality = q;
+                localStorage.setItem('listen-music-quality', q);
+                showAPISelectDialog(); // 刷新对话框显示选中状态
+            });
+            qualityContainer.appendChild(btn);
+        });
+        
+        // 【新增】音乐源选择
+        const sourceLabel = document.createElement('div');
+        sourceLabel.style.cssText = `
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        `;
+        sourceLabel.textContent = '🎸 音乐源选择';
+        
+        const sourceContainer = document.createElement('div');
+        sourceContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        `;
+        
+        // GD API真实支持的音乐源：netease, kuwo, joox
+        const sources = ['netease', 'kuwo', 'joox'];
+        const sourceNames = { 'netease': '🎵 网易云', 'kuwo': '🎶 酷我', 'joox': '🎼 Joox' };
+        sources.forEach(src => {
+            const btn = document.createElement('button');
+            btn.textContent = sourceNames[src];
+            btn.style.cssText = `
+                width: 100%;
+                padding: 10px;
+                border: 2px solid ${musicSource === src ? '#ff3333' : '#ddd'};
+                background: ${musicSource === src ? '#ffe0e0' : '#f9f9f9'};
+                color: ${musicSource === src ? '#ff3333' : '#333'};
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: ${musicSource === src ? '600' : '500'};
+                transition: all 0.2s;
+                text-align: left;
+            `;
+            btn.addEventListener('click', () => {
+                musicSource = src;
+                localStorage.setItem('listen-music-source', src);
+                showAPISelectDialog(); // 刷新对话框显示选中状态
+            });
+            sourceContainer.appendChild(btn);
+        });
         closeBtn.addEventListener('click', () => {
             dialogOverlay.remove();
         });
@@ -1547,6 +1785,10 @@ ${recentChat.substring(0, 1500)}
         dialog.appendChild(title);
         dialog.appendChild(subtitle);
         dialog.appendChild(apiList);
+        dialog.appendChild(qualityLabel);
+        dialog.appendChild(qualityContainer);
+        dialog.appendChild(sourceLabel);
+        dialog.appendChild(sourceContainer);
         dialog.appendChild(closeBtn);
         dialogOverlay.appendChild(dialog);
         document.body.appendChild(dialogOverlay);
@@ -1838,7 +2080,7 @@ ${recentChat.substring(0, 1500)}
             }
             
             try {
-                // 执行搜索
+                // 执行搜索 - 使用GD音乐台API
                 const keyword = songQuery.trim();
                 let searchResults = [];
                 
@@ -1847,13 +2089,22 @@ ${recentChat.substring(0, 1500)}
                 
                 for (const api of tryAPIs) {
                     try {
-                        const url = `${api}?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
+                        const url = `${api}?types=search&source=netease&name=${encodeURIComponent(keyword)}&count=10`;
                         
                         const res = await fetch(url);
                         const data = await res.json();
                         
-                        if (data && data.length) {
-                            searchResults = data;
+                        if (data && Array.isArray(data) && data.length) {
+                            searchResults = data.map(item => ({
+                                id: item.id,
+                                name: item.name,
+                                title: item.name,
+                                artist: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
+                                author: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
+                                pic_id: item.pic_id,
+                                lyric_id: item.lyric_id,
+                                source: 'netease'
+                            }));
                             break;
                         }
                     } catch (e) {
