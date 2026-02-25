@@ -240,7 +240,6 @@
                                 <div class="fiction-menu-title">我的内容</div>
                                 <div class="fiction-menu-list">
                                     <div class="fiction-menu-item" id="fiction-menu-reading">
-                                        <div class="fiction-menu-icon">⊞</div>
                                         <div class="fiction-menu-text">
                                             <div class="fiction-menu-main">正在阅读</div>
                                             <div class="fiction-menu-sub">查看阅读历史</div>
@@ -248,7 +247,6 @@
                                         <div class="fiction-menu-arrow">›</div>
                                     </div>
                                     <div class="fiction-menu-item" id="fiction-menu-bookmarks">
-                                        <div class="fiction-menu-icon">◢</div>
                                         <div class="fiction-menu-text">
                                             <div class="fiction-menu-main">书签与笔记</div>
                                             <div class="fiction-menu-sub">保存的标记和批注</div>
@@ -256,7 +254,6 @@
                                         <div class="fiction-menu-arrow">›</div>
                                     </div>
                                     <div class="fiction-menu-item" id="fiction-menu-comments">
-                                        <div class="fiction-menu-icon">✎</div>
                                         <div class="fiction-menu-text">
                                             <div class="fiction-menu-main">我的评论</div>
                                             <div class="fiction-menu-sub">查看发布的评论</div>
@@ -271,7 +268,6 @@
                                 <div class="fiction-menu-title">设置与帮助</div>
                                 <div class="fiction-menu-list">
                                     <div class="fiction-menu-item" id="fiction-menu-settings">
-                                        <div class="fiction-menu-icon">⚒</div>
                                         <div class="fiction-menu-text">
                                             <div class="fiction-menu-main">阅读设置</div>
                                             <div class="fiction-menu-sub">字体、背景、亮度等</div>
@@ -279,7 +275,6 @@
                                         <div class="fiction-menu-arrow">›</div>
                                     </div>
                                     <div class="fiction-menu-item" id="fiction-menu-download">
-                                        <div class="fiction-menu-icon">⬇</div>
                                         <div class="fiction-menu-text">
                                             <div class="fiction-menu-main">离线下载</div>
                                             <div class="fiction-menu-sub">管理已下载的小说</div>
@@ -287,7 +282,6 @@
                                         <div class="fiction-menu-arrow">›</div>
                                     </div>
                                     <div class="fiction-menu-item" id="fiction-menu-about">
-                                        <div class="fiction-menu-icon">ⓘ</div>
                                         <div class="fiction-menu-text">
                                             <div class="fiction-menu-main">关于我们</div>
                                             <div class="fiction-menu-sub">版本信息与反馈</div>
@@ -1022,9 +1016,17 @@
 【参考全网最火题材】
 ${trends}
 
-【角色设定】
-男主：${charName} - ${charDescription || '暂无详细设定'}
-女主：${userName} - ${userDescription || '暂无详细设定'}
+【角色设定（仅供背景参考，禁止直接照搬设定原文）】
+男主角色名：${charName}
+男主背景参考：${charDescription || '暂无详细设定'}
+女主角色名：${userName}
+女主背景参考：${userDescription || '暂无详细设定'}
+
+【重要规则】
+- 男主名字必须是"${charName}"，女主名字必须是"${userName}"，全文必须使用这两个名字
+- 角色设定仅作为人物背景灵感参考，禁止在小说正文或简介中直接复制粘贴设定原文
+- 要有同人文的感觉：基于角色进行二次创作，赋予角色新的故事和命运，发挥创意和脑洞
+- 剧情节奏要像真实网络小说一样，不要太快，注重铺垫和细节描写
 
 【任务】
 根据全网最火的热门小说题材和特点，不限制题材类型，为书库生成9部网络小说。可以是言情、悬疑、科幻、奇幻、穿越等任何题材的混合。
@@ -1036,9 +1038,9 @@ ${trends}
 
 【要求】
 - 必须生成恰好9部小说
-- 必须包含${charName}和${userName}这两个角色
+- 男主必须叫${charName}，女主必须叫${userName}，不可使用其他名字
 - 题材多元化（不全是同一类型），模仿当前全网最火的小说特点
-- 全部原创内容
+- 全部原创内容，体现同人文二次创作的创意和脑洞
 - 简介要高度吸引人，体现爆款小说的特征：
   1. 开头要有冲击力，能激发好奇心
   2. 核心冲突清晰，让人想继续读下去
@@ -1146,9 +1148,17 @@ ${trends}
 (1) 目标读者分析：了解和分析目标读者的喜好和需求，写出符合市场趋势的内容。
 (2) 潮流把握：紧跟言情小说的流行趋势，适时调整写作风格和主题。根据以下信息，为"${category}"分类生成9部网络小说。
 
-【角色设定】
-男主：${charName} - ${charDescription || '暂无详细设定'}
-女主：${userName} - ${userDescription || '暂无详细设定'}
+【角色设定（仅供背景参考，禁止直接照搬设定原文）】
+男主角色名：${charName}
+男主设定参考：${charDescription || '暂无详细设定'}
+女主角色名：${userName}
+女主设定参考：${userDescription || '暂无详细设定'}
+
+【重要规则】
+- 男主名字必须是"${charName}"，女主名字必须是"${userName}"
+- 角色设定仅作为人物背景灵感参考，禁止在小说正文或简介中直接使用一模一样的设定原文
+- 要有同人文的感觉：基于角色进行二次创作，赋予角色新的故事和命运，发挥创意和脑洞
+- 剧情节奏要像真实网络小说一样，不要太快，注重铺垫和细节描写
 
 【分类】${category}（标签：${getCategoryTags(category).join('、')}）
 
@@ -1159,8 +1169,8 @@ ${trends}
 - intro：简介（200-500个汉字）
 
 【要求】
-- 必须包含${charName}和${userName}这两个角色
-- 风格符合${category}的特点
+- 男主必须叫${charName}，女主必须叫${userName}，不可使用其他名字
+- 风格符合${category}的特点，同时体现同人文二次创作的创意和脑洞
 - 全部原创内容，不使用预设文字
 - 简介要吸引人，体现故事核心冲突，确保小说有一个完整的三幕式结构，故事要刺激、反复拉扯、最后有决定。简介不是把开头掐头去尾一放，那是自嗨，读者会直接划走。
 简介本质是：给你的故事打广告。
@@ -1364,6 +1374,11 @@ ${trends}
      * 显示书籍详情页
      */
     function showBookDetail(categoryIndex, bookId) {
+        // 记录来源页面（如果当前不在详情页，则记录当前页面作为返回目标）
+        if (fictionState.currentPage !== 'detail') {
+            fictionState.previousPage = fictionState.currentPage || 'category';
+        }
+        
         // 尝试从 fictionState.books 获取数据
         let book = fictionState.books[categoryIndex] && fictionState.books[categoryIndex][bookId];
         
@@ -1409,7 +1424,9 @@ ${trends}
         backBtn.id = 'fiction-back-btn';
         backBtn.textContent = '<';
         backBtn.addEventListener('click', function() {
-            switchFictionPage('category');
+            // 返回到之前的页面
+            const returnPage = fictionState.previousPage || 'category';
+            switchFictionPage(returnPage);
         });
         
         const titleDiv = document.createElement('div');
@@ -1664,53 +1681,27 @@ ${trends}
         
         // 创建书架容器
         const shelfContainer = document.createElement('div');
-        shelfContainer.style.cssText = 'padding: 16px; overflow-y: auto; height: 100%;';
+        shelfContainer.className = 'fiction-bookshelf-container';
         
         const shelfTitle = document.createElement('div');
-        shelfTitle.style.cssText = 'font-size: 16px; font-weight: 600; color: #333; margin-bottom: 16px; padding-left: 4px; border-left: 3px solid #FF4A7E;';
+        shelfTitle.className = 'fiction-bookshelf-title';
         shelfTitle.textContent = `我的书架 (${fictionState.bookshelf.length})`;
         shelfContainer.appendChild(shelfTitle);
         
         // 创建书架网格
         const shelfGrid = document.createElement('div');
-        shelfGrid.style.cssText = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;';
+        shelfGrid.className = 'fiction-bookshelf-grid';
         
         fictionState.bookshelf.forEach((book, idx) => {
             const card = document.createElement('div');
-            card.style.cssText = `
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 6px;
-                cursor: pointer;
-                max-width: 110px;
-                margin: 0 auto;
-                width: 100%;
-            `;
+            card.className = 'fiction-bookshelf-card';
             
             const cover = document.createElement('div');
-            cover.style.cssText = `
-                width: 100%;
-                aspect-ratio: 75/100;
-                background: #EDEEF2;
-                border-radius: 10px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-                background-image: url('${book.cover}');
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-            `;
+            cover.className = 'fiction-bookshelf-cover';
+            cover.style.backgroundImage = `url('${book.cover}')`;
             
             const title = document.createElement('div');
-            title.style.cssText = `
-                font-size: 12px;
-                color: #333;
-                width: 100%;
-                text-align: center;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            `;
+            title.className = 'fiction-bookshelf-card-title';
             title.textContent = book.title;
             
             card.appendChild(cover);
@@ -1941,11 +1932,22 @@ ${summariesText}
                 storyContext = `【故事简介】
 ${book.intro}
 
-你是一位畅销小说作家，已经出版过30本畅销小说，内容涵盖职场、校园、仙侠、穿越等多类题材，深受读者喜爱。请根据以上简介，充分发挥创意，从头开始写这部小说。故事要吸引人，情节要丰富，必须包含${charName}和${userName}两个主人公。
+你是一位畅销小说作家，已经出版过30本畅销小说，内容涵盖职场、校园、仙侠、穿越等多类题材，深受读者喜爱。请根据以上简介，充分发挥创意，从头开始写这部小说。
+
+【同人文创作核心规则】
+- 男主名字必须是"${charName}"，女主名字必须是"${userName}"，全文必须使用这两个名字
+- 角色设定仅作为人物背景灵感参考，禁止在正文中直接复制粘贴设定原文，要用自己的笔触重新演绎
+- 这是同人文二次创作，要发挥创意和脑洞，赋予角色全新的故事和命运
+- 剧情节奏要像真实网络小说一样，不要太快，注重铺垫、伏笔和细节描写
+- 每个场景要有充分的环境描写、心理描写、动作细节，不要流水账式推进
+- 对话要自然真实，符合人物性格，不要生硬说教
+
 1. 创意写作技巧
-(1) 情节构建：能够设计引人入胜的情节，保持读者的兴趣。
+(1) 情节构建：能够设计引人入胜的情节，保持读者的兴趣。节奏要慢热，像真正的网络小说一样层层递进。
 (2) 人物塑造：创造复杂、有深度的人物，尤其是男女主角的性格和成长过程。深挖人物过去的经历，原生家庭，以便形成立体的人物形象，解释人物在小说中的行为与性格。
 (3) 对话技巧：写出自然、真实的对话，增强人物的真实性和情感的表达。
+(4) 细节描写：注重场景氛围、五感描写（视觉、听觉、嗅觉、触觉、味觉）、微表情、小动作等细节，让读者有身临其境的感觉。
+(5) 节奏把控：不要一章内塞太多剧情，每章聚焦1-2个核心事件，给足铺垫和情感发酵的空间。
 2. 情感表达能力
 (1) 细腻情感描写：能够通过文字细腻地描写人物的情感变化，打动读者的心。
 (2) 共情能力：具备强烈的共情能力，理解并表达出读者可能经历的情感和体验。
@@ -2054,13 +2056,18 @@ ${allChaptersText}
 作者：${book.author}
 当前章节数：${totalChapters}
 
-【角色设定】
+【角色设定（仅供背景参考，禁止直接照搬设定原文）】
 女主角色名：${charName}
-女主角色设定：${charDescription || '暂无详细设定'}
+女主背景参考：${charDescription || '暂无详细设定'}
 男主角色名：${userName}
-男主角色设定：${userDescription || '暂无详细设定'}
+男主背景参考：${userDescription || '暂无详细设定'}
 
 ${storyContext}
+
+【同人文创作核心规则】
+- 男主名字必须是"${userName}"，女主名字必须是"${charName}"，全文必须使用这两个名字
+- 角色设定仅作为人物背景灵感参考，禁止在正文中直接复制粘贴设定原文，要用自己的笔触重新演绎
+- 这是同人文二次创作，要发挥创意和脑洞，赋予角色全新的故事和命运
 
 【要求】
 1. 每章1800-2300字
@@ -2070,12 +2077,14 @@ ${storyContext}
 (1) 情节构建：能够设计引人入胜的情节，保持读者的兴趣。
 (2) 人物塑造：创造复杂、有深度的人物，尤其是男女主角的性格和成长过程。深挖人物过去的经历，原生家庭，以便形成立体的人物形象，解释人物在小说中的行为与性格。
 (3) 对话技巧：写出自然、真实的对话，增强人物的真实性和情感的表达。
+(4) 细节描写：注重场景氛围、五感描写（视觉、听觉、嗅觉、触觉、味觉）、微表情、小动作等细节，让读者有身临其境的感觉。
+(5) 节奏把控：剧情节奏不要太快，像真实网络小说一样慢热推进，每章聚焦1-2个核心事件，给足铺垫和情感发酵的空间，不要流水账式推进。
 5. 放飞创意，不要限制想象力
 6. 内容要原创生成，不使用任何预设文字或框架
-7.情感表达能力：
+7. 情感表达能力：
 (1) 细腻情感描写：能够通过文字细腻地描写人物的情感变化，打动读者的心。
 (2) 共情能力：具备强烈的共情能力，理解并表达出读者可能经历的情感和体验。
-8.市场洞察力
+8. 市场洞察力
 (1) 目标读者分析：了解和分析目标读者的喜好和需求，写出符合市场趋势的内容。
 (2) 潮流把握：紧跟言情小说的流行趋势，适时调整写作风格和主题。
 
@@ -2174,17 +2183,22 @@ ${storyContext}
 作者：${book.author}
 当前章节数：${totalChapters}
 
-【角色设定】
+【角色设定（仅供背景参考，禁止直接照搬设定原文）】
 女主角色名：${charName}
-女主角色设定：${charDescription || '暂无详细设定'}
+女主背景参考：${charDescription || '暂无详细设定'}
 男主角色名：${userName}
-男主角色设定：${userDescription || '暂无详细设定'}
+男主背景参考：${userDescription || '暂无详细设定'}
 
 ${contextText}
 
 【当前章节】
 第${chapterIdx + 1}章 《${chapter.title}》
 ${chapter.content}
+
+【同人文创作核心规则】
+- 男主名字必须是"${userName}"，女主名字必须是"${charName}"，全文必须使用这两个名字
+- 角色设定仅作为人物背景灵感参考，禁止在正文中直接复制粘贴设定原文，要用自己的笔触重新演绎
+- 这是同人文二次创作，要发挥创意和脑洞，赋予角色全新的故事和命运
 
 【要求】
 1. 重新创作这一章，保持与前后章节的连贯性
@@ -2194,6 +2208,8 @@ ${chapter.content}
 (1) 情节构建：能够设计引人入胜的情节，保持读者的兴趣。
 (2) 人物塑造：创造复杂、有深度的人物，尤其是男女主角的性格和成长过程。
 (3) 对话技巧：写出自然、真实的对话，增强人物的真实性和情感的表达。
+(4) 细节描写：注重场景氛围、五感描写、微表情、小动作等细节，让读者有身临其境的感觉。
+(5) 节奏把控：剧情节奏不要太快，像真实网络小说一样慢热推进，注重铺垫和细节描写。
 5. 放飞创意，不要限制想象力
 6. 内容要原创生成，不使用任何预设文字或框架
 7. 情感表达能力：细腻地描写人物的情感变化，打动读者的心${interventionText}

@@ -86,6 +86,8 @@ const fictionReaderManager = {
 
     /**
      * 初始化阅读器
+     * @param {Object} book - 书籍对象
+     * @param {number} chapterIndex - 要打开的章节索引，如果传入则直接打开该章节，忽略阅读历史
      */
     init(book, chapterIndex = 0) {
         this.state.currentBook = book;
@@ -94,6 +96,7 @@ const fictionReaderManager = {
             title: book?.title,
             author: book?.author,
             chaptersCount: book?.chapters?.length,
+            requestedChapter: chapterIndex,
             deviceWidth: window.innerWidth,
             deviceHeight: window.innerHeight
         });
@@ -106,22 +109,10 @@ const fictionReaderManager = {
         
         this.loadReadingProgress();
         
-        // 检查是否有上次的阅读进度
-        const bookId = `${book.title}_${book.author}`;
-        console.log('检查阅读进度 bookId:', bookId);
-        console.log('保存的进度数据:', this.state.readingProgress);
-        
-        if (this.state.readingProgress[bookId]) {
-            const progress = this.state.readingProgress[bookId];
-            this.state.currentChapterIndex = progress.chapterIndex;
-            this.state.currentPageIndex = progress.pageIndex;
-            console.log(`恢复上次阅读进度: 第${progress.chapterIndex + 1}章第${progress.pageIndex + 1}页`);
-        } else {
-            // 没有进度就使用传入的章节索引
-            this.state.currentChapterIndex = chapterIndex;
-            this.state.currentPageIndex = 0;
-            console.log(`新书阅读，从第${chapterIndex + 1}章开始`);
-        }
+        // 直接使用传入的章节索引（用户选择的章节优先）
+        this.state.currentChapterIndex = chapterIndex;
+        this.state.currentPageIndex = 0;
+        console.log(`打开第${chapterIndex + 1}章`);
         
         // 创建阅读器HTML
         this.createReaderHTML();
@@ -323,7 +314,7 @@ const fictionReaderManager = {
     },
 
     /**
-     * 分页章节（关键算法：计算每页显示多少内容）
+     * 分页章节（关键算法：基于行数计算）
      */
     paginateChapter(chapterIndex) {
         const chapter = this.state.currentBook.chapters[chapterIndex];
@@ -342,146 +333,145 @@ const fictionReaderManager = {
         const mainArea = document.getElementById('fictionReaderMain');
         if (!mainArea) return;
 
-        // 强制重排以获取精确尺寸
-        mainArea.style.visibility = 'visible';
-        const viewportWidth = mainArea.offsetWidth || mainArea.clientWidth;
-        const viewportHeight = mainArea.offsetHeight || mainArea.clientHeight;
+        // 等待DOM渲染完成后再计算
+        const computedStyle = window.getComputedStyle(mainArea);
+        const viewportHeight = mainArea.clientHeight;
+        const viewportWidth = mainArea.clientWidth;
+        
+        // 获取当前设置
+        const fontSize = this.state.settings.fontSize || 16;
+        const lineHeight = parseFloat(this.state.settings.lineHeight) || 1.8;
+        const paragraphSpacing = this.state.settings.paragraphSpacing || 16;
+        
+        // 计算页面padding（根据屏幕宽度）
+        let paddingY, paddingX;
+        if (viewportWidth <= 480) {
+            paddingY = 16;
+            paddingX = 12;
+        } else if (viewportWidth <= 768) {
+            paddingY = 20;
+            paddingX = 14;
+        } else {
+            paddingY = 28;
+            paddingX = 20;
+        }
+        
+        // 计算每行高度和每页可容纳的行数
+        const lineHeightPx = fontSize * lineHeight;
+        const availableHeight = viewportHeight - (paddingY * 2);
+        const availableWidth = viewportWidth - (paddingX * 2);
+        
+        // 标题占用的行数（大约3-4行高度）
+        const titleLines = 4;
+        const titleHeight = titleLines * lineHeightPx;
+        
+        // 每页可以放多少行文字
+        const linesPerPage = Math.floor(availableHeight / lineHeightPx);
+        const linesPerPageWithTitle = Math.floor((availableHeight - titleHeight) / lineHeightPx);
+        
+        console.log('📐 分页参数:', {
+            viewportHeight,
+            availableHeight,
+            fontSize,
+            lineHeightPx,
+            linesPerPage,
+            linesPerPageWithTitle
+        });
 
-        // 计算实际可用高度（减去padding）
-        const paddingTop = parseInt(window.getComputedStyle(mainArea).paddingTop) || 0;
-        const paddingBottom = parseInt(window.getComputedStyle(mainArea).paddingBottom) || 0;
-        const effectiveHeight = viewportHeight - paddingTop - paddingBottom - 20;
-
-        // 创建临时测量容器，精确匹配阅读页面
-        const tempDiv = document.createElement('div');
-        const pagePadding = this.state.settings.fontSize > 16 ? 25 : 20;
-        tempDiv.style.cssText = `
-            position: fixed;
-            left: -10000px;
-            top: -10000px;
-            width: ${viewportWidth - 40}px;
-            padding: ${pagePadding}px 20px;
-            font-size: ${this.state.settings.fontSize}px;
-            line-height: ${this.state.settings.lineHeight};
-            color: ${this.state.settings.textColor};
-            word-break: break-word;
-            white-space: normal;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            box-sizing: border-box;
-            visibility: hidden;
-        `;
-        document.body.appendChild(tempDiv);
-
-        // 解析章节内容，处理各种换行符
+        // 解析章节内容
         const rawContent = chapter.content.trim();
-        const paragraphs = rawContent
-            .split(/\n\s*\n+/)
+        let paragraphs = rawContent
+            .split(/\n+/)
             .map(p => p.trim())
-            .filter(p => p.length > 0 && p !== '\n');
+            .filter(p => p.length > 0);
 
         if (paragraphs.length === 0) {
-            console.warn('⚠️ 章节内容为空');
-            paragraphs.push(chapter.content);
+            paragraphs = [chapter.content || '暂无内容'];
+        }
+
+        // 计算每个段落占用的行数
+        const charsPerLine = Math.floor(availableWidth / fontSize);
+        
+        function estimateParagraphLines(text) {
+            // 估算段落行数：字符数/每行字符数，向上取整，再加段落间距
+            const lines = Math.ceil(text.length / charsPerLine);
+            return Math.max(lines, 1);
         }
 
         // 创建分页
         const pages = [];
-        let currentPageContent = [];
-        let currentPageHeight = 0;
-
-        // 计算标题高度
-        tempDiv.innerHTML = `<div style="font-size: ${this.state.settings.fontSize * 1.5}px; font-weight: bold; margin-bottom: 30px; text-align: center; padding: 10px 0; border-bottom: 2px solid #e0e0e0;">${chapter.title}</div>`;
-        const titleHeight = tempDiv.scrollHeight;
-        currentPageHeight = titleHeight + 20; // 加上下边距
-
-        // 逐段落分页
+        let currentPageParagraphs = [];
+        let currentLines = 0;
+        let isFirstPage = true;
+        
         for (let i = 0; i < paragraphs.length; i++) {
             const paragraph = paragraphs[i];
+            const paraLines = estimateParagraphLines(paragraph);
+            // 段落间距算作额外行数
+            const paraLinesWithSpacing = paraLines + Math.ceil(paragraphSpacing / lineHeightPx);
             
-            // 构建段落HTML
-            const paragraphHTML = `<p style="margin: 0 0 ${this.state.settings.paragraphSpacing}px 0; word-break: break-word; text-align: justify; hyphens: auto;">${paragraph}</p>`;
-
-            // 计算加入此段落后的高度
-            let testHTML = '';
-            if (pages.length === 0 && currentPageContent.length === 0) {
-                // 第一页，包含标题
-                testHTML = `<div style="font-size: ${this.state.settings.fontSize * 1.5}px; font-weight: bold; margin-bottom: 30px; text-align: center; padding: 10px 0; border-bottom: 2px solid #e0e0e0;">${chapter.title}</div>`;
-            } else {
-                // 重建已有段落
-                currentPageContent.forEach(para => {
-                    testHTML += `<p style="margin: 0 0 ${this.state.settings.paragraphSpacing}px 0; word-break: break-word; text-align: justify; hyphens: auto;">${para}</p>`;
-                });
-            }
-            testHTML += paragraphHTML;
-
-            tempDiv.innerHTML = testHTML;
-            const newHeight = tempDiv.scrollHeight;
-
-            // 判断是否需要换页（保留10%的缓冲区）
-            const heightThreshold = effectiveHeight * 0.92;
-
-            if (newHeight > heightThreshold && currentPageContent.length > 0) {
+            // 当前页可用行数
+            const maxLines = isFirstPage && pages.length === 0 ? linesPerPageWithTitle : linesPerPage;
+            
+            // 判断是否需要换页
+            if (currentLines + paraLinesWithSpacing > maxLines && currentPageParagraphs.length > 0) {
                 // 保存当前页
                 pages.push({
-                    paragraphs: [...currentPageContent],
-                    showTitle: pages.length === 0,
-                    height: currentPageHeight
+                    paragraphs: [...currentPageParagraphs],
+                    showTitle: isFirstPage && pages.length === 0
                 });
-
-                console.log(`第${pages.length}页完成，高度: ${currentPageHeight}px`);
-
+                
                 // 开始新页
-                currentPageContent = [paragraph];
-                currentPageHeight = 50 + this.state.settings.paragraphSpacing;
+                currentPageParagraphs = [paragraph];
+                currentLines = paraLinesWithSpacing;
+                isFirstPage = false;
             } else {
                 // 添加到当前页
-                currentPageContent.push(paragraph);
-                currentPageHeight = newHeight;
+                currentPageParagraphs.push(paragraph);
+                currentLines += paraLinesWithSpacing;
             }
         }
 
         // 保存最后一页
-        if (currentPageContent.length > 0) {
+        if (currentPageParagraphs.length > 0) {
             pages.push({
-                paragraphs: currentPageContent,
-                showTitle: pages.length === 0,
-                height: currentPageHeight
+                paragraphs: currentPageParagraphs,
+                showTitle: isFirstPage && pages.length === 0
             });
-            console.log(`第${pages.length}页完成（最后页），高度: ${currentPageHeight}px`);
         }
-
-        document.body.removeChild(tempDiv);
 
         // 确保至少有一页
         if (pages.length === 0) {
             pages.push({
                 paragraphs: [''],
-                showTitle: true,
-                height: titleHeight
+                showTitle: true
             });
         }
 
-        // 创建页面DOM，真实铺满整个页面
+        console.log(`✅ 分页完成，共${pages.length}页`);
+
+        // 创建页面DOM
+        const titleFontSize = Math.min(fontSize * 1.2, 20);
+        
         pages.forEach((pageData, pageIndex) => {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'fiction-reader-page';
-            pageDiv.style.minHeight = '100%';
+            pageDiv.dataset.pageIndex = pageIndex;
             
-            let pageHTML = '<div class="fiction-reader-content">';
+            let pageHTML = '';
             
             // 显示标题（仅第一页）
             if (pageData.showTitle) {
-                pageHTML += `<div class="fiction-reader-chapter-title">${chapter.title}</div>`;
+                pageHTML += `<div class="fiction-reader-chapter-title" style="font-size:${titleFontSize}px;margin-bottom:${paragraphSpacing}px;">${chapter.title}</div>`;
             }
             
-            // 添加所有段落，确保正确的格式化
+            // 添加所有段落
             pageData.paragraphs.forEach(para => {
                 if (para.trim()) {
-                    pageHTML += `<p style="margin: 0 0 ${this.state.settings.paragraphSpacing}px 0; word-break: break-word; word-wrap: break-word; white-space: normal; text-align: justify; hyphens: auto; line-height: inherit;">${para}</p>`;
+                    pageHTML += `<p style="margin:0 0 ${paragraphSpacing}px 0;line-height:${lineHeight};word-break:break-word;text-align:justify;">${para}</p>`;
                 }
             });
             
-            pageHTML += '</div>';
             pageDiv.innerHTML = pageHTML;
             container.appendChild(pageDiv);
             

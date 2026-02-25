@@ -83,6 +83,117 @@
   padding: 12px;
   overflow-y: auto;
   background: #F7F8FA;
+  height: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* 书库页面专用网格 - 3列布局 */
+.fiction-bookstore .fiction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 书库页面卡片样式 - 适配3列 */
+.fiction-bookstore .fiction-card {
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.fiction-bookstore .fiction-cover {
+  width: 100%;
+  aspect-ratio: 75/100;
+}
+
+.fiction-bookstore .fiction-title {
+  font-size: 11px;
+  width: 100%;
+  padding: 0 2px;
+  box-sizing: border-box;
+}
+
+/* 书库页面section样式 */
+.fiction-bookstore .fiction-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ========== 书架页面样式 ========== */
+.fiction-bookshelf-container {
+  padding: 12px;
+  overflow-y: auto;
+  height: 100%;
+  background: #F7F8FA;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.fiction-bookshelf-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 3px solid #FF4A7E;
+}
+
+.fiction-bookshelf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fiction-bookshelf-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  width: 100%;
+  min-width: 0;
+  transition: transform 0.2s;
+}
+
+.fiction-bookshelf-card:active {
+  transform: scale(0.95);
+}
+
+.fiction-bookshelf-cover {
+  width: 100%;
+  aspect-ratio: 75/100;
+  background: #EDEEF2;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.fiction-bookshelf-card-title {
+  font-size: 11px;
+  color: #333;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+  box-sizing: border-box;
 }
 
 .fiction-section {
@@ -111,8 +222,8 @@
 
 .fiction-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .fiction-card {
@@ -147,7 +258,7 @@
 }
 
 .fiction-cat-left {
-  width: 95px;
+  width: 70px;
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #eee;
@@ -157,23 +268,25 @@
 }
 
 .fiction-cat-left::-webkit-scrollbar {
-  width: 3px;
+  width: 2px;
 }
 
 .fiction-cat-left::-webkit-scrollbar-thumb {
   background-color: #ddd;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .fiction-cat-left-item {
-  height: 46px;
+  height: 38px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  font-size: 14px;
+  padding: 0 8px;
+  font-size: 11px;
   color: #333;
   border-left: 3px solid transparent;
   cursor: pointer;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .fiction-cat-left-item.active {
@@ -185,8 +298,39 @@
 
 .fiction-cat-right {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   overflow-y: auto;
+  overflow-x: hidden;
+  background: #F7F8FA;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 分类页面专用网格 - 2列布局，适应右侧有侧边栏 */
+.fiction-cat-right .fiction-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fiction-cat-right .fiction-card {
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.fiction-cat-right .fiction-cover {
+  width: 100%;
+  aspect-ratio: 75/100;
+}
+
+.fiction-cat-right .fiction-title {
+  font-size: 11px;
+  width: 100%;
+  padding: 0 2px;
+  box-sizing: border-box;
 }
 
 .fiction-cat-content {
@@ -251,18 +395,298 @@
 }
 
 /* 移动端优化 */
+
+/* 书库页面响应式 - 保持3列布局 */
+@media (max-width: 768px) {
+  .fiction-bookstore .fiction-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .fiction-bookstore .fiction-title {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fiction-bookstore {
+    padding: 8px;
+  }
+  
+  .fiction-bookstore .fiction-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  
+  .fiction-bookstore .fiction-title {
+    font-size: 9px;
+  }
+  
+  .fiction-bookstore .fiction-cover {
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 375px) {
+  .fiction-bookstore {
+    padding: 6px;
+  }
+  
+  .fiction-bookstore .fiction-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  
+  .fiction-bookstore .fiction-title {
+    font-size: 8px;
+  }
+  
+  .fiction-bookstore .fiction-section {
+    padding: 10px;
+  }
+}
+
 @media (max-width: 320px) {
+  .fiction-bookstore {
+    padding: 4px;
+  }
+  
+  .fiction-bookstore .fiction-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
+  
+  .fiction-bookstore .fiction-title {
+    font-size: 7px;
+  }
+  
+  .fiction-bookstore .fiction-section {
+    padding: 8px;
+    border-radius: 10px;
+  }
+  
+  .fiction-bookstore .fiction-cover {
+    border-radius: 5px;
+  }
+}
+
+/* 书架页面响应式 - 保持3列布局 */
+@media (max-width: 768px) {
+  .fiction-bookshelf-container {
+    padding: 10px;
+  }
+  
+  .fiction-bookshelf-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .fiction-bookshelf-card-title {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fiction-bookshelf-container {
+    padding: 8px;
+  }
+  
+  .fiction-bookshelf-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  
+  .fiction-bookshelf-card-title {
+    font-size: 9px;
+  }
+  
+  .fiction-bookshelf-cover {
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 375px) {
+  .fiction-bookshelf-container {
+    padding: 6px;
+  }
+  
+  .fiction-bookshelf-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  
+  .fiction-bookshelf-card-title {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .fiction-bookshelf-container {
+    padding: 4px;
+  }
+  
+  .fiction-bookshelf-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
+  
+  .fiction-bookshelf-card-title {
+    font-size: 7px;
+  }
+  
+  .fiction-bookshelf-cover {
+    border-radius: 5px;
+  }
+}
+
+/* 分类页面响应式 - 右侧2列布局适配 */
+@media (max-width: 768px) {
+  .fiction-cat-right {
+    padding: 8px;
+  }
+  
+  .fiction-cat-right .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .fiction-cat-right .fiction-title {
+    font-size: 10px;
+  }
+  
   .fiction-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
   
   .fiction-cat-left {
-    width: 80px;
+    width: 65px;
   }
   
   .fiction-cat-left-item {
-    padding: 0 8px;
-    font-size: 12px;
+    height: 36px;
+    padding: 0 6px;
+    font-size: 10px;
+  }
+  
+  .fiction-card {
+    gap: 4px;
+  }
+  
+  .fiction-title {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fiction-cat-right {
+    padding: 6px;
+  }
+  
+  .fiction-cat-right .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+  
+  .fiction-cat-right .fiction-title {
+    font-size: 9px;
+  }
+  
+  .fiction-cat-right .fiction-cover {
+    border-radius: 6px;
+  }
+  
+  .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .fiction-cat-left {
+    width: 60px;
+  }
+  
+  .fiction-cat-left-item {
+    height: 34px;
+    padding: 0 5px;
+    font-size: 9px;
+  }
+  
+  .fiction-card {
+    gap: 3px;
+  }
+  
+  .fiction-title {
+    font-size: 10px;
+  }
+  
+  .fiction-cover {
+    aspect-ratio: 75/100;
+  }
+}
+
+@media (max-width: 375px) {
+  .fiction-cat-right {
+    padding: 5px;
+  }
+  
+  .fiction-cat-right .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+  
+  .fiction-cat-right .fiction-title {
+    font-size: 8px;
+  }
+  
+  .fiction-cat-left {
+    width: 55px;
+  }
+  
+  .fiction-cat-left-item {
+    height: 32px;
+    padding: 0 4px;
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .fiction-cat-right {
+    padding: 4px;
+  }
+  
+  .fiction-cat-right .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3px;
+  }
+  
+  .fiction-cat-right .fiction-title {
+    font-size: 7px;
+  }
+  
+  .fiction-cat-right .fiction-cover {
+    border-radius: 5px;
+  }
+  
+  .fiction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .fiction-cat-left {
+    width: 50px;
+  }
+  
+  .fiction-cat-left-item {
+    height: 30px;
+    padding: 0 3px;
+    font-size: 7px;
+  }
+  
+  .fiction-card {
+    gap: 2px;
+  }
+  
+  .fiction-title {
+    font-size: 9px;
   }
 }

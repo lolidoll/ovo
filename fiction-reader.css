@@ -132,37 +132,15 @@ body {
 .fiction-reader-page {
     position: relative;
     width: 100%;
-    min-height: 100%;
-    height: auto;
+    height: 100%;
     flex-shrink: 0;
-    padding: 30px 20px;
+    padding: 28px 20px;
     overflow: hidden;
     background: inherit;
-    display: flex;
-    flex-direction: column;
     box-sizing: border-box;
     transform-style: preserve-3d;
-    transition: box-shadow 0.3s ease;
     -webkit-transform-style: preserve-3d;
-    /* 安卓和iPhone微调 */
     -webkit-box-sizing: border-box;
-    -webkit-flex-direction: column;
-}
-
-.fiction-reader-page::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, rgba(0,0,0,0.02) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.02) 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.fiction-reader-pages.page-turn .fiction-reader-page {
-    box-shadow: inset -20px 0 30px -20px rgba(0, 0, 0, 0.15);
 }
 
 /* 移动端页面调整 */
@@ -178,7 +156,7 @@ body {
     }
     
     .fiction-reader-page {
-        padding: 22px 14px;
+        padding: 20px 14px;
     }
     
     .fiction-reader-footer {
@@ -203,7 +181,7 @@ body {
     }
     
     .fiction-reader-page {
-        padding: 18px 10px;
+        padding: 16px 12px;
     }
     
     .fiction-reader-footer {
@@ -247,7 +225,6 @@ body {
 
 .fiction-reader-content {
     width: 100%;
-    height: 100%;
     margin: 0 auto;
     line-height: 1.8;
     color: #333;
@@ -255,8 +232,6 @@ body {
     word-break: break-word;
     white-space: normal;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
     position: relative;
     z-index: 2;
 }
@@ -267,15 +242,13 @@ body {
 
 /* 章节标题 */
 .fiction-reader-chapter-title {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: bold;
-    margin-bottom: 30px;
+    margin-bottom: 16px;
     text-align: center;
-    padding: 10px 0;
-    border-bottom: 2px solid #e0e0e0;
-    flex-shrink: 0;
-    /* 确保标题响应式缩放 */
-    line-height: 1.4;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    line-height: 1.3;
     word-break: break-word;
 }
 
@@ -285,17 +258,17 @@ body {
 
 @media (max-width: 768px) {
     .fiction-reader-chapter-title {
-        font-size: 20px;
-        margin-bottom: 20px;
-        padding: 8px 0;
+        font-size: 18px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
     }
 }
 
 @media (max-width: 480px) {
     .fiction-reader-chapter-title {
-        font-size: 18px;
-        margin-bottom: 15px;
-        padding: 6px 0;
+        font-size: 16px;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
     }
 }
 
