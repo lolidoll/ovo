@@ -584,9 +584,11 @@
             overflow-x: hidden;
             display: none;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: calc(48px + env(safe-area-inset-bottom));
+            padding-bottom: 0;
             /* 确保内容不会被固定的顶部导航栏遮挡 */
             position: relative;
+            height: 100%;
+            min-height: 0;
         }
         .main-content.active {
             display: flex;
@@ -614,7 +616,7 @@
                 z-index: 101 !important;
             }
             
-            /* 搜索栏固定在顶部导航栏下方 */
+            /* 搜索栏固定在顶部导航栏下方，适用于所有搜索栏 */
             .search-bar {
                 position: fixed !important;
                 top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
@@ -622,13 +624,15 @@
                 right: 0 !important;
                 width: 100% !important;
                 z-index: 100 !important;
+                margin-top: 0 !important;
+                padding: 8px 15px !important; /* 减少上下padding，消除上方空白 */
             }
             
             /* 重置消息页面和好友页面的margin和padding */
             .msg-page,
             .friend-page {
                 margin-top: 0 !important;
-                padding-top: 56px !important; /* 搜索栏高度: 10px(padding上) + 36px(输入框) + 10px(padding下) */
+                padding-top: calc(var(--nav-total-height) + 52px) !important; /* 导航栏高度 + 搜索栏高度(8+36+8) */
             }
             
             /* msg-list和friend-content不需要额外的padding-top，因为页面本身已经有padding-top了 */
@@ -637,16 +641,9 @@
                 padding-top: 0 !important;
             }
             
-            /* 确保搜索栏也使用fixed定位 */
-            .msg-page .search-bar,
-            .friend-page .search-bar {
-                position: fixed !important;
-                top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
-                z-index: 100 !important;
-                margin-top: 0 !important;
+            /* 调整搜索输入框高度以适应减少的padding */
+            .search-input {
+                height: 36px !important;
             }
         }
         .search-input {
@@ -691,9 +688,11 @@
             padding: 0;
             margin-top: 0;
             padding-top: 0;
-            padding-bottom: calc(48px + env(safe-area-inset-bottom));
+            padding-bottom: 0;
             display: flex;
             flex-direction: column;
+            height: 100%;
+            min-height: calc(var(--app-height, 100vh) - var(--nav-total-height) - 48px);
         }
         
         .msg-page:not(.active) {
@@ -709,6 +708,8 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            height: 100%;
+            min-height: 0;
         }
         
         .empty-state {
@@ -877,7 +878,9 @@
             padding: 0;
             margin-top: 0;
             padding-top: 0;
-            padding-bottom: calc(48px + env(safe-area-inset-bottom));
+            padding-bottom: 0;
+            height: 100%;
+            min-height: calc(var(--app-height, 100vh) - var(--nav-total-height) - 48px);
         }
         
         /* 好友页面的搜索栏 */
@@ -889,6 +892,8 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            height: 100%;
+            min-height: 0;
         }
         
         .friend-group {
@@ -1013,7 +1018,11 @@
             padding: 0;
             margin-top: calc(-1 * var(--nav-total-height));
             padding-top: var(--nav-total-height);
-            padding-bottom: calc(48px + env(safe-area-inset-bottom));
+            padding-bottom: 0;
+            height: 100%;
+            min-height: calc(var(--app-height, 100vh) - var(--nav-total-height) - 48px);
+            display: flex;
+            flex-direction: column;
         }
         
         .dynamic-content {
@@ -1021,6 +1030,8 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-top: 10px;
+            height: 100%;
+            min-height: 0;
         }
         
         .func-list {
@@ -1278,7 +1289,12 @@
         /* 非PWA模式下，用top定位代替bottom定位，避免被浏览器底部工具栏遮挡 */
         html:not(.is-pwa):not(.is-standalone) .tab-bar {
             bottom: auto;
-            top: calc(var(--app-height, 100vh) - 48px - env(safe-area-inset-bottom));
+            top: auto;
+            position: fixed;
+            bottom: 0;
+            height: 48px;
+            min-height: 48px;
+            padding-bottom: 0;
         }
         
         .tab-item {
@@ -2644,20 +2660,21 @@ input[type="range"]::-ms-fill-upper {
         }
         
         .chat-nav {
-            height: 50px;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 15px;
-            background-color: #fff;
-            border-bottom: 1px solid #f0f0f0;
-            flex-shrink: 0;
-            position: relative;
-            z-index: 100;
-            overflow: visible;
-            /* 确保子元素层级正确 */
-            isolation: isolate;
+            height: 50px !important;
+            min-height: 50px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            padding: 0 !important;
+            background-color: #f7f7f7 !important;
+            border-bottom: 0.5px solid #e5e5e5 !important;
+            flex-shrink: 0 !important;
+            position: relative !important;
+            z-index: 200 !important;
+            overflow: visible !important;
+            gap: 0 !important;
+            font-size: 0 !important;
+            isolation: isolate !important;
         }
 
         /* iOS PWA 顶部安全区 - 聊天页导航 */
@@ -2669,21 +2686,26 @@ input[type="range"]::-ms-fill-upper {
         }
         
         .chat-toolbar-buttons {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            position: relative;
+            display: flex !important;
+            gap: 4px !important;
+            align-items: center !important;
+            position: relative !important;
             z-index: 100 !important;
             pointer-events: auto !important;
             flex-shrink: 0 !important;
-            isolation: isolate;
+            isolation: isolate !important;
+            margin-left: auto !important;
+            padding-right: 10px !important;
+            font-size: 16px !important;
         }
         
         .chat-title {
-            font-size: 17px;
-            font-weight: 500;
-            color: #000;
-            pointer-events: none;
+            font-size: 17px !important;
+            font-weight: 500 !important;
+            color: #666 !important;
+            pointer-events: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         /* 心声按钮样式优化 */
@@ -2697,6 +2719,45 @@ input[type="range"]::-ms-fill-upper {
         }
         #chat-mind-btn:active {
             opacity: 0.7;
+        }
+        
+        .chat-nav .back-btn {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0px !important;
+            padding: 8px 30px 8px 10px !important;
+            cursor: pointer !important;
+            color: #666 !important;
+            font-size: 16px !important;
+            flex-shrink: 0 !important;
+            min-width: 60px !important;
+            margin: 0 !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        .chat-nav .back-arrow {
+            width: 10px !important;
+            height: 10px !important;
+            border-left: 2px solid #666 !important;
+            border-bottom: 2px solid #666 !important;
+            transform: rotate(45deg) !important;
+        }
+        
+        .chat-title-area {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            position: relative !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 17px !important;
+            transform: translateX(-8px) !important;
         }
         
         .chat-more {

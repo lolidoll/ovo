@@ -104,12 +104,18 @@ body {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: none;
-    width: 100vw;
+    width: 100%;
     height: calc(100vh - 110px);
     /* 确保精确计算 */
     box-sizing: border-box;
     /* iOS Safari 防止输入框自动缩放 */
     font-size: 16px;
+    /* 修复opera浏览器空白问题 */
+    min-height: 200px;
+    /* 确保在所有设备上正确计算 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
 }
 
 .fiction-reader-main.dark {
@@ -153,6 +159,8 @@ body {
     .fiction-reader-main {
         top: 48px;
         height: calc(100vh - 108px);
+        /* 修复移动端空白问题 */
+        min-height: 180px;
     }
     
     .fiction-reader-page {
@@ -161,6 +169,8 @@ body {
     
     .fiction-reader-footer {
         height: 60px;
+        /* 修复移动端底部显示问题 */
+        box-sizing: border-box;
     }
 }
 
@@ -178,6 +188,8 @@ body {
     .fiction-reader-main {
         top: 44px;
         height: calc(100vh - 104px);
+        /* 修复小屏幕设备空白问题 */
+        min-height: 160px;
     }
     
     .fiction-reader-page {
@@ -187,6 +199,8 @@ body {
     .fiction-reader-footer {
         height: 60px;
         padding: 8px 10px;
+        /* 修复小屏幕底部显示问题 */
+        box-sizing: border-box;
     }
 }
 
@@ -300,6 +314,14 @@ body {
     z-index: 10001;
     backdrop-filter: blur(10px);
     gap: 10px;
+    /* 修复opera浏览器底部空白问题 */
+    box-sizing: border-box;
+    /* 确保在opera浏览器中正确显示 */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+    /* 防止opera浏览器中的布局问题 */
+    touch-action: manipulation;
 }
 
 .fiction-reader-footer.dark {
@@ -1099,5 +1121,93 @@ body {
 
     .fiction-reader-regenerate-btn {
         width: 100%;
+    }
+}
+
+/* Opera浏览器特定修复 */
+@-moz-document url-prefix() {
+    /* Opera浏览器空白问题修复 */
+    .fiction-reader-main {
+        height: calc(100vh - 110px) !important;
+        min-height: 200px !important;
+        position: fixed !important;
+        top: 50px !important;
+        bottom: 60px !important;
+    }
+    
+    .fiction-reader-footer {
+        position: fixed !important;
+        bottom: 0 !important;
+        height: 60px !important;
+        box-sizing: border-box !important;
+        touch-action: manipulation !important;
+    }
+    
+    .fiction-reader-container {
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+    }
+}
+
+/* Opera Mobile特定修复 */
+@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+    .fiction-reader-main {
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        will-change: transform !important;
+    }
+    
+    .fiction-reader-footer {
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        will-change: transform !important;
+    }
+}
+
+/* 修复所有移动浏览器中的布局问题 */
+@media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1) {
+    .fiction-reader-main {
+        height: calc(100vh - 108px) !important;
+        min-height: 180px !important;
+    }
+    
+    .fiction-reader-footer {
+        height: 60px !important;
+        box-sizing: border-box !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
+}
+
+/* 针对高DPI设备的额外修复 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .fiction-reader-main {
+        height: calc(100vh - 110px) !important;
+        min-height: 200px !important;
+    }
+    
+    .fiction-reader-footer {
+        height: 60px !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* 修复旋转屏幕时的布局问题 */
+@media (orientation: landscape) and (max-height: 600px) {
+    .fiction-reader-main {
+        top: 44px !important;
+        height: calc(100vh - 104px) !important;
+        min-height: 140px !important;
+    }
+    
+    .fiction-reader-toolbar {
+        height: 44px !important;
+    }
+    
+    .fiction-reader-footer {
+        height: 60px !important;
     }
 }
