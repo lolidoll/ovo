@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滚动测试页面</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .top-nav {
+            height: 45px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        
+        .content-area {
+            height: calc(100vh - 45px - 48px);
+            padding-top: 45px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .test-content {
+            padding: 20px;
+            min-height: 2000px;
+            background: linear-gradient(180deg, #fff 0%, #f5f5f5 100%);
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <span>顶部导航栏</span>
+    </div>
+    
+    <div class="content-area">
+        <div class="test-content">
+            <h1>滚动测试页面</h1>
+            <p>这个页面用于测试普通浏览器中内容的滚动是否正常。</p>
+            
+            <div class="section">
+                <h2>测试区域 1</h2>
+                <p>这是一个测试区域，用来验证页面是否可以正常滚动。</p>
+                <p>如果修复成功，你应该能够看到下面的所有内容。</p>
+            </div>
+            
+            <div class="section">
+                <h2>测试区域 2</h2>
+                <p>继续滚动以查看更多内容...</p>
+            </div>
+            
+            <div class="section">
+                <h2>测试区域 3</h2>
+                <p>更多内容...</p>
+            </div>
+            
+            <div class="section">
+                <h2>测试区域 4</h2>
+                <p>继续向下滚动...</p>
+            </div>
+            
+            <div class="section">
+                <h2>测试区域 5</h2>
+                <p>底部区域...</p>
+                <p>如果你能看到这个区域，说明滚动功能正常工作。</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-bar">
+        <div>标签 1</div>
+        <div>标签 2</div>
+        <div>标签 3</div>
+    </div>
+</body>
+</html>
