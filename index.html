@@ -221,6 +221,23 @@
             window.addEventListener('load', function() {
                 setTimeout(setViewportHeight, 300);
             });
+            
+            // 非PWA模式下，注入动态样式修复底部被浏览器工具栏遮挡的问题
+            if (!isPWA) {
+                const fixStyle = document.createElement('style');
+                fixStyle.id = 'non-pwa-viewport-fix';
+                fixStyle.textContent = `
+                    /* 非PWA模式：所有使用100vh的fixed全屏元素改用实际视口高度 */
+                    html:not(.is-pwa):not(.is-standalone) .add-friend-page,
+                    html:not(.is-pwa):not(.is-standalone) .card-edit-page,
+                    html:not(.is-pwa):not(.is-standalone) .create-group-page,
+                    html:not(.is-pwa):not(.is-standalone) .voice-call-overlay,
+                    html:not(.is-pwa):not(.is-standalone) .video-call-overlay {
+                        height: calc(var(--vh, 1vh) * 100) !important;
+                    }
+                `;
+                document.head.appendChild(fixStyle);
+            }
         })();
         
         // 应用保存的页面缩放设置
@@ -277,6 +294,7 @@
     <script src="mobile-performance-optimizer.js" defer></script>
     <script src="ios-paste-fix.js" defer></script>
     <script src="ios-input-fix.js" defer></script>
+    <script src="ios-chat-fix.js" defer></script>
     <script src="mobile-touch-fix.js" defer></script>
     <script src="font-manager.js" defer></script>
     <script src="theme-manager.js" defer></script>
@@ -3230,7 +3248,6 @@
                 <div class="header-left">
                     <button class="wallet-back-btn" data-back="wallet-page">
                         <i class="fa-solid fa-chevron-left"></i>
-                        <span>返回</span>
                     </button>
                 </div>
                 <span class="title">钱包</span>

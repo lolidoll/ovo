@@ -28,11 +28,10 @@
             --nav-safe-top: 0px;
             --nav-total-height: calc(var(--nav-height) + var(--nav-safe-top));
             --page-scale: 1;
-            --safe-area-inset-top: 0px;
-            --safe-area-inset-bottom: 0px;
-            --safe-area-inset-left: 0px;
-            --safe-area-inset-right: 0px;
-            --global-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            --safe-area-inset-top: env(safe-area-inset-top);
+            --safe-area-inset-bottom: env(safe-area-inset-bottom);
+            --safe-area-inset-left: env(safe-area-inset-left);
+            --safe-area-inset-right: env(safe-area-inset-right);
         }
         
         /* 等比缩放 - 应用到html元素，影响所有内容包括fixed元素 */
@@ -53,27 +52,7 @@
             }
         }
         
-        /* 通用全屏模式适配（包括所有iPhone型号、所有安卓手机、Edge等所有设备） */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* 在全屏模式下，重新定义safe-area变量 - 所有设备统一处理 */
-            :root {
-                --safe-area-inset-top: env(safe-area-inset-top);
-                --safe-area-inset-bottom: env(safe-area-inset-bottom);
-                --safe-area-inset-left: env(safe-area-inset-left);
-                --safe-area-inset-right: env(safe-area-inset-right);
-                --nav-safe-top: var(--safe-area-inset-top);
-                --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
-            }
-        }
-        
-        /* PWA模式统一样式 - 所有设备（iOS、Android、Edge等） */
-        .is-pwa,
-        .is-standalone {
-            --nav-safe-top: var(--safe-area-inset-top);
-            --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
-        }
-        
-        /* iOS PWA 顶部安全区（保持向后兼容） */
+        /* iOS PWA 顶部安全区（仅全屏/桌面模式） */
         .ios-standalone {
             --nav-safe-top: var(--safe-area-inset-top);
         }
@@ -82,7 +61,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: var(--global-font-family);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
             -webkit-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
@@ -133,25 +112,28 @@
             width: 100%;
             height: var(--app-height);
             height: calc(var(--vh, 1vh) * 100);
-            min-height: 100vh;
+            max-height: calc(var(--vh, 1vh) * 100);
             min-height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            padding-top: var(--nav-total-height); /* 包含safe-area的顶部导航栏总高度 */
-            padding-bottom: var(--safe-area-inset-bottom);
+            padding-top: var(--nav-total-height);
+            padding-bottom: 0;
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
         }
         
-        /* iOS模式和PWA模式：使用safe-area - 所有设备统一处理 */
+        /* PWA模式可以使用100dvh */
+        html.is-pwa #app-container,
+        html.is-standalone #app-container {
+            min-height: 100dvh;
+            max-height: none;
+        }
+        
+        /* iOS模式：使用safe-area */
         [data-adapt-mode="ios"] #app-container,
-        [data-adapt-mode="auto"].is-ios #app-container,
-        [data-adapt-mode="auto"].is-pwa #app-container,
-        [data-adapt-mode="auto"].is-standalone #app-container,
-        .is-pwa #app-container,
-        .is-standalone #app-container {
+        [data-adapt-mode="auto"].is-ios #app-container {
             padding-top: var(--nav-total-height);
         }
 
@@ -177,6 +159,8 @@
             justify-content: space-between;
             padding: 0 15px;
             padding-top: var(--nav-safe-top);
+            padding-left: max(15px, env(safe-area-inset-left));
+            padding-right: max(15px, env(safe-area-inset-right));
             position: fixed;
             top: 0;
             left: 0;
@@ -184,7 +168,14 @@
             z-index: 100;
         }
         
-        /* 全屏模式下的顶部导航栏适配 - 移除重复规则，使用上面的统一处理 */
+        /* Opera浏览器全屏模式下的顶部导航栏适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .top-nav {
+                position: fixed;
+                top: 0;
+                display: flex;
+            }
+        }
         
         .user-info {
             display: flex;
@@ -256,7 +247,6 @@
             max-width: 280px;
             height: var(--app-height);
             height: calc(var(--vh, 1vh) * 100);
-            min-height: 100vh;
             min-height: -webkit-fill-available;
             background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
             z-index: 300;
@@ -267,7 +257,6 @@
             flex-direction: column;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12), 2px 0 8px rgba(0, 0, 0, 0.08);
             visibility: hidden;
-            padding-top: env(safe-area-inset-top);
         }
         .side-menu.open {
             transform: translateX(0);
@@ -587,21 +576,6 @@
             visibility: visible;
             transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0s;
         }
-        
-        /* 全屏模式下侧边栏和遮罩层适配 - 所有设备统一处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            html.is-ios .side-menu,
-            html.is-android .side-menu,
-            html:not(.is-ios):not(.is-android) .side-menu {
-                padding-top: env(safe-area-inset-top);
-            }
-        }
-        
-        /* 通过class添加的额外适配 - 确保所有设备都能正确适配 */
-        .is-pwa .side-menu,
-        .is-standalone .side-menu {
-            padding-top: env(safe-area-inset-top) !important;
-        }
 
         /* 主内容区域 */
         .main-content {
@@ -610,7 +584,7 @@
             overflow-x: hidden;
             display: none;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 48px;
+            padding-bottom: calc(48px + env(safe-area-inset-bottom));
             /* 确保内容不会被固定的顶部导航栏遮挡 */
             position: relative;
         }
@@ -629,57 +603,51 @@
             margin-top: 0;
         }
         
-        /* 全屏模式适配 - 修复所有iPhone和所有安卓手机导航栏适配问题 - 统一处理 */
+        /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* 所有设备（iOS、Android、Edge等）：顶部导航栏从安全区域之后开始 */
-            html.is-ios .top-nav,
-            html.is-android .top-nav,
-            html:not(.is-ios):not(.is-android) .top-nav,
-            .is-pwa .top-nav,
-            .is-standalone .top-nav {
+            /* 顶部导航栏保持固定在最顶部 */
+            .top-nav {
                 position: fixed !important;
-                top: env(safe-area-inset-top) !important;
+                top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
                 z-index: 101 !important;
-                height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-                min-height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-                padding-top: env(safe-area-inset-top) !important;
             }
             
-            /* 全屏模式下，搜索栏保持相对定位，在文档流中正常显示 */
+            /* 搜索栏固定在顶部导航栏下方 */
             .search-bar {
-                position: relative !important;
-                top: auto !important;
-                left: auto !important;
-                right: auto !important;
-                width: auto !important;
-                z-index: 10 !important;
-                margin-top: 0 !important;
+                position: fixed !important;
+                top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                z-index: 100 !important;
             }
             
-            /* 消息页面和好友页面：不需要额外padding，因为#app-container已经处理了 */
+            /* 重置消息页面和好友页面的margin和padding */
             .msg-page,
             .friend-page {
                 margin-top: 0 !important;
-                padding-top: 0 !important;
+                padding-top: 56px !important; /* 搜索栏高度: 10px(padding上) + 36px(输入框) + 10px(padding下) */
             }
             
-            /* msg-list和friend-content保持正常 */
+            /* msg-list和friend-content不需要额外的padding-top，因为页面本身已经有padding-top了 */
             .msg-page .msg-list,
             .friend-page .friend-content {
                 padding-top: 0 !important;
             }
-        }
-        
-        /* 通过class添加的额外适配 - 确保所有设备都能正确适配 */
-        .is-pwa .top-nav,
-        .is-standalone .top-nav {
-            position: fixed !important;
-            top: env(safe-area-inset-top) !important;
-            height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-            min-height: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-            padding-top: env(safe-area-inset-top) !important;
+            
+            /* 确保搜索栏也使用fixed定位 */
+            .msg-page .search-bar,
+            .friend-page .search-bar {
+                position: fixed !important;
+                top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                z-index: 100 !important;
+                margin-top: 0 !important;
+            }
         }
         .search-input {
             width: 100%;
@@ -687,7 +655,7 @@
             background-color: #f5f5f5;
             border: none;
             border-radius: 18px;
-            padding: 0 15px 0 35px;
+            padding: 0 15px 0 40px;
             font-size: 14px;
             color: #333;
             outline: none;
@@ -697,14 +665,25 @@
         }
         .search-wrapper {
             position: relative;
+            display: flex;
+            align-items: center;
         }
         .search-icon {
             position: absolute;
-            left: 12px;
+            left: 10px;
             top: 50%;
             transform: translateY(-50%);
             width: 18px;
             height: 18px;
+            pointer-events: none;
+            z-index: 2;
+            flex-shrink: 0;
+            stroke: #666;
+            stroke-width: 1.8;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: block;
         }
         
         /* 消息页面 */
@@ -712,6 +691,7 @@
             padding: 0;
             margin-top: 0;
             padding-top: 0;
+            padding-bottom: calc(48px + env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
         }
@@ -897,6 +877,7 @@
             padding: 0;
             margin-top: 0;
             padding-top: 0;
+            padding-bottom: calc(48px + env(safe-area-inset-bottom));
         }
         
         /* 好友页面的搜索栏 */
@@ -1032,6 +1013,7 @@
             padding: 0;
             margin-top: calc(-1 * var(--nav-total-height));
             padding-top: var(--nav-total-height);
+            padding-bottom: calc(48px + env(safe-area-inset-bottom));
         }
         
         .dynamic-content {
@@ -1122,12 +1104,12 @@
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            bottom: 0 !important;
+            bottom: calc(48px + env(safe-area-inset-bottom)) !important;
             width: 100% !important;
             width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            min-height: 100vh !important;
+            height: calc(var(--app-height, 100vh) - 48px - env(safe-area-inset-bottom)) !important;
+            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+            min-height: calc(var(--app-height, 100vh) - 48px - env(safe-area-inset-bottom)) !important;
             min-height: -webkit-fill-available !important;
             background-color: #fff !important;
             z-index: 99999 !important;
@@ -1145,10 +1127,17 @@
             isolation: isolate !important;
         }
         
+        /* 非PWA模式下，子页面使用实际视口高度，避免底部被浏览器工具栏遮挡 */
+        html:not(.is-pwa):not(.is-standalone) .sub-page {
+            bottom: auto !important;
+            height: calc(var(--app-height, 100vh) - 48px) !important;
+        }
+        
         /* 缩放模式下，所有fixed定位元素都需要反向调整尺寸以正确铺满全屏 */
         html.page-scaled .sub-page {
             width: calc(100vw / var(--page-scale)) !important;
-            height: calc(100vh / var(--page-scale)) !important;
+            height: calc((100vh - 48px - env(safe-area-inset-bottom)) / var(--page-scale)) !important;
+            bottom: calc((48px + env(safe-area-inset-bottom)) / var(--page-scale)) !important;
         }
         
         html.page-scaled .side-menu {
@@ -1188,22 +1177,9 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        /* PWA模式顶部安全区 - 子页面导航 - 所有设备统一处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            html.is-ios .sub-nav,
-            html.is-android .sub-nav,
-            html:not(.is-ios):not(.is-android) .sub-nav {
-                padding-top: var(--safe-area-inset-top);
-                height: calc(56px + var(--safe-area-inset-top));
-                min-height: calc(56px + var(--safe-area-inset-top));
-            }
-        }
-        
-        /* 通过class添加的适配 - 确保所有设备都能正确适配 */
+        /* iOS PWA 顶部安全区 - 子页面导航 */
         .ios-standalone .sub-nav,
-        [data-adapt-mode="ios"] .sub-nav,
-        .is-pwa .sub-nav,
-        .is-standalone .sub-nav {
+        [data-adapt-mode="ios"] .sub-nav {
             padding-top: var(--safe-area-inset-top);
             height: calc(56px + var(--safe-area-inset-top));
             min-height: calc(56px + var(--safe-area-inset-top));
@@ -1264,20 +1240,9 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* PWA模式顶部安全区 - 朋友圈页头部 - 所有设备统一处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            html.is-ios #moments-page .moments-top-bar,
-            html.is-android #moments-page .moments-top-bar,
-            html:not(.is-ios):not(.is-android) #moments-page .moments-top-bar {
-                padding-top: calc(15px + var(--safe-area-inset-top)) !important;
-            }
-        }
-        
-        /* 通过class添加的适配 - 确保所有设备都能正确适配 */
+        /* iOS PWA 顶部安全区 - 朋友圈页头部 */
         .ios-standalone #moments-page .moments-top-bar,
-        [data-adapt-mode="ios"] #moments-page .moments-top-bar,
-        .is-pwa #moments-page .moments-top-bar,
-        .is-standalone #moments-page .moments-top-bar {
+        [data-adapt-mode="ios"] #moments-page .moments-top-bar {
             padding-top: calc(15px + var(--safe-area-inset-top)) !important;
         }
         
@@ -1295,8 +1260,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 48px;
-            min-height: 48px;
+            height: calc(48px + env(safe-area-inset-bottom));
+            min-height: calc(48px + env(safe-area-inset-bottom));
             width: 100%;
             background-color: #ffffff;
             border-top: 1px solid #f0f0f0;
@@ -1304,8 +1269,16 @@
             justify-content: space-around;
             align-items: center;
             padding-bottom: env(safe-area-inset-bottom);
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
             flex-shrink: 0;
             z-index: 100;
+        }
+        
+        /* 非PWA模式下，用top定位代替bottom定位，避免被浏览器底部工具栏遮挡 */
+        html:not(.is-pwa):not(.is-standalone) .tab-bar {
+            bottom: auto;
+            top: calc(var(--app-height, 100vh) - 48px - env(safe-area-inset-bottom));
         }
         
         .tab-item {
@@ -2026,31 +1999,12 @@ input[type="range"]::-ms-fill-upper {
     display:flex;
     align-items:center;
     vertical-align:middle;
-    pointer-events:auto !important;
-    touch-action:manipulation !important;
-    -webkit-user-select:text !important;
-    user-select:text !important;
+    pointer-events:auto;
+    touch-action:manipulation;
+    -webkit-user-select:text;
+    user-select:text;
     -webkit-tap-highlight-color:rgba(0,0,0,0.05);
     cursor:text;
-    -webkit-touch-callout:default !important;
-    touch-callout:default !important;
-}
-
-/* iOS Safari 特殊优化 */
-@supports (-webkit-touch-callout: default) {
-    .chat-input {
-        -webkit-user-select:text !important;
-        user-select:text !important;
-        -webkit-touch-callout:default !important;
-        touch-callout:default !important;
-        pointer-events:auto !important;
-        touch-action:manipulation !important;
-    }
-    
-    .chat-input-area {
-        pointer-events:auto !important;
-        touch-action:manipulation !important;
-    }
 }
 
 .chat-input::placeholder {
@@ -2669,7 +2623,7 @@ input[type="range"]::-ms-fill-upper {
             top: 0;
             left: 0;
             width: 100%;
-            height: 100vh;
+            height: var(--app-height, 100vh);
             height: 100dvh;
             background-color: #f5f5f5;
             z-index: 9999;
@@ -2679,6 +2633,11 @@ input[type="range"]::-ms-fill-upper {
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+        
+        /* 非PWA模式下，聊天页使用实际视口高度 */
+        html:not(.is-pwa):not(.is-standalone) .chat-page {
+            height: calc(var(--vh, 1vh) * 100);
         }
         .chat-page.open {
             transform: translateX(0);
@@ -2701,22 +2660,9 @@ input[type="range"]::-ms-fill-upper {
             isolation: isolate;
         }
 
-        /* PWA模式顶部安全区 - 聊天页导航 - 所有设备统一处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            html.is-ios .chat-nav,
-            html.is-android .chat-nav,
-            html:not(.is-ios):not(.is-android) .chat-nav {
-                padding-top: var(--safe-area-inset-top);
-                height: calc(50px + var(--safe-area-inset-top));
-                min-height: calc(50px + var(--safe-area-inset-top));
-            }
-        }
-        
-        /* 通过class添加的适配 - 确保所有设备都能正确适配 */
+        /* iOS PWA 顶部安全区 - 聊天页导航 */
         .ios-standalone .chat-nav,
-        [data-adapt-mode="ios"] .chat-nav,
-        .is-pwa .chat-nav,
-        .is-standalone .chat-nav {
+        [data-adapt-mode="ios"] .chat-nav {
             padding-top: var(--safe-area-inset-top);
             height: calc(50px + var(--safe-area-inset-top));
             min-height: calc(50px + var(--safe-area-inset-top));
@@ -4141,19 +4087,17 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .voice-bubble {
     max-width: 300px;
-    padding: 12px 16px;
-    border-radius: 18px;
+    padding: 10px 14px;
+    border-radius: 12px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     user-select: text;
-    background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+    background: #e8e8e8;
     color: #333;
-    border: 1px solid #e8e8e8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .voice-waveform {
@@ -4188,31 +4132,23 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .voice-bubble-user {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+    background: #e8e8e8;
     color: #333;
-    border-bottom-right-radius: 6px;
-    border: 1px solid #e0e0e0;
+    border-bottom-right-radius: 4px;
 }
 
 .voice-bubble-user:hover {
-    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
-    border-color: #d8d8d8;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
+    background: #ddd;
 }
 
 .voice-bubble-ai {
-    background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+    background: #f5f5f5;
     color: #333;
-    border-bottom-left-radius: 6px;
-    border: 1px solid #e8e8e8;
+    border-bottom-left-radius: 4px;
 }
 
 .voice-bubble-ai:hover {
-    background: linear-gradient(135deg, #f0f0f0 0%, #ebebeb 100%);
-    border-color: #e0e0e0;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
+    background: #efefef;
 }
 
 .voice-bubble-header {
@@ -4250,16 +4186,14 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     display: flex;
     gap: 2px;
     align-items: center;
-    height: 16px; /* 固定高度，防止动画影响布局 */
 }
 
 .wave {
-    width: 3px;
+    width: 2px;
     height: 12px;
-    background: linear-gradient(180deg, #999 0%, #ccc 100%);
-    border-radius: 2px;
+    background: #999;
+    border-radius: 1px;
     animation: voiceWave 0.6s ease-in-out infinite;
-    transform-origin: center; /* 从中心缩放 */
 }
 
 .voice-bubble-user .wave {
@@ -4278,10 +4212,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 @keyframes voiceWave {
     0%, 100% {
-        transform: scaleY(0.67);
+        height: 8px;
     }
     50% {
-        transform: scaleY(1.33);
+        height: 16px;
     }
 }
 
@@ -5510,7 +5444,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .char-settings-nav .back-arrow {
-    display: none;
+    border-color: #fff;
 }
 
 .char-settings-nav .sub-title {
@@ -6054,6 +5988,37 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     position: relative;
 }
 
+.bubble-lock-btn {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 2px solid #ffe4ed;
+    border-radius: 20px;
+    background: #fffbfc;
+    cursor: pointer;
+    font-size: 12px;
+    color: #ffb6c8;
+    transition: all 0.3s ease;
+}
+
+.bubble-lock-btn:hover {
+    background: #fff5f9;
+    border-color: #ffb6c8;
+}
+
+.lock-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
 .bubble-section {
     margin-bottom: 20px;
     padding: 16px;
@@ -6257,23 +6222,6 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .text-preview:hover {
     box-shadow: inset 0 1px 3px rgba(255, 228, 237, 0.3),
                 0 3px 6px rgba(255, 228, 237, 0.4);
-}
-
-.color-preview-box {
-    width: 100%;
-    height: 50px;
-    border-radius: 12px;
-    border: 2px solid #ffe4ed;
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(255, 228, 237, 0.3);
-    transition: all 0.3s ease;
-}
-
-.color-preview-box:hover {
-    box-shadow: 0 3px 6px rgba(255, 228, 237, 0.4);
 }
 
 /* 响应式调整 */

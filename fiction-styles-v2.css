@@ -28,6 +28,20 @@
   padding: 0 16px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   z-index: 1001;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* PWA模式下的安全区域处理 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+  .fiction-header {
+    top: 0;
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+.is-pwa .fiction-header,
+.is-standalone .fiction-header {
+  padding-top: env(safe-area-inset-top);
 }
 
 /* 当显示详情页时隐藏顶部导航 */
@@ -58,11 +72,23 @@
 /* 页面容器：严格计算中间区域高度 */
 .fiction-container {
   position: fixed;
-  top: 50px;
+  top: calc(50px + env(safe-area-inset-top));
   left: 0;
   right: 0;
   bottom: 60px;
   overflow: hidden;
+}
+
+/* PWA模式下容器位置调整 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+  .fiction-container {
+    top: calc(50px + env(safe-area-inset-top));
+  }
+}
+
+.is-pwa .fiction-container,
+.is-standalone .fiction-container {
+  top: calc(50px + env(safe-area-inset-top));
 }
 
 .fiction-content {
@@ -70,6 +96,7 @@
   height: 100%;
   display: none;
   flex-direction: column;
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
 .fiction-content.active {
@@ -713,6 +740,9 @@
   justify-content: space-around;
   box-shadow: 0 -1px 4px rgba(0,0,0,0.06);
   z-index: 1001;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
 }
 
 .fiction-tab {

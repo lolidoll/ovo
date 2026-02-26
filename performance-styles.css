@@ -220,7 +220,7 @@ button:active,
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     contain: layout style;
-    position: relative;
+    /* position 不在此覆盖，保持 style.css 中的 fixed */
     isolation: isolate;
 }
 

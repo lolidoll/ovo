@@ -11,7 +11,7 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #fff;
     display: flex !important;
-    align-items: flex-end !important;
+    align-items: center !important;
     justify-content: space-between !important;
     padding: env(safe-area-inset-top) 16px 0 16px !important;
     position: fixed !important;
@@ -133,7 +133,7 @@
 /* ==================== 内容容器 ==================== */
 #wallet-page .content-container {
     position: fixed;
-    top: 56px;
+    top: calc(56px + env(safe-area-inset-top));
     left: 0;
     right: 0;
     bottom: 0;

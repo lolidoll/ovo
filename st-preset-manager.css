@@ -36,6 +36,7 @@
         padding-top: env(safe-area-inset-top);
         height: calc(56px + env(safe-area-inset-top));
         min-height: calc(56px + env(safe-area-inset-top));
+        top: env(safe-area-inset-top);
     }
 }
 
@@ -45,6 +46,7 @@
     padding-top: env(safe-area-inset-top);
     height: calc(56px + env(safe-area-inset-top));
     min-height: calc(56px + env(safe-area-inset-top));
+    top: env(safe-area-inset-top);
 }
 .st-preset-back {
     width: 44px; height: 44px;

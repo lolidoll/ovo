@@ -29,6 +29,8 @@
   padding-bottom: 20px;
   /* iOS安全区域适配 */
   padding-bottom: calc(20px + var(--safe-area-inset-bottom));
+  /* 为sticky header预留空间 */
+  padding-top: 0;
 }
 
 /* 顶部导航栏 */
@@ -39,7 +41,7 @@
   padding: 15px 18px;
   padding-top: calc(15px + env(safe-area-inset-top));
   position: sticky;
-  top: env(safe-area-inset-top);
+  top: 0;
   background: var(--bg-white);
   z-index: 100;
   border-bottom: 1px solid var(--border-color);
@@ -85,6 +87,18 @@
 
 .cs-selector-btn:hover {
   background: var(--light-pink);
+}
+
+/* PWA模式下的header调整 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+  .cs-header {
+    top: env(safe-area-inset-top);
+  }
+}
+
+.is-pwa .cs-header,
+.is-standalone .cs-header {
+  top: env(safe-area-inset-top);
 }
 
 /* 个人信息卡片 */

@@ -19,6 +19,18 @@
     position: relative;
 }
 
+/* PWA模式下调整内容区域padding，避免被header遮挡 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #shopping-page .sub-content {
+        padding-top: calc(44px + env(safe-area-inset-top));
+    }
+}
+
+.is-pwa #shopping-page .sub-content,
+.is-standalone #shopping-page .sub-content {
+    padding-top: calc(44px + env(safe-area-inset-top));
+}
+
 /* 主页面容器 */
 #shopping-page .shopping-main-content {
     display: none;
@@ -52,6 +64,7 @@
         top: env(safe-area-inset-top);
         height: calc(44px + env(safe-area-inset-top));
         min-height: calc(44px + env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top);
     }
 }
 
@@ -61,6 +74,7 @@
     top: env(safe-area-inset-top);
     height: calc(44px + env(safe-area-inset-top));
     min-height: calc(44px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
 }
 
 /* 返回按钮 */
@@ -364,6 +378,7 @@
     height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(50px + env(safe-area-inset-bottom));
 }
 
 #shopping-page .cart-page.active {
@@ -588,6 +603,7 @@
     right: 0;
     bottom: 0;
     height: 100%;
+    padding-bottom: calc(50px + env(safe-area-inset-bottom));
 }
 
 #shopping-page .category-page.active {
@@ -773,6 +789,7 @@
     height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(50px + env(safe-area-inset-bottom));
 }
 
 #shopping-page .mine-page.active {
@@ -960,6 +977,8 @@
     border-top: 1px solid #eee;
     z-index: 95;
     padding-bottom: env(safe-area-inset-bottom);
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
 }
 
 #shopping-page .shopping-footer-item {
