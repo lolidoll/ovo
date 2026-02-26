@@ -31,11 +31,21 @@
   padding-top: env(safe-area-inset-top);
 }
 
-/* PWA模式下的安全区域处理 */
+/* PWA模式下的安全区域处理 - 与普通浏览器保持一致 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
   .fiction-header {
+    /* 与普通浏览器样式保持一致 */
     top: 0;
-    padding-top: env(safe-area-inset-top);
+    padding: 0 16px;
+    padding-top: 0; /* 重置PWA特殊padding */
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    z-index: 1001;
+    box-sizing: border-box;
   }
 }
 
@@ -71,8 +81,9 @@
 
 /* 页面容器：严格计算中间区域高度 */
 .fiction-container {
+  /* 与普通浏览器样式保持一致 */
   position: fixed;
-  top: calc(50px + env(safe-area-inset-top));
+  top: 50px; /* 固定顶部高度 */
   left: 0;
   right: 0;
   bottom: 60px;
@@ -82,16 +93,24 @@
   box-sizing: border-box;
 }
 
-/* PWA模式下容器位置调整 */
+/* PWA模式下容器位置调整 - 与普通浏览器保持一致 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
   .fiction-container {
-    top: calc(50px + env(safe-area-inset-top));
+    /* 与普通浏览器样式保持一致 */
+    top: 50px;
+    height: calc(100vh - 110px); /* 减去顶部和底部高度 */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 .is-pwa .fiction-container,
 .is-standalone .fiction-container {
-  top: calc(50px + env(safe-area-inset-top));
+  /* 与普通浏览器样式保持一致 */
+  top: 50px;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .fiction-content {

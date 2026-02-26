@@ -720,6 +720,8 @@
             -webkit-overflow-scrolling: touch;
             height: 100%;
             min-height: 0;
+            padding-bottom: 48px;
+            box-sizing: border-box;
         }
         
         .empty-state {
@@ -905,6 +907,8 @@
             -webkit-overflow-scrolling: touch;
             height: 100%;
             min-height: 0;
+            padding-bottom: 48px;
+            box-sizing: border-box;
         }
         
         .friend-group {
@@ -1024,7 +1028,6 @@
             text-overflow: ellipsis;
         }
 
-        /* 动态页面 */
         .dynamic-page {
             padding: 0;
             margin-top: calc(-1 * var(--nav-total-height));
@@ -1034,6 +1037,7 @@
             min-height: calc(var(--app-height, 100vh) - var(--nav-total-height) - 48px);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         .dynamic-content {
@@ -1041,8 +1045,10 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-top: 10px;
+            padding-bottom: 60px;
             height: 100%;
             min-height: 0;
+            box-sizing: border-box;
         }
         
         .func-list {
@@ -2767,8 +2773,8 @@ input[type="range"]::-ms-fill-upper {
             min-width: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
+            margin-left: -20px !important;
             font-size: 17px !important;
-            transform: translateX(-8px) !important;
         }
         
         .chat-more {
@@ -2821,6 +2827,7 @@ input[type="range"]::-ms-fill-upper {
             overflow-y: auto;
             overflow-x: hidden;
             padding: 15px;
+            padding-bottom: 63px;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -2840,6 +2847,7 @@ input[type="range"]::-ms-fill-upper {
             /* 确保消息气泡可以接收触摸事件 */
             pointer-events: auto;
             z-index: 1;
+            box-sizing: border-box;
         }
         
         /* 引用消息栏在移动端的样式 */

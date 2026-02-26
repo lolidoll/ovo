@@ -316,9 +316,8 @@
     min-width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
-    margin-left: 0 !important;
+    margin-left: -20px !important;
     font-size: 17px !important;
-    transform: translateX(-8px) !important;
 }
 
 .chat-title {
