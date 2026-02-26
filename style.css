@@ -624,8 +624,9 @@
                 right: 0 !important;
                 width: 100% !important;
                 z-index: 100 !important;
-                margin-top: 0 !important;
-                padding: 8px 15px !important; /* 减少上下padding，消除上方空白 */
+                margin: 0 !important;
+                padding: 8px 15px !important; /* 统一padding，确保总高度52px (8+36+8) */
+                box-sizing: border-box !important;
             }
             
             /* 重置消息页面和好友页面的margin和padding */
@@ -644,6 +645,7 @@
             /* 调整搜索输入框高度以适应减少的padding */
             .search-input {
                 height: 36px !important;
+                margin: 0 !important;
             }
         }
         .search-input {

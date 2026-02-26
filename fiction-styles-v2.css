@@ -77,6 +77,9 @@
   right: 0;
   bottom: 60px;
   overflow: hidden;
+  height: auto;
+  /* 确保容器精确填满可用空间 */
+  box-sizing: border-box;
 }
 
 /* PWA模式下容器位置调整 */
@@ -96,7 +99,9 @@
   height: 100%;
   display: none;
   flex-direction: column;
-  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  /* 移除可能导致空白的padding */
+  padding-bottom: 0;
+  box-sizing: border-box;
 }
 
 .fiction-content.active {
@@ -743,6 +748,9 @@
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: max(0px, env(safe-area-inset-left));
   padding-right: max(0px, env(safe-area-inset-right));
+  /* 确保不会有额外的margin或padding导致空白 */
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .fiction-tab {

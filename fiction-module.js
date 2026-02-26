@@ -25,13 +25,51 @@
     function initFiction() {
         console.log('📚 初始化同人文功能');
         
+        // 加载修复脚本
+        loadFixScript();
+        
         // 创建同人文页面DOM
         createFictionDOM();
         
         // 绑定事件
         bindFictionEvents();
         
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            // 防抖处理
+            if (window.resizeTimeout) {
+                clearTimeout(window.resizeTimeout);
+            }
+            window.resizeTimeout = setTimeout(() => {
+                checkFictionLayout();
+            }, 100);
+        });
+        
+        // 监听设备方向变化
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                checkFictionLayout();
+            }, 200);
+        });
+        
         console.log('✅ 同人文功能已初始化');
+    }
+    
+    /**
+     * 加载修复脚本
+     */
+    function loadFixScript() {
+        // 检查是否已加载修复脚本
+        if (document.querySelector('script[src="fiction-fix.js"]')) {
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'fiction-fix.js';
+        script.onload = function() {
+            console.log('🛠️ 修复脚本已加载');
+        };
+        document.head.appendChild(script);
     }
     
     /**
@@ -193,6 +231,10 @@
         tabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 switchFictionPage(this.dataset.page);
+                // 切换后检查布局
+                setTimeout(() => {
+                    checkFictionLayout();
+                }, 50);
             });
         });
         
@@ -238,10 +280,68 @@
         fictionPage.classList.add('active');
         fictionState.isOpen = true;
         
+        // 移动端布局优化
+        optimizeMobileLayout();
+        
+        // 检查布局问题
+        setTimeout(() => {
+            checkFictionLayout();
+        }, 100);
+        
         // 关闭聊天页面相关组件
         closeChatComponents();
         
         console.log('📚 同人文页面已打开');
+    }
+    
+    /**
+     * 检查同人文页面布局
+     */
+    function checkFictionLayout() {
+        const container = document.querySelector('.fiction-container');
+        const tabbar = document.querySelector('.fiction-tabbar');
+        const content = document.querySelector('.fiction-content.active');
+        
+        if (container) {
+            const containerHeight = container.offsetHeight;
+            const containerBottom = container.getBoundingClientRect().bottom;
+            const tabbarTop = tabbar ? tabbar.getBoundingClientRect().top : window.innerHeight;
+            
+            console.log('🔍 布局检查:');
+            console.log(`容器高度: ${containerHeight}px`);
+            console.log(`容器底部位置: ${containerBottom}px`);
+            console.log(`底部导航顶部位置: ${tabbarTop}px`);
+            console.log(`内容是否存在: ${!!content}`);
+            
+            // 检查是否有空白间隙
+            const hasGap = containerBottom < tabbarTop - 5;
+            if (hasGap) {
+                console.log('⚠️ 发现底部空白间隙');
+                // 修复容器高度
+                if (window.innerWidth < 768) {
+                    const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+                    const isAndroid = /android/.test(navigator.userAgent.toLowerCase());
+                    const safeAreaBottom = isIOS ? 20 : 16; // 估算的安全区域
+                    
+                    // 直接使用固定的底部高度，避免复杂的计算
+                    const bottomHeight = tabbar ? tabbar.offsetHeight : 60;
+                    container.style.bottom = `${bottomHeight}px`;
+                    console.log(`🔧 已修复容器高度，设置底部为: ${container.style.bottom}`);
+                }
+            }
+            
+            // 检查内容是否被遮挡
+            if (content && tabbar) {
+                const contentRect = content.getBoundingClientRect();
+                const tabbarRect = tabbar.getBoundingClientRect();
+                
+                if (contentRect.bottom > tabbarRect.top) {
+                    console.log('⚠️ 内容被底部导航栏遮挡');
+                    // 添加底部padding
+                    content.style.paddingBottom = `${tabbar.offsetHeight}px`;
+                }
+            }
+        }
     }
     
     /**
@@ -283,6 +383,35 @@
         });
         
         fictionState.currentPage = pageName;
+        
+        // 移动端布局优化
+        optimizeMobileLayout();
+    }
+    
+    /**
+     * 移动端布局优化
+     */
+    function optimizeMobileLayout() {
+        if (window.innerWidth < 768) {
+            const container = document.querySelector('.fiction-container');
+            const tabbar = document.querySelector('.fiction-tabbar');
+            const contents = document.querySelectorAll('.fiction-content.active');
+            
+            if (container && tabbar) {
+                // 确保容器底部正确计算
+                const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+                const safeAreaBottom = isIOS ? 20 : 16;
+                
+                container.style.bottom = `calc(${tabbar.offsetHeight + safeAreaBottom}px + env(safe-area-inset-bottom))`;
+                
+                // 确保内容不被遮挡
+                contents.forEach(content => {
+                    content.style.paddingBottom = `${tabbar.offsetHeight}px`;
+                });
+                
+                console.log('🔧 移动端布局已优化');
+            }
+        }
     }
     
     /**

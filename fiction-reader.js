@@ -47,7 +47,14 @@ const fictionReaderManager = {
      */
     getEffectiveHeight() {
         const mainArea = document.getElementById('fictionReaderMain');
-        if (!mainArea) return window.innerHeight - 110;
+        if (!mainArea) {
+            // 如果没有找到元素，返回基于bottom和top的差值
+            const toolbar = document.getElementById('fictionReaderToolbar');
+            const footer = document.getElementById('fictionReaderFooter');
+            const toolbarHeight = toolbar ? toolbar.offsetHeight : 50;
+            const footerHeight = footer ? footer.offsetHeight : 60;
+            return window.innerHeight - toolbarHeight - footerHeight;
+        }
         
         const rect = mainArea.getBoundingClientRect();
         return rect.height;
