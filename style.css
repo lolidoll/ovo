@@ -625,6 +625,12 @@
             margin-top: 0;
         }
         
+        /* 普通浏览器模式：搜索栏紧贴导航栏 */
+        html:not(.is-pwa):not(.is-standalone) .search-bar {
+            padding: 8px 15px;
+            margin: 0;
+        }
+        
         /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             /* 顶部导航栏保持固定在最顶部 */
@@ -749,6 +755,12 @@
             min-height: 0;
             padding-bottom: 48px;
             box-sizing: border-box;
+        }
+        
+        /* 普通浏览器模式：msg-list 正确处理高度 */
+        html:not(.is-pwa):not(.is-standalone) .msg-list {
+            height: auto;
+            min-height: auto;
         }
         
         .empty-state {
@@ -951,6 +963,12 @@
             box-sizing: border-box;
         }
         
+        /* 普通浏览器模式：friend-content 正确处理高度 */
+        html:not(.is-pwa):not(.is-standalone) .friend-content {
+            height: auto;
+            min-height: auto;
+        }
+        
         .friend-group {
             margin-bottom: 0;
         }
@@ -1099,6 +1117,13 @@
             height: 100%;
             min-height: 0;
             box-sizing: border-box;
+        }
+        
+        /* 普通浏览器模式：dynamic-content 正确处理高度 */
+        html:not(.is-pwa):not(.is-standalone) .dynamic-content {
+            padding-top: 0;
+            height: auto;
+            min-height: auto;
         }
         
         .func-list {
