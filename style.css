@@ -131,6 +131,15 @@
             max-height: none;
         }
         
+        /* 普通浏览器模式：调整容器以适应不同高度 */
+        html:not(.is-pwa):not(.is-standalone) #app-container {
+            overflow: visible;
+            min-height: auto;
+            max-height: none;
+            padding-top: var(--nav-total-height);
+            padding-bottom: 48px;
+        }
+        
         /* iOS模式：使用safe-area */
         [data-adapt-mode="ios"] #app-container,
         [data-adapt-mode="auto"].is-ios #app-container {
@@ -595,6 +604,17 @@
             flex-direction: column;
         }
         
+        /* 普通浏览器模式：主内容区域特殊处理 */
+        html:not(.is-pwa):not(.is-standalone) .main-content {
+            overflow: visible;
+            min-height: auto;
+            height: auto;
+        }
+        
+        html:not(.is-pwa):not(.is-standalone) .main-content.active {
+            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
+        }
+        
         .search-bar {
             padding: 10px 15px;
             background-color: #fff;
@@ -707,6 +727,12 @@
         
         .msg-page:not(.active) {
             display: none;
+        }
+        
+        /* 普通浏览器模式：消息页面特殊处理 */
+        html:not(.is-pwa):not(.is-standalone) .msg-page {
+            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
+            height: auto;
         }
         
         /* 消息页面的搜索栏 */
@@ -903,6 +929,12 @@
             display: none;
         }
         
+        /* 普通浏览器模式：好友页面特殊处理 */
+        html:not(.is-pwa):not(.is-standalone) .friend-page {
+            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
+            height: auto;
+        }
+        
         /* 好友页面的搜索栏 */
         .friend-page .search-bar {
             margin-top: 0 !important;
@@ -1050,6 +1082,12 @@
         
         .dynamic-page:not(.active) {
             display: none;
+        }
+        
+        /* 普通浏览器模式：动态页面特殊处理 */
+        html:not(.is-pwa):not(.is-standalone) .dynamic-page {
+            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
+            height: auto;
         }
         
         .dynamic-content {
