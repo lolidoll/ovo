@@ -115,6 +115,11 @@
         // 初始化
         document.addEventListener('DOMContentLoaded', async function() {
             try {
+                // 强制重新计算视口高度
+                if (window.setViewportHeight) {
+                    window.setViewportHeight();
+                }
+                
                 await loadFromStorage();
                 applyInitialTheme(); // 应用保存的主题
                 initEventListeners();

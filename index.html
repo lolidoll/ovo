@@ -115,50 +115,19 @@
             const isPWA = isStandalone;
             
             function setViewportHeight() {
-                // 获取真实的视口高度
-                let vh = window.innerHeight * 0.01;
-                let appHeight = window.innerHeight;
+                // 获取真实的视口高度 - 优先使用visualViewport (更精准)
+                let viewportHeight = window.innerHeight;
+                
+                // 对某些浏览器的特殊处理
+                if (window.visualViewport) {
+                    // visualViewport更精准，包括地址栏的动态变化
+                    viewportHeight = window.visualViewport.height;
+                }
                 
                 // 设置CSS自定义属性
+                let vh = viewportHeight * 0.01;
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
-                document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
-                
-                // 根据适配方案设置顶部padding
-                let topPadding = 45; // 默认标准模式
-                
-                switch(adaptMode) {
-                    case 'auto':
-                        // 自动模式：根据设备和浏览器自动选择
-                        if (isPWA) {
-                            topPadding = 0; // 所有设备PWA模式都使用safe-area
-                        } else {
-                            topPadding = 45; // 标准浏览器模式
-                        }
-                        break;
-                    case 'standard':
-                        topPadding = 45;
-                        break;
-                    case 'ios':
-                        topPadding = 0; // 使用safe-area-inset
-                        break;
-                    case 'fullscreen':
-                        topPadding = 0;
-                        break;
-                    case 'compact':
-                        topPadding = 35;
-                        break;
-                    case 'loose':
-                        topPadding = 55;
-                        break;
-                }
-                
-                // 设置顶部padding
-                document.documentElement.style.setProperty('--top-padding', `${topPadding}px`);
-                
-                // 针对iOS Safari的额外处理
-                if (CSS.supports && CSS.supports('-webkit-fill-available', '100vh')) {
-                    document.documentElement.style.height = '-webkit-fill-available';
-                }
+                document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
                 
                 // 标记设备类型 - 统一的设备标识
                 if (isIOS) {
@@ -186,6 +155,11 @@
                 
                 // 标记适配模式
                 document.documentElement.setAttribute('data-adapt-mode', adaptMode);
+                
+                // 调试日志
+                if (window.__DEBUG_VIEWPORT__) {
+                    console.log(`[Viewport] innerHeight: ${window.innerHeight}, visualViewport: ${window.visualViewport?.height || 'N/A'}, vh: ${vh}, isPWA: ${isPWA}`);
+                }
             }
             
             // 初始设置
@@ -222,18 +196,27 @@
                 setTimeout(setViewportHeight, 300);
             });
             
-            // 非PWA模式下，注入动态样式修复底部被浏览器工具栏遮挡的问题
+            // 处理visualViewport变化（地址栏动态显示/隐藏）
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', function() {
+                    setViewportHeight();
+                });
+            }
+            
+            // 非PWA模式下，注入动态样式修复
             if (!isPWA) {
                 const fixStyle = document.createElement('style');
                 fixStyle.id = 'non-pwa-viewport-fix';
                 fixStyle.textContent = `
-                    /* 非PWA模式：所有使用100vh的fixed全屏元素改用实际视口高度 */
-                    html:not(.is-pwa):not(.is-standalone) .add-friend-page,
-                    html:not(.is-pwa):not(.is-standalone) .card-edit-page,
-                    html:not(.is-pwa):not(.is-standalone) .create-group-page,
-                    html:not(.is-pwa):not(.is-standalone) .voice-call-overlay,
-                    html:not(.is-pwa):not(.is-standalone) .video-call-overlay {
-                        height: calc(var(--vh, 1vh) * 100) !important;
+                    /* 非PWA模式：使用100dvh确保所有元素正确显示 */
+                    html:not(.is-pwa):not(.is-standalone) body {
+                        height: 100dvh;
+                        height: 100vh;
+                    }
+                    
+                    html:not(.is-pwa):not(.is-standalone) #app-container {
+                        height: 100dvh;
+                        height: 100vh;
                     }
                 `;
                 document.head.appendChild(fixStyle);
