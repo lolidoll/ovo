@@ -608,13 +608,13 @@
         /* 普通浏览器模式：主内容区域特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .main-content {
             overflow: hidden;
-            min-height: calc(100vh - var(--nav-total-height) - 48px);
-            height: calc(100vh - var(--nav-total-height) - 48px);
+            flex: 1;
+            min-height: 0;
         }
         
         html:not(.is-pwa):not(.is-standalone) .main-content.active {
-            min-height: calc(100vh - var(--nav-total-height) - 48px);
-            height: calc(100vh - var(--nav-total-height) - 48px);
+            display: flex;
+            flex-direction: column;
         }
         
         .search-bar {
@@ -733,8 +733,8 @@
         
         /* 普通浏览器模式：消息页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .msg-page {
-            height: calc(100vh - var(--nav-total-height) - 48px);
-            min-height: calc(100vh - var(--nav-total-height) - 48px);
+            height: 100%;
+            min-height: 0;
         }
         
         /* 消息页面的搜索栏 */
@@ -749,9 +749,8 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            height: 100%;
             min-height: 0;
-            padding-bottom: 48px;
+            padding-bottom: 0;
             box-sizing: border-box;
         }
         
@@ -935,8 +934,8 @@
         
         /* 普通浏览器模式：好友页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .friend-page {
-            height: calc(100vh - var(--nav-total-height) - 48px);
-            min-height: calc(100vh - var(--nav-total-height) - 48px);
+            height: 100%;
+            min-height: 0;
         }
         
         /* 好友页面的搜索栏 */
@@ -951,9 +950,8 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            height: 100%;
             min-height: 0;
-            padding-bottom: 48px;
+            padding-bottom: 0;
             box-sizing: border-box;
         }
         
@@ -1092,8 +1090,8 @@
         
         /* 普通浏览器模式：动态页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .dynamic-page {
-            height: calc(100vh - var(--nav-total-height) - 48px);
-            min-height: calc(100vh - var(--nav-total-height) - 48px);
+            height: 100%;
+            min-height: 0;
         }
         
         .dynamic-content {
@@ -1101,8 +1099,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-top: 0;
-            padding-bottom: 60px;
-            height: 100%;
+            padding-bottom: 0;
             min-height: 0;
             box-sizing: border-box;
         }
