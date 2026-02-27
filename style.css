@@ -137,7 +137,7 @@
             height: 100vh;
             min-height: 100vh;
             max-height: 100vh;
-            padding-top: var(--nav-total-height);
+            padding-top: 0;
             padding-bottom: 0;
         }
         
@@ -608,7 +608,8 @@
             overflow: hidden;
             flex: 1;
             min-height: 0;
-            height: 100%;
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            margin-top: var(--nav-total-height);
         }
         
         html:not(.is-pwa):not(.is-standalone) .main-content.active {
