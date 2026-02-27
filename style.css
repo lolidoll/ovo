@@ -133,11 +133,12 @@
         
         /* 普通浏览器模式：调整容器以适应不同高度 */
         html:not(.is-pwa):not(.is-standalone) #app-container {
-            overflow: visible;
-            min-height: auto;
-            max-height: none;
+            overflow: hidden;
+            height: 100vh;
+            min-height: 100vh;
+            max-height: 100vh;
             padding-top: var(--nav-total-height);
-            padding-bottom: 48px;
+            padding-bottom: 0;
         }
         
         /* iOS模式：使用safe-area */
@@ -606,13 +607,14 @@
         
         /* 普通浏览器模式：主内容区域特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .main-content {
-            overflow: visible;
-            min-height: auto;
-            height: auto;
+            overflow: hidden;
+            min-height: calc(100vh - var(--nav-total-height) - 48px);
+            height: calc(100vh - var(--nav-total-height) - 48px);
         }
         
         html:not(.is-pwa):not(.is-standalone) .main-content.active {
-            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
+            min-height: calc(100vh - var(--nav-total-height) - 48px);
+            height: calc(100vh - var(--nav-total-height) - 48px);
         }
         
         .search-bar {
@@ -623,12 +625,6 @@
             top: auto;
             z-index: 10;
             margin-top: 0;
-        }
-        
-        /* 普通浏览器模式：搜索栏紧贴导航栏 */
-        html:not(.is-pwa):not(.is-standalone) .search-bar {
-            padding: 8px 15px;
-            margin: 0;
         }
         
         /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
@@ -665,10 +661,10 @@
             .msg-page,
             .friend-page {
                 margin-top: 0 !important;
-                padding-top: calc(var(--nav-total-height) + 44px) !important; /* 导航栏高度 + 搜索栏高度(4+36+4) */
+                padding-top: 0 !important;
             }
             
-            /* msg-list和friend-content不需要额外的padding-top，因为页面本身已经有padding-top了 */
+            /* msg-list和friend-content不需要额外的padding-top */
             .msg-page .msg-list,
             .friend-page .friend-content {
                 padding-top: 0 !important;
@@ -737,14 +733,16 @@
         
         /* 普通浏览器模式：消息页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .msg-page {
-            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
-            height: auto;
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            min-height: calc(100vh - var(--nav-total-height) - 48px);
         }
         
         /* 消息页面的搜索栏 */
         .msg-page .search-bar {
             margin-top: 0 !important;
             margin: 0 !important;
+            flex-shrink: 0;
+            height: 56px;
         }
         
         .msg-list {
@@ -755,12 +753,6 @@
             min-height: 0;
             padding-bottom: 48px;
             box-sizing: border-box;
-        }
-        
-        /* 普通浏览器模式：msg-list 正确处理高度 */
-        html:not(.is-pwa):not(.is-standalone) .msg-list {
-            height: auto;
-            min-height: auto;
         }
         
         .empty-state {
@@ -943,14 +935,16 @@
         
         /* 普通浏览器模式：好友页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .friend-page {
-            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
-            height: auto;
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            min-height: calc(100vh - var(--nav-total-height) - 48px);
         }
         
         /* 好友页面的搜索栏 */
         .friend-page .search-bar {
             margin-top: 0 !important;
             margin: 0 !important;
+            flex-shrink: 0;
+            height: 56px;
         }
         
         .friend-content {
@@ -961,12 +955,6 @@
             min-height: 0;
             padding-bottom: 48px;
             box-sizing: border-box;
-        }
-        
-        /* 普通浏览器模式：friend-content 正确处理高度 */
-        html:not(.is-pwa):not(.is-standalone) .friend-content {
-            height: auto;
-            min-height: auto;
         }
         
         .friend-group {
@@ -1104,26 +1092,19 @@
         
         /* 普通浏览器模式：动态页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .dynamic-page {
-            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
-            height: auto;
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            min-height: calc(100vh - var(--nav-total-height) - 48px);
         }
         
         .dynamic-content {
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            padding-top: 10px;
+            padding-top: 0;
             padding-bottom: 60px;
             height: 100%;
             min-height: 0;
             box-sizing: border-box;
-        }
-        
-        /* 普通浏览器模式：dynamic-content 正确处理高度 */
-        html:not(.is-pwa):not(.is-standalone) .dynamic-content {
-            padding-top: 0;
-            height: auto;
-            min-height: auto;
         }
         
         .func-list {
