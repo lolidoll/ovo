@@ -619,10 +619,15 @@
             padding: 10px 15px;
             background-color: #fff;
             flex-shrink: 0;
-            position: relative;
-            top: auto;
-            z-index: 10;
-            margin-top: 0;
+            position: fixed;
+            top: var(--nav-total-height);
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 50;
+            margin: 0;
+            box-sizing: border-box;
+            border-bottom: 1px solid transparent;
         }
         
         /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
@@ -636,39 +641,12 @@
                 z-index: 101 !important;
             }
             
-            /* 搜索栏固定在顶部导航栏下方，适用于所有搜索栏 */
+            /* 搜索栏已经是fixed定位，无需额外处理 */
             .search-bar {
-                position: fixed !important;
-                top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
                 z-index: 100 !important;
-                margin: 0 !important;
-                padding: 4px 15px !important; /* 最小padding */
-                box-sizing: border-box !important;
-                height: auto !important;
             }
             
-            .search-bar .search-wrapper {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            /* 重置消息页面和好友页面的margin和padding */
-            .msg-page,
-            .friend-page {
-                margin-top: 0 !important;
-                padding-top: calc(var(--nav-total-height) + 44px) !important; /* 导航栏高度 + 搜索栏高度(4+36+4) */
-            }
-            
-            /* msg-list和friend-content不需要额外的padding-top，因为页面本身已经有padding-top了 */
-            .msg-page .msg-list,
-            .friend-page .friend-content {
-                padding-top: 0 !important;
-            }
-            
-            /* 调整搜索输入框高度以适应减少的padding */
+            /* 调整搜索输入框高度 */
             .search-input {
                 height: 36px !important;
                 margin: 0 !important;
@@ -715,7 +693,7 @@
         /* 消息页面 */
         .msg-page {
             padding: 0;
-            margin-top: 0;
+            margin-top: 56px;
             padding-top: 0;
             padding-bottom: 0;
             display: flex;
@@ -736,9 +714,12 @@
         }
         
         /* 消息页面的搜索栏 */
-        .msg-page .search-bar {
-            margin-top: 0 !important;
-            margin: 0 !important;
+        .msg-search-bar {
+            display: block;
+        }
+        
+        .friend-search-bar {
+            display: none;
         }
         
         .msg-list {
@@ -749,6 +730,7 @@
             min-height: 0;
             padding-bottom: 48px;
             box-sizing: border-box;
+        }
         }
         
         .empty-state {
@@ -915,7 +897,7 @@
         /* 好友页面 */
         .friend-page {
             padding: 0;
-            margin-top: 0;
+            margin-top: 56px;
             padding-top: 0;
             padding-bottom: 0;
             height: 100%;
@@ -935,10 +917,13 @@
             height: auto;
         }
         
-        /* 好友页面的搜索栏 */
-        .friend-page .search-bar {
-            margin-top: 0 !important;
-            margin: 0 !important;
+        /* 好友页面激活时显示搜索栏 */
+        .friend-page.active ~ .friend-search-bar {
+            display: block;
+        }
+        
+        .msg-page.active ~ .msg-search-bar {
+            display: block;
         }
         
         .friend-content {

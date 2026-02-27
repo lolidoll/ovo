@@ -629,18 +629,19 @@
         <!-- 遮罩层 -->
         <div class="mask" id="mask"></div>
 
+        <!-- 消息页面搜索栏 -->
+        <div class="search-bar msg-search-bar" id="msg-search-bar">
+            <div class="search-wrapper">
+                <svg class="icon-svg search-icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="search-input" placeholder="搜索" id="search-input-msg">
+            </div>
+        </div>
+
         <!-- 消息页面 -->
         <div class="main-content msg-page active" id="msg-page">
-            <div class="search-bar">
-                <div class="search-wrapper">
-                    <svg class="icon-svg search-icon" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" class="search-input" placeholder="搜索" id="search-input-msg">
-                </div>
-            </div>
-            
             <div class="msg-list" id="msg-list">
                 <div class="empty-state" id="msg-empty">
                     <div class="empty-icon">
@@ -654,18 +655,19 @@
             </div>
         </div>
 
+        <!-- 好友页面搜索栏 -->
+        <div class="search-bar friend-search-bar" id="friend-search-bar" style="display: none;">
+            <div class="search-wrapper">
+                <svg class="icon-svg search-icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="search-input" placeholder="搜索好友" id="search-input-friend">
+            </div>
+        </div>
+
         <!-- 好友页面 -->
         <div class="main-content friend-page" id="friend-page">
-            <div class="search-bar">
-                <div class="search-wrapper">
-                    <svg class="icon-svg search-icon" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" class="search-input" placeholder="搜索好友" id="search-input-friend">
-                </div>
-            </div>
-            
             <div class="friend-content" id="friend-content">
                 <div class="friend-group">
                     <div class="group-header" data-group="common">

@@ -123,6 +123,12 @@
                 initPromptUI();
                 initWorldbookUI();
                 
+                // 初始化搜索栏显示状态
+                const msgSearchBar = document.getElementById('msg-search-bar');
+                const friendSearchBar = document.getElementById('friend-search-bar');
+                if (msgSearchBar) msgSearchBar.style.display = 'block';
+                if (friendSearchBar) friendSearchBar.style.display = 'none';
+                
                 // 初始化副API管理器
                 SecondaryAPIManager.init(AppState, showToast, saveToStorage, showLoadingOverlay, hideLoadingOverlay);
                 SecondaryAPIManager.initEventListeners();
@@ -1579,6 +1585,22 @@
                     topNav.style.display = 'none';
                 } else {
                     topNav.style.display = 'flex';
+                }
+                
+                // 更新搜索栏显示
+                const msgSearchBar = document.getElementById('msg-search-bar');
+                const friendSearchBar = document.getElementById('friend-search-bar');
+                if (msgSearchBar && friendSearchBar) {
+                    if (tabId === 'msg-page') {
+                        msgSearchBar.style.display = 'block';
+                        friendSearchBar.style.display = 'none';
+                    } else if (tabId === 'friend-page') {
+                        msgSearchBar.style.display = 'none';
+                        friendSearchBar.style.display = 'block';
+                    } else {
+                        msgSearchBar.style.display = 'none';
+                        friendSearchBar.style.display = 'none';
+                    }
                 }
                 
                 AppState.currentTab = tabId;
