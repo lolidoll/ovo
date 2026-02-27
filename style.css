@@ -144,6 +144,8 @@
             left: 0;
             right: 0;
             width: 100vw;
+            display: flex;
+            flex-direction: column;
         }
         
         /* iOS模式：使用safe-area */
@@ -611,14 +613,14 @@
         /* 普通浏览器模式：主内容区域特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .main-content {
             overflow: hidden;
-            flex: 1;
-            min-height: 0;
-            position: absolute;
+            position: fixed;
             top: var(--nav-total-height);
             left: 0;
             right: 0;
             bottom: 48px;
-            height: auto;
+            width: 100vw;
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            display: none;
         }
         
         html:not(.is-pwa):not(.is-standalone) .main-content.active {
@@ -636,7 +638,36 @@
             margin-top: 0;
         }
         
-        /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
+        /* 普通浏览器模式下搜索栏是相对定位，在flex布局中的第一个元素 */
+        html:not(.is-pwa):not(.is-standalone) .search-bar {
+            position: relative !important;
+            margin: 0 !important;
+            padding: 10px 15px !important;
+            box-sizing: border-box !important;
+            flex-shrink: 0 !important;
+            background-color: #fff !important;
+            z-index: 10 !important;
+        }
+        
+        html:not(.is-pwa):not(.is-standalone) .search-bar .search-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* 普通浏览器模式下，重置消息页面和好友页面的margin和padding */
+        html:not(.is-pwa):not(.is-standalone) .msg-page,
+        html:not(.is-pwa):not(.is-standalone) .friend-page {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* 普通浏览器模式下，msg-list和friend-content不需要额外的padding-top */
+        html:not(.is-pwa):not(.is-standalone) .msg-page .msg-list,
+        html:not(.is-pwa):not(.is-standalone) .friend-page .friend-content {
+            padding-top: 0 !important;
+        }
+        
+        /* Opera浏览器全屏模式适配 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             /* 顶部导航栏保持固定在最顶部 */
             .top-nav {
@@ -647,39 +678,7 @@
                 z-index: 101 !important;
             }
             
-            /* 搜索栏固定在顶部导航栏下方，适用于所有搜索栏 */
-            .search-bar {
-                position: fixed !important;
-                top: var(--nav-total-height) !important; /* 顶部导航栏高度 */
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
-                z-index: 100 !important;
-                margin: 0 !important;
-                padding: 4px 15px !important; /* 最小padding */
-                box-sizing: border-box !important;
-                height: auto !important;
-            }
-            
-            .search-bar .search-wrapper {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            /* 重置消息页面和好友页面的margin和padding */
-            .msg-page,
-            .friend-page {
-                margin-top: 0 !important;
-                padding-top: 0 !important;
-            }
-            
-            /* msg-list和friend-content不需要额外的padding-top */
-            .msg-page .msg-list,
-            .friend-page .friend-content {
-                padding-top: 0 !important;
-            }
-            
-            /* 调整搜索输入框高度以适应减少的padding */
+            /* 调整搜索输入框高度 */
             .search-input {
                 height: 36px !important;
                 margin: 0 !important;
@@ -738,12 +737,6 @@
         
         .msg-page:not(.active) {
             display: none;
-        }
-        
-        /* 普通浏览器模式：消息页面特殊处理 */
-        html:not(.is-pwa):not(.is-standalone) .msg-page {
-            height: 100%;
-            min-height: 0;
         }
         
         /* 消息页面的搜索栏 */
@@ -942,12 +935,6 @@
             display: none;
         }
         
-        /* 普通浏览器模式：好友页面特殊处理 */
-        html:not(.is-pwa):not(.is-standalone) .friend-page {
-            height: 100%;
-            min-height: 0;
-        }
-        
         /* 好友页面的搜索栏 */
         .friend-page .search-bar {
             margin-top: 0 !important;
@@ -1097,12 +1084,6 @@
         
         .dynamic-page:not(.active) {
             display: none;
-        }
-        
-        /* 普通浏览器模式：动态页面特殊处理 */
-        html:not(.is-pwa):not(.is-standalone) .dynamic-page {
-            height: 100%;
-            min-height: 0;
         }
         
         .dynamic-content {
