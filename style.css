@@ -725,10 +725,12 @@
             padding: 0;
             margin-top: 56px;
             padding-top: 0;
-            padding-bottom: 0;
+            padding-bottom: 48px;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(56px) - 底部导航(48px) */
+            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
             min-height: 0;
             flex: 1;
             overflow: hidden;
@@ -741,7 +743,9 @@
         /* 普通浏览器模式：消息页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .msg-page {
             flex: 1;
-            height: 100%;
+            /* 正确计算高度 */
+            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
             min-height: 0;
         }
         
@@ -758,11 +762,14 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            height: 100%;
+            /* 正确计算高度：100vh - 顶部导航(45px) - 搜索栏(56px) - 底部导航(48px) */
+            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            max-height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            max-height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
             min-height: 0;
-            padding-bottom: 48px;
+            padding-bottom: 0;
             box-sizing: border-box;
-        }
         }
         
         .empty-state {
@@ -931,8 +938,10 @@
             padding: 0;
             margin-top: 56px;
             padding-top: 0;
-            padding-bottom: 0;
-            height: 100%;
+            padding-bottom: 48px;
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(56px) - 底部导航(48px) */
+            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
             min-height: 0;
             flex: 1;
             overflow: hidden;
@@ -947,7 +956,9 @@
         /* 普通浏览器模式：好友页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .friend-page {
             flex: 1;
-            height: 100%;
+            /* 正确计算高度 */
+            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
             min-height: 0;
         }
         
@@ -964,9 +975,13 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            height: 100%;
+            /* 正确计算高度：100vh - 顶部导航(45px) - 搜索栏(56px) - 底部导航(48px) */
+            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            max-height: calc(100vh - var(--nav-total-height) - 56px - 48px);
+            max-height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
             min-height: 0;
-            padding-bottom: 48px;
+            padding-bottom: 0;
             box-sizing: border-box;
             width: 100%;
         }
@@ -1092,12 +1107,14 @@
             padding: 0;
             margin-top: 0;
             padding-top: 0;
-            padding-bottom: 0;
-            height: 100%;
+            padding-bottom: 48px;
+            /* 正确计算高度：100vh - 顶部导航 - 底部导航(48px) */
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 48px);
             min-height: 0;
             display: flex;
             flex-direction: column;
-            overflow: visible;
+            overflow: hidden;
         }
         
         .dynamic-page:not(.active) {
@@ -1106,8 +1123,10 @@
         
         /* 普通浏览器模式：动态页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .dynamic-page {
-            min-height: calc(var(--app-height) - var(--nav-total-height) - 48px);
-            height: auto;
+            /* 正确计算高度 */
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 48px);
+            min-height: 0;
         }
         
         .dynamic-content {
@@ -1115,9 +1134,13 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-top: 10px;
-            padding-bottom: 60px;
-            height: 100%;
+            /* 正确计算高度：100vh - 顶部导航(45px) - 底部导航(48px) */
+            height: calc(100vh - var(--nav-total-height) - 48px);
+            height: calc(100dvh - var(--nav-total-height) - 48px);
+            max-height: calc(100vh - var(--nav-total-height) - 48px);
+            max-height: calc(100dvh - var(--nav-total-height) - 48px);
             min-height: 0;
+            padding-bottom: 0;
             box-sizing: border-box;
         }
         
