@@ -139,6 +139,11 @@
             max-height: 100vh;
             padding-top: 0;
             padding-bottom: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100vw;
         }
         
         /* iOS模式：使用safe-area */
@@ -608,8 +613,12 @@
             overflow: hidden;
             flex: 1;
             min-height: 0;
-            height: calc(100vh - var(--nav-total-height) - 48px);
-            margin-top: var(--nav-total-height);
+            position: absolute;
+            top: var(--nav-total-height);
+            left: 0;
+            right: 0;
+            bottom: 48px;
+            height: auto;
         }
         
         html:not(.is-pwa):not(.is-standalone) .main-content.active {
