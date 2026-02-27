@@ -590,10 +590,8 @@
         /* 主内容区域 */
         .main-content {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
             display: none;
-            -webkit-overflow-scrolling: touch;
             padding-bottom: 0;
             /* 确保内容不会被固定的顶部导航栏遮挡 */
             position: relative;
@@ -610,6 +608,7 @@
             overflow: hidden;
             flex: 1;
             min-height: 0;
+            height: 100%;
         }
         
         html:not(.is-pwa):not(.is-standalone) .main-content.active {
@@ -741,8 +740,9 @@
         .msg-page .search-bar {
             margin-top: 0 !important;
             margin: 0 !important;
+            padding: 10px 15px;
             flex-shrink: 0;
-            height: 56px;
+            background-color: #fff;
         }
         
         .msg-list {
@@ -942,8 +942,9 @@
         .friend-page .search-bar {
             margin-top: 0 !important;
             margin: 0 !important;
+            padding: 10px 15px;
             flex-shrink: 0;
-            height: 56px;
+            background-color: #fff;
         }
         
         .friend-content {
