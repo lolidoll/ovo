@@ -1286,6 +1286,21 @@
             visibility: visible !important;
         }
         
+        /* PWA全屏模式 - 所有sub-page完全覆盖整个屏幕，不预留底部空间 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .sub-page {
+                bottom: 0 !important;
+                height: calc(100dvh - env(safe-area-inset-top)) !important;
+            }
+        }
+        
+        /* 通过class添加的额外适配 */
+        .is-pwa .sub-page,
+        .is-standalone .sub-page {
+            bottom: 0 !important;
+            height: calc(100dvh - env(safe-area-inset-top)) !important;
+        }
+        
         .sub-nav {
             height: 56px;
             min-height: 56px;

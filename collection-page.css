@@ -1,0 +1,85 @@
+/* ==================== 收藏页面样式 - 现代化设计 ==================== */
+
+/* 页面整体背景 */
+#collection-page {
+    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff 100%) !important;
+    bottom: 0 !important;
+}
+
+/* PWA全屏模式 - 完全覆盖整个屏幕，不预留底部空间 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #collection-page {
+        bottom: 0 !important;
+        height: calc(100dvh - env(safe-area-inset-top)) !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #collection-page,
+.is-standalone #collection-page {
+    bottom: 0 !important;
+    height: calc(100dvh - env(safe-area-inset-top)) !important;
+}
+
+/* ==================== 内容容器 ==================== */
+#collection-page .sub-content {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff 100%) !important;
+    -webkit-overflow-scrolling: touch;
+    z-index: 10;
+}
+
+/* PWA全屏模式适配 - 调整层级防止被底部切换栏覆盖 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #collection-page .sub-content {
+        z-index: 10;
+        position: fixed;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #collection-page .sub-content,
+.is-standalone #collection-page .sub-content {
+    z-index: 10;
+}
+
+/* 顶部导航栏 */
+#collection-page .sub-nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 56px !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+}
+
+/* PWA全屏模式适配 - 顶部导航栏 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #collection-page .sub-nav {
+        height: calc(56px + env(safe-area-inset-top)) !important;
+        padding-top: env(safe-area-inset-top) !important;
+        top: 0 !important;
+    }
+    
+    #collection-page .sub-content {
+        top: calc(56px + env(safe-area-inset-top)) !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #collection-page .sub-nav,
+.is-standalone #collection-page .sub-nav {
+    height: calc(56px + env(safe-area-inset-top)) !important;
+    padding-top: env(safe-area-inset-top) !important;
+}
+
+.is-pwa #collection-page .sub-content,
+.is-standalone #collection-page .sub-content {
+    top: calc(56px + env(safe-area-inset-top)) !important;
+}
