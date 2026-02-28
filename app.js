@@ -73,7 +73,7 @@
             user: {
                 name: '小喵1号',
                 avatar: '', // 侧边栏头像
-                signature: '这个人很懒，什么都没写~',
+                signature: '这个人很懒',
                 bgImage: '',
                 coins: 0, // 虚拟币余额
                 theme: 'light', // 主题: light(黑白灰简约), pink(白粉色系), dark(夜间模式)
@@ -462,28 +462,28 @@
                 e.stopPropagation();
             });
 
-            // 点击页面其他区域关闭侧边栏 - 只在冒泡阶段处理
+            // 点击页面其他区域关闭侧边栏 - 在捕获阶段处理，阻止事件传播到下层元素
             document.addEventListener('click', function(e) {
                 const sideMenu = document.getElementById('side-menu');
                 const userInfo = document.getElementById('user-info');
-                
+
                 if (sideMenu && sideMenu.classList.contains('open')) {
                     const isClickInsideSideMenu = sideMenu.contains(e.target);
                     const isClickUserInfo = userInfo && userInfo.contains(e.target);
-                    
+
                     // 只有当点击的是页面其他区域时才处理
                     if (!isClickInsideSideMenu && !isClickUserInfo) {
-                        // 只阻止这次事件的默认行为和冒泡
+                        // 在捕获阶段阻止事件传播，防止点击穿透到下层元素
                         e.preventDefault();
                         e.stopPropagation();
-                        
+
                         // 延迟执行关闭
                         setTimeout(function() {
                             closeSideMenu();
                         }, 50);
                     }
                 }
-            });
+            }, { capture: true });
 
             // 添加按钮
             document.getElementById('add-btn').addEventListener('click', function(e) {
@@ -1340,7 +1340,7 @@
 
             // 侧边栏名片
             document.getElementById('display-name').textContent = user.name;
-            document.getElementById('card-signature').textContent = user.signature || '这个人很懒，什么都没写~';
+            document.getElementById('card-signature').textContent = user.signature || '这个人很懒';
             
             const cardAvatar = document.getElementById('card-avatar');
             if (user.avatar) {
@@ -1366,7 +1366,7 @@
 
             // 编辑页面
             document.getElementById('card-edit-preview-name').textContent = user.name;
-            document.getElementById('card-edit-preview-sig').textContent = user.signature || '这个人很懒，什么都没写~';
+            document.getElementById('card-edit-preview-sig').textContent = user.signature || '这个人很懒';
             
             const previewAvatar = document.getElementById('card-edit-preview-avatar');
             if (user.avatar) {
@@ -1388,7 +1388,7 @@
             }
 
             document.getElementById('edit-name-value').textContent = user.name;
-            document.getElementById('edit-signature-value').textContent = user.signature || '这个人很懒，什么都没写~';
+            document.getElementById('edit-signature-value').textContent = user.signature || '这个人很懒';
             document.getElementById('edit-bg-value').textContent = user.bgImage ? '已设置' : '默认';
         }
 
