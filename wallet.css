@@ -142,6 +142,21 @@
     padding: 20px 16px 30px;
     background: linear-gradient(180deg, #f0f9ff 0%, #fafbfc 50%, #ffffff 100%);
     -webkit-overflow-scrolling: touch;
+    z-index: 10;
+}
+
+/* PWA全屏模式适配 - 调整层级防止被底部切换栏覆盖 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #wallet-page .content-container {
+        z-index: 10;
+        position: fixed;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #wallet-page .content-container,
+.is-standalone #wallet-page .content-container {
+    z-index: 10;
 }
 
 /* 确保内容区域填充整个可视区域 */
