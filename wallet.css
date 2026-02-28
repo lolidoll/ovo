@@ -3,6 +3,22 @@
 /* 页面整体背景 */
 #wallet-page {
     background: linear-gradient(180deg, #f0f9ff 0%, #fafbfc 50%, #ffffff 100%);
+    bottom: 0 !important;
+}
+
+/* PWA全屏模式 - 完全覆盖整个屏幕，不预留底部空间 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    #wallet-page {
+        bottom: 0 !important;
+        height: calc(100dvh - env(safe-area-inset-top)) !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa #wallet-page,
+.is-standalone #wallet-page {
+    bottom: 0 !important;
+    height: calc(100dvh - env(safe-area-inset-top)) !important;
 }
 
 /* ==================== 顶部导航栏 ==================== */
