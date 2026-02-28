@@ -465,36 +465,24 @@
 
         <!-- 侧边功能栏 -->
         <div class="side-menu" id="side-menu">
+            <!-- 左侧快捷按钮 -->
+            <div class="left-menu-buttons">
+                <button class="left-menu-btn" data-func="weather">天气</button>
+                <button class="left-menu-btn" data-func="calendar">日历</button>
+            </div>
+            
             <div class="card-info" id="card-info">
                 <div class="card-bg" id="card-bg"></div>
                 <div class="card-content">
                     <div class="card-avatar" id="card-avatar">喵</div>
-                    <div class="card-name" id="display-name">小喵1号</div>
-                    <div class="card-signature" id="card-signature">这个人很懒，什么都没写~</div>
+                    <div class="user-info">
+                        <div class="card-name" id="display-name">小喵1号</div>
+                        <div class="card-signature" id="card-signature">这个人很懒，什么都没写~</div>
+                    </div>
                 </div>
             </div>
             
             <div class="menu-list">
-                <div class="menu-item" data-func="wallet">
-                    <div class="menu-icon">
-                        <svg class="icon-svg" viewBox="0 0 24 24">
-                            <rect x="2" y="6" width="20" height="14" rx="2"></rect>
-                            <path d="M2 10h20"></path>
-                            <circle cx="16" cy="14" r="1.5"></circle>
-                        </svg>
-                    </div>
-                    <div class="menu-text">钱包</div>
-                </div>
-                
-                <div class="menu-item" data-func="collection">
-                    <div class="menu-icon">
-                        <svg class="icon-svg" viewBox="0 0 24 24">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                        </svg>
-                    </div>
-                    <div class="menu-text">收藏</div>
-                </div>
-                
                 <div class="menu-item" data-func="emoji">
                     <div class="menu-icon">
                         <svg class="icon-svg" viewBox="0 0 24 24">
@@ -519,63 +507,6 @@
                     <div class="menu-text">世界书</div>
                 </div>
                 
-                <div class="menu-divider"></div>
-                
-                <div class="menu-item" data-func="decoration">
-                    <div class="menu-icon">
-                        <svg class="icon-svg" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M12 2v4"></path>
-                            <path d="M12 18v4"></path>
-                            <path d="M4.93 4.93l2.83 2.83"></path>
-                            <path d="M16.24 16.24l2.83 2.83"></path>
-                            <path d="M2 12h4"></path>
-                            <path d="M18 12h4"></path>
-                            <path d="M4.93 19.07l2.83-2.83"></path>
-                            <path d="M16.24 7.76l2.83-2.83"></path>
-                        </svg>
-                    </div>
-                    <div class="menu-text">个性装扮</div>
-                </div>
-                
-                <div class="menu-item" data-func="api-settings">
-                    <div class="menu-icon">
-                        <svg class="icon-svg" viewBox="0 0 24 24">
-                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                            <circle cx="17.5" cy="17.5" r="3.5"></circle>
-                        </svg>
-                    </div>
-                    <div class="menu-text">API设置</div>
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                
-                <div class="menu-item" data-func="couples-space">
-                    <div class="menu-icon">
-                        <svg class="icon-svg" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                    </div>
-                    <div class="menu-text">情侣空间</div>
-                </div>
-                
-                <div class="menu-divider"></div>
-                
                 <div class="menu-item" data-func="user-persona">
                     <div class="menu-icon">
                         <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -583,9 +514,34 @@
                             <path d="M3 21c0-4 4-7 9-7s9 3 9 7"></path>
                         </svg>
                     </div>
-                    <div class="menu-text">人设</div>
+                    <div class="menu-text">我的人设</div>
                 </div>
                 
+                <div class="menu-item" data-func="collection">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">我的收藏</div>
+                </div>
+                
+                <div class="menu-divider"></div>
+                
+                <!-- 提示词（占位，后续功能再加） -->
+                <div class="menu-item" data-func="prompts" style="opacity: 0.6;">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <circle cx="9" cy="10" r="1"></circle>
+                            <circle cx="12" cy="10" r="1"></circle>
+                            <circle cx="15" cy="10" r="1"></circle>
+                        </svg>
+                    </div>
+                    <div class="menu-text">提示词</div>
+                </div>
+                
+                <!-- 预设 -->
                 <div class="menu-item" data-func="preset">
                     <div class="menu-icon">
                         <svg class="icon-svg" viewBox="0 0 24 24">
@@ -595,17 +551,127 @@
                             <rect x="14" y="14" width="7" height="7" rx="1"></rect>
                         </svg>
                     </div>
-                    <div class="menu-text">线下预设</div>
+                    <div class="menu-text">预设</div>
                 </div>
                 
-                <div class="menu-item" data-func="settings">
+                <div class="menu-divider"></div>
+                
+                <!-- 钱包 -->
+                <div class="menu-item" data-func="wallet">
                     <div class="menu-icon">
                         <svg class="icon-svg" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                            <path d="M1 10h22"></path>
+                            <rect x="16" y="14" width="4" height="4" rx="1"></rect>
                         </svg>
                     </div>
-                    <div class="menu-text">设置</div>
+                    <div class="menu-text">钱包</div>
+                </div>
+                
+                <!-- 购物 -->
+                <div class="menu-item" data-func="shopping">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z"></path>
+                            <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z"></path>
+                            <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">购物</div>
+                </div>
+                
+                <!-- 同人文 -->
+                <div class="menu-item" data-func="fiction">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <rect x="4" y="4" width="16" height="18" rx="1" fill="none" stroke="currentColor" stroke-width="2"></rect>
+                            <line x1="12" y1="6" x2="12" y2="20" stroke="currentColor" stroke-width="1.5"></line>
+                            <line x1="4" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.5"></line>
+                        </svg>
+                    </div>
+                    <div class="menu-text">阅读</div>
+                </div>
+                
+                <!-- 论坛（占位，后续功能再加） -->
+                <div class="menu-item" data-func="forum" style="opacity: 0.6;">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <line x1="9" y1="10" x2="15" y2="10"></line>
+                            <line x1="9" y1="14" x2="13" y2="14"></line>
+                        </svg>
+                    </div>
+                    <div class="menu-text">论坛</div>
+                </div>
+                
+                <!-- 游戏中心（占位，后续功能再加） -->
+                <div class="menu-item" data-func="game-center" style="opacity: 0.6;">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="2" y1="17" x2="22" y2="17"></line>
+                            <circle cx="7" cy="9" r="1"></circle>
+                            <circle cx="10" cy="6" r="1"></circle>
+                            <circle cx="10" cy="12" r="1"></circle>
+                            <circle cx="13" cy="9" r="1"></circle>
+                        </svg>
+                    </div>
+                    <div class="menu-text">游戏中心</div>
+                </div>
+                
+                <!-- 情侣空间 -->
+                <div class="menu-item" data-func="couples-space">
+                    <div class="menu-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </div>
+                    <div class="menu-text">情侣空间</div>
+                </div>
+                
+                <!-- 横向设置组 -->
+                <div class="horizontal-settings-group">
+                    <!-- 个性装扮 -->
+                    <div class="horizontal-menu-item" data-func="decoration">
+                        <div class="horizontal-menu-icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M12 2v4"></path>
+                                <path d="M12 18v4"></path>
+                                <path d="M4.93 4.93l2.83 2.83"></path>
+                                <path d="M16.24 16.24l2.83 2.83"></path>
+                                <path d="M2 12h4"></path>
+                                <path d="M18 12h4"></path>
+                                <path d="M4.93 19.07l2.83-2.83"></path>
+                                <path d="M16.24 7.76l2.83-2.83"></path>
+                            </svg>
+                        </div>
+                        <div class="horizontal-menu-text">个性装扮</div>
+                    </div>
+                    
+                    <!-- 设置与配置 -->
+                    <div class="horizontal-menu-item" data-func="api-settings">
+                        <div class="horizontal-menu-icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                                <circle cx="17.5" cy="17.5" r="3.5"></circle>
+                            </svg>
+                        </div>
+                        <div class="horizontal-menu-text">设置与配置</div>
+                    </div>
+                    
+                    <!-- 通知与数据 -->
+                    <div class="horizontal-menu-item" data-func="settings">
+                        <div class="horizontal-menu-icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </div>
+                        <div class="horizontal-menu-text">通知与数据</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -903,11 +969,12 @@
                 </div>
                 <div class="tab-text">好友</div>
             </div>
-            <div class="tab-item" data-tab="dynamic-page">
+            <div class="tab-item" data-tab="moments-page">
                 <div class="tab-icon">
                     <svg class="icon-svg" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 6v6l4 2"></path>
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <path d="M21 15l-5-5L5 21"></path>
                     </svg>
                 </div>
                 <div class="tab-text">动态</div>
@@ -1138,18 +1205,32 @@
             </div>
         </div>
 
-        <!-- 子页面 - 朋友圈 -->
-        <div class="sub-page" id="moments-page">
-            <!-- 顶部导航 - 全透明 -->
+        <!-- 朋友圈页面 -->
+        <div class="main-content" id="moments-page">
+            <!-- 顶部导航 - 只有通知和设置按钮 -->
             <div class="moments-top-bar">
-                <button class="back-btn moments-back-btn" data-back="moments-page">返回</button>
-                <div class="moments-icon-group">
+                <div class="moments-icon-group" style="margin-left: auto;">
                     <button class="moments-icon-btn" id="notificationBtn">通知</button>
                     <button class="moments-icon-btn" id="settingBtn">设置</button>
                 </div>
             </div>
-            <div class="sub-content" style="padding: 0; background: #ffffff; overflow-y: auto;">
+            <div class="sub-content" style="padding: 0; background: #ffffff; overflow-y: auto; flex: 1;">
                 <style>
+                    /* 朋友圈页面作为main-content的特殊样式 */
+                    #moments-page {
+                        padding: 0;
+                        overflow: hidden;
+                    }
+                    
+                    /* 朋友圈页面不需要顶部导航栏的padding - 抵消app-container的padding-top */
+                    #app-container:has(#moments-page.active) {
+                        padding-top: 0 !important;
+                    }
+                    
+                    #moments-page .sub-content {
+                        height: 100%;
+                    }
+                    
                     :root {
                         --bg-image: url('');
                         --bg-color: #ffffff;
@@ -1173,7 +1254,6 @@
                         border: none;
                     }
 
-                    #moments-page .moments-back-btn,
                     #moments-page .moments-icon-btn {
                         background: transparent;
                         border: none;
@@ -1186,7 +1266,6 @@
                         transition: all 0.2s;
                     }
 
-                    #moments-page .moments-back-btn:hover,
                     #moments-page .moments-icon-btn:hover {
                         background: var(--light-pink);
                         color: var(--main-pink);
@@ -1838,7 +1917,7 @@
                     <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;" onchange="changeProfileAvatar(this)">
                     <div class="profile-info">
                         <h2 id="profileName">用户名</h2>
-                        <p>访客总量 <span id="visitorCount">0</span></p>
+                        <p>访客总量 <span id="visitorCount">1314</span></p>
                     </div>
                 </div>
 
@@ -2958,32 +3037,41 @@
                 <div class="back-btn" data-back="api-settings-page">
                     <span>返回</span>
                 </div>
-                <div class="sub-title">API设置</div>
+                <div class="sub-title">设置</div>
             </div>
             <div class="sub-content">
                 <div class="api-settings-container">
                     <!-- API预设管理 -->
-                    <div class="settings-card">
-                        <h3 class="card-title">
-                            <span class="title-indicator"></span>
-                            API 预设管理
+                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="title-indicator"></span>
+                                API 预设管理
+                            </span>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">−</span>
                         </h3>
-                        <button id="api-preset-btn" class="modern-btn" style="width:100%;">预设管理</button>
+                        <button id="api-preset-create-btn" class="modern-btn" style="width:100%;margin-bottom:12px;margin-top:16px;">新增预设</button>
+                        <div id="api-presets-list" style="flex-direction:column;gap:8px;margin-top:8px;">
+                            <!-- 预设列表将动态生成 -->
+                        </div>
                     </div>
 
                     <!-- 主API设置 -->
-                    <div class="settings-card">
-                        <h3 class="card-title">
-                            <span class="title-indicator"></span>
-                            主API设置
+                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="title-indicator"></span>
+                                主API设置
+                            </span>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
                         
-                        <div class="setting-row">
+                        <div class="setting-row" style="margin-top:16px;">
                             <label class="modern-label">API 端点 (Endpoint)</label>
                             <input id="api-endpoint" class="modern-input" placeholder="例如 https://api.openai.com/v1">
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">API 密钥 (Key)</label>
                             <div style="display:flex;gap:10px;align-items:center;">
                                 <input id="api-key" class="modern-input" type="text" placeholder="在此处填写 Bearer Key（可选）" style="flex:1;">
@@ -2991,65 +3079,29 @@
                             </div>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">拉取模型</label>
                             <button id="pull-models-btn" class="modern-btn" style="width:100%;">拉取模型</button>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">模型名称</label>
                             <select id="models-select" class="modern-select" style="margin-top:8px;"></select>
                             <div class="info-box">目前保存的模型：<span id="selected-model-display" class="highlight">未选择</span></div>
                         </div>
                     </div>
-                    
-                    <!-- 副API设置 -->
-                    <div class="settings-card">
-                        <h3 class="card-title">
-                            <span class="title-indicator"></span>
-                            副API设置（用于翻译、总结等）
-                        </h3>
-                        
-                        <div class="setting-row">
-                            <label class="modern-label">副API 端点 (Endpoint)</label>
-                            <input id="secondary-api-endpoint" class="modern-input" placeholder="例如 https://api.example.com/v1">
-                        </div>
-
-                        <div class="setting-row">
-                            <label class="modern-label">副API 密钥 (Key)</label>
-                            <div style="display:flex;gap:10px;align-items:center;">
-                                <input id="secondary-api-key" class="modern-input" type="text" placeholder="副API密钥（可选）" style="flex:1;">
-                                <button id="secondary-api-key-toggle" class="modern-btn modern-btn-small">显示</button>
-                            </div>
-                        </div>
-
-                        <div class="setting-row">
-                            <label class="modern-label">拉取模型</label>
-                            <button id="pull-secondary-models-btn" class="modern-btn" style="width:100%;">拉取模型</button>
-                        </div>
-
-                        <div class="setting-row">
-                            <label class="modern-label">模型名称</label>
-                            <select id="secondary-models-select" class="modern-select" style="margin-top:8px;"></select>
-                            <div class="info-box">目前保存的模型：<span id="secondary-selected-model-display" class="highlight">未选择</span></div>
-                        </div>
-                    </div>
 
                     <!-- 主API参数设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                            <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;">
+                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;user-select:none;" onclick="toggleApiParamsContent(this)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
                                 <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
                                 主API参数设置
                             </h3>
-                            <button id="api-params-lock-btn" class="small-btn" style="padding:6px 12px;height:32px;font-size:13px;display:flex;align-items:center;gap:6px;">
-                                <i class="fa-solid fa-lock-open"></i>
-                                <span>解锁</span>
-                            </button>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </div>
-                        <div id="api-params-container" style="opacity:1;transition:opacity 0.3s;">
-                        
-                        <div class="setting-row">
+                        <div id="api-params-container" style="display:none;margin-top:14px;">
+                        <div class="setting-row" style="margin-top:12px;">
                             <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <span>温度 (Temperature)</span>
                                 <span id="temperature-value" style="color:#666;font-weight:600;font-size:14px;background:#f5f5f5;padding:4px 10px;border-radius:6px;">0.8</span>
@@ -3098,15 +3150,140 @@
                         </div>
                         </div>
                     </div>
-
-                    <!-- MiniMax TTS 设置 -->
-                    <div class="settings-card">
-                        <h3 class="card-title">
-                            <span class="title-indicator"></span>
-                            MiniMax 语音合成 (TTS)
+                    
+                    <!-- 副API设置 -->
+                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="title-indicator"></span>
+                                副API设置（用于翻译、总结等）
+                            </span>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
                         
+                        <div class="setting-row" style="margin-top:16px;">
+                            <label class="modern-label">副API 端点 (Endpoint)</label>
+                            <input id="secondary-api-endpoint" class="modern-input" placeholder="例如 https://api.example.com/v1">
+                        </div>
+
+                        <div class="setting-row" style="">
+                            <label class="modern-label">副API 密钥 (Key)</label>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <input id="secondary-api-key" class="modern-input" type="text" placeholder="副API密钥（可选）" style="flex:1;">
+                                <button id="secondary-api-key-toggle" class="modern-btn modern-btn-small">显示</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row" style="">
+                            <label class="modern-label">拉取模型</label>
+                            <button id="pull-secondary-models-btn" class="modern-btn" style="width:100%;">拉取模型</button>
+                        </div>
+
+                        <div class="setting-row" style="">
+                            <label class="modern-label">模型名称</label>
+                            <select id="secondary-models-select" class="modern-select" style="margin-top:8px;"></select>
+                            <div class="info-box">目前保存的模型：<span id="secondary-selected-model-display" class="highlight">未选择</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 副API参数设置 -->
+                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;user-select:none;" onclick="toggleSecondaryApiParamsContent(this)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
+                                <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                                副API参数设置
+                            </h3>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
+                        </div>
+                        <div id="secondary-api-params-container" style="display:none;margin-top:14px;">
+                        <div class="setting-row" style="margin-top:12px;">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>温度 (Temperature)</span>
+                                <span id="secondary-temperature-value" style="color:#666;font-weight:600;font-size:14px;background:#f5f5f5;padding:4px 10px;border-radius:6px;">0.8</span>
+                            </label>
+                            <input id="secondary-temperature-input" type="range" min="0" max="2" step="0.01" value="0.8" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:linear-gradient(90deg,#e8e8e8,#ccc);cursor:pointer;" oninput="document.getElementById('secondary-temperature-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:6px;color:#999;font-size:12px;">
+                                <span>0 (确定性)</span>
+                                <span>2 (随机性)</span>
+                            </div>
+                        </div>
+
                         <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>频率惩罚 (Frequency Penalty)</span>
+                                <span id="secondary-frequency-penalty-value" style="color:#666;font-weight:600;font-size:14px;background:#f5f5f5;padding:4px 10px;border-radius:6px;">0.2</span>
+                            </label>
+                            <input id="secondary-frequency-penalty-input" type="range" min="-2" max="2" step="0.01" value="0.2" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:linear-gradient(90deg,#e8e8e8,#ccc);cursor:pointer;" oninput="document.getElementById('secondary-frequency-penalty-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:6px;color:#999;font-size:12px;">
+                                <span>-2 (鼓励重复)</span>
+                                <span>2 (避免重复)</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>存在惩罚 (Presence Penalty)</span>
+                                <span id="secondary-presence-penalty-value" style="color:#666;font-weight:600;font-size:14px;background:#f5f5f5;padding:4px 10px;border-radius:6px;">0.1</span>
+                            </label>
+                            <input id="secondary-presence-penalty-input" type="range" min="-2" max="2" step="0.01" value="0.1" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:linear-gradient(90deg,#e8e8e8,#ccc);cursor:pointer;" oninput="document.getElementById('secondary-presence-penalty-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:6px;color:#999;font-size:12px;">
+                                <span>-2 (重复话题)</span>
+                                <span>2 (新话题)</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span>Top P (核采样)</span>
+                                <span id="secondary-top-p-value" style="color:#666;font-weight:600;font-size:14px;background:#f5f5f5;padding:4px 10px;border-radius:6px;">1.0</span>
+                            </label>
+                            <input id="secondary-top-p-input" type="range" min="0" max="1" step="0.01" value="1.0" style="width:100%;height:6px;border-radius:3px;outline:none;-webkit-appearance:none;background:linear-gradient(90deg,#e8e8e8,#ccc);cursor:pointer;" oninput="document.getElementById('secondary-top-p-value').textContent = this.value">
+                            <div style="display:flex;justify-content:space-between;margin-top:6px;color:#999;font-size:12px;">
+                                <span>0 (保守)</span>
+                                <span>1 (多样)</span>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- 时间感知 -->
+                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="title-indicator"></span>
+                                时间感知
+                            </span>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
+                        </h3>
+                        
+                        <div class="setting-row" style="margin-top:16px;">
+                            <label class="modern-label">线上时间感知</label>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="checkbox" id="ai-time-aware" checked style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
+                                <div style="color:#666;font-size:13px;">开启后在线上模式发送时会包含时间信息</div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-row" style="">
+                            <label class="modern-label">线下时间感知</label>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="checkbox" id="offline-time-aware" style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
+                                <div style="color:#666;font-size:13px;">开启后在线下模式发送时会包含时间信息</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MiniMax TTS 设置 -->
+                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="title-indicator"></span>
+                                MiniMax 语音合成 (TTS)
+                            </span>
+                            <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
+                        </h3>
+                        
+                        <div class="setting-row" style="margin-top:16px;">
                             <label class="modern-label">启用 MiniMax TTS</label>
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <input type="checkbox" id="minimax-tts-enabled" style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
@@ -3114,12 +3291,12 @@
                             </div>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">Group ID</label>
                             <input id="minimax-group-id" class="modern-input" placeholder="输入 MiniMax Group ID">
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">API Key</label>
                             <div style="display:flex;gap:10px;align-items:center;">
                                 <input id="minimax-api-key" class="modern-input" type="text" placeholder="输入 MiniMax API Key" style="flex:1;">
@@ -3127,7 +3304,7 @@
                             </div>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">声音模型 (Voice ID)</label>
                             <input id="minimax-voice-id" class="modern-input" placeholder="例如：female-tianmei" value="female-tianmei">
                             <div style="margin-top:8px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:12px;color:#666;">
@@ -3135,7 +3312,7 @@
                             </div>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">语速</label>
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <span style="font-size:13px;color:#666;">Speed</span>
@@ -3148,7 +3325,7 @@
                             </div>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <label class="modern-label">音量</label>
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <span style="font-size:13px;color:#666;">Volume</span>
@@ -3161,49 +3338,15 @@
                             </div>
                         </div>
 
-                        <div class="setting-row">
+                        <div class="setting-row" style="">
                             <button id="test-minimax-tts-btn" class="modern-btn" style="width:100%;">测试语音</button>
                         </div>
                     </div>
 
-                    <!-- 其他设置 -->
                     <div class="settings-card">
-                        <h3 class="card-title">
-                            <span class="title-indicator"></span>
-                            其他设置
-                        </h3>
-                        
-                        <div class="setting-row">
-                            <label class="modern-label">AI 时间感知</label>
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                <input type="checkbox" id="ai-time-aware" checked style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
-                                <div style="color:#666;font-size:13px;">开启后会将当前时间信息作为 system 指令发送</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <div class="setting-row">
-                            <label class="modern-label">提示词管理</label>
-                            <div style="display:flex;gap:10px;margin-top:8px;">
-                                <button id="add-prompt-btn" class="modern-btn" style="flex:1;">新增提示词</button>
-                                <button id="prompt-list-btn" class="modern-btn" style="flex:1;">查看提示词列表</button>
-                            </div>
-                        </div>
-
-                        <div class="setting-row">
-                            <label class="modern-label">当前提示词</label>
-                            <select id="prompts-select" class="modern-select" style="margin-top:8px;"></select>
-                            <div id="current-prompt-display" style="margin-top:12px;padding:14px;background:#fafafa;border:1px solid #e8e8e8;border-radius:10px;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-wrap:break-word;font-size:12px;color:#666;font-family:monospace;line-height:1.6;"></div>
-                        </div>
-
                         <div class="setting-row">
                             <button id="save-settings-btn" class="primary-btn-modern">保存设置</button>
                         </div>
-                    </div>
-
-                    <div class="tip-box">
-                        使用说明：填写端点与（可选）密钥，点击"拉取模型"获取模型列表，务必记得点击保存设置。
                     </div>
                 </div>
             </div>

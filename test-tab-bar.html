@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>底部导航栏测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .test-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        /* 模拟底部导航栏样式 */
+        .test-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .test-tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            cursor: pointer;
+            padding: 5px 20px;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .test-tab-item.active {
+            opacity: 1;
+        }
+        
+        .test-tab-item:active {
+            opacity: 1;
+            transform: scale(0.95);
+            transition: opacity 0.1s ease, transform 0.1s ease;
+        }
+        
+        .content-area {
+            padding: 20px;
+            padding-bottom: 80px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .content-section {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h2>底部导航栏功能测试</h2>
+            <p>请点击底部的"消息"、"好友"、"动态"标签进行测试</p>
+        </div>
+        
+        <div id="test-results">
+            <div class="test-result info">
+                系统初始化中...
+            </div>
+        </div>
+    </div>
+    
+    <!-- 内容区域 -->
+    <div class="content-area">
+        <div class="content-section" id="msg-page">
+            <h3>消息页面</h3>
+            <p>这是消息页面的内容区域。</p>
+        </div>
+        
+        <div class="content-section" id="friend-page">
+            <h3>好友页面</h3>
+            <p>这是好友页面的内容区域。</p>
+        </div>
+        
+        <div class="content-section" id="moments-page">
+            <h3>动态页面</h3>
+            <p>这是动态页面的内容区域。</p>
+        </div>
+    </div>
+    
+    <!-- 测试用的底部导航栏 -->
+    <div class="test-tab-bar">
+        <div class="test-tab-item active" data-tab="msg-page">
+            <div class="tab-icon">📱</div>
+            <div class="tab-text">消息</div>
+        </div>
+        <div class="test-tab-item" data-tab="friend-page">
+            <div class="tab-icon">👥</div>
+            <div class="tab-text">好友</div>
+        </div>
+        <div class="test-tab-item" data-tab="moments-page">
+            <div class="tab-icon">📸</div>
+            <div class="tab-text">动态</div>
+        </div>
+    </div>
+
+    <script>
+        // 测试脚本
+        let testResults = [];
+        let currentTab = 'msg-page';
+        
+        function addResult(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            testResults.push(`[${timestamp}] ${message}`);
+            updateTestDisplay();
+        }
+        
+        function updateTestDisplay() {
+            const resultsContainer = document.getElementById('test-results');
+            resultsContainer.innerHTML = testResults
+                .slice(-10) // 只显示最近10条结果
+                .map(result => `<div class="test-result info">${result}</div>`)
+                .join('');
+            
+            resultsContainer.scrollTop = resultsContainer.scrollHeight;
+        }
+        
+        function switchTab(tabId) {
+            try {
+                addResult(`尝试切换到: ${tabId}`);
+                
+                if (currentTab === tabId) {
+                    addResult('⚠️ 相同标签，无需切换', 'info');
+                    return;
+                }
+                
+                // 更新导航栏状态
+                document.querySelectorAll('.test-tab-item').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                const activeTab = document.querySelector(`.test-tab-item[data-tab="${tabId}"]`);
+                if (activeTab) {
+                    activeTab.classList.add('active');
+                    addResult('✅ 导航栏状态更新成功', 'success');
+                } else {
+                    addResult('❌ 未找到对应的标签元素', 'error');
+                    return;
+                }
+                
+                // 更新内容区域
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                const targetSection = document.getElementById(tabId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                    addResult('✅ 内容区域切换成功', 'success');
+                    currentTab = tabId;
+                } else {
+                    addResult('❌ 未找到对应的内容区域', 'error');
+                }
+                
+                // 测试震动反馈
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                    addResult('✅ 震动反馈触发', 'success');
+                }
+                
+            } catch (error) {
+                addResult(`❌ 切换错误: ${error.message}`, 'error');
+                console.error('切换错误:', error);
+            }
+        }
+        
+        // 初始化测试
+        document.addEventListener('DOMContentLoaded', function() {
+            addResult('✅ 页面加载完成');
+            
+            // 绑定底部导航栏事件
+            document.querySelectorAll('.test-tab-item').forEach(function(tab) {
+                let lastClickTime = 0;
+                
+                tab.addEventListener('click', function(e) {
+                    const now = Date.now();
+                    if (now - lastClickTime < 100) {
+                        addResult('🚫 点击过于频繁，被防抖阻止', 'info');
+                        return;
+                    }
+                    lastClickTime = now;
+                    
+                    const tabId = this.dataset.tab;
+                    switchTab(tabId);
+                }, { passive: false });
+                
+                // iOS 触摸事件测试
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    tab.addEventListener('touchend', function(e) {
+                        const now = Date.now();
+                        if (now - lastClickTime < 100) {
+                            addResult('🚫 iOS触摸过于频繁，被防抖阻止', 'info');
+                            return;
+                        }
+                        lastClickTime = now;
+                        
+                        const tabId = this.dataset.tab;
+                        addResult('📱 触摸事件触发，切换到: ' + tabId);
+                        switchTab(tabId);
+                    }, { passive: false });
+                }
+            });
+            
+            addResult('✅ 底部导航栏事件绑定完成');
+            
+            // 模拟自动测试
+            setTimeout(() => {
+                addResult('🔄 开始自动测试...');
+                
+                // 测试消息页面
+                setTimeout(() => {
+                    document.querySelector('.test-tab-item[data-tab="msg-page"]').click();
+                }, 1000);
+                
+                // 测试好友页面
+                setTimeout(() => {
+                    document.querySelector('.test-tab-item[data-tab="friend-page"]').click();
+                }, 2000);
+                
+                // 测试动态页面
+                setTimeout(() => {
+                    document.querySelector('.test-tab-item[data-tab="moments-page"]').click();
+                }, 3000);
+                
+                // 测试重复点击
+                setTimeout(() => {
+                    document.querySelector('.test-tab-item[data-tab="msg-page"]').click();
+                }, 3500);
+                
+                addResult('✅ 自动测试计划已启动');
+            }, 2000);
+        });
+        
+        // 全局函数，用于外部测试
+        window.testTabBar = {
+            switchTab: switchTab,
+            addResult: addResult,
+            getCurrentTab: () => currentTab
+        };
+    </script>
+</body>
+</html>

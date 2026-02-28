@@ -37,6 +37,7 @@
                 models: [],
                 selectedModel: '',
                 aiTimeAware: false,
+                offlineTimeAware: false,
                 // 主API参数设置
                 temperature: 0.8, // 温度，默认0.8
                 frequencyPenalty: 0.2, // 频率惩罚，默认0.2
@@ -53,6 +54,11 @@
                 secondaryApiKey: '', // 副API密钥
                 secondaryModels: [], // 副API的可用模型列表
                 secondarySelectedModel: '', // 副API选定的模型
+                // 副API参数设置
+                secondaryTemperature: 0.8, // 温度，默认0.8
+                secondaryFrequencyPenalty: 0.2, // 频率惩罚，默认0.2
+                secondaryPresencePenalty: 0.1, // 存在惩罚，默认0.1
+                secondaryTopP: 1.0, // Top P，默认1.0
                 // 副API功能提示词
                 secondaryPrompts: {
                     translateChinese: '你是一个翻译助手。将用户提供的非中文文本翻译成简体中文。只返回翻译结果，不要有其他内容。',
@@ -125,7 +131,6 @@
                 initEventListeners();
                 initNotificationSystem();
                 initApiSettingsUI();
-                initPromptUI();
                 initWorldbookUI();
                 
                 // 初始化搜索栏显示状态
@@ -436,15 +441,48 @@
         // 初始化事件监听
         function initEventListeners() {
             // 用户信息点击 - 打开侧边栏
-            document.getElementById('user-info').addEventListener('click', function() {
+            document.getElementById('user-info').addEventListener('click', function(e) {
+                e.stopPropagation();
                 document.getElementById('side-menu').classList.add('open');
                 document.getElementById('mask').classList.add('show');
             });
 
-            // 遮罩层点击
-            document.getElementById('mask').addEventListener('click', function() {
-                closeSideMenu();
-                closeAddPopup();
+            // 点击遮罩层关闭侧边栏
+            const mask = document.getElementById('mask');
+            if (mask) {
+                mask.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeSideMenu();
+                });
+            }
+
+            // 点击侧边栏内容区域不关闭，但允许内部元素正常工作
+            document.getElementById('side-menu').addEventListener('click', function(e) {
+                // 只阻止事件冒泡，不阻止内部元素的事件处理
+                e.stopPropagation();
+            });
+
+            // 点击页面其他区域关闭侧边栏 - 只在冒泡阶段处理
+            document.addEventListener('click', function(e) {
+                const sideMenu = document.getElementById('side-menu');
+                const userInfo = document.getElementById('user-info');
+                
+                if (sideMenu && sideMenu.classList.contains('open')) {
+                    const isClickInsideSideMenu = sideMenu.contains(e.target);
+                    const isClickUserInfo = userInfo && userInfo.contains(e.target);
+                    
+                    // 只有当点击的是页面其他区域时才处理
+                    if (!isClickInsideSideMenu && !isClickUserInfo) {
+                        // 只阻止这次事件的默认行为和冒泡
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // 延迟执行关闭
+                        setTimeout(function() {
+                            closeSideMenu();
+                        }, 50);
+                    }
+                }
             });
 
             // 添加按钮
@@ -487,34 +525,223 @@
             }
 
             // 底部标签栏 - 移动端性能优化
-            document.querySelectorAll('.tab-item').forEach(function(tab) {
-                let lastClickTime = 0;
-                
-                tab.addEventListener('click', function(e) {
-                    const now = Date.now();
-                    // 防止重复点击和过快点击
-                    if (now - lastClickTime < 150) {
-                        e.preventDefault();
-                        return;
-                    }
-                    lastClickTime = now;
-                    switchTab(this.dataset.tab);
-                }, { passive: false });
+            function initTabBarEvents() {
+                // 先移除现有的事件监听器，避免重复绑定
+                document.querySelectorAll('.tab-item').forEach(function(tab) {
+                    tab.replaceWith(tab.cloneNode(true));
+                });
 
-                // iOS Safari 特殊处理 - 确保触摸事件能触发
-                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                    tab.addEventListener('touchend', function(e) {
+                document.querySelectorAll('.tab-item').forEach(function(tab) {
+                    let lastClickTime = 0;
+                    let touchStartTime = 0;
+                    let clickTimeout = null;
+                    
+                    // 点击事件处理
+                    const handleTabClick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
                         const now = Date.now();
-                        if (now - lastClickTime < 150) {
-                            e.preventDefault();
+                        // 优化防抖间隔，平衡响应性和防误触
+                        if (now - lastClickTime < 120) {
+                            console.log('🚫 点击间隔太短，被防抖阻止');
                             return;
                         }
                         lastClickTime = now;
-                        e.preventDefault();
-                        switchTab(this.dataset.tab);
-                    }, { passive: false });
+                        
+                        // 清除之前的超时
+                        if (clickTimeout) {
+                            clearTimeout(clickTimeout);
+                            clickTimeout = null;
+                        }
+                        
+                        try {
+                            const tabId = this.dataset.tab;
+                            if (tabId) {
+                                console.log('🔄 切换到标签:', tabId);
+                                switchTabWithRetry(tabId);
+                                
+                                // 添加点击反馈
+                                this.style.transform = 'scale(0.95)';
+                                setTimeout(() => {
+                                    this.style.transform = '';
+                                }, 100);
+                            }
+                        } catch (error) {
+                            console.error('标签切换错误:', error);
+                        }
+                    };
+                    
+                    // 绑定点击事件
+                    tab.addEventListener('click', handleTabClick, { passive: false });
+                    
+                    // iOS Safari 特殊处理 - 触摸事件
+                    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                        const handleTouchEnd = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const now = Date.now();
+                            if (now - lastClickTime < 120) {
+                                return;
+                            }
+                            lastClickTime = now;
+                            
+                            try {
+                                const tabId = this.dataset.tab;
+                                if (tabId) {
+                                    console.log('🔄 切换到标签:', tabId);
+                                    switchTabWithRetry(tabId);
+                                    
+                                    // 添加点击反馈
+                                    this.style.transform = 'scale(0.95)';
+                                    setTimeout(() => {
+                                        this.style.transform = '';
+                                    }, 100);
+                                }
+                            } catch (error) {
+                                console.error('iOS标签切换错误:', error);
+                            }
+                        };
+                        
+                        tab.addEventListener('touchstart', function(e) {
+                            touchStartTime = Date.now();
+                        }, { passive: true });
+                        
+                        tab.addEventListener('touchend', handleTouchEnd, { passive: false });
+                    }
+                });
+                
+                console.log('✅ 底部标签栏事件初始化完成');
+            }
+
+            // 切换标签页的重试机制
+            function switchTabWithRetry(tabId, maxRetries = 3) {
+                let retryCount = 0;
+                
+                function attemptSwitch() {
+                    try {
+                        // 智能判断：只有当DOM状态和 AppState 都相同时才阻止切换
+                        const currentPage = document.querySelector('.main-content.active');
+                        const currentActiveTab = document.querySelector('.tab-item.active');
+                        const isDOMSameTab = currentPage && currentPage.id === tabId;
+                        const isAppStateSameTab = AppState.currentTab === tabId;
+                        
+                        if (isDOMSameTab && isAppStateSameTab && retryCount === 0) {
+                            console.log('🔄 页面和状态都已经是相同标签，无需切换:', tabId);
+                            return;
+                        }
+                        
+                        switchTab(tabId);
+                        
+                        // 验证切换是否成功
+                        setTimeout(() => {
+                            const verifyCurrentPage = document.querySelector('.main-content.active');
+                            const verifyCurrentActiveTab = document.querySelector('.tab-item.active');
+                            
+                            if (!verifyCurrentPage || !verifyCurrentActiveTab || 
+                                !verifyCurrentPage.id || !verifyCurrentActiveTab.dataset.tab ||
+                                verifyCurrentPage.id !== tabId || verifyCurrentActiveTab.dataset.tab !== tabId) {
+                                
+                                retryCount++;
+                                console.log(`⚠️ 切换验证失败，重试 ${retryCount}/${maxRetries}`);
+                                
+                                if (retryCount < maxRetries) {
+                                    setTimeout(attemptSwitch, 200);
+                                } else {
+                                    console.error('🚫 标签切换失败，达到最大重试次数');
+                                }
+                            } else {
+                                console.log('✅ 标签切换验证成功');
+                            }
+                        }, 100);
+                        
+                    } catch (error) {
+                        console.error('切换尝试失败:', error);
+                        retryCount++;
+                        if (retryCount < maxRetries) {
+                            setTimeout(attemptSwitch, 200);
+                        }
+                    }
                 }
-            });
+                
+                attemptSwitch();
+            }
+
+            // 初始化底部标签栏事件
+            initTabBarEvents();
+            
+            // 添加页面状态重新绑定功能
+            window.rebindTabBarEvents = function() {
+                console.log('🔄 重新绑定底部标签栏事件...');
+                initTabBarEvents();
+            };
+            
+            // 监听页面显示事件（PWA模式下可能需要）
+            if ('visibilityState' in document) {
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible') {
+                        // 页面重新可见时重新绑定事件
+                        setTimeout(() => {
+                            window.rebindTabBarEvents();
+                        }, 100);
+                    }
+                });
+            }
+
+            // 强制刷新标签状态
+            window.forceRefreshTabState = function() {
+                console.log('🔄 强制刷新标签状态...');
+                const currentTab = AppState.currentTab;
+                if (currentTab) {
+                    // 先移除所有active状态
+                    document.querySelectorAll('.tab-item').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    document.querySelectorAll('.main-content').forEach(page => {
+                        page.classList.remove('active');
+                    });
+                    
+                    // 重新激活当前标签
+                    const activeTab = document.querySelector(`.tab-item[data-tab="${currentTab}"]`);
+                    const activePage = document.getElementById(currentTab);
+                    if (activeTab) activeTab.classList.add('active');
+                    if (activePage) activePage.classList.add('active');
+                }
+            };
+
+            // 状态同步监听器
+            function setupStateSync() {
+                // 监听页面变化，同步更新 AppState
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.target.classList && mutation.target.classList.contains('main-content')) {
+                            const activePage = document.querySelector('.main-content.active');
+                            if (activePage && activePage.id) {
+                                if (AppState.currentTab !== activePage.id) {
+                                    console.log('🔄 检测到页面状态变化，同步更新 AppState:', activePage.id);
+                                    AppState.currentTab = activePage.id;
+                                }
+                            }
+                        }
+                    });
+                });
+
+                // 监听所有 main-content 元素
+                document.querySelectorAll('.main-content').forEach(function(page) {
+                    observer.observe(page, {
+                        attributes: true,
+                        attributeFilter: ['class'],
+                        childList: false,
+                        subtree: false
+                    });
+                });
+
+                console.log('✅ 状态同步监听器已设置');
+            }
+
+            // 初始化状态同步
+            setupStateSync();
 
             // 好友分组折叠
             document.querySelectorAll('.group-header').forEach(function(header) {
@@ -531,7 +758,12 @@
                 item.addEventListener('click', function() {
                     const pageId = this.dataset.page;
                     if (pageId) {
-                        openSubPage(pageId);
+                        // 朋友圈页面现在是 main-content，使用 switchTab
+                        if (pageId === 'moments-page') {
+                            switchTab(pageId);
+                        } else {
+                            openSubPage(pageId);
+                        }
                     }
                 });
             });
@@ -546,6 +778,22 @@
 
             // 侧边栏菜单项
             document.querySelectorAll('.menu-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    const func = this.dataset.func;
+                    handleMenuClick(func);
+                });
+            });
+
+            // 顶部菜单按钮
+            document.querySelectorAll('.left-menu-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const func = this.dataset.func;
+                    handleMenuClick(func);
+                });
+            });
+
+            // 横向设置菜单项
+            document.querySelectorAll('.horizontal-menu-item').forEach(function(item) {
                 item.addEventListener('click', function() {
                     const func = this.dataset.func;
                     handleMenuClick(func);
@@ -790,36 +1038,6 @@
                 saveBtn.addEventListener('click', function() { saveApiSettingsFromUI(); });
             }
 
-            // API参数锁定按钮
-            const lockBtn = document.getElementById('api-params-lock-btn');
-            const paramsContainer = document.getElementById('api-params-container');
-            if (lockBtn && paramsContainer) {
-                // 初始化锁定状态（从localStorage读取，默认为锁定）
-                const savedLockState = localStorage.getItem('apiParamsLocked');
-                const isLocked = savedLockState === null ? true : savedLockState === 'true';
-                updateLockButtonState(isLocked);
-                
-                lockBtn.addEventListener('click', function() {
-                    const currentLocked = paramsContainer.classList.contains('locked');
-                    const newLocked = !currentLocked;
-                    
-                    if (newLocked) {
-                        paramsContainer.classList.add('locked');
-                        lockBtn.classList.add('locked');
-                        lockBtn.innerHTML = '<i class="fa-solid fa-lock"></i><span>已锁定</span>';
-                        showToast('主API参数已锁定，防止误触');
-                    } else {
-                        paramsContainer.classList.remove('locked');
-                        lockBtn.classList.remove('locked');
-                        lockBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i><span>解锁</span>';
-                        showToast('主API参数已解锁');
-                    }
-                    
-                    // 保存锁定状态
-                    localStorage.setItem('apiParamsLocked', newLocked);
-                });
-            }
-
             const modelsSelect = document.getElementById('models-select');
             if (modelsSelect) {
                 modelsSelect.addEventListener('change', function() {
@@ -832,6 +1050,12 @@
             if (aiToggle) {
                 aiToggle.addEventListener('change', function() {
                     AppState.apiSettings.aiTimeAware = this.checked;
+                });
+            }
+            const offlineTimeToggle = document.getElementById('offline-time-aware');
+            if (offlineTimeToggle) {
+                offlineTimeToggle.addEventListener('change', function() {
+                    AppState.apiSettings.offlineTimeAware = this.checked;
                 });
             }
 
@@ -1126,8 +1350,18 @@
             }
 
             const cardBg = document.getElementById('card-bg');
+            const sideMenu = document.getElementById('side-menu');
             if (user.bgImage) {
                 cardBg.style.backgroundImage = `url(${user.bgImage})`;
+                // 让侧边栏整体继承背景图
+                sideMenu.style.backgroundImage = `url(${user.bgImage})`;
+                sideMenu.style.backgroundSize = 'cover';
+                sideMenu.style.backgroundPosition = 'center';
+                sideMenu.style.backgroundAttachment = 'fixed';
+            } else {
+                // 恢复默认白色背景
+                sideMenu.style.backgroundImage = 'none';
+                sideMenu.style.backgroundColor = '#ffffff';
             }
 
             // 编辑页面
@@ -1552,69 +1786,107 @@
 
         // 切换标签页 - 移动端性能优化版
         function switchTab(tabId) {
-            // 防止重复切换
-            if (AppState.currentTab === tabId) {
-                return;
-            }
+            try {
+                // 智能判断：只有当DOM状态和 AppState 都相同时才阻止切换
+                const currentPage = document.querySelector('.main-content.active');
+                const currentActiveTab = document.querySelector('.tab-item.active');
+                const isDOMSameTab = currentPage && currentPage.id === tabId;
+                const isAppStateSameTab = AppState.currentTab === tabId;
+                
+                if (isDOMSameTab && isAppStateSameTab) {
+                    console.log('🔄 页面和状态都已经是相同标签，无需切换:', tabId);
+                    return;
+                }
+                
+                // 检查是否过于频繁切换（防抖）
+                const now = Date.now();
+                if (switchTab._lastSwitchTime && now - switchTab._lastSwitchTime < 120) {
+                    console.log('🚫 切换过于频繁，被防抖阻止');
+                    return;
+                }
+                switchTab._lastSwitchTime = now;
+                
+                console.log('🔄 开始切换标签:', tabId, '当前DOM:', isDOMSameTab ? '相同' : '不同', '当前状态:', isAppStateSameTab ? '相同' : '不同');
 
-            // 防抖：防止过快切换
-            const now = Date.now();
-            if (switchTab._lastSwitchTime && now - switchTab._lastSwitchTime < 100) {
-                return;
-            }
-            switchTab._lastSwitchTime = now;
+                // 使用 requestAnimationFrame 优化渲染
+                requestAnimationFrame(() => {
+                    try {
+                        // 更新标签栏状态
+                        const allTabs = document.querySelectorAll('.tab-item');
+                        allTabs.forEach(function(tab) {
+                            tab.classList.remove('active');
+                        });
+                        
+                        const activeTab = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
+                        if (activeTab) {
+                            activeTab.classList.add('active');
+                            console.log('✅ 激活标签:', tabId);
+                        } else {
+                            console.warn('⚠️ 未找到标签元素:', tabId);
+                        }
+                        
+                        // 更新内容区域
+                        const allPages = document.querySelectorAll('.main-content');
+                        allPages.forEach(function(page) {
+                            page.classList.remove('active');
+                        });
+                        
+                        const targetPage = document.getElementById(tabId);
+                        if (targetPage) {
+                            targetPage.classList.add('active');
+                            console.log('✅ 激活页面:', tabId);
+                        } else {
+                            console.warn('⚠️ 未找到页面元素:', tabId);
+                        }
+                        
+                        // 更新顶部导航栏显示
+                        const topNav = document.getElementById('top-nav');
+                        if (topNav) {
+                            if (tabId === 'dynamic-page' || tabId === 'moments-page') {
+                                topNav.style.display = 'none';
+                                console.log('📱 隐藏顶部导航栏');
+                            } else {
+                                topNav.style.display = 'flex';
+                                console.log('📱 显示顶部导航栏');
+                            }
+                        }
+                        
+                        // 更新搜索栏显示
+                        const msgSearchBar = document.getElementById('msg-search-bar');
+                        const friendSearchBar = document.getElementById('friend-search-bar');
+                        if (msgSearchBar && friendSearchBar) {
+                            if (tabId === 'msg-page') {
+                                msgSearchBar.style.display = 'block';
+                                friendSearchBar.style.display = 'none';
+                                console.log('🔍 显示消息搜索栏');
+                            } else if (tabId === 'friend-page') {
+                                msgSearchBar.style.display = 'none';
+                                friendSearchBar.style.display = 'block';
+                                console.log('🔍 显示好友搜索栏');
+                            } else {
+                                msgSearchBar.style.display = 'none';
+                                friendSearchBar.style.display = 'none';
+                                console.log('🔍 隐藏搜索栏');
+                            }
+                        }
+                        
+                        // 立即更新应用状态，避免阻止后续操作
+                        AppState.currentTab = tabId;
+                        console.log('✅ 状态更新完成:', tabId);
 
-            // 使用 requestAnimationFrame 优化渲染
-            requestAnimationFrame(() => {
-                // 更新标签栏
-                document.querySelectorAll('.tab-item').forEach(function(tab) {
-                    tab.classList.remove('active');
-                });
-                const activeTab = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
-                if (activeTab) {
-                    activeTab.classList.add('active');
-                }
-                
-                // 更新内容区域
-                document.querySelectorAll('.main-content').forEach(function(page) {
-                    page.classList.remove('active');
-                });
-                const targetPage = document.getElementById(tabId);
-                if (targetPage) {
-                    targetPage.classList.add('active');
-                }
-                
-                // 更新顶部导航栏显示
-                const topNav = document.getElementById('top-nav');
-                if (tabId === 'dynamic-page') {
-                    topNav.style.display = 'none';
-                } else {
-                    topNav.style.display = 'flex';
-                }
-                
-                // 更新搜索栏显示
-                const msgSearchBar = document.getElementById('msg-search-bar');
-                const friendSearchBar = document.getElementById('friend-search-bar');
-                if (msgSearchBar && friendSearchBar) {
-                    if (tabId === 'msg-page') {
-                        msgSearchBar.style.display = 'block';
-                        friendSearchBar.style.display = 'none';
-                    } else if (tabId === 'friend-page') {
-                        msgSearchBar.style.display = 'none';
-                        friendSearchBar.style.display = 'block';
-                    } else {
-                        msgSearchBar.style.display = 'none';
-                        friendSearchBar.style.display = 'none';
+                        // 震动反馈（如果支持）
+                        if (navigator.vibrate) {
+                            navigator.vibrate(10);
+                        }
+                        
+                    } catch (error) {
+                        console.error('🚫 标签切换渲染错误:', error);
                     }
-                }
+                });
                 
-                AppState.currentTab = tabId;
-
-                // 震动反馈（如果支持）
-                if (navigator.vibrate) {
-                    navigator.vibrate(10);
-                }
-            });
+            } catch (error) {
+                console.error('🚫 标签切换错误:', error);
+            }
         }
 
         // 关闭侧边栏
@@ -1712,7 +1984,7 @@
                         openSubPage('api-settings-page');
                         break;
                     case 'moments':
-                        openSubPage('moments-page');
+                        switchTab('moments-page');
                         // 刷新朋友圈的个人信息、分组、好友列表和内容
                         setTimeout(function() {
                             if (typeof momentsManager !== 'undefined') {
@@ -1750,6 +2022,12 @@
                         } else {
                             showToast('用户设定管理模块未加载');
                         }
+                        break;
+                    case 'weather':
+                        showToast('天气功能开发中');
+                        break;
+                    case 'calendar':
+                        showToast('日历功能开发中');
                         break;
                     case 'decoration':
                         openDecorationPage();
@@ -6968,40 +7246,94 @@
 
         // 工具函数
         // ---------- API 设置相关 ----------
+        
+        // 折叠/展开卡片内容
+        function toggleCardContent(titleElement) {
+            const card = titleElement.closest('.settings-card');
+            if (!card) return;
+            
+            const icon = titleElement.querySelector('.collapse-icon');
+            const contents = Array.from(card.children).slice(1); // 除了title之外的所有元素
+            
+            // 检查是否已折叠
+            const isCollapsed = contents.length > 0 && contents[0].style.display === 'none';
+            
+            contents.forEach((el, index) => {
+                if (isCollapsed) {
+                    // 展开
+                    el.style.removeProperty('display');
+                } else {
+                    // 折叠
+                    el.style.display = 'none';
+                }
+            });
+            
+            if (icon) {
+                icon.textContent = isCollapsed ? '−' : '+';
+            }
+        }
+        
+        // 折叠/展开主API参数内容（特殊处理）
+        function toggleApiParamsContent(headerElement) {
+            const icon = headerElement.querySelector('.collapse-icon');
+            const outerDiv = headerElement.closest('div').parentElement;
+            const container = outerDiv.querySelector('#api-params-container');
+            
+            if (!container) return;
+            
+            const isCollapsed = container.style.display === 'none';
+            
+            container.style.display = isCollapsed ? '' : 'none';
+            if (icon) {
+                icon.textContent = isCollapsed ? '−' : '+';
+            }
+        }
+        
+        // 折叠/展开副API参数内容（特殊处理）
+        function toggleSecondaryApiParamsContent(headerElement) {
+            const icon = headerElement.querySelector('.collapse-icon');
+            const outerDiv = headerElement.closest('div').parentElement;
+            const container = outerDiv.querySelector('#secondary-api-params-container');
+            
+            if (!container) return;
+            
+            const isCollapsed = container.style.display === 'none';
+            
+            container.style.display = isCollapsed ? '' : 'none';
+            if (icon) {
+                icon.textContent = isCollapsed ? '−' : '+';
+            }
+        }
+        
         function initApiSettingsUI() {
+            // 初始化所有settings-card为折叠状态
+            const settingsCards = document.querySelectorAll('.settings-card');
+            settingsCards.forEach(card => {
+                const contents = Array.from(card.children).slice(1); // 除了title之外的所有元素
+                contents.forEach((el, index) => {
+                    el.style.display = 'none';
+                });
+            });
+            
+            // 初始化特殊的参数设置卡片
+            const apiParamsContainer = document.getElementById('api-params-container');
+            if (apiParamsContainer) {
+                apiParamsContainer.style.display = 'none';
+            }
+            
+            const secondaryApiParamsContainer = document.getElementById('secondary-api-params-container');
+            if (secondaryApiParamsContainer) {
+                secondaryApiParamsContainer.style.display = 'none';
+            }
+            
             // 将存储的设置填入界面
             loadApiSettingsToUI();
-            initPromptUI();
             
             // 初始化预设选择器
             initApiPresetUI();
             
             // 如果已有API设置和模型列表，则不需要重新拉取（提高稳定性）
             // 只在用户点击"拉取模型"时才手动拉取
-            
-            // 添加按钮事件
-            const addPromptBtn = document.getElementById('add-prompt-btn');
-            if (addPromptBtn) {
-                addPromptBtn.addEventListener('click', function() {
-                    openAddPromptDialog();
-                });
-            }
-            
-            const promptListBtn = document.getElementById('prompt-list-btn');
-            if (promptListBtn) {
-                promptListBtn.addEventListener('click', function() {
-                    openPromptListManager();
-                });
-            }
-            
-            const promptsSelect = document.getElementById('prompts-select');
-            if (promptsSelect) {
-                promptsSelect.addEventListener('change', function() {
-                    AppState.apiSettings.selectedPromptId = this.value;
-                    displayCurrentPrompt();
-                    saveToStorage();
-                });
-            }
             
             // 主API模型选择器 change 事件监听 - 自动保存
             const modelsSelect = document.getElementById('models-select');
@@ -7015,15 +7347,19 @@
                 });
             }
             
-            // API预设管理按钮 - 使用事件委托确保手机端可用
-            const apiPresetBtn = document.getElementById('api-preset-btn');
-            if (apiPresetBtn) {
-                apiPresetBtn.addEventListener('click', function(e) {
+            // API预设管理按钮 - 新增预设
+            const apiPresetCreateBtn = document.getElementById('api-preset-create-btn');
+            if (apiPresetCreateBtn) {
+                apiPresetCreateBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    openApiPresetManager();
+                    createNewApiPreset();
                 }, false);
             }
+            
+            // 初始化预设列表显示
+            refreshApiPresetsList();
+
 
             // 副API拉取模型按钮
             const pullSecondaryModelsBtn = document.getElementById('pull-secondary-models-btn');
@@ -7145,13 +7481,7 @@
             const id = target.id;
             const onclick = target.getAttribute('onclick');
             
-            // 处理预设管理按钮
-            if (id === 'api-preset-btn' || target.textContent.includes('预设管理')) {
-                e.preventDefault();
-                e.stopPropagation();
-                openApiPresetManager();
-                return;
-            }
+            // 处理其他按钮事件（如需要可在此扩展）
         }
         
         // 初始化API预设选择器
@@ -7166,77 +7496,53 @@
             }
         }
         
-        // 打开API预设管理器
-        function openApiPresetManager() {
-            let modal = document.getElementById('api-preset-modal');
-            if (modal) modal.remove();
+        // 刷新预设列表显示
+        function refreshApiPresetsList() {
+            const listContainer = document.getElementById('api-presets-list');
+            if (!listContainer) return;
             
-            modal = document.createElement('div');
-            modal.id = 'api-preset-modal';
-            modal.className = 'emoji-mgmt-modal show';
+            const presets = AppState.apiSettings?.presets || [];
             
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
+            if (presets.length === 0) {
+                listContainer.innerHTML = '<div style="text-align:center;color:#999;padding:12px;font-size:13px;">暂无预设</div>';
+                return;
+            }
             
-            const presets = AppState.apiSettings.presets || [];
-            
-            let presetList = '<div style="padding:12px;">';
-            
-            presets.forEach((preset, index) => {
-                presetList += `
-                    <div style="padding:12px;background:#f9f9f9;border-radius:4px;margin-bottom:8px;border-left:3px solid #333;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                            <div style="font-weight:bold;color:#333;margin-bottom:4px;">${preset.name}</div>
-                            <div style="display:flex;gap:4px;">
-                                <button class="emoji-mgmt-btn" style="padding:4px 8px;font-size:12px;height:auto;" onclick="selectApiPreset('${preset.id}');">使用</button>
-                                <button class="emoji-mgmt-btn" style="padding:4px 8px;font-size:12px;height:auto;" onclick="editApiPreset('${preset.id}');">编辑</button>
-                                <button class="emoji-mgmt-btn" style="padding:4px 8px;font-size:12px;height:auto;" onclick="deleteApiPreset('${preset.id}');">删除</button>
-                            </div>
+            let html = '';
+            presets.forEach((preset) => {
+                html += `
+                    <div style="padding:12px;background:#f9f9f9;border-radius:8px;border-left:3px solid #666;">
+                        <div style="margin-bottom:8px;">
+                            <div style="font-weight:600;color:#333;margin-bottom:6px;word-break:break-all;">${preset.name}</div>
+                            <div style="font-size:12px;color:#666;margin-bottom:4px;word-break:break-all;">主API: ${preset.endpoint.substring(0, 30)}${preset.endpoint.length > 30 ? '...' : ''}</div>
+                            ${preset.selectedModel ? `<div style="font-size:12px;color:#666;word-break:break-all;">模型: ${preset.selectedModel}</div>` : ''}
                         </div>
-                        <div style="font-size:12px;color:#666;"><strong>主API</strong></div>
-                        <div style="font-size:12px;color:#666;margin-left:8px;">端点：${preset.endpoint}</div>
-                        <div style="font-size:12px;color:#666;margin-left:8px;">密钥：${preset.apiKey.substring(0, 10)}***</div>
-                        <div style="font-size:12px;color:#666;margin-left:8px;margin-bottom:8px;">模型：${preset.selectedModel || '未选择'}</div>
-                        ${preset.secondaryEndpoint ? `
-                        <div style="font-size:12px;color:#666;"><strong>副API</strong></div>
-                        <div style="font-size:12px;color:#666;margin-left:8px;">端点：${preset.secondaryEndpoint}</div>
-                        <div style="font-size:12px;color:#666;margin-left:8px;">密钥：${preset.secondaryApiKey ? preset.secondaryApiKey.substring(0, 10) + '***' : '未配置'}</div>
-                        <div style="font-size:12px;color:#666;margin-left:8px;">模型：${preset.secondarySelectedModel || '未选择'}</div>
-                        ` : ''}
+                        <div style="display:flex;gap:6px;justify-content:center;">
+                            <button class="modern-btn modern-btn-small" style="flex:1;padding:6px 10px;font-size:12px;height:auto;" onclick="selectApiPreset('${preset.id}');">使用</button>
+                            <button class="modern-btn modern-btn-small" style="flex:1;padding:6px 10px;font-size:12px;height:auto;" onclick="updateApiPreset('${preset.id}');">更新</button>
+                            <button class="modern-btn modern-btn-small" style="flex:1;padding:6px 10px;font-size:12px;height:auto;" onclick="deleteApiPreset('${preset.id}');">删除</button>
+                        </div>
                     </div>
                 `;
             });
             
-            if (presets.length === 0) {
-                presetList += '<div style="text-align:center;color:#999;padding:20px;font-size:13px;">暂无预设，点击"新增预设"创建</div>';
-            }
-            
-            presetList += '</div>';
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:400px;max-height:80vh;overflow-y:auto;">
-                    <div class="emoji-mgmt-header">
-                        <h3 style="margin:0;">API 预设管理</h3>
-                        <button class="emoji-mgmt-close" onclick="document.getElementById('api-preset-modal').remove();">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                    <div style="padding:12px;border-bottom:1px solid #e8e8e8;">
-                        <button class="emoji-mgmt-btn" style="width:100%;padding:10px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;" onclick="createNewApiPreset();">新增预设</button>
-                    </div>
-                    <div style="flex:1;overflow-y:auto;">
-                        ${presetList}
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
+            listContainer.innerHTML = html;
         }
         
         // 创建新API预设
         function createNewApiPreset() {
+            const endpoint = document.getElementById('api-endpoint').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+            const selectedModel = document.getElementById('models-select').value;
+            const secondaryEndpoint = document.getElementById('secondary-api-endpoint').value.trim();
+            const secondaryApiKey = document.getElementById('secondary-api-key').value.trim();
+            const secondarySelectedModel = document.getElementById('secondary-models-select').value;
+            
+            if (!endpoint || !apiKey) {
+                showToast('请先填写主API端点和密钥');
+                return;
+            }
+            
             // 创建自定义输入模态框
             let modal = document.getElementById('new-preset-name-modal');
             if (modal) modal.remove();
@@ -7302,11 +7608,6 @@
             const secondaryApiKey = document.getElementById('secondary-api-key').value.trim();
             const secondarySelectedModel = document.getElementById('secondary-models-select').value;
             
-            if (!endpoint || !apiKey) {
-                showToast('请先填写主API端点和密钥');
-                return;
-            }
-            
             const preset = {
                 id: 'preset_' + Date.now(),
                 name: name,
@@ -7323,7 +7624,7 @@
             AppState.apiSettings.presets.push(preset);
             
             saveToStorage();
-            openApiPresetManager();
+            refreshApiPresetsList();
             showToast('预设已创建');
         }
         
@@ -7355,8 +7656,39 @@
             
             saveToStorage();
             loadApiSettingsToUI();
-            document.getElementById('api-preset-modal').remove();
             showToast(`已加载预设：${preset.name}，正在拉取模型...`);
+        }
+        
+        // 更新API预设（用当前的API设置和模型更新该预设）
+        function updateApiPreset(presetId) {
+            const preset = (AppState.apiSettings.presets || []).find(p => p.id === presetId);
+            if (!preset) return;
+            
+            // 获取当前表单中的最新配置
+            const currentEndpoint = document.getElementById('api-endpoint').value.trim();
+            const currentApiKey = document.getElementById('api-key').value.trim();
+            const currentSelectedModel = document.getElementById('models-select').value;
+            const currentSecondaryEndpoint = document.getElementById('secondary-api-endpoint').value.trim();
+            const currentSecondaryApiKey = document.getElementById('secondary-api-key').value.trim();
+            const currentSecondarySelectedModel = document.getElementById('secondary-models-select').value;
+            
+            if (!currentEndpoint || !currentApiKey) {
+                showToast('请先填写主API端点和密钥');
+                return;
+            }
+            
+            // 更新预设内容
+            preset.endpoint = currentEndpoint;
+            preset.apiKey = currentApiKey;
+            preset.selectedModel = currentSelectedModel;
+            preset.secondaryEndpoint = currentSecondaryEndpoint;
+            preset.secondaryApiKey = currentSecondaryApiKey;
+            preset.secondarySelectedModel = currentSecondarySelectedModel;
+            preset.updatedAt = new Date().toISOString();
+            
+            saveToStorage();
+            refreshApiPresetsList();
+            showToast(`预设 "${preset.name}" 已更新`);
         }
         
         // 为预设自动拉取模型
@@ -7408,7 +7740,43 @@
         
         // 删除API预设
         function deleteApiPreset(presetId) {
-            if (!confirm('确定要删除该预设吗？')) return;
+            // 创建自定义确认对话框
+            let modal = document.getElementById('delete-api-preset-modal');
+            if (modal) modal.remove();
+            
+            modal = document.createElement('div');
+            modal.id = 'delete-api-preset-modal';
+            modal.className = 'emoji-mgmt-modal show';
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            modal.innerHTML = `
+                <div class="emoji-mgmt-content" style="max-width:350px;">
+                    <div class="emoji-mgmt-header">
+                        <h3 style="margin:0;flex:1;">确认删除</h3>
+                        <button class="emoji-mgmt-close" onclick="document.getElementById('delete-api-preset-modal').remove();">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    <div style="padding:20px;flex:1;">
+                        <p style="margin:0;color:#333;font-size:14px;line-height:1.6;">确定要删除该预设吗？删除后将无法恢复。</p>
+                    </div>
+                    <div style="display:flex;gap:12px;padding:16px;border-top:1px solid #f0f0f0;background:#fafafa;">
+                        <button class="emoji-mgmt-btn" onclick="document.getElementById('delete-api-preset-modal').remove();">取消</button>
+                        <button class="emoji-mgmt-btn" style="background:#ff4444;color:#fff;border-color:#ff4444;" onclick="confirmDeleteApiPreset('${presetId}');">删除</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function confirmDeleteApiPreset(presetId) {
+            document.getElementById('delete-api-preset-modal').remove();
             
             AppState.apiSettings.presets = (AppState.apiSettings.presets || []).filter(p => p.id !== presetId);
             
@@ -7417,113 +7785,8 @@
             }
             
             saveToStorage();
-            openApiPresetManager();
+            refreshApiPresetsList();
             showToast('预设已删除');
-        }
-
-        function editApiPreset(presetId) {
-            const preset = (AppState.apiSettings.presets || []).find(p => p.id === presetId);
-            if (!preset) {
-                showToast('预设不存在');
-                return;
-            }
-
-            const modalHTML = `
-                <div id="api-preset-edit-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:50001;padding:20px;">
-                    <div style="background:white;border-radius:8px;padding:20px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;">
-                        <h3 style="margin-top:0;margin-bottom:20px;color:#333;">编辑预设</h3>
-                        
-                        <div style="margin-bottom:15px;">
-                            <label style="display:block;margin-bottom:5px;color:#666;font-weight:bold;">预设名称</label>
-                            <input type="text" id="edit-preset-name" value="${preset.name}" placeholder="预设名称" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;">
-                        </div>
-
-                        <div style="margin-bottom:20px;border-bottom:1px solid #e0e0e0;padding-bottom:15px;">
-                            <h4 style="margin:0 0 10px 0;color:#333;font-size:14px;">主API设置</h4>
-                            <div style="margin-bottom:10px;">
-                                <label style="display:block;margin-bottom:5px;color:#666;font-weight:bold;font-size:12px;">端点</label>
-                                <input type="text" id="edit-api-endpoint" value="${preset.endpoint}" placeholder="https://api.example.com/v1" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;">
-                            </div>
-                            <div style="margin-bottom:10px;">
-                                <label style="display:block;margin-bottom:5px;color:#666;font-weight:bold;font-size:12px;">密钥</label>
-                                <input type="password" id="edit-api-key" value="${preset.apiKey}" placeholder="sk-..." style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;">
-                                <button style="margin-top:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;font-size:12px;cursor:pointer;" onclick="toggleEditApiKeyVisibility('edit-api-key')">显示</button>
-                            </div>
-                        </div>
-
-                        <div style="margin-bottom:20px;">
-                            <h4 style="margin:0 0 10px 0;color:#333;font-size:14px;">副API设置（可选）</h4>
-                            <div style="margin-bottom:10px;">
-                                <label style="display:block;margin-bottom:5px;color:#666;font-weight:bold;font-size:12px;">端点</label>
-                                <input type="text" id="edit-secondary-api-endpoint" value="${preset.secondaryEndpoint || ''}" placeholder="https://api.example.com（可选）" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;">
-                            </div>
-                            <div style="margin-bottom:10px;">
-                                <label style="display:block;margin-bottom:5px;color:#666;font-weight:bold;font-size:12px;">密钥</label>
-                                <input type="password" id="edit-secondary-api-key" value="${preset.secondaryApiKey || ''}" placeholder="副API密钥（可选）" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;">
-                                <button style="margin-top:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;font-size:12px;cursor:pointer;" onclick="toggleEditApiKeyVisibility('edit-secondary-api-key')">显示</button>
-                            </div>
-                        </div>
-
-                        <div style="display:flex;gap:10px;justify-content:flex-end;">
-                            <button style="padding:8px 16px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:14px;" onclick="document.getElementById('api-preset-edit-modal').remove();">取消</button>
-                            <button style="padding:8px 16px;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;" onclick="saveApiPresetEdit('${presetId}');">保存</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            const modal = document.createElement('div');
-            modal.innerHTML = modalHTML;
-            document.body.appendChild(modal.firstElementChild);
-
-            // 防止模态框关闭时冒泡
-            document.getElementById('api-preset-edit-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.remove();
-                }
-            });
-        }
-
-        function toggleEditApiKeyVisibility(inputId) {
-            const keyInput = document.getElementById(inputId);
-            const btn = event.target;
-            if (keyInput.type === 'password') {
-                keyInput.type = 'text';
-                btn.textContent = '隐藏';
-            } else {
-                keyInput.type = 'password';
-                btn.textContent = '显示';
-            }
-        }
-
-        function saveApiPresetEdit(presetId) {
-            const name = document.getElementById('edit-preset-name').value.trim();
-            const endpoint = document.getElementById('edit-api-endpoint').value.trim();
-            const apiKey = document.getElementById('edit-api-key').value.trim();
-            const secondaryEndpoint = document.getElementById('edit-secondary-api-endpoint').value.trim();
-            const secondaryApiKey = document.getElementById('edit-secondary-api-key').value.trim();
-
-            if (!name || !endpoint || !apiKey) {
-                showToast('请填写所有必填项（主API端点和密钥）');
-                return;
-            }
-
-            const presets = AppState.apiSettings.presets || [];
-            const presetIndex = presets.findIndex(p => p.id === presetId);
-            
-            if (presetIndex !== -1) {
-                presets[presetIndex].name = name;
-                presets[presetIndex].endpoint = endpoint;
-                presets[presetIndex].apiKey = apiKey;
-                presets[presetIndex].secondaryEndpoint = secondaryEndpoint;
-                presets[presetIndex].secondaryApiKey = secondaryApiKey;
-                AppState.apiSettings.presets = presets;
-                
-                saveToStorage();
-                document.getElementById('api-preset-edit-modal').remove();
-                openApiPresetManager();
-                showToast('预设已保存');
-            }
         }
 
         function loadApiSettingsToUI() {
@@ -7555,6 +7818,9 @@
                 }
                 
                 if (aiToggle) aiToggle.checked = !!s.aiTimeAware;
+                
+                const offlineTimeToggle = document.getElementById('offline-time-aware');
+                if (offlineTimeToggle) offlineTimeToggle.checked = !!s.offlineTimeAware;
                 
                 // 加载主API参数并更新显示值
                 if (temperatureEl) {
@@ -7597,198 +7863,46 @@
 
                 if (displayEl) displayEl.textContent = s.selectedModel || '未选择';
 
+                // 加载副API参数
+                const secondaryTemperatureEl = document.getElementById('secondary-temperature-input');
+                const secondaryFrequencyPenaltyEl = document.getElementById('secondary-frequency-penalty-input');
+                const secondaryPresencePenaltyEl = document.getElementById('secondary-presence-penalty-input');
+                const secondaryTopPEl = document.getElementById('secondary-top-p-input');
+                
+                if (secondaryTemperatureEl) {
+                    const stempValue = s.secondaryTemperature !== undefined ? s.secondaryTemperature : 0.8;
+                    secondaryTemperatureEl.value = stempValue;
+                    const stempDisplay = document.getElementById('secondary-temperature-value');
+                    if (stempDisplay) stempDisplay.textContent = stempValue;
+                }
+                if (secondaryFrequencyPenaltyEl) {
+                    const sfpValue = s.secondaryFrequencyPenalty !== undefined ? s.secondaryFrequencyPenalty : 0.2;
+                    secondaryFrequencyPenaltyEl.value = sfpValue;
+                    const sfpDisplay = document.getElementById('secondary-frequency-penalty-value');
+                    if (sfpDisplay) sfpDisplay.textContent = sfpValue;
+                }
+                if (secondaryPresencePenaltyEl) {
+                    const sppValue = s.secondaryPresencePenalty !== undefined ? s.secondaryPresencePenalty : 0.1;
+                    secondaryPresencePenaltyEl.value = sppValue;
+                    const sppDisplay = document.getElementById('secondary-presence-penalty-value');
+                    if (sppDisplay) sppDisplay.textContent = sppValue;
+                }
+                if (secondaryTopPEl) {
+                    const stopPValue = s.secondaryTopP !== undefined ? s.secondaryTopP : 1.0;
+                    secondaryTopPEl.value = stopPValue;
+                    const stopPDisplay = document.getElementById('secondary-top-p-value');
+                    if (stopPDisplay) stopPDisplay.textContent = stopPValue;
+                }
+
                 // 副API设置加载已迁移到 secondary-api-manager.js
                 SecondaryAPIManager.loadSettingsToUI();
                 
                 // 加载 MiniMax TTS 设置
                 loadMinimaxTTSSettingsToUI();
+                
+                // 刷新预设列表显示
+                refreshApiPresetsList();
             } catch (e) { console.error(e); }
-        }
-
-        function initPromptUI() {
-            try {
-                const s = AppState.apiSettings || {};
-                const promptsSelect = document.getElementById('prompts-select');
-                
-                if (promptsSelect) {
-                    promptsSelect.innerHTML = '';
-                    
-                  
-                    
-                    // 添加自定义提示词选项
-                    if (s.prompts && s.prompts.length) {
-                        s.prompts.forEach(p => {
-                            const opt = document.createElement('option');
-                            opt.value = p.id;
-                            opt.textContent = p.name || '未命名提示词';
-                            promptsSelect.appendChild(opt);
-                        });
-                    }
-                    
-                    // 设置当前选中的提示词
-                    promptsSelect.value = s.selectedPromptId || '__default__';
-                }
-                
-                displayCurrentPrompt();
-            } catch (e) { console.error(e); }
-        }
-
-        function displayCurrentPrompt() {
-            try {
-                const s = AppState.apiSettings || {};
-                const displayEl = document.getElementById('current-prompt-display');
-                
-                if (!displayEl) return;
-                
-                let promptContent = '';
-                if (s.selectedPromptId === '__default__' || !s.selectedPromptId) {
-                    promptContent = s.defaultPrompt || '暂无提示词';
-                } else {
-                    const prompt = (s.prompts || []).find(p => p.id === s.selectedPromptId);
-                    promptContent = prompt ? prompt.content : '提示词不存在';
-                }
-                
-                displayEl.textContent = promptContent;
-            } catch (e) { console.error(e); }
-        }
-
-        function openAddPromptDialog() {
-            let modal = document.getElementById('add-prompt-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'add-prompt-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:500px;max-height:90vh;overflow-y:auto;">
-                    <div class="emoji-mgmt-header">
-                        <h3 style="margin:0;">新增提示词</h3>
-                        <button class="emoji-mgmt-close" onclick="document.getElementById('add-prompt-modal').remove();">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                    <div style="padding:16px;flex:1;overflow-y:auto;">
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;color:#333;font-size:13px;margin-bottom:4px;">提示词名称</label>
-                            <input type="text" id="prompt-name-input" placeholder="例如：角色卡模式" class="group-input" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
-                        </div>
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;color:#333;font-size:13px;margin-bottom:4px;">提示词内容</label>
-                            <textarea id="prompt-content-input" placeholder="输入提示词内容..." style="width:100%;min-height:200px;padding:8px;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
-                        </div>
-                        <div style="display:flex;gap:8px;justify-content:flex-end;">
-                            <button class="emoji-mgmt-btn" onclick="document.getElementById('add-prompt-modal').remove();">取消</button>
-                            <button class="emoji-mgmt-btn" style="background:#000;color:#fff;" onclick="saveNewPrompt();">保存</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        function saveNewPrompt() {
-            const nameInput = document.getElementById('prompt-name-input');
-            const contentInput = document.getElementById('prompt-content-input');
-            
-            const name = (nameInput ? nameInput.value.trim() : '').trim();
-            const content = (contentInput ? contentInput.value.trim() : '').trim();
-            
-            if (!name || !content) {
-                showToast('请填写提示词名称和内容');
-                return;
-            }
-            
-            AppState.apiSettings = AppState.apiSettings || {};
-            AppState.apiSettings.prompts = AppState.apiSettings.prompts || [];
-            
-            const newPrompt = {
-                id: 'prompt_' + Date.now(),
-                name: name,
-                content: content,
-                category: '自定义',
-                createdAt: new Date().toISOString()
-            };
-            
-            AppState.apiSettings.prompts.push(newPrompt);
-            AppState.apiSettings.selectedPromptId = newPrompt.id;
-            
-            saveToStorage();
-            initPromptUI();
-            document.getElementById('add-prompt-modal').remove();
-            showToast('提示词已保存');
-        }
-
-        function openPromptListManager() {
-            let modal = document.getElementById('prompt-list-modal');
-            if (modal) modal.remove();
-            
-            modal = document.createElement('div');
-            modal.id = 'prompt-list-modal';
-            modal.className = 'emoji-mgmt-modal show';
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-            
-            const prompts = AppState.apiSettings && AppState.apiSettings.prompts ? AppState.apiSettings.prompts : [];
-            
-            let promptList = '<div style="padding:12px;">';
-            
-           
-            
-            // 自定义提示词
-            prompts.forEach(p => {
-                promptList += `
-                    <div style="padding:12px;background:#f9f9f9;border-radius:4px;margin-bottom:8px;border-left:3px solid #000;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                            <div style="font-weight:bold;color:#333;">${p.name}</div>
-                            <button class="emoji-mgmt-btn" style="padding:4px 8px;font-size:12px;height:auto;" onclick="deletePrompt('${p.id}');">删除</button>
-                        </div>
-                        <div style="font-size:12px;color:#999;margin-bottom:8px;">${p.category || '自定义'}</div>
-                        <div style="font-size:12px;color:#666;white-space:pre-wrap;max-height:100px;overflow-y:auto;">${p.content}</div>
-                    </div>
-                `;
-            });
-            
-            promptList += '</div>';
-            
-            modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:600px;max-height:90vh;overflow-y:auto;">
-                    <div class="emoji-mgmt-header">
-                        <h3 style="margin:0;">提示词列表</h3>
-                        <button class="emoji-mgmt-close" onclick="document.getElementById('prompt-list-modal').remove();">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                    <div style="flex:1;overflow-y:auto;">
-                        ${promptList}
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        function deletePrompt(promptId) {
-            if (!confirm('确定要删除该提示词吗？')) return;
-            
-            AppState.apiSettings = AppState.apiSettings || {};
-            AppState.apiSettings.prompts = (AppState.apiSettings.prompts || []).filter(p => p.id !== promptId);
-            
-       
-            // 更新列表
-            const listModal = document.getElementById('prompt-list-modal');
-            if (listModal) {
-                openPromptListManager();
-            }
         }
 
         // ===== 世界书UI初始化 =====
@@ -7798,47 +7912,45 @@
             console.log('世界书UI由WorldbookManager管理');
         }
 
-        // API参数锁定状态更新函数
-        function updateLockButtonState(isLocked) {
-            const lockBtn = document.getElementById('api-params-lock-btn');
-            const paramsContainer = document.getElementById('api-params-container');
-            
-            if (lockBtn && paramsContainer) {
-                if (isLocked) {
-                    paramsContainer.classList.add('locked');
-                    lockBtn.classList.add('locked');
-                    lockBtn.innerHTML = '<i class="fa-solid fa-lock"></i><span>已锁定</span>';
-                } else {
-                    paramsContainer.classList.remove('locked');
-                    lockBtn.classList.remove('locked');
-                    lockBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i><span>解锁</span>';
-                }
-            }
-        }
+
 
         function saveApiSettingsFromUI() {
             const endpoint = (document.getElementById('api-endpoint') || {}).value || '';
             const apiKey = (document.getElementById('api-key') || {}).value || '';
             const selected = (document.getElementById('models-select') || {}).value || '';
             const aiTime = !!((document.getElementById('ai-time-aware') || {}).checked);
+            const offlineTime = !!((document.getElementById('offline-time-aware') || {}).checked);
             
             // 主API参数
             const temperature = parseFloat((document.getElementById('temperature-input') || {}).value || 0.8);
             const frequencyPenalty = parseFloat((document.getElementById('frequency-penalty-input') || {}).value || 0.2);
             const presencePenalty = parseFloat((document.getElementById('presence-penalty-input') || {}).value || 0.1);
             const topP = parseFloat((document.getElementById('top-p-input') || {}).value || 1.0);
+            
+            // 副API参数
+            const secondaryTemperature = parseFloat((document.getElementById('secondary-temperature-input') || {}).value || 0.8);
+            const secondaryFrequencyPenalty = parseFloat((document.getElementById('secondary-frequency-penalty-input') || {}).value || 0.2);
+            const secondaryPresencePenalty = parseFloat((document.getElementById('secondary-presence-penalty-input') || {}).value || 0.1);
+            const secondaryTopP = parseFloat((document.getElementById('secondary-top-p-input') || {}).value || 1.0);
 
             AppState.apiSettings = AppState.apiSettings || {};
             AppState.apiSettings.endpoint = endpoint.trim();
             AppState.apiSettings.apiKey = apiKey.trim();
             AppState.apiSettings.selectedModel = selected;
             AppState.apiSettings.aiTimeAware = aiTime;
+            AppState.apiSettings.offlineTimeAware = offlineTime;
             
             // 保存主API参数（添加范围验证）
             AppState.apiSettings.temperature = isNaN(temperature) ? 0.8 : Math.max(0, Math.min(2, temperature));
             AppState.apiSettings.frequencyPenalty = isNaN(frequencyPenalty) ? 0.2 : Math.max(-2, Math.min(2, frequencyPenalty));
             AppState.apiSettings.presencePenalty = isNaN(presencePenalty) ? 0.1 : Math.max(-2, Math.min(2, presencePenalty));
             AppState.apiSettings.topP = isNaN(topP) ? 1.0 : Math.max(0, Math.min(1, topP));
+            
+            // 保存副API参数（添加范围验证）
+            AppState.apiSettings.secondaryTemperature = isNaN(secondaryTemperature) ? 0.8 : Math.max(0, Math.min(2, secondaryTemperature));
+            AppState.apiSettings.secondaryFrequencyPenalty = isNaN(secondaryFrequencyPenalty) ? 0.2 : Math.max(-2, Math.min(2, secondaryFrequencyPenalty));
+            AppState.apiSettings.secondaryPresencePenalty = isNaN(secondaryPresencePenalty) ? 0.1 : Math.max(-2, Math.min(2, secondaryPresencePenalty));
+            AppState.apiSettings.secondaryTopP = isNaN(secondaryTopP) ? 1.0 : Math.max(0, Math.min(1, secondaryTopP));
 
             // 保存副API设置 - 已迁移到 secondary-api-manager.js
             SecondaryAPIManager.saveSettingsFromUI();
@@ -7849,6 +7961,7 @@
             // persist
             saveToStorage();
             loadApiSettingsToUI();
+            refreshApiPresetsList();
             showToast('设置已保存');
         }
 

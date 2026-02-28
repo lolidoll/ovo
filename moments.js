@@ -44,6 +44,116 @@ function confirmDelete() {
   }
 }
 
+// 显示修改用户名弹窗
+function showEditNameDialog(currentName, callback) {
+  let modal = document.getElementById('editNameModal');
+  if (modal) modal.remove();
+  
+  modal = document.createElement('div');
+  modal.id = 'editNameModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);';
+  
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  modal.innerHTML = `
+    <div style="max-width:320px;width:90%;background:linear-gradient(180deg,#fffbfd 0%,#fff5f9 100%);border-radius:20px;box-shadow:0 24px 48px rgba(255,182,193,0.25),0 0 0 1px rgba(255,240,245,0.5);overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at top,rgba(255,228,235,0.4) 0%,transparent 70%);pointer-events:none;"></div>
+      <div style="position:relative;padding:24px 20px 20px;background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);border-bottom:1px solid rgba(255,228,235,0.3);">
+        <h3 style="margin:0;font-size:18px;font-weight:700;color:#ff85a6;letter-spacing:0.5px;text-align:center;">修改用户名</h3>
+      </div>
+      <div style="padding:20px;">
+        <input type="text" id="editNameInput" value="${currentName}" placeholder="请输入新的用户名" style="width:100%;padding:12px 14px;border:2px solid rgba(255,192,203,0.3);border-radius:12px;font-size:14px;color:#9b7a9f;background:rgba(255,255,255,0.8);outline:none;transition:all 0.3s;box-sizing:border-box;" onfocus="this.style.borderColor='#ff85a6';this.style.boxShadow='0 0 0 3px rgba(255,133,166,0.1)'" onblur="this.style.borderColor='rgba(255,192,203,0.3)';this.style.boxShadow='none'">
+        <div style="display:flex;gap:12px;margin-top:20px;">
+          <button id="cancelNameBtn" style="flex:1;padding:12px;border:1.5px solid rgba(255,192,203,0.4);background:rgba(255,255,255,0.8);border-radius:16px;cursor:pointer;font-size:14px;color:#ff85a6;font-weight:700;transition:all 0.3s;box-shadow:0 4px 16px rgba(255,182,193,0.12);" onmouseover="this.style.background='rgba(255,250,252,0.95)';this.style.boxShadow='0 6px 24px rgba(255,182,193,0.22)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.8)';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.12)';this.style.transform='translateY(0)'">取消</button>
+          <button id="confirmNameBtn" style="flex:1;padding:12px;border:none;background:linear-gradient(135deg,#ff85a6 0%,#ff6b9d 100%);color:#fff;border-radius:16px;cursor:pointer;font-size:14px;font-weight:700;transition:all 0.3s;box-shadow:0 6px 20px rgba(255,107,157,0.4);" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,107,157,0.55)';this.style.transform='translateY(-2px) scale(1.02)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,107,157,0.4)';this.style.transform='translateY(0) scale(1)'">确认</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  const input = document.getElementById('editNameInput');
+  const cancelBtn = document.getElementById('cancelNameBtn');
+  const confirmBtn = document.getElementById('confirmNameBtn');
+  
+  input.focus();
+  input.select();
+  
+  cancelBtn.addEventListener('click', () => modal.remove());
+  
+  confirmBtn.addEventListener('click', () => {
+    const newName = input.value.trim();
+    callback(newName || null);
+    modal.remove();
+  });
+  
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      confirmBtn.click();
+    }
+  });
+}
+
+// 显示修改访客总量弹窗
+function showEditVisitorDialog(currentCount, callback) {
+  let modal = document.getElementById('editVisitorModal');
+  if (modal) modal.remove();
+  
+  modal = document.createElement('div');
+  modal.id = 'editVisitorModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);';
+  
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  modal.innerHTML = `
+    <div style="max-width:320px;width:90%;background:linear-gradient(180deg,#fffbfd 0%,#fff5f9 100%);border-radius:20px;box-shadow:0 24px 48px rgba(255,182,193,0.25),0 0 0 1px rgba(255,240,245,0.5);overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at top,rgba(255,228,235,0.4) 0%,transparent 70%);pointer-events:none;"></div>
+      <div style="position:relative;padding:24px 20px 20px;background:linear-gradient(135deg,rgba(255,245,250,0.95) 0%,rgba(255,250,252,0.9) 100%);border-bottom:1px solid rgba(255,228,235,0.3);">
+        <h3 style="margin:0;font-size:18px;font-weight:700;color:#ff85a6;letter-spacing:0.5px;text-align:center;">修改访客总量</h3>
+      </div>
+      <div style="padding:20px;">
+        <input type="number" id="editVisitorInput" value="${currentCount}" placeholder="请输入新的访客总量" min="0" style="width:100%;padding:12px 14px;border:2px solid rgba(255,192,203,0.3);border-radius:12px;font-size:14px;color:#9b7a9f;background:rgba(255,255,255,0.8);outline:none;transition:all 0.3s;box-sizing:border-box;" onfocus="this.style.borderColor='#ff85a6';this.style.boxShadow='0 0 0 3px rgba(255,133,166,0.1)'" onblur="this.style.borderColor='rgba(255,192,203,0.3)';this.style.boxShadow='none'">
+        <div style="display:flex;gap:12px;margin-top:20px;">
+          <button id="cancelVisitorBtn" style="flex:1;padding:12px;border:1.5px solid rgba(255,192,203,0.4);background:rgba(255,255,255,0.8);border-radius:16px;cursor:pointer;font-size:14px;color:#ff85a6;font-weight:700;transition:all 0.3s;box-shadow:0 4px 16px rgba(255,182,193,0.12);" onmouseover="this.style.background='rgba(255,250,252,0.95)';this.style.boxShadow='0 6px 24px rgba(255,182,193,0.22)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.8)';this.style.boxShadow='0 4px 16px rgba(255,182,193,0.12)';this.style.transform='translateY(0)'">取消</button>
+          <button id="confirmVisitorBtn" style="flex:1;padding:12px;border:none;background:linear-gradient(135deg,#ff85a6 0%,#ff6b9d 100%);color:#fff;border-radius:16px;cursor:pointer;font-size:14px;font-weight:700;transition:all 0.3s;box-shadow:0 6px 20px rgba(255,107,157,0.4);" onmouseover="this.style.boxShadow='0 8px 32px rgba(255,107,157,0.55)';this.style.transform='translateY(-2px) scale(1.02)'" onmouseout="this.style.boxShadow='0 6px 20px rgba(255,107,157,0.4)';this.style.transform='translateY(0) scale(1)'">确认</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  const input = document.getElementById('editVisitorInput');
+  const cancelBtn = document.getElementById('cancelVisitorBtn');
+  const confirmBtn = document.getElementById('confirmVisitorBtn');
+  
+  input.focus();
+  input.select();
+  
+  cancelBtn.addEventListener('click', () => modal.remove());
+  
+  confirmBtn.addEventListener('click', () => {
+    const newCount = parseInt(input.value);
+    callback(isNaN(newCount) ? null : newCount);
+    modal.remove();
+  });
+  
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      confirmBtn.click();
+    }
+  });
+}
+
 // 朋友圈数据存储
 class MomentsManager {
   constructor() {
@@ -89,16 +199,16 @@ class MomentsManager {
         console.error('加载朋友圈个人资料失败:', e);
         this.profileData = {
           name: '小喵1号',
-          avatar: '',
-          visitorCount: 0,
+          avatar: 'https://img.heliar.top/file/1772263381384_IMG_20260228_080931.jpg',
+          visitorCount: 1314,
           bgImage: ''
         };
       }
     } else {
       this.profileData = {
         name: '小喵1号',
-        avatar: '',
-        visitorCount: 0,
+        avatar: 'https://img.heliar.top/file/1772263381384_IMG_20260228_080931.jpg',
+        visitorCount: 1314,
         bgImage: ''
       };
     }
@@ -151,13 +261,14 @@ class MomentsManager {
         
         // 添加点击事件
         newNameEl.addEventListener('click', () => {
-          const newName = prompt('修改朋友圈用户名:', this.profileData.name);
-          if (newName && newName.trim()) {
-            this.profileData.name = newName.trim();
-            newNameEl.textContent = newName.trim();
-            this.saveToStorage();
-            console.log('朋友圈用户名已更新:', this.profileData.name);
-          }
+          showEditNameDialog(this.profileData.name, (newName) => {
+            if (newName && newName.trim()) {
+              this.profileData.name = newName.trim();
+              newNameEl.textContent = newName.trim();
+              this.saveToStorage();
+              console.log('朋友圈用户名已更新:', this.profileData.name);
+            }
+          });
         });
       }
       
@@ -189,16 +300,17 @@ class MomentsManager {
           
           // 添加点击事件
           newParentP.addEventListener('click', () => {
-            const newCount = prompt('修改朋友圈访客总量:', this.profileData.visitorCount);
-            if (newCount !== null && !isNaN(newCount)) {
-              const countVal = parseInt(newCount);
-              if (countVal >= 0) {
-                this.profileData.visitorCount = countVal;
-                newVisitorEl.textContent = countVal;
-                this.saveToStorage();
-                console.log('朋友圈访客总量已更新:', countVal);
+            showEditVisitorDialog(this.profileData.visitorCount, (newCount) => {
+              if (newCount !== null && !isNaN(newCount)) {
+                const countVal = parseInt(newCount);
+                if (countVal >= 0) {
+                  this.profileData.visitorCount = countVal;
+                  newVisitorEl.textContent = countVal;
+                  this.saveToStorage();
+                  console.log('朋友圈访客总量已更新:', countVal);
+                }
               }
-            }
+            });
           });
         }
       }
@@ -569,7 +681,9 @@ class MomentsManager {
   // 渲染朋友圈列表
   renderMoments() {
     try {
-      const feedList = document.getElementById('feedList');
+      // 查找朋友圈页面中的 feedList
+      let feedList = document.getElementById('feedList');
+      
       if (!feedList) return;
 
       feedList.innerHTML = '';

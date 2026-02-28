@@ -90,7 +90,7 @@
 
 /* 标题样式 - 精致排版 */
 #api-settings-page .card-title {
-    margin: 0 0 20px 0;
+    margin: 0;
     font-size: 16px;
     color: #1a1a1a;
     font-weight: 600;
@@ -544,8 +544,6 @@
 /* 弹窗遮罩�?*/
 .emoji-mgmt-modal,
 #api-preset-modal,
-#add-prompt-modal,
-#prompt-list-modal,
 #api-preset-edit-modal {
     position: fixed !important;
     top: 0;
@@ -574,9 +572,7 @@
 /* 弹窗内容容器 */
 .emoji-mgmt-modal > div,
 .emoji-mgmt-content,
-#api-preset-modal > div,
-#add-prompt-modal > div,
-#prompt-list-modal > div,
+#api-preset-modal > div > div > div,
 #api-preset-edit-modal > div {
     background: #ffffff !important;
     border-radius: 20px !important;
@@ -605,9 +601,7 @@
 /* 弹窗头部 */
 .emoji-mgmt-modal h3,
 .emoji-mgmt-content h3,
-#api-preset-modal h3,
-#add-prompt-modal h3,
-#prompt-list-modal h3 {
+#api-preset-modal h3 h3 h3 {
     margin: 0 0 24px 0 !important;
     font-size: 20px !important;
     color: #1a1a1a !important;
@@ -672,13 +666,7 @@
 .emoji-mgmt-content textarea,
 #api-preset-modal input[type="text"],
 #api-preset-modal input[type="password"],
-#api-preset-modal textarea,
-#add-prompt-modal input[type="text"],
-#add-prompt-modal input[type="password"],
-#add-prompt-modal textarea,
-#prompt-list-modal input[type="text"],
-#prompt-list-modal input[type="password"],
-#prompt-list-modal textarea,
+#api-preset-modal textarea input[type="text"] input[type="password"] textarea input[type="text"] input[type="password"] textarea,
 #api-preset-edit-modal input[type="text"],
 #api-preset-edit-modal input[type="password"],
 #api-preset-edit-modal textarea {
@@ -701,11 +689,7 @@
 .emoji-mgmt-content input:focus,
 .emoji-mgmt-content textarea:focus,
 #api-preset-modal input:focus,
-#api-preset-modal textarea:focus,
-#add-prompt-modal input:focus,
-#add-prompt-modal textarea:focus,
-#prompt-list-modal input:focus,
-#prompt-list-modal textarea:focus,
+#api-preset-modal textarea:focus input:focus textarea:focus input:focus textarea:focus,
 #api-preset-edit-modal input:focus,
 #api-preset-edit-modal textarea:focus {
     border-color: #999 !important;
@@ -720,11 +704,7 @@
 .emoji-mgmt-content input::placeholder,
 .emoji-mgmt-content textarea::placeholder,
 #api-preset-modal input::placeholder,
-#api-preset-modal textarea::placeholder,
-#add-prompt-modal input::placeholder,
-#add-prompt-modal textarea::placeholder,
-#prompt-list-modal input::placeholder,
-#prompt-list-modal textarea::placeholder,
+#api-preset-modal textarea::placeholder input::placeholder textarea::placeholder input::placeholder textarea::placeholder,
 #api-preset-edit-modal input::placeholder,
 #api-preset-edit-modal textarea::placeholder {
     color: #aaa !important;
@@ -734,9 +714,7 @@
 /* 弹窗标签 */
 .emoji-mgmt-modal label,
 .emoji-mgmt-content label,
-#api-preset-modal label,
-#add-prompt-modal label,
-#prompt-list-modal label,
+#api-preset-modal label label label,
 #api-preset-edit-modal label {
     display: block !important;
     margin-bottom: 8px !important;
@@ -749,9 +727,7 @@
 /* 弹窗按钮 */
 .emoji-mgmt-btn,
 .emoji-mgmt-content button:not([class*="close"]),
-#api-preset-modal button:not([class*="close"]),
-#add-prompt-modal button:not([class*="close"]),
-#prompt-list-modal button:not([class*="close"]),
+#api-preset-modal button:not([class*="close"]) button:not([class*="close"]) button:not([class*="close"]),
 #api-preset-edit-modal button:not([class*="close"]) {
     padding: 12px 24px !important;
     background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%) !important;
@@ -768,9 +744,7 @@
 
 .emoji-mgmt-btn:hover,
 .emoji-mgmt-content button:not([class*="close"]):hover,
-#api-preset-modal button:not([class*="close"]):hover,
-#add-prompt-modal button:not([class*="close"]):hover,
-#prompt-list-modal button:not([class*="close"]):hover,
+#api-preset-modal button:not([class*="close"]):hover button:not([class*="close"]):hover button:not([class*="close"]):hover,
 #api-preset-edit-modal button:not([class*="close"]):hover {
     background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%) !important;
     border-color: #d0d0d0 !important;
@@ -780,9 +754,7 @@
 
 .emoji-mgmt-btn:active,
 .emoji-mgmt-content button:not([class*="close"]):active,
-#api-preset-modal button:not([class*="close"]):active,
-#add-prompt-modal button:not([class*="close"]):active,
-#prompt-list-modal button:not([class*="close"]):active,
+#api-preset-modal button:not([class*="close"]):active button:not([class*="close"]):active button:not([class*="close"]):active,
 #api-preset-edit-modal button:not([class*="close"]):active {
     transform: translateY(0);
 }
@@ -793,11 +765,7 @@
 .emoji-mgmt-content button[style*="background:#000"],
 .emoji-mgmt-content button[style*="background:#4CAF50"],
 #api-preset-modal button[style*="background:#000"],
-#api-preset-modal button[style*="background:#4CAF50"],
-#add-prompt-modal button[style*="background:#000"],
-#add-prompt-modal button[style*="background:#4CAF50"],
-#prompt-list-modal button[style*="background:#000"],
-#prompt-list-modal button[style*="background:#4CAF50"],
+#api-preset-modal button[style*="background:#4CAF50"] button[style*="background:#000"] button[style*="background:#4CAF50"] button[style*="background:#000"] button[style*="background:#4CAF50"],
 #api-preset-edit-modal button[style*="background:#000"],
 #api-preset-edit-modal button[style*="background:#4CAF50"] {
     background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%) !important;
@@ -812,11 +780,7 @@
 .emoji-mgmt-content button[style*="background:#000"]:hover,
 .emoji-mgmt-content button[style*="background:#4CAF50"]:hover,
 #api-preset-modal button[style*="background:#000"]:hover,
-#api-preset-modal button[style*="background:#4CAF50"]:hover,
-#add-prompt-modal button[style*="background:#000"]:hover,
-#add-prompt-modal button[style*="background:#4CAF50"]:hover,
-#prompt-list-modal button[style*="background:#000"]:hover,
-#prompt-list-modal button[style*="background:#4CAF50"]:hover,
+#api-preset-modal button[style*="background:#4CAF50"]:hover button[style*="background:#000"]:hover button[style*="background:#4CAF50"]:hover button[style*="background:#000"]:hover button[style*="background:#4CAF50"]:hover,
 #api-preset-edit-modal button[style*="background:#000"]:hover,
 #api-preset-edit-modal button[style*="background:#4CAF50"]:hover {
     background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%) !important;
@@ -908,18 +872,14 @@
 /* 滚动条美�?*/
 .emoji-mgmt-modal > div::-webkit-scrollbar,
 .emoji-mgmt-content::-webkit-scrollbar,
-#api-preset-modal > div::-webkit-scrollbar,
-#add-prompt-modal > div::-webkit-scrollbar,
-#prompt-list-modal > div::-webkit-scrollbar,
+#api-preset-modal > div::-webkit-scrollbar > div::-webkit-scrollbar > div::-webkit-scrollbar,
 #api-preset-edit-modal > div::-webkit-scrollbar {
     width: 6px;
 }
 
 .emoji-mgmt-modal > div::-webkit-scrollbar-track,
 .emoji-mgmt-content::-webkit-scrollbar-track,
-#api-preset-modal > div::-webkit-scrollbar-track,
-#add-prompt-modal > div::-webkit-scrollbar-track,
-#prompt-list-modal > div::-webkit-scrollbar-track,
+#api-preset-modal > div::-webkit-scrollbar-track > div::-webkit-scrollbar-track > div::-webkit-scrollbar-track,
 #api-preset-edit-modal > div::-webkit-scrollbar-track {
     background: #f0f0f0;
     border-radius: 3px;
@@ -927,9 +887,7 @@
 
 .emoji-mgmt-modal > div::-webkit-scrollbar-thumb,
 .emoji-mgmt-content::-webkit-scrollbar-thumb,
-#api-preset-modal > div::-webkit-scrollbar-thumb,
-#add-prompt-modal > div::-webkit-scrollbar-thumb,
-#prompt-list-modal > div::-webkit-scrollbar-thumb,
+#api-preset-modal > div::-webkit-scrollbar-thumb > div::-webkit-scrollbar-thumb > div::-webkit-scrollbar-thumb,
 #api-preset-edit-modal > div::-webkit-scrollbar-thumb {
     background: #ccc;
     border-radius: 3px;
@@ -937,9 +895,7 @@
 
 .emoji-mgmt-modal > div::-webkit-scrollbar-thumb:hover,
 .emoji-mgmt-content::-webkit-scrollbar-thumb:hover,
-#api-preset-modal > div::-webkit-scrollbar-thumb:hover,
-#add-prompt-modal > div::-webkit-scrollbar-thumb:hover,
-#prompt-list-modal > div::-webkit-scrollbar-thumb:hover,
+#api-preset-modal > div::-webkit-scrollbar-thumb:hover > div::-webkit-scrollbar-thumb:hover > div::-webkit-scrollbar-thumb:hover,
 #api-preset-edit-modal > div::-webkit-scrollbar-thumb:hover {
     background: #bbb;
 }
@@ -948,17 +904,13 @@
 @media (max-width: 768px) {
     .emoji-mgmt-modal,
     #api-preset-modal,
-    #add-prompt-modal,
-    #prompt-list-modal,
     #api-preset-edit-modal {
         padding: 16px;
     }
 
     .emoji-mgmt-modal > div,
     .emoji-mgmt-content,
-    #api-preset-modal > div,
-    #add-prompt-modal > div,
-    #prompt-list-modal > div,
+    #api-preset-modal > div > div > div,
     #api-preset-edit-modal > div {
         padding: 24px !important;
         border-radius: 16px !important;
@@ -967,9 +919,7 @@
 
     .emoji-mgmt-modal h3,
     .emoji-mgmt-content h3,
-    #api-preset-modal h3,
-    #add-prompt-modal h3,
-    #prompt-list-modal h3 {
+    #api-preset-modal h3 h3 h3 {
         font-size: 18px !important;
     }
 
@@ -988,9 +938,7 @@
 @media (hover: none) and (pointer: coarse) {
     .emoji-mgmt-btn:active,
     .emoji-mgmt-content button:active,
-    #api-preset-modal button:active,
-    #add-prompt-modal button:active,
-    #prompt-list-modal button:active,
+    #api-preset-modal button:active button:active button:active,
     #api-preset-edit-modal button:active {
         transform: scale(0.98);
     }

@@ -285,7 +285,7 @@
             height: var(--app-height);
             height: calc(var(--vh, 1vh) * 100);
             min-height: -webkit-fill-available;
-            background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
+            background: #ffffff;
             z-index: 300;
             transform: translateX(-100%);
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.35s;
@@ -301,127 +301,62 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0s;
         }
         
-    /* 用户名片区域 - 黑白灰简约设计 */
 .card-info {
     position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 0;
+    padding: 12px 16px;
     background-color: transparent;
     border-bottom: none;
     cursor: pointer;
     overflow: hidden;
-    min-height: 160px;
-    background-size: cover;
-    background-position: center;
-    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    min-height: 80px;
     transition: all 0.3s ease;
-}
-
-.card-info:hover {
-    transform: scale(1.01);
-}
-
-/* 装饰性背景动画元素 */
-.card-info::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
-    animation: cardFloat 8s ease-in-out infinite;
-    z-index: 1;
-}
-
-@keyframes cardFloat {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    50% { transform: translate(-20px, -20px) rotate(5deg); }
-}
-
-.card-info[style*="background-image"] {
-    background: none;
-}
-
-.card-info[style*="background-image"]::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.4) 100%);
-    z-index: 1;
-}
-
-.card-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    z-index: 0;
+    z-index: 2;
+    margin-top: 20px;
 }
 
 .card-content {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 0 24px;
-    box-sizing: border-box;
-    z-index: 2;
-}
-
-/* 头像 - 添加光晕效果 */
-.card-avatar {
-    width: 60px;
-    height: 60px;
-    min-width: 60px;
-    min-height: 60px;
-    border-radius: 50%;
-    background-color: transparent;
-    margin-bottom: 10px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: #fff;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 3px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2), 0 0 0 6px rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-}
+    flex: 1;
+            position: relative;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            box-sizing: border-box;
+            z-index: 2;
+            flex-direction: row;
+            gap: 12px;
+        }
+        
+        /* 头像 - 简化设计并放大 */
+        .side-menu .card-avatar {
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
+            min-height: 80px;
+            border-radius: 50%;
+            background-color: transparent;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #fff;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
 
-.card-avatar::before {
-    content: "";
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 50%;
-    background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), transparent);
-    z-index: -1;
-}
-
-.card-info:hover .card-avatar {
-    transform: scale(1.08) rotate(5deg);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3), 0 0 0 12px rgba(255, 255, 255, 0.15);
-}
+        .side-menu .card-info:hover .card-avatar {
+            transform: scale(1.05) rotate(3deg);
+        }
 
 .card-avatar img {
     width: 100%;
@@ -430,43 +365,45 @@
     border-radius: 50%;
 }
 
-/* 用户名 - 增强视觉效果 */
-.card-name {
-    font-size: 17px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.5px;
+/* 用户名和签名区域 */
+.side-menu .user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* 用户名 - 简化设计 */
+.side-menu .card-name {
+            font-size: 16px;
+            font-weight: 400;
+            color: #333;
+    letter-spacing: 0.3px;
     transition: all 0.3s ease;
 }
 
-.card-info:hover .card-name {
-    transform: translateY(-2px);
-    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+.side-menu .card-info:hover .card-name {
+    transform: none;
 }
 
-/* 个性签名 - 优化显示 */
-.card-signature {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.95);
-    padding: 6px 20px;
-    text-align: center;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* 个性签名 - 简化设计 */
+.side-menu .card-signature {
+            font-size: 14px;
+            color: #666;
+            padding: 2px 8px;
+            text-align: left;
+            max-width: 220px;
     white-space: nowrap;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-shadow: none;
+    background: transparent;
+    border-radius: 12px;
+    backdrop-filter: none;
+    border: none;
     transition: all 0.3s ease;
 }
 
-.card-info:hover .card-signature {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+.side-menu .card-info:hover .card-signature {
+    background: transparent;
+    border-color: transparent;
 }
         
         .menu-list {
@@ -485,11 +422,11 @@
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            margin: 2px 12px;
+            gap: 8px;
+            padding: 8px 10px;
+            margin: 1px 8px;
             cursor: pointer;
-            border-radius: 10px;
+            border-radius: 8px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -505,53 +442,57 @@
             background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
             opacity: 0;
             transition: opacity 0.25s ease;
-            border-radius: 12px;
+            border-radius: 10px;
         }
         
         .menu-item:hover {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.06) 100%);
-            transform: translateX(4px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background: transparent;
+            transform: translateX(3px);
+            box-shadow: none;
         }
         
         .menu-item:hover::before {
-            opacity: 1;
+            opacity: 0;
         }
         
         .menu-item:active {
-            transform: translateX(2px) scale(0.98);
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.08) 100%);
+            transform: translateX(1px) scale(0.98);
+            background: transparent;
         }
         
-        /* 菜单图标容器 - 黑白灰配色 */
+        /* 菜单图标容器 - 透明背景 */
         .menu-icon {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-            min-height: 36px;
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            min-height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            border-radius: 9px;
-            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            border-radius: 7px;
+            background: transparent;
             transition: all 0.25s ease;
             position: relative;
             z-index: 1;
         }
         
+        .menu-icon .icon-svg {
+            width: 14px;
+            height: 14px;
+            stroke: #666666;
+            transition: all 0.25s ease;
+        }
+        
         .menu-item:hover .menu-icon {
-            background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: transparent;
+            box-shadow: none;
             transform: scale(1.05) rotate(-3deg);
         }
         
-        .menu-icon .icon-svg {
-            width: 18px;
-            height: 18px;
-            stroke: #666666;
-            transition: all 0.25s ease;
+        .menu-item:hover .menu-icon .icon-svg {
+            stroke: #000;
+            transform: scale(1.1);
         }
         
         .menu-item:hover .menu-icon .icon-svg {
@@ -560,10 +501,10 @@
         }
         
         .menu-text {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 500;
             color: #333;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             transition: all 0.25s ease;
             position: relative;
             z-index: 1;
@@ -588,6 +529,142 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            display: none;
+        }
+        
+        /* 左侧菜单按钮 */
+        .left-menu-buttons {
+            display: flex;
+            gap: 6px;
+            padding: 4px 8px;
+            margin-left: 12px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .left-menu-btn {
+            flex: none;
+            padding: 4px 12px;
+            border: none;
+            background: rgba(204, 204, 204, 0.3);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            min-height: auto;
+            line-height: 1.2;
+        }
+        
+        .left-menu-btn:hover {
+            background: rgba(153, 153, 153, 0.4);
+            backdrop-filter: blur(15px);
+            color: #fff;
+            border-color: rgba(153, 153, 153, 0.4);
+        }
+        
+        .left-menu-btn:active {
+            background: rgba(119, 119, 119, 0.5);
+            backdrop-filter: blur(20px);
+            border-color: rgba(119, 119, 119, 0.5);
+        }
+        
+        /* 横向设置组 */
+        .horizontal-settings-group {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            background: transparent;
+        }
+        
+        .horizontal-menu-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+        }
+        
+        .horizontal-menu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .horizontal-menu-item:active {
+            transform: translateY(0);
+            background: rgba(0, 0, 0, 0.08);
+        }
+        
+        .horizontal-menu-icon {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: transparent;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .horizontal-menu-item:hover .horizontal-menu-icon {
+            background: transparent;
+            transform: scale(1.05);
+        }
+        
+        .horizontal-menu-icon .icon-svg {
+            width: 16px;
+            height: 16px;
+            stroke: #666;
+            transition: all 0.2s ease;
+        }
+        
+        .horizontal-menu-item:hover .horizontal-menu-icon .icon-svg {
+            stroke: #000;
+        }
+        
+        .horizontal-menu-text {
+            font-size: 11px;
+            font-weight: 500;
+            color: #333;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+        
+        .horizontal-menu-item:hover .horizontal-menu-text {
+            color: #000;
+            font-weight: 600;
+            background: transparent;
+        }
+        
+        /* 调整横向设置组的对齐方式 */
+        .horizontal-settings-group {
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            background: transparent;
+            justify-content: flex-start;
+            align-items: center;
+        }
+            top: 50%;
+            transform: translate(-50%, -50%);
             width: 4px;
             height: 4px;
             background: #d0d0d0;
@@ -607,11 +684,14 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.35s;
+            pointer-events: none;
+            cursor: pointer;
         }
         .mask.show {
             opacity: 1;
             visibility: visible;
             transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0s;
+            pointer-events: auto;
         }
 
         /* 主内容区域 */
@@ -1431,10 +1511,56 @@
             cursor: pointer;
             padding: 5px 20px;
             opacity: 0.5;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            z-index: 1;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform: translateZ(0);
         }
+        
+        .tab-item:active {
+            transform: scale(0.95);
+            transition: opacity 0.1s ease, transform 0.1s ease;
+        }
+        
         .tab-item.active {
             opacity: 1;
+        }
+        }
+        
+        .tab-item:active {
+            opacity: 1;
+            transform: scale(0.95);
+            transition: opacity 0.1s ease, transform 0.1s ease;
+        }
+        
+        .tab-item.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* iOS Safari 兼容性优化 */
+        @supports (-webkit-touch-callout: none) {
+            .tab-item {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                touch-action: manipulation;
+            }
+        }
+        
+        /* 高性能触摸优化 */
+        .tab-item {
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         .tab-icon {

@@ -435,6 +435,13 @@
                 }
             }
             
+            // 添加线下时间感知
+            if (window.AppState?.apiSettings?.offlineTimeAware) {
+                const now = new Date();
+                const timeStr = `Current date and time: ${now.toLocaleString()}`;
+                apiMsgs.push({ role: 'system', content: timeStr });
+            }
+            
             // 继续生成：将最后一条AI消息改为assistant角色，让模型直接续写
             if (isContinue) {
                 const lastAiMsg = apiMsgs[apiMsgs.length - 1];
