@@ -1,12 +1,11 @@
 /**
  * iOS Safari 输入框修复
- * 使用visual viewport API确保输入框和工具栏位置正确
+ * 使用transform补偿iOS Safari的键盘滚动行为
  */
 
 (function() {
     'use strict';
 
-    // 检测是否为iOS设备
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
@@ -23,12 +22,12 @@
     const toolbar = document.querySelector('.chat-toolbar');
     const messagesContainer = document.getElementById('chat-messages');
 
-    if (!chatPage || !inputArea || !toolbar || !chatInput) {
+    if (!chatPage || !inputArea || !toolbar || !chatInput || !messagesContainer) {
         console.warn('[iOS Fix] 元素未找到');
         return;
     }
 
-    let originalHeight = window.innerHeight;
+    let isKeyboardOpen = false;
 
     /**
      * 处理visualViewport变化
@@ -36,56 +35,64 @@
     function handleViewportChange() {
         if (!window.visualViewport) return;
 
-        const currentHeight = window.visualViewport.height;
-        const keyboardHeight = originalHeight - currentHeight;
+        const viewportHeight = window.visualViewport.height;
+        const viewportTop = window.visualViewport.top;
+        const keyboardHeight = window.innerHeight - viewportHeight;
 
-        console.log('[iOS Fix] 键盘高度:', keyboardHeight, '视口高度:', currentHeight);
+        console.log('[iOS Fix] 视口:', { h: viewportHeight, top: viewportTop, kb: keyboardHeight });
 
-        // 键盘弹出时
         if (keyboardHeight > 150) {
-            // 使用fixed定位，位置相对于visual viewport底部
+            // 键盘弹出
+            isKeyboardOpen = true;
+
+            // 使用transform将输入区域和工具栏"钉"在visual viewport底部
+            // fixed定位 + transform补偿
             inputArea.style.position = 'fixed';
             inputArea.style.bottom = '36px';
             inputArea.style.left = '0';
             inputArea.style.right = '0';
             inputArea.style.width = '100%';
-            inputArea.style.top = '';
+            inputArea.style.transform = `translateY(${viewportTop}px)`;
+            inputArea.style.willChange = 'transform';
             
             toolbar.style.position = 'fixed';
             toolbar.style.bottom = '0';
             toolbar.style.left = '0';
             toolbar.style.right = '0';
             toolbar.style.width = '100%';
-            toolbar.style.top = '';
+            toolbar.style.transform = `translateY(${viewportTop}px)`;
+            toolbar.style.willChange = 'transform';
 
             // 调整消息区域
-            if (messagesContainer) {
-                const navHeight = 50;
-                const inputAreaHeight = 50;
-                const toolbarHeight = 36;
-                const availableHeight = currentHeight - navHeight - inputAreaHeight - toolbarHeight;
-                messagesContainer.style.height = availableHeight + 'px';
-                messagesContainer.style.flex = 'none';
-                
-                // 滚动到底部
-                setTimeout(() => {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }, 100);
-            }
+            const navHeight = 50;
+            const inputAreaHeight = 50;
+            const toolbarHeight = 36;
+            const availableHeight = viewportHeight - navHeight - inputAreaHeight - toolbarHeight;
+            messagesContainer.style.height = availableHeight + 'px';
+            messagesContainer.style.flex = 'none';
         } else {
-            // 键盘收起时，恢复absolute定位
-            inputArea.style.position = 'absolute';
-            inputArea.style.bottom = '36px';
-            inputArea.style.top = '';
-            
-            toolbar.style.position = 'absolute';
-            toolbar.style.bottom = '0';
-            toolbar.style.top = '';
+            // 键盘收起
+            isKeyboardOpen = false;
 
-            if (messagesContainer) {
-                messagesContainer.style.height = '';
-                messagesContainer.style.flex = '';
-            }
+            // 清除所有内联样式
+            inputArea.style.position = '';
+            inputArea.style.bottom = '';
+            inputArea.style.left = '';
+            inputArea.style.right = '';
+            inputArea.style.width = '';
+            inputArea.style.transform = '';
+            inputArea.style.willChange = '';
+            
+            toolbar.style.position = '';
+            toolbar.style.bottom = '';
+            toolbar.style.left = '';
+            toolbar.style.right = '';
+            toolbar.style.width = '';
+            toolbar.style.transform = '';
+            toolbar.style.willChange = '';
+
+            messagesContainer.style.height = '';
+            messagesContainer.style.flex = '1';
         }
     }
 
@@ -96,17 +103,11 @@
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', handleViewportChange);
             window.visualViewport.addEventListener('scroll', handleViewportChange);
-            
-            // 初始设置
-            originalHeight = window.innerHeight;
         }
 
-        // 输入框聚焦时滚动到底部
         chatInput.addEventListener('focus', function() {
             setTimeout(() => {
-                if (messagesContainer) {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }, 300);
         }, { passive: true });
 
