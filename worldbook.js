@@ -64,15 +64,15 @@
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <label style="display:flex;align-items:center;font-size:14px;cursor:pointer;padding:12px 16px;background:#f8f8f8;border-radius:10px;transition:all 0.3s;border:2px solid transparent;flex:1;">
                                 <input name="wb-type" type="radio" value="local" checked style="margin-right:10px;cursor:pointer;width:18px;height:18px;accent-color:#666;">
-                                <span style="color:#333;font-weight:500;">📖 局部</span>
+                                <span style="color:#333;font-weight:500;">局部</span>
                             </label>
                             <label style="display:flex;align-items:center;font-size:14px;cursor:pointer;padding:12px 16px;background:#f8f8f8;border-radius:10px;transition:all 0.3s;border:2px solid transparent;flex:1;">
                                 <input name="wb-type" type="radio" value="global" style="margin-right:10px;cursor:pointer;width:18px;height:18px;accent-color:#2c2c2c;">
-                                <span style="color:#333;font-weight:500;">🌍 全局</span>
+                                <span style="color:#333;font-weight:500;">全局</span>
                             </label>
                             <label style="display:flex;align-items:center;font-size:14px;cursor:pointer;padding:12px 16px;background:#f0f7ff;border-radius:10px;transition:all 0.3s;border:2px solid transparent;flex:1;">
                                 <input name="wb-type" type="radio" value="offline" style="margin-right:10px;cursor:pointer;width:18px;height:18px;accent-color:#4a9eff;">
-                                <span style="color:#333;font-weight:500;">📕 线下</span>
+                                <span style="color:#333;font-weight:500;">线下</span>
                             </label>
                         </div>
                     </div>
@@ -750,15 +750,11 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;padding-left:8px;">
                         <h4 style="margin:0;font-size:16px;font-weight:700;flex:1;color:#1a1a1a;letter-spacing:0.2px;">${this.escapeHtml(wb.name)}</h4>
                         <div style="display:flex;gap:6px;flex-shrink:0;">
-                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:#f5f5f5;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#2c2c2c';this.style.color='#fff'" onmouseleave="this.style.background='#f5f5f5';this.style.color='#666'">编辑</button>
-                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:#fff;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:2px solid #ffe8e8;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff';this.style.borderColor='#ff4444'" onmouseleave="this.style.background='#fff';this.style.color='#ff4444';this.style.borderColor='#ffe8e8'">×</button>
+                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:transparent;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#2c2c2c';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='#666'">编辑</button>
+                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:transparent;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:none;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='#ff4444'">×</button>
                         </div>
                     </div>
                     <p style="margin:0 0 12px 8px;font-size:14px;color:#666;line-height:1.7;max-height:80px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
-                    <div style="font-size:12px;color:#999;margin-top:12px;padding:10px 12px 10px 20px;background:linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);border-radius:10px;display:flex;align-items:center;gap:12px;">
-                        <span style="background:linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);color:#fff;padding:4px 12px;border-radius:12px;font-weight:600;font-size:11px;letter-spacing:0.3px;">🌍 全局</span>
-                        <span style="color:#999;font-size:12px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
-                    </div>
                 </div>
             `).join('');
             
@@ -769,15 +765,11 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;padding-left:8px;">
                         <h4 style="margin:0;font-size:16px;font-weight:700;flex:1;color:#1a1a1a;letter-spacing:0.2px;">${this.escapeHtml(wb.name)}</h4>
                         <div style="display:flex;gap:6px;flex-shrink:0;">
-                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:#f5f5f5;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#666';this.style.color='#fff'" onmouseleave="this.style.background='#f5f5f5';this.style.color='#666'">编辑</button>
-                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:#fff;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:2px solid #ffe8e8;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff';this.style.borderColor='#ff4444'" onmouseleave="this.style.background='#fff';this.style.color='#ff4444';this.style.borderColor='#ffe8e8'">×</button>
+                            <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:transparent;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#666';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='#666'">编辑</button>
+                            <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:transparent;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:none;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='#ff4444'">×</button>
                         </div>
                     </div>
                     <p style="margin:0 0 12px 8px;font-size:14px;color:#666;line-height:1.7;max-height:80px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
-                    <div style="font-size:12px;color:#999;margin-top:12px;padding:10px 12px 10px 20px;background:linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);border-radius:10px;display:flex;align-items:center;gap:12px;">
-                        <span style="background:linear-gradient(135deg, #666 0%, #888 100%);color:#fff;padding:4px 12px;border-radius:12px;font-weight:600;font-size:11px;letter-spacing:0.3px;">📍 局部</span>
-                        <span style="color:#999;font-size:12px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
-                    </div>
                 </div>
             `).join('');
             
@@ -798,15 +790,11 @@
                         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;padding-left:8px;">
                             <h4 style="margin:0;font-size:16px;font-weight:700;flex:1;color:#1a1a1a;letter-spacing:0.2px;">${this.escapeHtml(wb.name)}</h4>
                             <div style="display:flex;gap:6px;flex-shrink:0;">
-                                <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:#f5f5f5;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#4a9eff';this.style.color='#fff'" onmouseleave="this.style.background='#f5f5f5';this.style.color='#666'">编辑</button>
-                                <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:#fff;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:2px solid #ffe8e8;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff';this.style.borderColor='#ff4444'" onmouseleave="this.style.background='#fff';this.style.color='#ff4444';this.style.borderColor='#ffe8e8'">×</button>
+                                <button onclick="window.WorldbookManager.edit('${wb.id}');" style="border:none;background:transparent;color:#666;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;transition:all 0.2s;font-weight:600;" onmouseenter="this.style.background='#4a9eff';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='#666'">编辑</button>
+                                <button onclick="window.WorldbookManager.delete('${wb.id}');" style="border:none;background:transparent;color:#ff4444;cursor:pointer;font-size:20px;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border-radius:8px;border:none;" onmouseenter="this.style.background='#ff4444';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='#ff4444'">×</button>
                             </div>
                         </div>
                         <p style="margin:0 0 12px 8px;font-size:14px;color:#666;line-height:1.7;max-height:80px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${this.escapeHtml(wb.content)}</p>
-                        <div style="font-size:12px;color:#999;margin-top:12px;padding:10px 12px 10px 20px;background:linear-gradient(135deg, #f0f7ff 0%, #e8f4ff 100%);border-radius:10px;display:flex;align-items:center;gap:12px;">
-                            <span style="background:linear-gradient(135deg, #4a9eff 0%, #7cb7ff 100%);color:#fff;padding:4px 12px;border-radius:12px;font-weight:600;font-size:11px;letter-spacing:0.3px;">📕 线下</span>
-                            <span style="color:#999;font-size:12px;">创建于 ${new Date(wb.createdAt).toLocaleDateString('zh-CN')}</span>
-                        </div>
                     </div>
                 `).join('');
                 

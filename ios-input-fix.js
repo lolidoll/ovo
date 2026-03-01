@@ -1,359 +1,266 @@
 /**
- * iOS Safari 聊天输入框修复脚本
- * 完整修复iOS Safari上点击输入框导致布局错乱的问题
+ * iOS Safari 聊天输入框修复模块
  * 
- * 修复问题：
- * 1. 点击输入框时，输入框和工具栏跑到顶部
- * 2. 底部导航栏暴露
- * 3. 页面被键盘向上推动
+ * 问题：iOS Safari 上聊天输入框无法点击聚焦、键盘弹出时布局混乱
+ * 解决方案：使用 Flex 内部滚动布局，不依赖 100vh
  */
 
 (function() {
     'use strict';
-
-    // 检测是否为iOS设备
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
-    // 如果不是iOS设备，则不需要此脚本
+    // 检测是否为 iOS 设备
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
     if (!isIOS) {
-        console.log('[iOS Input Fix] 非iOS设备，跳过修复');
+        console.log('🔍 非iOS设备，跳过iOS输入框修复');
         return;
     }
-
-    console.log('[iOS Input Fix] 检测到iOS设备，启用输入框修复');
-
-    // 获取DOM元素
-    const chatPage = document.getElementById('chat-page');
-    const chatInput = document.getElementById('chat-input');
-    const tabBar = document.getElementById('tab-bar');
-
-    if (!chatPage || !chatInput) {
-        console.warn('[iOS Input Fix] 聊天页面元素未找到');
-        return;
-    }
-
-    // 键盘状态标志
-    let isKeyboardVisible = false;
-    let keyboardHeight = 0;
-    let originalScrollPosition = 0;
-    let viewportHeight = window.innerHeight;
-    let isLandscape = window.orientation === 90 || window.orientation === -90;
-
+    
+    console.log('🔧 检测到iOS设备，应用聊天输入框修复...');
+    
     /**
-     * 处理输入框聚焦事件
+     * 设置 Flex 布局，确保页面正确撑满
      */
-    function handleInputFocus(e) {
-        console.log('[iOS Input Fix] 输入框聚焦');
+    function setupFlexLayout() {
+        // 设置 body 为 flex 容器
+        document.body.style.setProperty('display', 'flex', 'important');
+        document.body.style.setProperty('flex-direction', 'column', 'important');
+        document.body.style.setProperty('height', '100%', 'important');
+        document.body.style.setProperty('height', '-webkit-fill-available', 'important');
+        document.body.style.setProperty('min-height', '100%', 'important');
+        document.body.style.setProperty('position', 'relative', 'important');
         
-        // 只添加状态类名，不立即调整布局
-        chatPage.classList.add('input-focused');
-        document.body.classList.add('input-open');
-        document.body.classList.add('input-focused');
+        // 设置 html
+        document.documentElement.style.setProperty('height', '100%', 'important');
+        document.documentElement.style.setProperty('height', '-webkit-fill-available', 'important');
         
-        isKeyboardVisible = true;
+        console.log('✅ Flex 布局已设置');
     }
-
-    /**
-     * 处理输入框失焦事件
-     */
-    function handleInputBlur(e) {
-        console.log('[iOS Input Fix] 输入框失焦');
-        
-        // 延迟执行，等待键盘收起
-        setTimeout(() => {
-            // 移除聚焦状态类名
-            chatPage.classList.remove('input-focused');
-            document.body.classList.remove('keyboard-open');
-            document.body.classList.remove('input-focused');
-            
-            isKeyboardVisible = false;
-
-            // 恢复页面滚动
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-            document.body.style.height = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-
-            // 恢复聊天页面样式
-            chatPage.style.position = '';
-            chatPage.style.top = '';
-            chatPage.style.left = '';
-            chatPage.style.width = '';
-            chatPage.style.height = '';
-            chatPage.style.overflow = '';
-
-            // 恢复底部导航栏
-            if (tabBar) {
-                if (chatPage.classList.contains('open')) {
-                    tabBar.style.visibility = 'hidden';
-                    tabBar.style.pointerEvents = 'none';
-                } else {
-                    tabBar.style.visibility = '';
-                    tabBar.style.pointerEvents = '';
-                }
-            }
-
-            // 恢复输入区域和工具栏样式
-            const inputArea = chatPage.querySelector('.chat-input-area');
-            const toolbar = chatPage.querySelector('.chat-toolbar');
-            
-            if (inputArea) {
-                inputArea.style.position = '';
-                inputArea.style.bottom = '';
-                inputArea.style.left = '';
-                inputArea.style.right = '';
-                inputArea.style.zIndex = '';
-                inputArea.style.width = '';
-                inputArea.style.overflow = '';
-                inputArea.style.touchAction = '';
-            }
-            
-            if (toolbar) {
-                toolbar.style.position = '';
-                toolbar.style.bottom = '';
-                toolbar.style.left = '';
-                toolbar.style.right = '';
-                toolbar.style.zIndex = '';
-                toolbar.style.width = '';
-                toolbar.style.overflow = '';
-                toolbar.style.touchAction = '';
-            }
-
-            // 恢复消息区域样式
-            const messagesContainer = document.getElementById('chat-messages');
-            if (messagesContainer) {
-                messagesContainer.style.height = '';
-                messagesContainer.style.flex = '';
-            }
-
-        }, 200);
+    
+        console.log('✅ Flex 布局已设置');
     }
-
+    
     /**
-     * 根据键盘高度调整布局
+     * 修复iOS Safari输入框点击和键盘弹出问题
      */
-    function adjustForKeyboardHeight(viewportHeight) {
-        const inputArea = chatPage.querySelector('.chat-input-area');
-        const toolbar = chatPage.querySelector('.chat-toolbar');
-        const messagesContainer = document.getElementById('chat-messages');
+    function fixIOSChatInput() {
+        const chatInput = document.getElementById('chat-input');
+        const inputArea = document.querySelector('.chat-input-area');
+        const chatPage = document.getElementById('chat-page');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatToolbar = document.getElementById('chat-toolbar');
         
-        if (!inputArea || !toolbar || !messagesContainer) return;
+        if (!chatInput) {
+            console.log('⚠️ 聊天输入框未找到');
+            return;
+        }
         
-        const navHeight = 50;
-        const inputAreaHeight = 50;
-        const toolbarHeight = 36;
+        console.log('✅ 找到聊天输入框，开始修复...');
         
-        // 输入区域固定在工具栏上方
-        inputArea.style.position = 'fixed';
-        inputArea.style.bottom = toolbarHeight + 'px';
-        inputArea.style.left = '0';
-        inputArea.style.right = '0';
-        inputArea.style.width = '100%';
+        // 1. 强制设置输入框样式
+        chatInput.style.setProperty('-webkit-user-select', 'text', 'important');
+        chatInput.style.setProperty('user-select', 'text', 'important');
+        chatInput.style.setProperty('-webkit-touch-callout', 'default', 'important');
+        chatInput.style.setProperty('touch-callout', 'default', 'important');
+        chatInput.style.setProperty('pointer-events', 'auto', 'important');
+        chatInput.style.setProperty('touch-action', 'manipulation', 'important');
+        chatInput.style.setProperty('font-size', '16px', 'important');
         
-        // 工具栏固定在最底部
-        toolbar.style.position = 'fixed';
-        toolbar.style.bottom = '0';
-        toolbar.style.left = '0';
-        toolbar.style.right = '0';
-        toolbar.style.width = '100%';
+        // 2. 修复输入区域样式
+        if (inputArea) {
+            inputArea.style.setProperty('pointer-events', 'auto', 'important');
+            inputArea.style.setProperty('touch-action', 'manipulation', 'important');
+            inputArea.style.setProperty('position', 'relative', 'important');
+            inputArea.style.setProperty('bottom', 'auto', 'important');
+        }
         
-        // 消息区域高度
-        const availableHeight = viewportHeight - navHeight - inputAreaHeight - toolbarHeight;
-        messagesContainer.style.height = availableHeight + 'px';
-    }
-
-    /**
-     * 处理触摸输入事件（在键盘弹出前）
-     */
-    function handleTouchStart(e) {
-        // 记录当前滚动位置
-        originalScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-    }
-
-    /**
-     * 处理视觉视口变化（iOS 15+）
-     */
-    function handleVisualViewportResize() {
-        if (!window.visualViewport) return;
+        // 3. 修复聊天页面布局
+        if (chatPage) {
+            chatPage.style.setProperty('display', 'flex', 'important');
+            chatPage.style.setProperty('flex-direction', 'column', 'important');
+            chatPage.style.setProperty('position', 'absolute', 'important');
+            chatPage.style.setProperty('top', '0', 'important');
+            chatPage.style.setProperty('left', '0', 'important');
+            chatPage.style.setProperty('right', '0', 'important');
+            chatPage.style.setProperty('bottom', '0', 'important');
+            chatPage.style.setProperty('height', '100%', 'important');
+            chatPage.style.setProperty('height', '-webkit-fill-available', 'important');
+        }
         
-        const newViewportHeight = window.visualViewport.height;
-        const newKeyboardHeight = window.innerHeight - newViewportHeight;
+        // 4. 修复消息区域
+        if (chatMessages) {
+            chatMessages.style.setProperty('flex', '1', 'important');
+            chatMessages.style.setProperty('min-height', '0', 'important');
+            chatMessages.style.setProperty('overflow-y', 'auto', 'important');
+            chatMessages.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+        }
         
-        viewportHeight = newViewportHeight;
-        keyboardHeight = newKeyboardHeight;
+        // 5. 修复工具栏
+        if (chatToolbar) {
+            chatToolbar.style.setProperty('flex-shrink', '0', 'important');
+            chatToolbar.style.setProperty('position', 'relative', 'important');
+            chatToolbar.style.setProperty('bottom', 'auto', 'important');
+        }
         
-        console.log('[iOS Input Fix] 视口变化:', {
-            viewportHeight: newViewportHeight,
-            keyboardHeight: newKeyboardHeight,
-            isKeyboardVisible: isKeyboardVisible
-        });
+        // 6. 移除可能阻止事件的父元素样式
+        let parent = chatInput.parentElement;
+        while (parent && parent !== document.body) {
+            parent.style.setProperty('-webkit-touch-callout', 'default', 'important');
+            parent.style.setProperty('pointer-events', 'auto', 'important');
+            parent = parent.parentElement;
+        }
         
-        if (newKeyboardHeight > 150) {
-            // 键盘已弹出 - 应用完整布局调整
-            if (!document.body.classList.contains('keyboard-open')) {
-                document.body.classList.add('keyboard-open');
-            }
+        // 7. iOS特殊处理：确保输入框可以被聚焦
+        let lastTouchTime = 0;
+        
+        // 触摸开始 - 记录时间
+        chatInput.addEventListener('touchstart', function(e) {
+            lastTouchTime = Date.now();
+            console.log('📱 输入框 touchstart');
+        }, { passive: true });
+        
+        // 触摸结束
+        chatInput.addEventListener('touchend', function(e) {
+            const touchDuration = Date.now() - lastTouchTime;
+            console.log('📱 输入框 touchend, 耗时:', touchDuration);
             
-            // 禁用页面滚动
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
-            document.body.style.top = '0';
-            document.body.style.left = '0';
-
-            // 强制聊天页面固定在视口
-            chatPage.style.position = 'fixed';
-            chatPage.style.top = '0';
-            chatPage.style.left = '0';
-            chatPage.style.width = '100vw';
-            chatPage.style.height = newViewportHeight + 'px';
-            chatPage.style.overflow = 'hidden';
-
-            // 隐藏底部导航栏
-            if (tabBar) {
-                tabBar.style.visibility = 'hidden';
-                tabBar.style.pointerEvents = 'none';
-            }
-            
-            // 调整输入区域和工具栏
-            const inputArea = chatPage.querySelector('.chat-input-area');
-            const toolbar = chatPage.querySelector('.chat-toolbar');
-            const messagesContainer = document.getElementById('chat-messages');
-            
-            if (inputArea && toolbar && messagesContainer) {
-                // 输入区域固定在工具栏上方
-                inputArea.style.position = 'fixed';
-                inputArea.style.bottom = '36px';
-                inputArea.style.left = '0';
-                inputArea.style.right = '0';
-                inputArea.style.width = '100%';
-                inputArea.style.zIndex = '200';
-                inputArea.style.overflow = 'hidden';
-                
-                // 工具栏固定在最底部
-                toolbar.style.position = 'fixed';
-                toolbar.style.bottom = '0';
-                toolbar.style.left = '0';
-                toolbar.style.right = '0';
-                toolbar.style.width = '100%';
-                toolbar.style.zIndex = '200';
-                toolbar.style.overflow = 'hidden';
-                
-                // 消息区域高度调整
-                const navHeight = 50;
-                const inputAreaHeight = 50;
-                const toolbarHeight = 36;
-                const availableHeight = newViewportHeight - navHeight - inputAreaHeight - toolbarHeight;
-                messagesContainer.style.height = availableHeight + 'px';
-                messagesContainer.style.flex = 'none';
-                
-                // 滚动到底部
+            // 如果是短触摸（小于300ms），手动触发聚焦
+            if (touchDuration < 300) {
                 setTimeout(() => {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    chatInput.focus();
                 }, 50);
             }
-        } else {
-            // 键盘已收起
-            if (document.body.classList.contains('keyboard-open')) {
-                document.body.classList.remove('keyboard-open');
-                // 恢复原始布局
-                handleInputBlur();
-            }
-        }
-    }
-
-    /**
-     * 处理页面显示事件（从后台切换回来）
-     */
-    function handlePageShow() {
-        // 重置所有状态
-        handleInputBlur();
-    }
-
-    /**
-     * 处理屏幕方向变化
-     */
-    function handleOrientationChange() {
-        const newIsLandscape = window.orientation === 90 || window.orientation === -90;
+        }, { passive: true });
         
-        if (newIsLandscape !== isLandscape) {
-            isLandscape = newIsLandscape;
-            
-            // 延迟处理，等待方向切换完成
+        // 点击事件作为后备
+        chatInput.addEventListener('click', function(e) {
+            console.log('📱 输入框 click');
             setTimeout(() => {
-                // 如果键盘已弹出，根据当前视口重新调整
-                if (document.body.classList.contains('keyboard-open') && window.visualViewport) {
-                    handleVisualViewportResize();
-                } else {
-                    handleInputBlur();
+                chatInput.focus();
+            }, 10);
+        });
+        
+        // 8. 处理键盘弹出/收起
+        let originalVisualViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        
+        // 聚焦事件 - 键盘弹出
+        chatInput.addEventListener('focus', function(e) {
+            console.log('📱 输入框 focus - 键盘弹出');
+            
+            // 设置聊天页面样式，防止布局跳动
+            if (chatPage) {
+                chatPage.style.setProperty('position', 'absolute', 'important');
+                chatPage.style.setProperty('top', '0', 'important');
+                chatPage.style.setProperty('left', '0', 'important');
+                chatPage.style.setProperty('right', '0', 'important');
+                chatPage.style.setProperty('bottom', '0', 'important');
+            }
+            
+            // 确保工具栏不被推到顶部
+            if (chatToolbar) {
+                chatToolbar.style.setProperty('position', 'relative', 'important');
+                chatToolbar.style.setProperty('bottom', 'auto', 'important');
+                chatToolbar.style.setProperty('transform', 'none', 'important');
+            }
+            
+            // 滚动到输入框
+            setTimeout(() => {
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
-            }, 500);
+            }, 300);
+        });
+        
+        // 失焦事件 - 键盘收起
+        chatInput.addEventListener('blur', function(e) {
+            console.log('📱 输入框 blur - 键盘收起');
+            
+            // 恢复布局
+            setTimeout(() => {
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }, 100);
+        });
+        
+        // 9. 监听 visualViewport 变化（iOS 13+）
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', function() {
+                const newHeight = window.visualViewport.height;
+                console.log('📱 visualViewport 变化:', newHeight);
+                
+                // 键盘弹出时，确保工具栏在可视区域内
+                if (chatPage && chatToolbar) {
+                    const heightDiff = originalVisualViewportHeight - newHeight;
+                    
+                    // 如果高度差超过150px，认为是键盘弹出了
+                    if (heightDiff > 150) {
+                        console.log('📱 键盘已弹出');
+                        chatPage.style.setProperty('height', newHeight + 'px', 'important');
+                    } else {
+                        console.log('📱 键盘已收起');
+                        chatPage.style.removeProperty('height');
+                    }
+                }
+            });
         }
+        
+        console.log('✅ iOS聊天输入框修复完成');
     }
-
+    
     /**
-     * 初始化事件监听
+     * 初始化修复
      */
     function init() {
-        // 监听输入框focus/blur事件
-        chatInput.addEventListener('focus', handleInputFocus, { passive: false });
-        chatInput.addEventListener('blur', handleInputBlur, { passive: true });
-
-        // 监听touchstart事件
-        chatInput.addEventListener('touchstart', handleTouchStart, { passive: true });
-
-        // 监听visualViewport变化（iOS 15+）
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', handleVisualViewportResize);
-            window.visualViewport.addEventListener('scroll', handleVisualViewportResize);
+        // 设置 Flex 布局
+        setupFlexLayout();
+        
+        // DOM加载完成后执行修复
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                fixIOSChatInput();
+            });
+        } else {
+            fixIOSChatInput();
         }
-
-        // 阻止橡皮筋效果
-        document.addEventListener('wheel', preventOverscroll, { passive: false });
-        document.addEventListener('touchmove', preventOverscroll, { passive: false });
-
-        // 监听页面显示事件
-        window.addEventListener('pageshow', handlePageShow);
-
-        // 处理屏幕方向变化
-        window.addEventListener('orientationchange', handleOrientationChange);
-
-        // 防止iOS Safari的双击缩放
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(e) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, { passive: false });
-
-        // 防止iOS Safari的长按菜单影响
-        chatInput.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
+        
+        // 监听DOM变化，确保动态添加的输入框也被修复
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        // 检查是否添加了聊天输入框或聊天页面
+                        if (node.id === 'chat-input' || 
+                            node.id === 'chat-page' ||
+                            (node.querySelector && (
+                                node.querySelector('#chat-input') ||
+                                node.querySelector('#chat-page')
+                            ))) {
+                            console.log('🔄 检测到动态添加的聊天相关元素');
+                            setupFlexLayout();
+                            setTimeout(fixIOSChatInput, 100);
+                        }
+                    }
+                });
+            });
         });
-
-        console.log('[iOS Input Fix] 事件监听已初始化');
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     }
-
-    // 页面加载完成后初始化
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-
-    // 导出API供外部使用
-    window.iOSInputFix = {
-        isKeyboardVisible: () => isKeyboardVisible,
-        getKeyboardHeight: () => keyboardHeight,
-        forceKeyboardHide: () => handleInputBlur(),
-        reset: () => handleInputBlur()
-    };
-
+    
+    // 执行初始化
+    init();
+    
+    // 导出到全局，方便调试
+    window.fixIOSChatInput = fixIOSChatInput;
+    window.setupFlexLayout = setupFlexLayout;
+    
 })();
-
+    
+    // 导出到全局，方便调试
+    window.fixIOSChatInput = fixIOSChatInput;
+    
+})();

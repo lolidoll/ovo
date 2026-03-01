@@ -554,11 +554,10 @@
     border-top: none;
     flex-shrink: 0;
     min-height: 50px;
-    max-height: 50px;
-    height: 50px;
     z-index: 60;
     position: relative;
     pointer-events: auto;
+    touch-action: manipulation;
 }
 
 .chat-input {
@@ -570,13 +569,14 @@
     border: 0.5px solid #ebebeb;
     border-radius: 8px;
     background: rgba(255, 253, 250, 0.95);
-    font-size: 16px;
+    font-size: 15px;
     color: #000;
     resize: none;
     outline: none;
     overflow-y: auto;
     -webkit-user-select: text;
     user-select: text;
+    transition: background 0.2s ease;
     margin: 0 4px;
     pointer-events: auto;
     touch-action: manipulation;
@@ -635,11 +635,11 @@
     border-top: none;
     flex-shrink: 0;
     min-height: 36px;
-    max-height: 36px;
     height: 36px;
     z-index: 55;
     position: relative;
     pointer-events: auto;
+    touch-action: manipulation;
 }
 
 /* 工具栏按钮 - 6个核心按钮 */
@@ -1091,47 +1091,8 @@
 }
 
 /* ========================================
-   iOS Safari 聊天输入框完整修复样式
-   修复问题：点击输入框时，输入框和工具栏跑到顶部，底部导航栏暴露
-   适配所有型号iPhone
+   主题适配(如果需要)
 ======================================== */
-
-/* 防止iOS Safari自动缩放（输入框font-size必须>=16px） */
-.chat-input {
-    font-size: 16px !important;
-    -webkit-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
-}
-
-/* iOS导航栏增强 - 只在iOS设备上应用 */
-@supports (-webkit-touch-callout: none) {
-    .chat-nav {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        height: 50px !important;
-        min-height: 50px !important;
-        max-height: 50px !important;
-        z-index: 210 !important;
-        padding-top: env(safe-area-inset-top) !important;
-    }
-    
-    .chat-messages {
-        -webkit-overflow-scrolling: touch !important;
-        overscroll-behavior-y: contain !important;
-        -webkit-overscroll-behavior-y: contain !important;
-    }
-    
-    /* 防止输入框在iOS上缩放 */
-    .chat-input {
-        font-size: 16px !important;
-    }
-}
-
-/* iPhone X及以后的刘海屏设备 */
-@supports (padding: max(0px)) {
-    .chat-nav {
-        padding-top: max(0px, env(safe-area-inset-top)) !important;
-    }
+@media (prefers-color-scheme: dark) {
+    /* 暗色模式可以在这里添加 */
 }

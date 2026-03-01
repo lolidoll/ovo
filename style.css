@@ -83,7 +83,6 @@
         
         html, body {
             width: 100%;
-            height: 100%;
             min-height: 100%;
             min-height: -webkit-fill-available;
             background-color: #ffffff;
@@ -101,77 +100,39 @@
         html {
             width: 100%;
             height: 100%;
-            height: 100dvh;
             overflow: hidden;
             -webkit-user-select: none;
             user-select: none;
+            /* iOS: 使用 -webkit-fill-available 确保高度正确 */
+            height: -webkit-fill-available;
         }
         
         body {
             width: 100%;
-            height: 100%;
-            height: 100dvh;
             margin: 0;
             padding: 0;
             overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            /* 使用 flex 布局撑满屏幕，不用 fixed */
+            display: flex;
+            flex-direction: column;
+            /* iOS: 使用 -webkit-fill-available 撑满屏幕 */
+            height: 100%;
+            height: -webkit-fill-available;
+            min-height: 100%;
         }
         
         #app-container {
             width: 100%;
-            height: 100dvh;
-            height: 100vh;
             display: flex;
             flex-direction: column;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            /* 使用 flex 撑满屏幕，不用 fixed */
+            flex: 1;
             overflow: hidden;
             padding-top: var(--nav-total-height);
             padding-bottom: 0;
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             box-sizing: border-box;
-        }
-        
-        /* PWA模式 */
-        html.is-pwa #app-container,
-        html.is-standalone #app-container {
-            height: 100dvh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-        }
-        
-        /* 普通浏览器模式 */
-        html:not(.is-pwa):not(.is-standalone) #app-container {
-            height: 100dvh;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-        }
-        
-        /* iOS模式 */
-        [data-adapt-mode="ios"] #app-container,
-        [data-adapt-mode="auto"].is-ios #app-container {
-            height: 100dvh;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
         }
 
         .icon-svg {
@@ -2884,14 +2845,15 @@ input[type="range"]::-ms-fill-upper {
             cursor: pointer;
         }
 
-        /* 聊天页面 */
+        /* 聊天页面 - 使用 flex 内部滚动布局，适配 iOS Safari 键盘 */
         .chat-page {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
-            height: var(--app-height, 100vh);
-            height: 100dvh;
+            height: 100%;
             background-color: #f5f5f5;
             z-index: 9999;
             transform: translateX(100%);
@@ -2900,12 +2862,10 @@ input[type="range"]::-ms-fill-upper {
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            /* iOS: 确保高度正确撑满 */
+            height: -webkit-fill-available;
         }
         
-        /* 非PWA模式下，聊天页使用实际视口高度 */
-        html:not(.is-pwa):not(.is-standalone) .chat-page {
-            height: calc(var(--vh, 1vh) * 100);
-        }
         .chat-page.open {
             transform: translateX(0);
         }
@@ -7021,5 +6981,180 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     .settings-btn {
         padding: 10px 14px;
         font-size: 12px;
+    }
+}
+
+/* ========================================
+   iOS Safari 聊天页面键盘弹出修复
+   使用 Flex 内部滚动布局，不使用 100vh
+======================================== */
+
+/* iOS Safari 特殊处理 */
+@supports (-webkit-touch-callout: none) {
+    /* 确保 body 使用 flex 布局 */
+    body {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        height: -webkit-fill-available !important;
+        min-height: 100% !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+    
+    html {
+        height: 100% !important;
+        height: -webkit-fill-available !important;
+        min-height: 100% !important;
+    }
+    
+    #app-container {
+        flex: 1 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+    }
+}
+
+/* 聊天页面内部滚动布局 */
+.chat-page {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    height: -webkit-fill-available !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 聊天导航栏 - 固定在顶部 */
+.chat-nav {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    top: auto !important;
+}
+
+/* 聊天消息区 - 内部滚动 */
+.chat-messages {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+}
+
+/* 引用消息栏 - 在消息和输入之间 */
+.quote-message-bar-container {
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+/* 输入区域 - 固定在底部工具栏上方 */
+.chat-input-area {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    bottom: auto !important;
+}
+
+/* 工具栏 - 固定在最底部 */
+.chat-toolbar {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    bottom: auto !important;
+}
+
+/* 更多功能面板 */
+.toolbar-more-panel {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 70vh !important;
+    z-index: 1000 !important;
+}
+
+/* iOS Safari 键盘弹出时的特殊处理 */
+@supports (-webkit-touch-callout: none) and (-webkit-appearance: none) {
+    /* 当输入框获得焦点时 */
+    .chat-input:focus ~ .chat-toolbar,
+    .chat-input-area:has(.chat-input:focus) ~ .chat-toolbar {
+        position: relative !important;
+        bottom: auto !important;
+        transform: none !important;
+    }
+    
+    /* 确保聊天页面在键盘弹出时正确布局 */
+    .chat-page.open {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        height: -webkit-fill-available !important;
+    }
+    
+    /* 消息区域自动滚动到底部 */
+    .chat-messages {
+        flex: 1 !important;
+        min-height: 0 !important;
+    }
+}
+
+/* iOS 安全区域适配 */
+.ios-standalone .chat-page,
+[data-adapt-mode="ios"] .chat-page {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.ios-standalone .chat-toolbar,
+[data-adapt-mode="ios"] .chat-toolbar {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+}
+
+/* 防止 iOS Safari橡皮筋效果影响聊天页面 */
+.chat-page {
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* 确保输入框不会触发页面缩放 */
+.chat-input {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+}
+
+/* iOS 键盘弹出时，防止底部导航栏干扰 */
+.chat-page.open ~ .tab-bar {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* 修复 iOS Safari 输入框聚焦时的布局跳动 */
+@supports (-webkit-touch-callout: none) {
+    .chat-page {
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .chat-page.open {
+        transform: translateX(0);
+    }
+    
+    /* 输入框聚焦时不改变页面布局 */
+    .chat-input:focus {
+        transform: none !important;
+        -webkit-transform: none !important;
     }
 }

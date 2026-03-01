@@ -5,6 +5,7 @@
  * 1. 返回按钮点击区域太小，在iOS上点不动
  * 2. 底部工具栏太靠下，显示不完整
  * 3. 考虑iOS安全区域（Safe Area）
+ * 4. 键盘弹出时输入框和工具栏布局问题（使用 Flex 内部滚动）
  */
 
 (function() {
@@ -82,12 +83,13 @@
     }
     
     /**
-     * 修复底部工具栏位置和显示问题
+     * 修复底部工具栏位置和显示问题 - 使用 Flex 布局适配键盘弹出
      */
     function fixToolbar() {
         const toolbar = document.getElementById('chat-toolbar');
         const inputArea = document.querySelector('.chat-input-area');
         const chatPage = document.getElementById('chat-page');
+        const chatMessages = document.getElementById('chat-messages');
         
         if (!toolbar) {
             console.log('⚠️ 工具栏未找到');
@@ -96,21 +98,51 @@
         
         console.log('✅ 修复底部工具栏...');
         
-        // 1. 确保工具栏有足够的高度
+        // 1. 设置聊天页面为 Flex 列布局
+        if (chatPage) {
+            chatPage.style.setProperty('display', 'flex', 'important');
+            chatPage.style.setProperty('flex-direction', 'column', 'important');
+            chatPage.style.setProperty('position', 'absolute', 'important');
+            chatPage.style.setProperty('top', '0', 'important');
+            chatPage.style.setProperty('left', '0', 'important');
+            chatPage.style.setProperty('right', '0', 'important');
+            chatPage.style.setProperty('bottom', '0', 'important');
+            chatPage.style.setProperty('height', '100%', 'important');
+            chatPage.style.setProperty('height', '-webkit-fill-available', 'important');
+            chatPage.style.setProperty('overflow', 'hidden', 'important');
+        }
+        
+        // 2. 设置消息区域为可滚动
+        if (chatMessages) {
+            chatMessages.style.setProperty('flex', '1', 'important');
+            chatMessages.style.setProperty('min-height', '0', 'important');
+            chatMessages.style.setProperty('overflow-y', 'auto', 'important');
+            chatMessages.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+        }
+        
+        // 3. 设置输入区域和工具栏为固定高度（不随键盘移动）
+        if (inputArea) {
+            inputArea.style.setProperty('flex-shrink', '0', 'important');
+            inputArea.style.setProperty('position', 'relative', 'important');
+            inputArea.style.setProperty('bottom', 'auto', 'important');
+        }
+        
+        // 4. 设置工具栏为固定高度
+        toolbar.style.setProperty('flex-shrink', '0', 'important');
+        toolbar.style.setProperty('position', 'relative', 'important');
+        toolbar.style.setProperty('bottom', 'auto', 'important');
         toolbar.style.setProperty('min-height', '44px', 'important');
         toolbar.style.setProperty('height', 'auto', 'important');
         toolbar.style.setProperty('padding', '8px 0', 'important');
         
-        // 2. 添加iOS安全区域支持
-        // 在iOS 11+上，使用safe-area-inset-bottom来处理底部安全区域
-        const safeAreaBottom = 'max(8px, env(safe-area-inset-bottom))';
+        // 5. 添加iOS安全区域支持
         toolbar.style.setProperty('padding-bottom', `calc(8px + env(safe-area-inset-bottom, 0px))`, 'important');
         
-        // 3. 确保工具栏按钮可以被点击
+        // 6. 确保工具栏按钮可以被点击
         toolbar.style.setProperty('pointer-events', 'auto', 'important');
         toolbar.style.setProperty('touch-action', 'manipulation', 'important');
         
-        // 4. 修复工具栏按钮的点击区域
+        // 7. 修复工具栏按钮的点击区域
         const buttons = toolbar.querySelectorAll('.tb-btn');
         buttons.forEach(btn => {
             btn.style.setProperty('min-height', '44px', 'important');
@@ -121,17 +153,9 @@
             btn.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.05)', 'important');
         });
         
-        // 5. 修复输入区域
+        // 8. 修复输入区域
         if (inputArea) {
             inputArea.style.setProperty('padding-bottom', `calc(8px + env(safe-area-inset-bottom, 0px))`, 'important');
-        }
-        
-        // 6. 修复聊天页面的底部padding
-        if (chatPage) {
-            // 确保聊天页面有足够的底部空间
-            const computedStyle = window.getComputedStyle(chatPage);
-            const currentPaddingBottom = computedStyle.paddingBottom;
-            chatPage.style.setProperty('padding-bottom', `max(${currentPaddingBottom}, env(safe-area-inset-bottom, 0px))`, 'important');
         }
         
         console.log('✅ 底部工具栏修复完成');
