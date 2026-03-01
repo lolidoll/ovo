@@ -3,6 +3,11 @@
    参考现实App设计风格，移动端全屏优化
    ======================================== */
 
+#api-settings-page {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
 /* 导航栏样�?- 极简高级�?*/
 #api-settings-page .sub-nav {
     background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
@@ -557,6 +562,11 @@
    API设置页面弹窗样式 - 白灰黑高级设�?
    ======================================== */
 
+#api-settings-page {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
 /* 弹窗遮罩�?*/
 .emoji-mgmt-modal,
 #api-preset-modal,
@@ -962,6 +972,11 @@
    Token统计样式
    ======================================== */
 
+#api-settings-page {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
 .token-stats-container {
     display: flex;
     flex-direction: column;
@@ -1011,6 +1026,11 @@
 }/* ========================================
    Token统计样式 - 粉色公主风格
    ======================================== */
+
+#api-settings-page {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
 
 .token-stats-container {
     display: flex;
