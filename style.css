@@ -5964,7 +5964,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     padding: 20px;
 }
 
-/* 表单元素 - 公主风格 */
+/* 表单元素 - 使用浏览器默认样式 */
 .form-group {
     margin-bottom: 20px;
 }
@@ -5982,41 +5982,38 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     letter-spacing: 0.3px;
 }
 
+/* 普通HTML输入框样式 - 兼容所有浏览器 */
 .form-input,
 .form-select,
 .form-textarea {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #ffe4ed;
-    border-radius: 12px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     font-size: 14px;
     color: #333;
-    background: #fffbfc;
-    transition: all 0.3s ease;
+    background: #fff;
     font-family: inherit;
+    box-sizing: border-box;
 }
 
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
-    outline: none;
-    border-color: #ffb6c8;
-    box-shadow: 0 0 0 4px rgba(255, 182, 200, 0.15);
-    background: #fff;
+    outline: 2px solid #2196F3;
+    outline-offset: -1px;
 }
 
 .form-textarea {
     min-height: 120px;
     resize: vertical;
-    font-family: monospace;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 .form-hint {
     font-size: 12px;
-    color: #ffb6c8;
-    margin-top: 8px;
-    opacity: 0.85;
+    color: #666;
+    margin-top: 6px;
 }
 
 /* 按钮组 */
@@ -6140,10 +6137,9 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .tag-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
-    accent-color: #ffb6c8;
 }
 
 .tag-text {
@@ -6208,25 +6204,25 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     margin-bottom: 16px;
 }
 
+/* 复选框 - 使用浏览器默认样式 */
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
     margin-bottom: 12px;
 }
 
 .custom-checkbox {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
-    accent-color: #ffb6c8;
+    /* 移除accent-color，使用浏览器默认样式 */
 }
 
 .checkbox-label span {
-    font-size: 15px;
-    font-weight: 600;
-    color: #ff9db8;
+    font-size: 14px;
+    color: #333;
 }
 
 .summaries-list {

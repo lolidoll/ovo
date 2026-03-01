@@ -3042,30 +3042,32 @@
             <div class="sub-content">
                 <div class="api-settings-container">
                     <!-- API预设管理 -->
-                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
-                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="settings-card">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
                             <span style="display:flex;align-items:center;gap:8px;flex:1;">
                                 <span class="title-indicator"></span>
                                 API 预设管理
                             </span>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">−</span>
                         </h3>
+                        <div onclick="event.stopPropagation()">
                         <button id="api-preset-create-btn" class="modern-btn" style="width:100%;margin-bottom:12px;margin-top:16px;">新增预设</button>
                         <div id="api-presets-list" style="flex-direction:column;gap:8px;margin-top:8px;">
                             <!-- 预设列表将动态生成 -->
                         </div>
+                        </div>
                     </div>
 
                     <!-- 主API设置 -->
-                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
-                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="settings-card">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
                             <span style="display:flex;align-items:center;gap:8px;flex:1;">
                                 <span class="title-indicator"></span>
                                 主API设置
                             </span>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
-                        
+                        <div onclick="event.stopPropagation()">
                         <div class="setting-row" style="margin-top:16px;">
                             <label class="modern-label">API 端点 (Endpoint)</label>
                             <input id="api-endpoint" class="modern-input" placeholder="例如 https://api.openai.com/v1">
@@ -3089,18 +3091,19 @@
                             <select id="models-select" class="modern-select" style="margin-top:8px;"></select>
                             <div class="info-box">目前保存的模型：<span id="selected-model-display" class="highlight">未选择</span></div>
                         </div>
+                        </div>
                     </div>
 
                     <!-- 主API参数设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;user-select:none;" onclick="toggleApiParamsContent(this)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleApiParamsContent(this)">
                             <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
                                 <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
                                 主API参数设置
                             </h3>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </div>
-                        <div id="api-params-container" style="display:none;margin-top:14px;">
+                        <div id="api-params-container" onclick="event.stopPropagation()" style="display:none;margin-top:14px;">
                         <div class="setting-row" style="margin-top:12px;">
                             <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <span>温度 (Temperature)</span>
@@ -3152,15 +3155,15 @@
                     </div>
                     
                     <!-- 副API设置 -->
-                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
-                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="settings-card">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
                             <span style="display:flex;align-items:center;gap:8px;flex:1;">
                                 <span class="title-indicator"></span>
                                 副API设置（用于翻译、总结等）
                             </span>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
-                        
+                        <div onclick="event.stopPropagation()">
                         <div class="setting-row" style="margin-top:16px;">
                             <label class="modern-label">副API 端点 (Endpoint)</label>
                             <input id="secondary-api-endpoint" class="modern-input" placeholder="例如 https://api.example.com/v1">
@@ -3184,18 +3187,19 @@
                             <select id="secondary-models-select" class="modern-select" style="margin-top:8px;"></select>
                             <div class="info-box">目前保存的模型：<span id="secondary-selected-model-display" class="highlight">未选择</span></div>
                         </div>
+                        </div>
                     </div>
 
                     <!-- 副API参数设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;user-select:none;" onclick="toggleSecondaryApiParamsContent(this)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleSecondaryApiParamsContent(this)">
                             <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
                                 <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
                                 副API参数设置
                             </h3>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </div>
-                        <div id="secondary-api-params-container" style="display:none;margin-top:14px;">
+                        <div id="secondary-api-params-container" onclick="event.stopPropagation()" style="display:none;margin-top:14px;">
                         <div class="setting-row" style="margin-top:12px;">
                             <label class="setting-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <span>温度 (Temperature)</span>
@@ -3247,15 +3251,15 @@
                     </div>
 
                     <!-- 时间感知 -->
-                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
-                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="settings-card">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
                             <span style="display:flex;align-items:center;gap:8px;flex:1;">
                                 <span class="title-indicator"></span>
                                 时间感知
                             </span>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
-                        
+                        <div onclick="event.stopPropagation()">
                         <div class="setting-row" style="margin-top:16px;">
                             <label class="modern-label">线上时间感知</label>
                             <div style="display:flex;align-items:center;gap:10px;">
@@ -3271,18 +3275,19 @@
                                 <div style="color:#666;font-size:13px;">开启后在线下模式发送时会包含时间信息</div>
                             </div>
                         </div>
+                        </div>
                     </div>
 
                     <!-- MiniMax TTS 设置 -->
-                    <div class="settings-card" style="cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
-                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="settings-card">
+                        <h3 class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleCardContent(this)">
                             <span style="display:flex;align-items:center;gap:8px;flex:1;">
                                 <span class="title-indicator"></span>
                                 MiniMax 语音合成 (TTS)
                             </span>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
-                        
+                        <div onclick="event.stopPropagation()">
                         <div class="setting-row" style="margin-top:16px;">
                             <label class="modern-label">启用 MiniMax TTS</label>
                             <div style="display:flex;align-items:center;gap:10px;">
@@ -3341,12 +3346,11 @@
                         <div class="setting-row" style="">
                             <button id="test-minimax-tts-btn" class="modern-btn" style="width:100%;">测试语音</button>
                         </div>
+                        </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="setting-row">
-                            <button id="save-settings-btn" class="primary-btn-modern">保存设置</button>
-                        </div>
+                    <div style="margin-top:24px;">
+                        <button id="save-settings-btn" class="primary-btn-modern" style="width:100%;">保存设置</button>
                     </div>
                 </div>
             </div>

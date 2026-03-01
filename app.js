@@ -7248,7 +7248,11 @@
         // ---------- API 设置相关 ----------
         
         // 折叠/展开卡片内容
-        function toggleCardContent(titleElement) {
+        function toggleCardContent(clickedElement) {
+            // 只有点击标题区域(h3)才触发折叠/展开
+            const titleElement = clickedElement.closest('.card-title') || clickedElement.closest('h3');
+            if (!titleElement) return;
+            
             const card = titleElement.closest('.settings-card');
             if (!card) return;
             
