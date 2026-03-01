@@ -3913,6 +3913,14 @@
                 </div>
                 <!-- 第二行：批量操作按钮 -->
                 <div class="emoji-toolbar-row">
+                    <button class="emoji-manager-btn" id="emoji-manager-export-json">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                            <polyline points="8 17 12 21 16 17"></polyline>
+                            <line x1="12" y1="12" x2="12" y2="21"></line>
+                            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path>
+                        </svg>
+                        <span>导出JSON</span>
+                    </button>
                     <button class="emoji-manager-btn" id="emoji-manager-select-mode">
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
                             <polyline points="9 11 12 14 22 4"></polyline>
@@ -3938,8 +3946,8 @@
             <!-- 表情包内容区 -->
             <div class="emoji-manager-content" id="emoji-manager-content">
                 <div class="emoji-manager-empty">
-                    <div style="font-size:48px;margin-bottom:8px;">🙂</div>
                     <div>该分组下暂无表情包</div>
+                    <div style="font-size:12px;color:#999;margin-top:8px;">长按表情包可修改文字或移动分组</div>
                     <div style="font-size:12px;color:#999;margin-top:8px;">点击上方按钮导入表情包</div>
                 </div>
             </div>

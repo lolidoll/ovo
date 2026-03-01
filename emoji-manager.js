@@ -64,6 +64,14 @@
                 });
             }
             
+            // 导出JSON按钮
+            const exportJsonBtn = document.getElementById('emoji-manager-export-json');
+            if (exportJsonBtn) {
+                exportJsonBtn.addEventListener('click', () => {
+                    this.showExportDialog();
+                });
+            }
+            
             // 批量选择按钮
             const selectModeBtn = document.getElementById('emoji-manager-select-mode');
             if (selectModeBtn) {
@@ -475,8 +483,8 @@
             if (emojisInGroup.length === 0) {
                 contentArea.innerHTML = `
                     <div class="emoji-manager-empty">
-                        <div style="font-size:48px;margin-bottom:8px;">🙂</div>
                         <div>该分组下暂无表情包</div>
+                        <div style="font-size:12px;color:#999;margin-top:8px;">长按表情包可修改描述、移动分组、删除</div>
                     </div>
                 `;
                 return;
@@ -581,7 +589,8 @@
                 border-radius: 8px;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
                 z-index: 10001;
-                padding: 3px 0;
+                padding: 0;
+                display: inline-block;
             `;
             
             const options = [
@@ -593,7 +602,7 @@
                     }
                 },
                 {
-                    text: '移动到分组',
+                    text: '移动分组',
                     action: () => {
                         menu.remove();
                         this.moveEmojiToGroup(emoji);
@@ -619,8 +628,8 @@
             options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.style.cssText = `
-                    width: 100%;
-                    padding: 10px 12px;
+                    display: block;
+                    padding: 8px 10px;
                     border: none;
                     background: transparent;
                     text-align: center;
@@ -631,6 +640,9 @@
                     transition: all 0.2s;
                     font-weight: 500;
                     white-space: nowrap;
+                    margin: 0;
+                    line-height: 1.2;
+                    width: auto;
                 `;
                 btn.textContent = opt.text;
                 btn.addEventListener('click', opt.action);
@@ -706,7 +718,7 @@
                 }
                 
                 this.showAlert('移动成功！');
-            }, '移动到分组');
+            }, '移动分组');
         },
         
         // 处理图片导入
@@ -719,31 +731,152 @@
                 return;
             }
             
-            // 选择分组
-            this.showGroupSelectDialog((groupId) => {
-                let processed = 0;
-                filesArray.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const fileName = file.name.replace(/\.[^.]+$/, '');
-                        
+            // 读取所有文件并准备导入数据
+            let processedFiles = 0;
+            const emojisData = [];
+            
+            filesArray.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileName = file.name.replace(/\.[^.]+$/, '');
+                    emojisData[index] = {
+                        url: e.target.result,
+                        text: fileName,
+                        originalName: fileName
+                    };
+                    
+                    processedFiles++;
+                    if (processedFiles === filesArray.length) {
+                        // 所有文件都已读取，显示编辑对话框
+                        this.showEmojiEditDialog(emojisData);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        },
+        
+        // 显示表情包编辑对话框
+        showEmojiEditDialog: function(emojisData) {
+            let modal = document.getElementById('emoji-edit-modal');
+            if (modal) modal.remove();
+            
+            modal = document.createElement('div');
+            modal.id = 'emoji-edit-modal';
+            modal.className = 'emoji-mgmt-modal show';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                max-width: 500px;
+                width: 90%;
+                max-height: 70vh;
+                overflow-y: auto;
+            `;
+            
+            let contentHtml = `
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">修改表情包文字描述</h3>
+                <div style="margin-bottom: 16px;">
+            `;
+            
+            emojisData.forEach((emoji, index) => {
+                contentHtml += `
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 13px; color: #666;">表情包 ${index + 1}</label>
+                        <input type="text" data-index="${index}" class="emoji-text-input" value="${emoji.text}" style="
+                            width: 100%;
+                            padding: 10px;
+                            border: 1px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 14px;
+                            box-sizing: border-box;
+                        ">
+                    </div>
+                `;
+            });
+            
+            contentHtml += `
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="emoji-edit-cancel" style="
+                        flex: 1;
+                        padding: 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        background: #f5f5f5;
+                        color: #333;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                    ">取消</button>
+                    <button id="emoji-edit-confirm" style="
+                        flex: 1;
+                        padding: 12px;
+                        border: none;
+                        border-radius: 6px;
+                        background: #007AFF;
+                        color: white;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                    ">确定</button>
+                </div>
+            `;
+            
+            content.innerHTML = contentHtml;
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // 绑定事件
+            document.getElementById('emoji-edit-cancel').addEventListener('click', () => {
+                modal.remove();
+            });
+            
+            document.getElementById('emoji-edit-confirm').addEventListener('click', () => {
+                // 获取修改后的文字
+                const inputs = content.querySelectorAll('.emoji-text-input');
+                inputs.forEach(input => {
+                    const index = parseInt(input.dataset.index);
+                    emojisData[index].text = input.value || emojisData[index].originalName;
+                });
+                
+                modal.remove();
+                // 显示分组选择对话框
+                this.showGroupSelectDialog((groupId) => {
+                    emojisData.forEach(emoji => {
                         AppState.emojis.push({
                             id: 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                            url: e.target.result,
-                            text: fileName,
+                            url: emoji.url,
+                            text: emoji.text,
                             groupId: groupId,
                             createdAt: new Date().toISOString()
                         });
-                        
-                        processed++;
-                        if (processed === filesArray.length) {
-                            saveToStorage();
-                            this.renderGroups();
-                            this.showAlert('已导入 ' + filesArray.length + ' 个表情包');
-                        }
-                    };
-                    reader.readAsDataURL(file);
+                    });
+                    
+                    saveToStorage();
+                    this.renderGroups();
+                    this.showAlert('已导入 ' + emojisData.length + ' 个表情包');
                 });
+            });
+            
+            // 点击外部关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
             });
         },
         
@@ -754,8 +887,36 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     let emojis = [];
+                    let groups = [];
                     
-                    if (Array.isArray(data)) {
+                    // 新格式：包含分组信息的JSON
+                    if (data.version && data.groups && data.emojis) {
+                        // 处理分组
+                        if (Array.isArray(data.groups)) {
+                            data.groups.forEach(group => {
+                                // 检查分组是否已存在
+                                const existingGroup = AppState.emojiGroups.find(g => g.id === group.id);
+                                if (!existingGroup) {
+                                    AppState.emojiGroups.push(group);
+                                    groups.push(group);
+                                }
+                            });
+                        }
+                        
+                        // 处理表情包
+                        if (Array.isArray(data.emojis)) {
+                            data.emojis.forEach(emoji => {
+                                emojis.push({
+                                    id: emoji.id || ('emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
+                                    url: emoji.url,
+                                    text: emoji.text,
+                                    groupId: emoji.groupId,
+                                    createdAt: emoji.createdAt || new Date().toISOString()
+                                });
+                            });
+                        }
+                    } else if (Array.isArray(data)) {
+                        // 旧格式：纯数组格式
                         data.forEach(item => {
                             const text = item.name || item.text || item.description || '无描述';
                             const url = item.url || item.image || item.link;
@@ -764,6 +925,7 @@
                             }
                         });
                     } else if (typeof data === 'object') {
+                        // 对象格式
                         Object.entries(data).forEach(([key, value]) => {
                             let text = key;
                             let url = '';
@@ -786,22 +948,33 @@
                         return;
                     }
                     
-                    // 选择分组
-                    this.showGroupSelectDialog((groupId) => {
+                    saveToStorage();
+                    
+                    // 如果是新格式且有分组信息，直接导入
+                    if (data.version && data.groups && data.emojis) {
                         emojis.forEach(emoji => {
-                            AppState.emojis.push({
-                                id: 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                                url: emoji.url,
-                                text: emoji.text,
-                                groupId: groupId,
-                                createdAt: new Date().toISOString()
-                            });
+                            AppState.emojis.push(emoji);
                         });
-                        
-                        saveToStorage();
                         this.renderGroups();
-                        this.showAlert('已导入 ' + emojis.length + ' 个表情包');
-                    });
+                        this.showAlert('已导入 ' + emojis.length + ' 个表情包和 ' + groups.length + ' 个分组');
+                    } else {
+                        // 否则需要选择分组
+                        this.showGroupSelectDialog((groupId) => {
+                            emojis.forEach(emoji => {
+                                AppState.emojis.push({
+                                    id: 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                                    url: emoji.url,
+                                    text: emoji.text,
+                                    groupId: groupId,
+                                    createdAt: new Date().toISOString()
+                                });
+                            });
+                            
+                            saveToStorage();
+                            this.renderGroups();
+                            this.showAlert('已导入 ' + emojis.length + ' 个表情包');
+                        });
+                    }
                 } catch (err) {
                     this.showAlert('JSON文件解析失败：' + err.message);
                 }
@@ -887,7 +1060,7 @@
         
         // 显示URL导入对话框
         showUrlImportDialog: function() {
-            this.showPrompt('请输入表情包URL\n格式：名称:链接，多个用分号分隔\n例如：开心:https://example.com/1.jpg', '', (text) => {
+            this.showPrompt('请输入表情包URL\n格式1：名称:链接，多个用分号分隔\n例如：开心:https://example.com/1.jpg;开心:https://example.com/2.jpg\n\n格式2：名称和链接无分号，每行一个\n例如：\n开心:https://example.com/1.jpg\n伤心:https://example.com/2.jpg\n\n格式3：纯链接，每行一个\n例如：\nhttps://example.com/1.jpg\nhttps://example.com/2.jpg', '', (text) => {
                 if (!text || !text.trim()) return;
                 
                 const emojis = this.parseUrlText(text);
@@ -914,12 +1087,284 @@
             });
         },
         
+        // 显示导出对话框
+        showExportDialog: function() {
+            let modal = document.getElementById('emoji-export-modal');
+            if (modal) modal.remove();
+            
+            modal = document.createElement('div');
+            modal.id = 'emoji-export-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                max-width: 400px;
+                width: 90%;
+            `;
+            
+            content.innerHTML = `
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">导出表情包</h3>
+                <div id="export-option-list" style="margin-bottom:16px;"></div>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            const list = document.getElementById('export-option-list');
+            
+            // 导出全部选项
+            const allBtn = document.createElement('button');
+            allBtn.style.cssText = `
+                width: 100%;
+                padding: 14px;
+                margin-bottom: 10px;
+                border: none;
+                border-radius: 10px;
+                background: #f5f5f5;
+                color: #333;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 500;
+                transition: all 0.2s;
+            `;
+            allBtn.textContent = '导出全部表情包';
+            allBtn.addEventListener('click', () => {
+                modal.remove();
+                this.exportEmojis(null);
+            });
+            allBtn.addEventListener('mouseenter', () => { allBtn.style.background = '#e8e8e8'; });
+            allBtn.addEventListener('mouseleave', () => { allBtn.style.background = '#f5f5f5'; });
+            list.appendChild(allBtn);
+            
+            // 单个分组选项
+            AppState.emojiGroups.forEach(group => {
+                const btn = document.createElement('button');
+                btn.style.cssText = `
+                    width: 100%;
+                    padding: 14px;
+                    margin-bottom: 10px;
+                    border: none;
+                    border-radius: 10px;
+                    background: #f5f5f5;
+                    color: #333;
+                    cursor: pointer;
+                    font-size: 15px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                `;
+                btn.textContent = '导出"' + group.name + '"分组';
+                btn.addEventListener('click', () => {
+                    modal.remove();
+                    this.exportEmojis([group.id]);
+                });
+                btn.addEventListener('mouseenter', () => { btn.style.background = '#e8e8e8'; });
+                btn.addEventListener('mouseleave', () => { btn.style.background = '#f5f5f5'; });
+                list.appendChild(btn);
+            });
+            
+            // 多个分组选项
+            const multiBtn = document.createElement('button');
+            multiBtn.style.cssText = `
+                width: 100%;
+                padding: 14px;
+                margin-bottom: 10px;
+                border: none;
+                border-radius: 10px;
+                background: #f5f5f5;
+                color: #333;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 500;
+                transition: all 0.2s;
+            `;
+            multiBtn.textContent = '导出多个分组...';
+            multiBtn.addEventListener('click', () => {
+                modal.remove();
+                this.showMultiGroupExportDialog();
+            });
+            multiBtn.addEventListener('mouseenter', () => { multiBtn.style.background = '#e8e8e8'; });
+            multiBtn.addEventListener('mouseleave', () => { multiBtn.style.background = '#f5f5f5'; });
+            list.appendChild(multiBtn);
+            
+            // 点击外部关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        },
+        
+        // 显示多个分组导出对话框
+        showMultiGroupExportDialog: function() {
+            let modal = document.getElementById('emoji-multi-export-modal');
+            if (modal) modal.remove();
+            
+            modal = document.createElement('div');
+            modal.id = 'emoji-multi-export-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                max-width: 400px;
+                width: 90%;
+                max-height: 70vh;
+                overflow-y: auto;
+            `;
+            
+            let html = `
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">选择要导出的分组</h3>
+                <div id="multi-group-list" style="margin-bottom:16px;">
+            `;
+            
+            AppState.emojiGroups.forEach(group => {
+                const emojiCount = AppState.emojis.filter(e => e.groupId === group.id).length;
+                html += `
+                    <label style="display:flex;align-items:center;padding:10px;margin-bottom:8px;background:#f5f5f5;border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" data-group-id="${group.id}" style="margin-right:10px;cursor:pointer;">
+                        <span>${group.name}</span>
+                        <span style="margin-left:auto;color:#999;font-size:12px;">${emojiCount}个</span>
+                    </label>
+                `;
+            });
+            
+            html += `
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button id="multi-export-cancel" style="
+                        flex: 1;
+                        padding: 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        background: #f5f5f5;
+                        color: #333;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                    ">取消</button>
+                    <button id="multi-export-confirm" style="
+                        flex: 1;
+                        padding: 12px;
+                        border: none;
+                        border-radius: 6px;
+                        background: #007AFF;
+                        color: white;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                    ">导出</button>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // 绑定事件
+            document.getElementById('multi-export-cancel').addEventListener('click', () => {
+                modal.remove();
+            });
+            
+            document.getElementById('multi-export-confirm').addEventListener('click', () => {
+                const checkboxes = content.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    this.showAlert('请选择至少一个分组');
+                    return;
+                }
+                
+                const groupIds = Array.from(checkboxes).map(cb => cb.dataset.groupId);
+                modal.remove();
+                this.exportEmojis(groupIds);
+            });
+            
+            // 点击外部关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        },
+        
+        // 导出表情包
+        exportEmojis: function(groupIds) {
+            let emojisToExport = AppState.emojis;
+            let groupsToExport = AppState.emojiGroups;
+            
+            if (groupIds && groupIds.length > 0) {
+                emojisToExport = AppState.emojis.filter(e => groupIds.includes(e.groupId));
+                groupsToExport = AppState.emojiGroups.filter(g => groupIds.includes(g.id));
+            }
+            
+            if (emojisToExport.length === 0) {
+                this.showAlert('没有可导出的表情包');
+                return;
+            }
+            
+            // 创建导出数据
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                groups: groupsToExport,
+                emojis: emojisToExport.map(emoji => ({
+                    id: emoji.id,
+                    url: emoji.url,
+                    text: emoji.text,
+                    groupId: emoji.groupId,
+                    createdAt: emoji.createdAt
+                }))
+            };
+            
+            // 创建JSON文件
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // 下载文件
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'emojis_' + new Date().toISOString().split('T')[0] + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            this.showAlert('已导出 ' + emojisToExport.length + ' 个表情包');
+        },
+        
         // 解析URL文本
         parseUrlText: function(text) {
             const emojis = [];
+            let lines = text.split(/[\n\r]+/).map(line => line.trim()).filter(line => line);
             
-            // 支持分号分隔
-            if (text.includes(';') || text.includes('；') || text.includes(':') || text.includes('：')) {
+            // 首先尝试分号分隔的格式
+            if (text.includes(';') || text.includes('；')) {
                 const pairs = text.split(/[;；]/).map(p => p.trim()).filter(p => p);
                 
                 pairs.forEach(pair => {
@@ -933,6 +1378,54 @@
                         emojis.push({ text: name, url: url });
                     }
                 });
+                
+                if (emojis.length > 0) return emojis;
+            }
+            
+            // 尝试每行格式：名称:URL
+            if (lines.length > 0) {
+                let lineFormatValid = true;
+                const tempEmojis = [];
+                
+                for (let line of lines) {
+                    const colonIndex = line.search(/[:：]/);
+                    if (colonIndex === -1) {
+                        // 如果这行没有冒号，检查是否是纯URL
+                        if (line.startsWith('http://') || line.startsWith('https://')) {
+                            tempEmojis.push({ text: '表情包', url: line });
+                        } else {
+                            lineFormatValid = false;
+                            break;
+                        }
+                    } else {
+                        const name = line.substring(0, colonIndex).trim();
+                        const url = line.substring(colonIndex + 1).trim();
+                        
+                        if (name && url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                            tempEmojis.push({ text: name, url: url });
+                        } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                            lineFormatValid = false;
+                            break;
+                        }
+                    }
+                }
+                
+                // 如果每一行都有效，返回结果
+                if (tempEmojis.length > 0 && lineFormatValid) {
+                    return tempEmojis;
+                }
+            }
+            
+            // 尝试纯URL格式（每行一个URL）
+            const pureUrls = [];
+            for (let line of lines) {
+                if (line.startsWith('http://') || line.startsWith('https://')) {
+                    pureUrls.push({ text: '表情包', url: line });
+                }
+            }
+            
+            if (pureUrls.length > 0) {
+                return pureUrls;
             }
             
             return emojis;
