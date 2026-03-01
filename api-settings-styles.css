@@ -42,11 +42,11 @@
 /* 内容区域 - 优雅渐变背景 */
 #api-settings-page .sub-content {
     background: linear-gradient(180deg, #f8f8f8 0%, #f0f0f0 100%);
-    min-height: calc(100vh - 56px);
+    min-height: auto;
 }
 
 #api-settings-page .api-settings-container {
-    padding: 20px 16px 32px;
+    padding: 20px 16px 60px;
     max-width: 600px;
     margin: 0 auto;
 }
