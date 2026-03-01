@@ -2,6 +2,9 @@
 .st-preset-page {
     position: fixed;
     inset: 0;
+    /* iOS Safari: 使用 dvh 处理动态地址栏，并减去顶部安全区域 */
+    height: 100dvh;
+    height: -webkit-fill-available;
     background: linear-gradient(180deg, #f8f8fa 0%, #ececf0 50%, #e2e2e7 100%);
     z-index: 30000;
     display: flex;
@@ -12,6 +15,11 @@
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
+    /* iOS 安全区域适配 */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 .st-preset-page.show { opacity: 1; visibility: visible; }
 
@@ -25,29 +33,11 @@
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 0.33px solid rgba(0, 0, 0, 0.06);
     height: 56px;
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
+    position: relative;
     z-index: 10;
 }
 
-/* PWA全屏模式适配 - 所有设备统一处理 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
-    .st-preset-nav {
-        padding-top: env(safe-area-inset-top);
-        height: calc(56px + env(safe-area-inset-top));
-        min-height: calc(56px + env(safe-area-inset-top));
-        top: env(safe-area-inset-top);
-    }
-}
-
-/* 通过class添加的额外适配 */
-.is-pwa .st-preset-nav,
-.is-standalone .st-preset-nav {
-    padding-top: env(safe-area-inset-top);
-    height: calc(56px + env(safe-area-inset-top));
-    min-height: calc(56px + env(safe-area-inset-top));
-    top: env(safe-area-inset-top);
-}
 .st-preset-back {
     width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
@@ -80,15 +70,21 @@
     border-radius: 14px;
     box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
     overflow-x: auto;
+    flex-shrink: 0;
 }
+
+/* iOS 小屏幕适配 */
 @media (max-width: 480px) {
     .st-preset-selector {
-        display: flex;
         flex-wrap: nowrap;
         gap: 4px;
         padding: 8px;
+        margin: 8px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        /* 确保在iOS设备上完整显示 */
+        flex-shrink: 0;
+        min-height: fit-content;
     }
 }
 .st-preset-select {

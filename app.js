@@ -1314,10 +1314,10 @@
                 apiKeyToggle.addEventListener('click', function() {
                     if (apiKeyInput.type === 'text') {
                         apiKeyInput.type = 'password';
-                        apiKeyToggle.textContent = '显示';
+                        this.textContent = '显示';
                     } else {
                         apiKeyInput.type = 'text';
-                        apiKeyToggle.textContent = '隐藏';
+                        this.textContent = '隐藏';
                     }
                 });
             }
@@ -1917,6 +1917,13 @@
             requestAnimationFrame(() => {
                 page.classList.add('open');
                 
+                // 隐藏底部导航栏（非聊天页面）
+                const tabBar = document.getElementById('tab-bar');
+                if (tabBar && pageId !== 'chat-page') {
+                    tabBar.style.visibility = 'hidden';
+                    tabBar.style.pointerEvents = 'none';
+                }
+                
                 // 打开API设置页面时重新初始化UI
                 if (pageId === 'api-settings-page') {
                     setTimeout(function() {
@@ -1955,6 +1962,17 @@
 
             requestAnimationFrame(() => {
                 page.classList.remove('open');
+                
+                // 显示底部导航栏（非聊天页面关闭时）
+                const tabBar = document.getElementById('tab-bar');
+                const chatPage = document.getElementById('chat-page');
+                if (tabBar && pageId !== 'chat-page') {
+                    // 如果聊天页面没打开，才显示底部导航栏
+                    if (!chatPage || !chatPage.classList.contains('open')) {
+                        tabBar.style.visibility = '';
+                        tabBar.style.pointerEvents = '';
+                    }
+                }
             });
         }
 
@@ -3381,8 +3399,14 @@
             
             // 立即添加open类和更新标题（快速显示UI）
             const chatPage = document.getElementById('chat-page');
+            const tabBar = document.getElementById('tab-bar');
             if (chatPage) {
                 chatPage.classList.add('open');
+            }
+            // 隐藏底部导航栏（防止在聊天页面中暴露）
+            if (tabBar) {
+                tabBar.style.visibility = 'hidden';
+                tabBar.style.pointerEvents = 'none';
             }
             
             // 优先显示备注，如果没有备注则显示角色名称
@@ -3591,6 +3615,13 @@
             // 移除群聊成员数显示
             const memberCount = chatPage.querySelector('.group-chat-member-count');
             if (memberCount) memberCount.remove();
+            
+            // 显示底部导航栏
+            const tabBar = document.getElementById('tab-bar');
+            if (tabBar) {
+                tabBar.style.visibility = '';
+                tabBar.style.pointerEvents = '';
+            }
             
             // 不清除AppState.currentChat，让打字状态保持为该对话的状态
             // 这样当用户返回时，打字状态会被正确恢复
@@ -7811,14 +7842,14 @@
 
                 if (endpointEl) endpointEl.value = s.endpoint || '';
                 
-                // API密钥默认隐藏
+                // API密钥默认显示（text类型不触发安全键盘）
                 if (keyEl) {
                     keyEl.value = s.apiKey || '';
-                    keyEl.type = 'password';  // 默认隐藏
+                    keyEl.type = 'text';  // 保持text类型，不触发安全键盘
                 }
                 
                 if (apiKeyToggle) {
-                    apiKeyToggle.textContent = '显示';  // 默认状态为隐藏
+                    apiKeyToggle.textContent = '隐藏';  // 默认状态为显示
                 }
                 
                 if (aiToggle) aiToggle.checked = !!s.aiTimeAware;

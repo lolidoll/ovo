@@ -407,11 +407,11 @@ const SecondaryAPIManager = (function() {
             
             if (secondaryKeyEl) {
                 secondaryKeyEl.value = s.secondaryApiKey || '';
-                secondaryKeyEl.type = 'password';  // 默认隐藏
+                secondaryKeyEl.type = 'text';  // 保持text类型，不触发安全键盘
             }
             
             if (secondaryKeyToggle) {
-                secondaryKeyToggle.textContent = '显示';  // 默认状态为隐藏
+                secondaryKeyToggle.textContent = '隐藏';  // 默认状态为显示
             }
 
             if (secondarySelEl) {

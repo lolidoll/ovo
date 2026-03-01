@@ -1091,8 +1091,54 @@
 }
 
 /* ========================================
-   主题适配(如果需要)
+   iOS Safari 聊天输入框完整修复样式
+   修复问题：点击输入框时，输入框和工具栏跑到顶部，底部导航栏暴露
+   适配所有型号iPhone
 ======================================== */
-@media (prefers-color-scheme: dark) {
-    /* 暗色模式可以在这里添加 */
+
+/* 防止iOS Safari自动缩放（输入框font-size必须>=16px） */
+.chat-input {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+}
+
+/* iOS导航栏增强 - 只在iOS设备上应用 */
+@supports (-webkit-touch-callout: none) {
+    .chat-nav {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        max-height: 50px !important;
+        z-index: 210 !important;
+        padding-top: env(safe-area-inset-top) !important;
+        padding-top: constant(safe-area-inset-top) !important;
+    }
+    
+    .chat-messages {
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        -webkit-overscroll-behavior-y: contain !important;
+    }
+    
+    /* 输入框聚焦时的iOS特殊处理 */
+    .chat-page.input-focused .chat-input-area,
+    .chat-page.input-focused .chat-toolbar {
+        position: fixed !important;
+        bottom: 0 !important;
+    }
+    
+    .chat-page.input-focused .chat-input-area {
+        bottom: 36px !important;
+    }
+}
+
+/* iPhone X及以后的刘海屏设备 */
+@supports (padding: max(0px)) {
+    .chat-nav {
+        padding-top: max(0px, env(safe-area-inset-top)) !important;
+    }
 }
