@@ -46,81 +46,12 @@
     function handleInputFocus(e) {
         console.log('[iOS Input Fix] 输入框聚焦');
         
-        // 阻止默认行为
-        // e.preventDefault();
-        
-        // 添加聚焦状态类名
+        // 只添加状态类名，不立即调整布局
         chatPage.classList.add('input-focused');
-        document.body.classList.add('keyboard-open');
+        document.body.classList.add('input-open');
         document.body.classList.add('input-focused');
         
         isKeyboardVisible = true;
-
-        // 延迟执行，等待键盘弹出
-        setTimeout(() => {
-            // 1. 禁用页面滚动
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
-            document.body.style.top = '0';
-            document.body.style.left = '0';
-            document.body.style.bottom = '0';
-
-            // 2. 强制聊天页面固定在视口
-            chatPage.style.position = 'fixed';
-            chatPage.style.top = '0';
-            chatPage.style.left = '0';
-            chatPage.style.width = '100vw';
-            chatPage.style.height = '100vh';
-            chatPage.style.height = '100dvh';
-            chatPage.style.overflow = 'hidden';
-            chatPage.style.overflowY = 'auto';
-
-            // 3. 隐藏底部导航栏（防止暴露）
-            if (tabBar) {
-                tabBar.style.visibility = 'hidden';
-                tabBar.style.pointerEvents = 'none';
-            }
-
-            // 4. 确保输入区域和工具栏固定在底部
-            const inputArea = chatPage.querySelector('.chat-input-area');
-            const toolbar = chatPage.querySelector('.chat-toolbar');
-            
-            if (inputArea) {
-                inputArea.style.position = 'fixed';
-                inputArea.style.bottom = '36px';
-                inputArea.style.left = '0';
-                inputArea.style.right = '0';
-                inputArea.style.zIndex = '200';
-                inputArea.style.width = '100%';
-            }
-            
-            if (toolbar) {
-                toolbar.style.position = 'fixed';
-                toolbar.style.bottom = '0';
-                toolbar.style.left = '0';
-                toolbar.style.right = '0';
-                toolbar.style.zIndex = '200';
-                toolbar.style.width = '100%';
-            }
-
-            // 5. 调整消息区域高度
-            const messagesContainer = document.getElementById('chat-messages');
-            if (messagesContainer) {
-                const navHeight = 50;
-                const inputAreaHeight = 50;
-                const toolbarHeight = 36;
-                const availableHeight = window.innerHeight - navHeight - inputAreaHeight - toolbarHeight;
-                messagesContainer.style.height = availableHeight + 'px';
-                messagesContainer.style.flex = 'none';
-                // 滚动到底部
-                setTimeout(() => {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }, 100);
-            }
-
-        }, 300);
     }
 
     /**
@@ -138,25 +69,23 @@
             
             isKeyboardVisible = false;
 
-            // 1. 恢复页面滚动
+            // 恢复页面滚动
             document.body.style.overflow = '';
             document.body.style.position = '';
             document.body.style.width = '';
             document.body.style.height = '';
             document.body.style.top = '';
             document.body.style.left = '';
-            document.body.style.bottom = '';
 
-            // 2. 恢复聊天页面样式
+            // 恢复聊天页面样式
             chatPage.style.position = '';
             chatPage.style.top = '';
             chatPage.style.left = '';
             chatPage.style.width = '';
             chatPage.style.height = '';
             chatPage.style.overflow = '';
-            chatPage.style.overflowY = '';
 
-            // 3. 显示底部导航栏（如果聊天页面打开则保持隐藏）
+            // 恢复底部导航栏
             if (tabBar) {
                 if (chatPage.classList.contains('open')) {
                     tabBar.style.visibility = 'hidden';
@@ -167,7 +96,7 @@
                 }
             }
 
-            // 4. 恢复输入区域和工具栏样式
+            // 恢复输入区域和工具栏样式
             const inputArea = chatPage.querySelector('.chat-input-area');
             const toolbar = chatPage.querySelector('.chat-toolbar');
             
@@ -178,6 +107,8 @@
                 inputArea.style.right = '';
                 inputArea.style.zIndex = '';
                 inputArea.style.width = '';
+                inputArea.style.overflow = '';
+                inputArea.style.touchAction = '';
             }
             
             if (toolbar) {
@@ -187,9 +118,11 @@
                 toolbar.style.right = '';
                 toolbar.style.zIndex = '';
                 toolbar.style.width = '';
+                toolbar.style.overflow = '';
+                toolbar.style.touchAction = '';
             }
 
-            // 5. 恢复消息区域样式
+            // 恢复消息区域样式
             const messagesContainer = document.getElementById('chat-messages');
             if (messagesContainer) {
                 messagesContainer.style.height = '';
@@ -197,6 +130,39 @@
             }
 
         }, 200);
+    }
+
+    /**
+     * 根据键盘高度调整布局
+     */
+    function adjustForKeyboardHeight(viewportHeight) {
+        const inputArea = chatPage.querySelector('.chat-input-area');
+        const toolbar = chatPage.querySelector('.chat-toolbar');
+        const messagesContainer = document.getElementById('chat-messages');
+        
+        if (!inputArea || !toolbar || !messagesContainer) return;
+        
+        const navHeight = 50;
+        const inputAreaHeight = 50;
+        const toolbarHeight = 36;
+        
+        // 输入区域固定在工具栏上方
+        inputArea.style.position = 'fixed';
+        inputArea.style.bottom = toolbarHeight + 'px';
+        inputArea.style.left = '0';
+        inputArea.style.right = '0';
+        inputArea.style.width = '100%';
+        
+        // 工具栏固定在最底部
+        toolbar.style.position = 'fixed';
+        toolbar.style.bottom = '0';
+        toolbar.style.left = '0';
+        toolbar.style.right = '0';
+        toolbar.style.width = '100%';
+        
+        // 消息区域高度
+        const availableHeight = viewportHeight - navHeight - inputAreaHeight - toolbarHeight;
+        messagesContainer.style.height = availableHeight + 'px';
     }
 
     /**
@@ -226,85 +192,76 @@
         });
         
         if (newKeyboardHeight > 150) {
-            // 键盘已弹出
-            if (!isKeyboardVisible) {
-                handleInputFocus();
+            // 键盘已弹出 - 应用完整布局调整
+            if (!document.body.classList.contains('keyboard-open')) {
+                document.body.classList.add('keyboard-open');
             }
             
-            // 调整聊天页面高度为实际可视区域
+            // 禁用页面滚动
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+
+            // 强制聊天页面固定在视口
+            chatPage.style.position = 'fixed';
+            chatPage.style.top = '0';
+            chatPage.style.left = '0';
+            chatPage.style.width = '100vw';
             chatPage.style.height = newViewportHeight + 'px';
+            chatPage.style.overflow = 'hidden';
+
+            // 隐藏底部导航栏
+            if (tabBar) {
+                tabBar.style.visibility = 'hidden';
+                tabBar.style.pointerEvents = 'none';
+            }
             
-            // 调整输入区域和工具栏位置
+            // 调整输入区域和工具栏
             const inputArea = chatPage.querySelector('.chat-input-area');
             const toolbar = chatPage.querySelector('.chat-toolbar');
             const messagesContainer = document.getElementById('chat-messages');
             
             if (inputArea && toolbar && messagesContainer) {
-                const navHeight = 50;
-                const inputAreaHeight = 50;
-                const toolbarHeight = 36;
-                const safeAreaBottom = getSafeAreaInset('bottom');
-                
-                // 输入区域固定在底部（工具栏上方）
+                // 输入区域固定在工具栏上方
                 inputArea.style.position = 'fixed';
-                inputArea.style.bottom = (toolbarHeight + safeAreaBottom) + 'px';
+                inputArea.style.bottom = '36px';
+                inputArea.style.left = '0';
+                inputArea.style.right = '0';
+                inputArea.style.width = '100%';
+                inputArea.style.zIndex = '200';
+                inputArea.style.overflow = 'hidden';
                 
                 // 工具栏固定在最底部
                 toolbar.style.position = 'fixed';
                 toolbar.style.bottom = '0';
+                toolbar.style.left = '0';
+                toolbar.style.right = '0';
+                toolbar.style.width = '100%';
+                toolbar.style.zIndex = '200';
+                toolbar.style.overflow = 'hidden';
                 
                 // 消息区域高度调整
-                const availableHeight = newViewportHeight - navHeight - inputAreaHeight - toolbarHeight - safeAreaBottom;
+                const navHeight = 50;
+                const inputAreaHeight = 50;
+                const toolbarHeight = 36;
+                const availableHeight = newViewportHeight - navHeight - inputAreaHeight - toolbarHeight;
                 messagesContainer.style.height = availableHeight + 'px';
                 messagesContainer.style.flex = 'none';
+                
+                // 滚动到底部
+                setTimeout(() => {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 50);
             }
         } else {
             // 键盘已收起
-            if (isKeyboardVisible) {
+            if (document.body.classList.contains('keyboard-open')) {
+                document.body.classList.remove('keyboard-open');
+                // 恢复原始布局
                 handleInputBlur();
-            }
-        }
-    }
-
-    /**
-     * 获取安全区域插入值
-     */
-    function getSafeAreaInset(position) {
-        const computedStyle = getComputedStyle(document.documentElement);
-        const value = computedStyle.getPropertyValue(`--safe-area-inset-${position}`);
-        // 尝试从env()获取
-        if (value && value.includes('env(')) {
-            const match = value.match(/env\(([^)]+)\)/);
-            if (match) {
-                // 返回0，实际值由CSS处理
-                return 0;
-            }
-        }
-        return parseFloat(value) || 0;
-    }
-
-    /**
-     * 防止iOS Safari的橡皮筋效果
-     */
-    function preventOverscroll(e) {
-        const target = e.target;
-        
-        // 只在聊天页面内阻止橡皮筋效果
-        if (!chatPage.contains(target)) return;
-        
-        const messagesContainer = document.getElementById('chat-messages');
-        
-        if (messagesContainer && messagesContainer.contains(target)) {
-            const scrollTop = messagesContainer.scrollTop;
-            const scrollHeight = messagesContainer.scrollHeight;
-            const clientHeight = messagesContainer.clientHeight;
-            
-            // 如果已经滚动到顶部或底部，阻止默认行为
-            if (scrollTop === 0 && e.deltaY < 0) {
-                e.preventDefault();
-            }
-            if (scrollTop + clientHeight >= scrollHeight && e.deltaY > 0) {
-                e.preventDefault();
             }
         }
     }
@@ -328,8 +285,9 @@
             
             // 延迟处理，等待方向切换完成
             setTimeout(() => {
-                if (isKeyboardVisible) {
-                    handleInputFocus();
+                // 如果键盘已弹出，根据当前视口重新调整
+                if (document.body.classList.contains('keyboard-open') && window.visualViewport) {
+                    handleVisualViewportResize();
                 } else {
                     handleInputBlur();
                 }

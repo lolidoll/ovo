@@ -253,7 +253,7 @@
         
         .user-name {
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 400;
             color: #000;
         }
         
@@ -263,7 +263,7 @@
             min-width: 35px;
             min-height: 35px;
             border-radius: 50%;
-            background-color: #f5f5f5;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -272,7 +272,7 @@
             flex-shrink: 0;
         }
         .add-btn:active {
-            background-color: #e8e8e8;
+            background: rgba(0, 0, 0, 0.05);
         }
 
         /* 侧边功能栏 - 黑白灰简约设计 */
