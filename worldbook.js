@@ -507,6 +507,10 @@
                             <input type="radio" name="wb-import-scope-${idx}" value="local" checked style="width:18px;height:18px;cursor:pointer;accent-color:#2c2c2c;">
                             <span style="font-weight:500;">局部世界书（需绑定到角色）</span>
                         </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#666;padding:8px 10px;border-radius:8px;transition:all 0.2s;background:#fafafa;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
+                            <input type="radio" name="wb-import-scope-${idx}" value="offline" style="width:18px;height:18px;cursor:pointer;accent-color:#2c2c2c;">
+                            <span style="font-weight:500;">线下世界书（仅本地使用）</span>
+                        </label>
                     </div>
                 </div>
             `).join('');
@@ -561,7 +565,7 @@
             const selectedIdx = parseInt(selectedRadio.value);
             const selectedWb = window.pendingWorldbookImport[selectedIdx];
             const scopeRadio = document.querySelector(`input[name="wb-import-scope-${selectedIdx}"]:checked`);
-            const isGlobal = scopeRadio ? scopeRadio.value === 'global' : false;
+            const scope = scopeRadio ? scopeRadio.value : 'local';
             
             if (!selectedWb || !selectedWb.content || !selectedWb.content.trim()) {
                 this.showToast('世界书内容为空', 'warning');
@@ -572,7 +576,8 @@
                 id: 'wb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 name: selectedWb.name || '导入的世界书',
                 content: selectedWb.content,
-                isGlobal: isGlobal,
+                isGlobal: scope === 'global',
+                isOffline: scope === 'offline',
                 createdAt: new Date().toISOString()
             };
             
