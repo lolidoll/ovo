@@ -21,9 +21,14 @@
 @media (display-mode: fullscreen), (display-mode: standalone) {
     #persona-manager-page .sub-nav,
     #persona-editor-page .sub-nav {
-        padding-top: var(--safe-area-inset-top);
-        height: calc(56px + var(--safe-area-inset-top));
-        min-height: calc(56px + var(--safe-area-inset-top));
+        padding-top: env(safe-area-inset-top) !important;
+        height: calc(56px + env(safe-area-inset-top)) !important;
+        min-height: calc(56px + env(safe-area-inset-top)) !important;
+    }
+    
+    #persona-manager-page .sub-content,
+    #persona-editor-page .sub-content {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
     }
 }
 
@@ -32,9 +37,16 @@
 .is-pwa #persona-editor-page .sub-nav,
 .is-standalone #persona-manager-page .sub-nav,
 .is-standalone #persona-editor-page .sub-nav {
-    padding-top: var(--safe-area-inset-top);
-    height: calc(56px + var(--safe-area-inset-top));
-    min-height: calc(56px + var(--safe-area-inset-top));
+    padding-top: env(safe-area-inset-top) !important;
+    height: calc(56px + env(safe-area-inset-top)) !important;
+    min-height: calc(56px + env(safe-area-inset-top)) !important;
+}
+
+.is-pwa #persona-manager-page .sub-content,
+.is-pwa #persona-editor-page .sub-content,
+.is-standalone #persona-manager-page .sub-content,
+.is-standalone #persona-editor-page .sub-content {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
 }
 
 #persona-manager-page .sub-title,

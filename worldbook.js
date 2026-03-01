@@ -271,7 +271,7 @@
                         
                         const data = JSON.parse(text);
                         const worldbooks = [];
-                        
+
                         // 处理不同格式的JSON
                         if (Array.isArray(data)) {
                             // 数组格式
@@ -280,18 +280,56 @@
                                 content: wb.content || wb.data || wb.description || '',
                                 isGlobal: wb.isGlobal || wb.global || false
                             })));
-                        } else if (data.spec === 'world_book_v1' || data.spec === 'chara_world') {
-                            // SillyTavern世界书格式
-                            const entries = data.entries || [];
-                            const content = Array.isArray(entries) 
-                                ? entries.map(e => {
-                                    const keys = Array.isArray(e.keys) ? e.keys.join(', ') : '';
-                                    return `【${keys}】\n${e.content || e.text || ''}`;
-                                  }).join('\n\n')
-                                : JSON.stringify(entries);
-                            
+                        } else if (data.entries && typeof data.entries === 'object') {
+                            // SillyTavern世界书格式（包括带spec和不带spec的）
+                            // entries 可能是对象 {"0": {...}, "1": {...}} 或数组
+                            const entries = data.entries;
+                            const entriesArray = Array.isArray(entries) 
+                                ? entries 
+                                : Object.values(entries);
+
+                            // 按displayIndex或uid排序
+                            entriesArray.sort((a, b) => {
+                                const aIndex = a.displayIndex ?? a.uid ?? 0;
+                                const bIndex = b.displayIndex ?? b.uid ?? 0;
+                                return aIndex - bIndex;
+                            });
+
+                            const content = entriesArray.map(e => {
+                                // 提取关键词
+                                const keys = Array.isArray(e.key) ? e.key.filter(k => k).join(', ') : '';
+                                const keysecondary = Array.isArray(e.keysecondary) && e.keysecondary.length > 0 
+                                    ? e.keysecondary.filter(k => k).join(', ') 
+                                    : '';
+                                
+                                // 提取注释
+                                const comment = e.comment || '';
+                                
+                                // 提取内容
+                                const entryContent = e.content || e.text || '';
+                                
+                                // 组合格式
+                                let entryText = '';
+                                if (comment) {
+                                    entryText += `# ${comment}\n\n`;
+                                }
+                                if (keys) {
+                                    entryText += `**关键词**: ${keys}\n`;
+                                    if (keysecondary) {
+                                        entryText += `**次要关键词**: ${keysecondary}\n`;
+                                    }
+                                    entryText += '\n';
+                                }
+                                entryText += entryContent;
+                                
+                                return entryText;
+                            }).join('\n\n---\n\n');
+
+                            // 使用文件名或data中的name作为世界书名称
+                            const worldbookName = data.name || file.name.replace(/\.json$/i, '');
+
                             worldbooks.push({
-                                name: data.name || '世界书',
+                                name: worldbookName,
                                 content: content,
                                 isGlobal: false
                             });

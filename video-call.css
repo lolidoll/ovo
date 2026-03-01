@@ -627,6 +627,19 @@
     z-index: 12;
 }
 
+/* PWA全屏模式适配 - 底部安全区域 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .video-call-controls {
+        padding-bottom: calc(25px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .video-call-controls,
+.is-standalone .video-call-controls {
+    padding-bottom: calc(25px + env(safe-area-inset-bottom)) !important;
+}
+
 .video-call-duration {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.9);

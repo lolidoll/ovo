@@ -1952,6 +1952,18 @@
                         }
                     }, 50);
                 }
+                // 打开购物页面时，初始化购物页面
+                if (pageId === 'shopping-page') {
+                    setTimeout(function() {
+                        try {
+                            if (window.ShoppingPage && typeof window.ShoppingPage.initAll === 'function') {
+                                window.ShoppingPage.initAll();
+                            }
+                        } catch (e) {
+                            console.log('shopping page initialization error:', e.message);
+                        }
+                    }, 100);
+                }
             });
         }
 
@@ -2040,6 +2052,9 @@
                         } else {
                             showToast('用户设定管理模块未加载');
                         }
+                        break;
+                    case 'shopping':
+                        openSubPage('shopping-page');
                         break;
                     case 'weather':
                         showToast('天气功能开发中');
@@ -7341,8 +7356,11 @@
         }
         
         function initApiSettingsUI() {
-            // 初始化所有settings-card为折叠状态
-            const settingsCards = document.querySelectorAll('.settings-card');
+            // 初始化API设置页面内的settings-card为折叠状态（只限api-settings-page内的卡片）
+            const apiSettingsPage = document.getElementById('api-settings-page');
+            if (!apiSettingsPage) return;
+            
+            const settingsCards = apiSettingsPage.querySelectorAll('.settings-card');
             settingsCards.forEach(card => {
                 const contents = Array.from(card.children).slice(1); // 除了title之外的所有元素
                 contents.forEach((el, index) => {

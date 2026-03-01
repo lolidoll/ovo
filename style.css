@@ -1289,6 +1289,23 @@
             isolation: isolate !important;
         }
         
+        /* PWA全屏模式 - 子页面容器顶部安全区域适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .sub-page {
+                top: env(safe-area-inset-top) !important;
+                height: calc(100dvh - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+                padding-top: 0 !important;
+            }
+        }
+        
+        /* 通过class添加的额外适配 */
+        .is-pwa .sub-page,
+        .is-standalone .sub-page {
+            top: env(safe-area-inset-top) !important;
+            height: calc(100dvh - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+            padding-top: 0 !important;
+        }
+        
         /* 非PWA模式下，子页面使用实际视口高度，避免底部被浏览器工具栏遮挡 */
         html:not(.is-pwa):not(.is-standalone) .sub-page {
             bottom: auto !important;
@@ -1330,16 +1347,18 @@
         /* PWA全屏模式 - 所有sub-page完全覆盖整个屏幕，不预留底部空间 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .sub-page {
+                top: 0 !important;
                 bottom: 0 !important;
-                height: calc(100dvh - env(safe-area-inset-top)) !important;
+                height: 100dvh !important;
             }
         }
         
         /* 通过class添加的额外适配 */
         .is-pwa .sub-page,
         .is-standalone .sub-page {
+            top: 0 !important;
             bottom: 0 !important;
-            height: calc(100dvh - env(safe-area-inset-top)) !important;
+            height: 100dvh !important;
         }
         
         .sub-nav {
@@ -1357,9 +1376,26 @@
         /* iOS PWA 顶部安全区 - 子页面导航 */
         .ios-standalone .sub-nav,
         [data-adapt-mode="ios"] .sub-nav {
-            padding-top: var(--safe-area-inset-top);
-            height: calc(56px + var(--safe-area-inset-top));
-            min-height: calc(56px + var(--safe-area-inset-top));
+            padding-top: var(--safe-area-inset-top) !important;
+            height: calc(56px + var(--safe-area-inset-top)) !important;
+            min-height: calc(56px + var(--safe-area-inset-top)) !important;
+        }
+        
+        /* PWA全屏模式 - 子页面导航栏顶部安全区域 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .sub-nav {
+                padding-top: env(safe-area-inset-top) !important;
+                height: calc(56px + env(safe-area-inset-top)) !important;
+                min-height: calc(56px + env(safe-area-inset-top)) !important;
+            }
+        }
+        
+        /* 通过class添加的额外适配 */
+        .is-pwa .sub-nav,
+        .is-standalone .sub-nav {
+            padding-top: env(safe-area-inset-top) !important;
+            height: calc(56px + env(safe-area-inset-top)) !important;
+            min-height: calc(56px + env(safe-area-inset-top)) !important;
         }
         
         .back-btn {
@@ -1416,11 +1452,53 @@
             padding: 15px;
             -webkit-overflow-scrolling: touch;
         }
-
+        
+        /* PWA全屏模式 - 子页面内容区域底部安全区域 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .sub-content {
+                padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
+            }
+        }
+        
+        /* 通过class添加的额外适配 */
+        .is-pwa .sub-content,
+        .is-standalone .sub-content {
+            padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
+        }
+        
         /* iOS PWA 顶部安全区 - 朋友圈页头部 */
         .ios-standalone #moments-page .moments-top-bar,
         [data-adapt-mode="ios"] #moments-page .moments-top-bar {
             padding-top: calc(15px + var(--safe-area-inset-top)) !important;
+            height: calc(44px + 15px + var(--safe-area-inset-top)) !important;
+            min-height: calc(44px + 15px + var(--safe-area-inset-top)) !important;
+        }
+        
+        /* PWA全屏模式 - 朋友圈页面顶部栏适配 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            #moments-page .moments-top-bar {
+                padding-top: calc(15px + env(safe-area-inset-top)) !important;
+                height: calc(44px + 15px + env(safe-area-inset-top)) !important;
+                min-height: calc(44px + 15px + env(safe-area-inset-top)) !important;
+            }
+            
+            #moments-page .sub-content {
+                padding-top: 0 !important;
+                padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
+            }
+        }
+        
+        /* 通过class添加的额外适配 */
+        .is-pwa #moments-page .moments-top-bar,
+        .is-standalone #moments-page .moments-top-bar {
+            padding-top: calc(15px + env(safe-area-inset-top)) !important;
+            height: calc(44px + 15px + env(safe-area-inset-top)) !important;
+            min-height: calc(44px + 15px + env(safe-area-inset-top)) !important;
+        }
+        
+        .is-pwa #moments-page .sub-content,
+        .is-standalone #moments-page .sub-content {
+            padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
         }
         
         .placeholder-text {
@@ -5924,7 +6002,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     padding: 20px;
 }
 
-/* 表单元素 - 使用浏览器默认样式 */
+/* 表单元素 - 公主风格 */
 .form-group {
     margin-bottom: 20px;
 }
@@ -5942,38 +6020,41 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     letter-spacing: 0.3px;
 }
 
-/* 普通HTML输入框样式 - 兼容所有浏览器 */
 .form-input,
 .form-select,
 .form-textarea {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 12px 16px;
+    border: 2px solid #ffe4ed;
+    border-radius: 12px;
     font-size: 14px;
     color: #333;
-    background: #fff;
+    background: #fffbfc;
+    transition: all 0.3s ease;
     font-family: inherit;
-    box-sizing: border-box;
 }
 
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
-    outline: 2px solid #2196F3;
-    outline-offset: -1px;
+    outline: none;
+    border-color: #ffb6c8;
+    box-shadow: 0 0 0 4px rgba(255, 182, 200, 0.15);
+    background: #fff;
 }
 
 .form-textarea {
     min-height: 120px;
     resize: vertical;
-    line-height: 1.5;
+    font-family: monospace;
+    line-height: 1.6;
 }
 
 .form-hint {
     font-size: 12px;
-    color: #666;
-    margin-top: 6px;
+    color: #ffb6c8;
+    margin-top: 8px;
+    opacity: 0.85;
 }
 
 /* 按钮组 */
@@ -6097,9 +6178,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .tag-item input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
+    accent-color: #ffb6c8;
 }
 
 .tag-text {
@@ -6164,25 +6246,26 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     margin-bottom: 16px;
 }
 
-/* 复选框 - 使用浏览器默认样式 */
+/* 复选框 - 公主风格 */
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
     margin-bottom: 12px;
 }
 
 .custom-checkbox {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     cursor: pointer;
-    /* 移除accent-color，使用浏览器默认样式 */
+    accent-color: #ffb6c8;
 }
 
 .checkbox-label span {
-    font-size: 14px;
-    color: #333;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ff9db8;
 }
 
 .summaries-list {

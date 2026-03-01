@@ -430,6 +430,19 @@
     box-shadow: 0 -2px 8px rgba(255, 182, 193, 0.1);
 }
 
+/* PWA全屏模式适配 - 底部安全区域 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .call-controls {
+        padding-bottom: calc(32px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* 通过class添加的额外适配 */
+.is-pwa .call-controls,
+.is-standalone .call-controls {
+    padding-bottom: calc(32px + env(safe-area-inset-bottom)) !important;
+}
+
 .call-duration {
     font-size: 18px;
     font-weight: 700;

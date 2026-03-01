@@ -13,7 +13,17 @@
         if (backBtn) {
             backBtn.addEventListener('click', function() {
                 console.log('购物页面返回按钮被点击');
-                shoppingPage.classList.remove('active');
+                // 使用正确的方式关闭子页面
+                shoppingPage.classList.remove('open');
+                // 恢复底部导航栏
+                const tabBar = document.getElementById('tab-bar');
+                const chatPage = document.getElementById('chat-page');
+                if (tabBar) {
+                    if (!chatPage || !chatPage.classList.contains('open')) {
+                        tabBar.style.visibility = '';
+                        tabBar.style.pointerEvents = '';
+                    }
+                }
             });
         }
 

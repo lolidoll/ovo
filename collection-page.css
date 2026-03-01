@@ -39,6 +39,7 @@
     #collection-page .sub-content {
         z-index: 10;
         position: fixed;
+        padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
     }
 }
 
@@ -46,6 +47,7 @@
 .is-pwa #collection-page .sub-content,
 .is-standalone #collection-page .sub-content {
     z-index: 10;
+    padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
 }
 
 /* 顶部导航栏 */
