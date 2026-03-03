@@ -155,6 +155,18 @@
             box-sizing: border-box;
         }
 
+        /* PWA全屏模式：app-container移除padding-top，因为导航栏是fixed定位 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            #app-container {
+                padding-top: 0 !important;
+            }
+        }
+        
+        .is-pwa #app-container,
+        .is-standalone #app-container {
+            padding-top: 0 !important;
+        }
+
         /* iOS PWA全屏模式：为底部安全区域添加padding */
         .is-standalone #app-container,
         .is-pwa #app-container {
@@ -725,6 +737,7 @@
         /* PWA全屏模式：main-content（包括频道页面）使用dvh确保顶部栏完整显示 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .main-content {
+                /* 频道页面没有搜索栏，所以不需要减去30px */
                 height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top)) !important;
                 max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top)) !important;
             }
@@ -821,6 +834,18 @@
             overflow: hidden;
         }
         
+        /* PWA全屏模式：移除margin-top，避免内容被顶部导航栏遮挡 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .msg-page {
+                margin-top: 0 !important;
+            }
+        }
+        
+        .is-pwa .msg-page,
+        .is-standalone .msg-page {
+            margin-top: 0 !important;
+        }
+        
         .msg-page:not(.active) {
             display: none;
         }
@@ -837,6 +862,7 @@
         /* PWA全屏模式：消息页面使用dvh确保顶部栏完整显示 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .msg-page {
+                /* PWA模式下需要减去导航栏和搜索栏高度 */
                 height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
                 max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
             }
@@ -872,15 +898,16 @@
         /* PWA全屏模式：消息列表使用dvh */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .msg-list {
-                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
-                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+                /* 消息列表是msg-page的子元素，使用100%高度 */
+                height: 100% !important;
+                max-height: 100% !important;
             }
         }
         
         .is-pwa .msg-list,
         .is-standalone .msg-list {
-            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
-            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            height: 100% !important;
+            max-height: 100% !important;
         }
         
         .empty-state {
@@ -1060,6 +1087,18 @@
             flex-direction: column;
         }
         
+        /* PWA全屏模式：移除margin-top，避免内容被顶部导航栏遮挡 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .friend-page {
+                margin-top: 0 !important;
+            }
+        }
+        
+        .is-pwa .friend-page,
+        .is-standalone .friend-page {
+            margin-top: 0 !important;
+        }
+        
         .friend-page:not(.active) {
             display: none;
         }
@@ -1076,6 +1115,7 @@
         /* PWA全屏模式：好友页面使用dvh确保顶部栏完整显示 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .friend-page {
+                /* PWA模式下需要减去导航栏和搜索栏高度 */
                 height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
                 max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
             }
@@ -1112,15 +1152,16 @@
         /* PWA全屏模式：好友内容区域使用dvh */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .friend-content {
-                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
-                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+                /* 好友内容是friend-page的子元素，使用100%高度 */
+                height: 100% !important;
+                max-height: 100% !important;
             }
         }
         
         .is-pwa .friend-content,
         .is-standalone .friend-content {
-            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
-            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            height: 100% !important;
+            max-height: 100% !important;
         }
         
         .friend-group {
