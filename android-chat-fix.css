@@ -102,25 +102,6 @@
             -webkit-appearance: none;
             appearance: none;
         }
-        
-        /* 发送按钮修复 */
-        .chat-send-btn {
-            width: 36px;
-            height: 36px;
-            background: #007aff;
-            border: none;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-        }
-        
-        .chat-send-btn:active {
-            transform: scale(0.95);
-            background: #0063d1;
-        }
     }
 }
 

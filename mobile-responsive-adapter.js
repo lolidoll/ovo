@@ -258,8 +258,8 @@ const MobileResponsiveAdapter = {
             this.fixAndroidInputIssues();
         }
         
-        // 3. 修复100vh问题
-        this.fix100vhIssue();
+        // 3. 修复100dvh问题
+        this.fix100dvhIssue();
         
         // 4. 修复固定定位问题
         this.fixFixedPositioning();
@@ -304,8 +304,8 @@ const MobileResponsiveAdapter = {
         });
     },
 
-    // 修复100vh问题
-    fix100vhIssue: function() {
+    // 修复100dvh问题
+    fix100dvhIssue: function() {
         const updateVh = () => {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);

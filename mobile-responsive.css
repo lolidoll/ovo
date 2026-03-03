@@ -10,9 +10,9 @@
 :root {
     /* 视口高度变量 */
     --vh: 1vh;
-    --window-height: 100vh;
-    --screen-height: 100vh;
-    --app-height: 100vh;
+    --window-height: 100dvh;
+    --screen-height: 100dvh;
+    --app-height: 100dvh;
     
     /* 导航栏配置 */
     --nav-height: 45px;
@@ -127,7 +127,7 @@ body {
     width: 100%;
     height: var(--app-height);
     height: calc(var(--vh, 1vh) * 100);
-    min-height: 100vh;
+    min-height: 100dvh;
     min-height: -webkit-fill-available;
     display: flex;
     flex-direction: column;
@@ -169,6 +169,24 @@ body {
         padding-top: env(safe-area-inset-top);
         height: calc(var(--nav-height) + env(safe-area-inset-top));
         min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+        max-height: calc(var(--nav-height) + env(safe-area-inset-top));
+    }
+
+    /* PWA模式下消息、好友、频道页面的顶部栏完整显示 */
+    .msg-page,
+    .friend-page,
+    .channel-page,
+    .main-content {
+        height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top));
+        max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top));
+    }
+
+    /* 消息列表和好友列表内容区域 */
+    .msg-list,
+    .friend-content,
+    .channel-content {
+        height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px);
+        max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px);
     }
 }
 
@@ -179,6 +197,16 @@ body {
     padding-top: env(safe-area-inset-top);
     height: calc(var(--nav-height) + env(safe-area-inset-top));
     min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+    max-height: calc(var(--nav-height) + env(safe-area-inset-top));
+}
+
+/* iOS PWA模式下消息、好友、频道页面 */
+.is-pwa.is-ios .msg-page,
+.is-pwa.is-ios .friend-page,
+.is-pwa.is-ios .channel-page,
+.is-pwa.is-ios .main-content {
+    height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top));
+    max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top));
 }
 
 /* ============================================
@@ -251,7 +279,7 @@ body {
         .chat-content,
         .content-area,
         [data-content="true"] {
-            height: calc(100vh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
+            height: calc(100dvh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
             padding-bottom: 63px; /* 为工具栏留出空间 */
             overscroll-behavior: contain;
             touch-action: pan-y;
@@ -263,7 +291,7 @@ body {
         body.keyboard-open .content-area,
         body.keyboard-open [data-content="true"] {
             padding-bottom: 20px;
-            height: calc(100vh - var(--nav-height) - var(--keyboard-height, 300px));
+            height: calc(100dvh - var(--nav-height) - var(--keyboard-height, 300px));
         }
     }
 }

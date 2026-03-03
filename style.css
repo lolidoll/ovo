@@ -192,13 +192,23 @@
             z-index: 100;
         }
         
-        /* Opera浏览器全屏模式下的顶部导航栏适配 */
+        /* PWA全屏模式：顶部导航栏使用dvh确保完整显示 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .top-nav {
                 position: fixed;
                 top: 0;
                 display: flex;
+                height: calc(var(--nav-height) + env(safe-area-inset-top));
+                min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+                max-height: calc(var(--nav-height) + env(safe-area-inset-top));
             }
+        }
+        
+        .is-pwa .top-nav,
+        .is-standalone .top-nav {
+            height: calc(var(--nav-height) + env(safe-area-inset-top));
+            min-height: calc(var(--nav-height) + env(safe-area-inset-top));
+            max-height: calc(var(--nav-height) + env(safe-area-inset-top));
         }
         
         .user-info {
@@ -712,6 +722,20 @@
             min-height: 0;
         }
         
+        /* PWA全屏模式：main-content（包括频道页面）使用dvh确保顶部栏完整显示 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .main-content {
+                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top)) !important;
+                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top)) !important;
+            }
+        }
+        
+        .is-pwa .main-content,
+        .is-standalone .main-content {
+            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top)) !important;
+            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top)) !important;
+        }
+        
         .search-bar {
             padding: 3px 15px;
             background-color: #fff;
@@ -727,7 +751,7 @@
             border-bottom: 1px solid transparent;
         }
         
-        /* Opera浏览器全屏模式适配 - 使用fixed确保搜索栏始终可见 */
+        /* PWA全屏模式适配 - 使用dvh确保搜索栏位置正确 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             /* 顶部导航栏保持固定在最顶部 */
             .top-nav {
@@ -738,9 +762,10 @@
                 z-index: 101 !important;
             }
             
-            /* 搜索栏已经是fixed定位，无需额外处理 */
+            /* 搜索栏位置使用dvh计算 */
             .search-bar {
                 z-index: 100 !important;
+                top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
             }
             
             /* 调整搜索输入框高度 */
@@ -749,6 +774,11 @@
                 margin: 0 !important;
                 padding: 0 15px 0 40px !important;
             }
+        }
+        
+        .is-pwa .search-bar,
+        .is-standalone .search-bar {
+            top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
         }
         .search-input {
             width: 100%;
@@ -804,6 +834,20 @@
             min-height: 0;
         }
         
+        /* PWA全屏模式：消息页面使用dvh确保顶部栏完整显示 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .msg-page {
+                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            }
+        }
+        
+        .is-pwa .msg-page,
+        .is-standalone .msg-page {
+            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+        }
+        
         /* 消息页面的搜索栏 */
         .msg-search-bar {
             display: block;
@@ -823,6 +867,20 @@
             min-height: 0;
             padding-bottom: 48px;
             box-sizing: border-box;
+        }
+        
+        /* PWA全屏模式：消息列表使用dvh */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .msg-list {
+                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            }
+        }
+        
+        .is-pwa .msg-list,
+        .is-standalone .msg-list {
+            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
         }
         
         .empty-state {
@@ -1015,6 +1073,20 @@
             min-height: 0;
         }
         
+        /* PWA全屏模式：好友页面使用dvh确保顶部栏完整显示 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .friend-page {
+                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            }
+        }
+        
+        .is-pwa .friend-page,
+        .is-standalone .friend-page {
+            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+        }
+        
         /* 好友页面激活时显示搜索栏 */
         .friend-page.active ~ .friend-search-bar {
             display: block;
@@ -1035,6 +1107,20 @@
             padding-bottom: 48px;
             box-sizing: border-box;
             width: 100%;
+        }
+        
+        /* PWA全屏模式：好友内容区域使用dvh */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            .friend-content {
+                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            }
+        }
+        
+        .is-pwa .friend-content,
+        .is-standalone .friend-content {
+            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
+            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px) !important;
         }
         
         .friend-group {
