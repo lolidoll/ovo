@@ -233,13 +233,14 @@
             // 消息
             if (options.message) {
                 const message = document.createElement('div');
-                message.textContent = options.message;
+                message.innerHTML = options.message.replace(/\n/g, '<br>');
                 message.style.cssText = `
                     font-size: 14px;
                     color: #666;
                     line-height: 1.6;
                     margin-bottom: ${options.input ? '16px' : '20px'};
-                    text-align: center;
+                    text-align: left;
+                    white-space: pre-wrap;
                 `;
                 dialog.appendChild(message);
             }
@@ -1060,7 +1061,7 @@
         
         // 显示URL导入对话框
         showUrlImportDialog: function() {
-            this.showPrompt('请输入表情包URL\n格式1：名称:链接，多个用分号分隔\n例如：开心:https://example.com/1.jpg;开心:https://example.com/2.jpg\n\n格式2：名称和链接无分号，每行一个\n例如：\n开心:https://example.com/1.jpg\n伤心:https://example.com/2.jpg\n\n格式3：纯链接，每行一个\n例如：\nhttps://example.com/1.jpg\nhttps://example.com/2.jpg', '', (text) => {
+            this.showPrompt('分号分隔：名称:链接;名称:链接\n逗号分隔：名称:链接,名称:链接\n空格分隔：多个链接直接空格隔开\n无分隔符：连续链接自动识别\n\n支持中英文分号、逗号、空格分隔\n连续链接无分隔符也可识别\n纯链接自动命名为"表情包"', '', (text) => {
                 if (!text || !text.trim()) return;
                 
                 const emojis = this.parseUrlText(text);
@@ -1361,71 +1362,109 @@
         // 解析URL文本
         parseUrlText: function(text) {
             const emojis = [];
-            let lines = text.split(/[\n\r]+/).map(line => line.trim()).filter(line => line);
             
-            // 首先尝试分号分隔的格式
-            if (text.includes(';') || text.includes('；')) {
-                const pairs = text.split(/[;；]/).map(p => p.trim()).filter(p => p);
+            // 如果文本包含明确的分隔符（分号、逗号、换行），按原有逻辑处理
+            if (text.includes(';') || text.includes('；') || text.includes(',') || text.includes('，') || text.includes('\n') || text.includes('\r')) {
+                // 首先尝试分号分隔的格式
+                if (text.includes(';') || text.includes('；')) {
+                    const pairs = text.split(/[;；]/).map(p => p.trim()).filter(p => p);
+                    
+                    pairs.forEach(pair => {
+                        const colonIndex = pair.search(/[:：]/);
+                        if (colonIndex === -1) return;
+                        
+                        const name = pair.substring(0, colonIndex).trim();
+                        const url = pair.substring(colonIndex + 1).trim();
+                        
+                        if (name && url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                            emojis.push({ text: name, url: url });
+                        }
+                    });
+                    
+                    if (emojis.length > 0) return emojis;
+                }
                 
-                pairs.forEach(pair => {
-                    const colonIndex = pair.search(/[:：]/);
-                    if (colonIndex === -1) return;
+                // 尝试每行格式：名称:URL
+                let lines = text.split(/[\n\r]+/).map(line => line.trim()).filter(line => line);
+                if (lines.length > 0) {
+                    let lineFormatValid = true;
+                    const tempEmojis = [];
                     
-                    const name = pair.substring(0, colonIndex).trim();
-                    const url = pair.substring(colonIndex + 1).trim();
+                    for (let line of lines) {
+                        const colonIndex = line.search(/[:：]/);
+                        if (colonIndex === -1) {
+                            // 如果这行没有冒号，检查是否是纯URL
+                            if (line.startsWith('http://') || line.startsWith('https://')) {
+                                tempEmojis.push({ text: '表情包', url: line });
+                            } else {
+                                lineFormatValid = false;
+                                break;
+                            }
+                        } else {
+                            const name = line.substring(0, colonIndex).trim();
+                            const url = line.substring(colonIndex + 1).trim();
+                            
+                            if (name && url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                                tempEmojis.push({ text: name, url: url });
+                            } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                lineFormatValid = false;
+                                break;
+                            }
+                        }
+                    }
                     
-                    if (name && url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                        emojis.push({ text: name, url: url });
+                    // 如果每一行都有效，返回结果
+                    if (tempEmojis.length > 0 && lineFormatValid) {
+                        return tempEmojis;
+                    }
+                }
+                
+                // 尝试逗号分隔格式
+                if (text.includes(',') || text.includes('，')) {
+                    const pairs = text.split(/[,，]/).map(p => p.trim()).filter(p => p);
+                    let hasValidPairs = false;
+                    const commaEmojis = [];
+                    
+                    pairs.forEach(pair => {
+                        const colonIndex = pair.search(/[:：]/);
+                        if (colonIndex === -1) {
+                            // 如果没有冒号，检查是否是纯URL
+                            if (pair.startsWith('http://') || pair.startsWith('https://')) {
+                                commaEmojis.push({ text: '表情包', url: pair });
+                                hasValidPairs = true;
+                            }
+                        } else {
+                            const name = pair.substring(0, colonIndex).trim();
+                            const url = pair.substring(colonIndex + 1).trim();
+                            
+                            if (name && url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                                commaEmojis.push({ text: name, url: url });
+                                hasValidPairs = true;
+                            }
+                        }
+                    });
+                    
+                    if (hasValidPairs) {
+                        return commaEmojis;
+                    }
+                }
+            }
+            
+            // 如果没有分隔符或无法按上述方式解析，提取所有HTTP/HTTPS URL
+            const urlPattern = /https?:\/\/[^\s<>{\[\]'"`]+/g;
+            const urlMatches = text.match(urlPattern);
+            if (urlMatches && urlMatches.length > 0) {
+                urlMatches.forEach(url => {
+                    if (url.startsWith('http://') || url.startsWith('https://')) {
+                        // 清理URL，移除可能的标点符号
+                        const cleanUrl = url.replace(/[.,;!?，。；！？"'`>()\]]$/, '');
+                        emojis.push({ text: '表情包', url: cleanUrl });
                     }
                 });
                 
-                if (emojis.length > 0) return emojis;
-            }
-            
-            // 尝试每行格式：名称:URL
-            if (lines.length > 0) {
-                let lineFormatValid = true;
-                const tempEmojis = [];
-                
-                for (let line of lines) {
-                    const colonIndex = line.search(/[:：]/);
-                    if (colonIndex === -1) {
-                        // 如果这行没有冒号，检查是否是纯URL
-                        if (line.startsWith('http://') || line.startsWith('https://')) {
-                            tempEmojis.push({ text: '表情包', url: line });
-                        } else {
-                            lineFormatValid = false;
-                            break;
-                        }
-                    } else {
-                        const name = line.substring(0, colonIndex).trim();
-                        const url = line.substring(colonIndex + 1).trim();
-                        
-                        if (name && url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                            tempEmojis.push({ text: name, url: url });
-                        } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                            lineFormatValid = false;
-                            break;
-                        }
-                    }
+                if (emojis.length > 0) {
+                    return emojis;
                 }
-                
-                // 如果每一行都有效，返回结果
-                if (tempEmojis.length > 0 && lineFormatValid) {
-                    return tempEmojis;
-                }
-            }
-            
-            // 尝试纯URL格式（每行一个URL）
-            const pureUrls = [];
-            for (let line of lines) {
-                if (line.startsWith('http://') || line.startsWith('https://')) {
-                    pureUrls.push({ text: '表情包', url: line });
-                }
-            }
-            
-            if (pureUrls.length > 0) {
-                return pureUrls;
             }
             
             return emojis;

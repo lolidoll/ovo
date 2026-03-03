@@ -167,7 +167,8 @@ const MobileAdaptationValidator = {
     validateAdaptationScheme: function() {
         console.group('⚙️ 适配方案验证');
         
-        const mode = localStorage.getItem('viewportAdaptMode') || 'auto';
+        // 强制使用自动适配模式
+        const mode = 'auto';
         const styles = getComputedStyle(document.documentElement);
         const topPadding = styles.getPropertyValue('--top-padding');
         

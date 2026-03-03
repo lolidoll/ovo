@@ -1,0 +1,61 @@
+/**
+ * 消息背景管理器样式
+ */
+
+/* 消息背景容器 */
+.message-bg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* 确保聊天区域支持背景图 */
+.chat-area {
+    position: relative;
+    overflow: hidden;
+}
+
+/* 确保消息列表在背景之上 */
+.chat-messages,
+.messages-list {
+    position: relative;
+    z-index: 1;
+}
+
+/* 顶部栏背景配置 */
+.chat-nav {
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* 底部工具栏背景配置 */
+.chat-toolbar,
+.chat-input-area {
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* 响应式设计 - 移动端调整 */
+@media (max-width: 768px) {
+    .message-bg-container,
+    .chat-nav,
+    .chat-toolbar,
+    .chat-input-area {
+        background-attachment: scroll;
+    }
+}
+
+/* 响应式设计 - 超小屏幕 */
+@media (max-width: 480px) {
+    .message-bg-container {
+        background-attachment: scroll;
+    }
+}

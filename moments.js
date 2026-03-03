@@ -558,7 +558,7 @@ class MomentsManager {
       body: JSON.stringify({
         model: appState.apiSettings.selectedModel,
         prompt: `角色${friend.name}对朋友圈"${moment.content}"的回应（5-20字）：`,
-        max_tokens: 50
+        max_tokens: 50000
       })
     });
     const data = await response.json();
