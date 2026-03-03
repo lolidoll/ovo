@@ -96,7 +96,7 @@
   .fiction-container {
     /* 与普通浏览器样式保持一致 */
     top: 50px;
-    height: calc(100vh - 110px); /* 减去顶部和底部高度 */
+    height: calc(100dvh - 110px); /* 减去顶部和底部高度 */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -106,7 +106,7 @@
 .is-standalone .fiction-container {
   /* 与普通浏览器样式保持一致 */
   top: 50px;
-  height: calc(100vh - 110px);
+  height: calc(100dvh - 110px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

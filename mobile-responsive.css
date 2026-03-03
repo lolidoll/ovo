@@ -139,14 +139,8 @@ body {
     padding-right: var(--safe-area-inset-right);
 }
 
-/* 页面缩放模式 */
-html.page-scaled {
-    transform: scale(var(--page-scale));
-    transform-origin: 0 0;
-    width: calc(100vw / var(--page-scale));
-    height: calc(100vh / var(--page-scale));
-    overflow: hidden;
-}
+/* 页面缩放模式 - 移动到style.css中统一管理 */
+        /* 相关样式已移至style.css */
 
 /* ============================================
    5. 导航栏适配
@@ -191,6 +185,7 @@ html.page-scaled {
    6. 底部输入框适配
    ============================================ */
 
+/* 基础输入框样式 */
 .chat-input-area,
 .input-area,
 [data-input="true"] {
@@ -202,6 +197,22 @@ html.page-scaled {
     padding-bottom: var(--safe-area-inset-bottom);
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
+    background: #f8f8f8;
+    border-top: 1px solid #e0e0e0;
+    transition: transform 0.2s ease;
+    touch-action: manipulation;
+}
+
+/* 安卓浏览器输入框修复 */
+@media (max-width: 768px) {
+    body.android-browser {
+        .chat-input-area,
+        .input-area,
+        [data-input="true"] {
+            position: absolute;
+            z-index: 1000;
+        }
+    }
 }
 
 /* PWA模式底部输入框 */
@@ -216,9 +227,10 @@ html.page-scaled {
 }
 
 /* ============================================
-   7. 内容区域适配
+   7. 内容区域适配 - 安卓浏览器优化
    ============================================ */
 
+/* 基础内容区域样式 */
 .chat-content,
 .content-area,
 [data-content="true"] {
@@ -228,6 +240,41 @@ html.page-scaled {
     -webkit-overflow-scrolling: touch;
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
+    padding-top: 15px;
+    padding-bottom: 15px;
+    min-height: 0;
+}
+
+/* 安卓浏览器内容区域修复 */
+@media (max-width: 768px) {
+    body.android-browser {
+        .chat-content,
+        .content-area,
+        [data-content="true"] {
+            height: calc(100vh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
+            padding-bottom: 63px; /* 为工具栏留出空间 */
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            contain: layout style paint;
+        }
+        
+        /* 键盘弹出时的内容区域调整 */
+        body.keyboard-open .chat-content,
+        body.keyboard-open .content-area,
+        body.keyboard-open [data-content="true"] {
+            padding-bottom: 20px;
+            height: calc(100vh - var(--nav-height) - var(--keyboard-height, 300px));
+        }
+    }
+}
+
+/* 消息列表特定样式 */
+.chat-messages,
+.messages-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 /* ============================================

@@ -1,0 +1,319 @@
+/**
+ * 安卓浏览器聊天页面适配修复
+ * 解决安卓手机浏览器上输入框和内容显示不完整的问题
+ */
+
+/* ============================================
+ * 1. 安卓浏览器检测和基础修复
+ * ============================================ */
+
+/* 检测安卓浏览器 */
+.android-browser {
+    /* 强制使用100vh而不是-webkit-fill-available */
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
+/* 安卓浏览器下的聊天页面修复 */
+@media (max-width: 768px) {
+    /* 检测是否为安卓设备 */
+    body[class*="android"], 
+    body[class*="Android"],
+    body[class*="android-browser"],
+    body[class*="Android-browser"] {
+        /* 禁用-webkit-fill-available，使用固定高度 */
+        :root {
+            --app-height: 100vh;
+            --chat-content-height: calc(100vh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
+        }
+        
+        /* 聊天页面修复 */
+        .chat-page {
+            height: 100vh;
+            height: var(--app-height);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 聊天内容区域修复 */
+        .chat-messages {
+            flex: 1;
+            min-height: 0;
+            height: var(--chat-content-height);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 15px;
+            padding-bottom: 63px; /* 为工具栏留出空间 */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+        
+        /* 输入区域修复 - 使用绝对定位避免被键盘遮挡 */
+        .chat-input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            padding: 10px 12px 12px 12px;
+            z-index: 1000;
+            transform: translateY(0);
+            transition: transform 0.2s ease;
+        }
+        
+        /* 键盘弹出时的输入区域处理 */
+        .chat-page.keyboard-open .chat-input-area {
+            transform: translateY(-200px); /* 根据键盘高度调整 */
+        }
+        
+        /* 工具栏修复 */
+        .chat-toolbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            z-index: 999;
+            transform: translateY(0);
+            transition: transform 0.2s ease;
+        }
+        
+        /* 键盘弹出时的工具栏处理 */
+        .chat-page.keyboard-open .chat-toolbar {
+            transform: translateY(-50px); /* 根据工具栏高度调整 */
+        }
+        
+        /* 消息输入框修复 */
+        .chat-input {
+            flex: 1;
+            min-height: 36px;
+            max-height: 100px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        /* 发送按钮修复 */
+        .chat-send-btn {
+            width: 36px;
+            height: 36px;
+            background: #007aff;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        .chat-send-btn:active {
+            transform: scale(0.95);
+            background: #0063d1;
+        }
+    }
+}
+
+/* ============================================
+ * 2. 特定安卓浏览器修复
+ * ============================================ */
+
+/* Chrome for Android 特定修复 */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
+    body.chrome-android {
+        /* 修复Chrome的视口问题 */
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .chat-page {
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .chat-messages {
+            height: calc(100vh - var(--nav-height) - 120px); /* 估算的输入区域高度 */
+            overflow-y: auto;
+        }
+    }
+}
+
+/* Samsung Galaxy 设备特定修复 */
+@media screen and (device-width: 360px) and (device-height: 740px) {
+    body.samsung-device {
+        /* 三星设备特定调整 */
+        :root {
+            --input-area-height: 80px;
+            --toolbar-height: 50px;
+        }
+        
+        .chat-input-area {
+            height: var(--input-area-height);
+        }
+        
+        .chat-toolbar {
+            height: var(--toolbar-height);
+        }
+    }
+}
+
+/* 小米设备特定修复 */
+@media screen and (device-width: 375px) and (device-height: 812px) {
+    body.xiaomi-device {
+        /* 小米设备特定调整 */
+        :root {
+            --input-area-height: 90px;
+            --toolbar-height: 60px;
+        }
+    }
+}
+
+/* ============================================
+ * 3. 触摸优化
+ * ============================================ */
+
+/* 安卓设备触摸优化 */
+.android-touch-optimized {
+    /* 改善滚动性能 */
+    .chat-messages {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        scroll-behavior: smooth;
+    }
+    
+    /* 防止误触 */
+    .chat-input-area, .chat-toolbar {
+        touch-action: manipulation;
+    }
+    
+    /* 输入框聚焦时的处理 */
+    .chat-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+    }
+}
+
+/* ============================================
+ * 4. 键盘检测和处理
+ * ============================================ */
+
+/* 使用JavaScript动态检测键盘状态 */
+.keyboard-detect-active {
+    /* 检测键盘弹出时的样式调整 */
+    .keyboard-open {
+        .chat-messages {
+            height: calc(100vh - var(--nav-height) - var(--keyboard-height, 300px));
+            padding-bottom: 20px; /* 减少底部padding为键盘留出空间 */
+        }
+        
+        .chat-input-area {
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+        }
+    }
+}
+
+/* ============================================
+ * 5. 横屏模式适配
+ * ============================================ */
+
+@media (orientation: landscape) and (max-width: 1024px) {
+    body.android-landscape {
+        :root {
+            --nav-height: 32px;
+            --input-area-height: 60px;
+            --toolbar-height: 50px;
+        }
+        
+        .chat-page {
+            height: 100vh;
+        }
+        
+        .chat-nav {
+            height: var(--nav-height);
+        }
+        
+        .chat-messages {
+            height: calc(100vh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
+        }
+        
+        .chat-input-area {
+            height: var(--input-area-height);
+            padding: 8px 12px;
+        }
+        
+        .chat-toolbar {
+            height: var(--toolbar-height);
+        }
+    }
+}
+
+/* ============================================
+ * 6. 兼容性修复
+ * ============================================ */
+
+/* 修复一些安卓浏览器的兼容性问题 */
+.android-compat-fix {
+    /* 禁用某些浏览器的默认行为 */
+    input[type="text"], textarea {
+        -webkit-user-modify: read-write-plaintext-only;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    /* 修复滚动条显示问题 */
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 2px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* ============================================
+ * 7. 性能优化
+ * ============================================ */
+
+/* 安卓设备性能优化 */
+.android-performance {
+    /* 减少重绘和重排 */
+    .chat-messages {
+        contain: layout style paint;
+        will-change: scroll-position;
+    }
+    
+    /* 优化动画性能 */
+    .chat-input-area, .chat-toolbar {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+    
+    /* 减少阴影等复杂样式 */
+    .chat-send-btn {
+        box-shadow: none;
+    }
+    
+    .chat-send-btn:active {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+}

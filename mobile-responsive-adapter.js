@@ -187,43 +187,37 @@ const MobileResponsiveAdapter = {
         }
     },
 
-    // 应用适配方案
+    // 应用适配方案（现在只使用自动适配）
     applyAdaptationScheme: function() {
-        const savedMode = localStorage.getItem('viewportAdaptMode') || 'auto';
+        // 强制使用自动适配模式
+        const savedMode = 'auto';
         let topPadding = 45;
         
-        switch(savedMode) {
-            case 'auto':
-                // 自动模式：根据设备和浏览器自动选择
-                if (this.displayModes.isPWA()) {
-                    topPadding = 0; // PWA模式使用safe-area
-                } else if (this.browsers.isIOS) {
-                    topPadding = 45; // iOS浏览器
-                } else if (this.browsers.isAndroid) {
-                    topPadding = 45; // Android浏览器
-                } else {
-                    topPadding = 45; // 其他浏览器
-                }
-                break;
-            case 'standard':
-                topPadding = 45;
-                break;
-            case 'ios':
-                topPadding = 0; // 使用safe-area-inset
-                break;
-            case 'fullscreen':
-                topPadding = 0;
-                break;
-            case 'compact':
-                topPadding = 35;
-                break;
-            case 'loose':
-                topPadding = 55;
-                break;
+        // 自动模式：根据设备和浏览器自动选择
+        if (this.displayModes.isPWA()) {
+            topPadding = 0; // PWA模式使用safe-area
+        } else if (this.browsers.isIOS) {
+            topPadding = 45; // iOS浏览器
+        } else if (this.browsers.isAndroid) {
+            topPadding = 45; // Android浏览器
+        } else {
+            topPadding = 45; // 其他浏览器
         }
         
+        // 更新CSS变量
         document.documentElement.style.setProperty('--top-padding', `${topPadding}px`);
-        document.documentElement.setAttribute('data-adapt-mode', savedMode);
+        
+        // 同时更新导航栏的CSS变量，确保正确显示
+        const navHeight = topPadding; // 导航栏高度等于顶部间距
+        const navSafeTop = this.browsers.isIOS && this.displayModes.isPWA() ? 
+                           parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top')) : 0;
+        const navTotalHeight = navHeight + navSafeTop;
+        
+        document.documentElement.style.setProperty('--nav-height', `${navHeight}px`);
+        document.documentElement.style.setProperty('--nav-safe-top', `${navSafeTop}px`);
+        document.documentElement.style.setProperty('--nav-total-height', `${navTotalHeight}px`);
+        
+        document.documentElement.setAttribute('data-adapt-mode', 'auto');
     },
 
     // 监听事件

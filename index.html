@@ -33,11 +33,13 @@
     <title>喵机1号</title>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="android-chat-fix.css">
     <link rel="stylesheet" href="fiction-styles-v2.css">
     <link rel="stylesheet" href="fiction-reader.css">
     <link rel="stylesheet" href="fiction-comments.css">
     <link rel="stylesheet" href="moments.css">
     <link rel="stylesheet" href="login.css">
+    <script src="android-chat-fix.js" defer></script>
     <link rel="stylesheet" href="auth-modal.css">
     <link rel="stylesheet" href="api-settings-styles.css">
     <link rel="stylesheet" href="wallet.css">
@@ -53,6 +55,7 @@
     <link rel="stylesheet" href="transfer.css">
     <link rel="stylesheet" href="font-manager.css">
     <link rel="stylesheet" href="theme-manager.css">
+    <link rel="stylesheet" href="message-background-manager.css">
     <link rel="stylesheet" href="iphone-simulator.css">
     <link rel="stylesheet" href="iphone-settings.css">
     <link rel="stylesheet" href="iphone-notes.css">
@@ -95,8 +98,8 @@
     <script>
         // 移动端全屏适配 - 动态计算视口高度
         (function() {
-            // 获取用户选择的适配方案
-            const adaptMode = localStorage.getItem('viewportAdaptMode') || 'auto';
+            // 强制使用自动适配模式
+            const adaptMode = 'auto';
             
             // 检测是否为iOS设备
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -214,23 +217,67 @@
                         height: 100dvh;
                         height: 100vh;
                     }
-                    
+
                     html:not(.is-pwa):not(.is-standalone) #app-container {
                         height: 100dvh;
                         height: 100vh;
                     }
                 `;
                 document.head.appendChild(fixStyle);
+            } else {
+                // PWA模式：添加底部安全区域支持
+                const pwaFixStyle = document.createElement('style');
+                pwaFixStyle.id = 'pwa-viewport-fix';
+                pwaFixStyle.textContent = `
+                    /* iOS PWA全屏模式：为body和html添加底部安全区域 */
+                    .is-standalone body,
+                    .is-pwa body {
+                        padding-bottom: env(safe-area-inset-bottom) !important;
+                    }
+
+                    .is-standalone #app-container,
+                    .is-pwa #app-container {
+                        padding-bottom: env(safe-area-inset-bottom) !important;
+                    }
+
+                    /* iOS PWA全屏模式：确保页面内容正确显示 */
+                    .is-standalone html,
+                    .is-pwa html {
+                        height: 100dvh !important;
+                        height: -webkit-fill-available !important;
+                        min-height: 100% !important;
+                    }
+
+                    .is-standalone .main-content,
+                    .is-pwa .main-content {
+                        flex: 1 !important;
+                        min-height: 0 !important;
+                    }
+                `;
+                document.head.appendChild(pwaFixStyle);
             }
         })();
         
-        // 应用保存的页面缩放设置
+        // 应用保存的页面缩放设置 - 优化版本
         (function() {
             const savedScale = localStorage.getItem('pageZoomScale');
             if (savedScale) {
                 const scale = parseFloat(savedScale);
-                document.documentElement.style.setProperty('--page-scale', scale);
-                document.documentElement.classList.add('page-scaled');
+                if (scale >= 0.8 && scale <= 1.2) { // 添加范围验证
+                    document.documentElement.style.setProperty('--page-scale', scale);
+                    document.documentElement.classList.add('page-scaled');
+                    
+                    // 确保应用容器也被正确标记
+                    const appContainer = document.getElementById('app-container');
+                    if (appContainer) {
+                        appContainer.classList.add('page-scaled');
+                    }
+                    
+                    console.log('✅ 页面缩放设置已应用:', scale);
+                } else {
+                    console.warn('⚠️ 无效的页面缩放值，已重置:', scale);
+                    localStorage.removeItem('pageZoomScale');
+                }
             }
         })();
     </script>
@@ -284,6 +331,9 @@
     <script src="mobile-touch-fix.js" defer></script>
     <script src="font-manager.js" defer></script>
     <script src="theme-manager.js" defer></script>
+    <script src="message-background-manager.js" defer></script>
+    <script src="message-background-manager-ui.js" defer></script>
+    <script src="message-background-diagnostics.js" defer></script>
     <script src="iphone-simulator.js" defer></script>
     <script src="iphone-settings.js" defer></script>
     <script src="iphone-notes.js" defer></script>
@@ -685,10 +735,6 @@
         <!-- 消息页面搜索栏 -->
         <div class="search-bar msg-search-bar" id="msg-search-bar">
             <div class="search-wrapper">
-                <svg class="icon-svg search-icon" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
                 <input type="text" class="search-input" placeholder="搜索" id="search-input-msg">
             </div>
         </div>
@@ -711,10 +757,6 @@
         <!-- 好友页面搜索栏 -->
         <div class="search-bar friend-search-bar" id="friend-search-bar" style="display: none;">
             <div class="search-wrapper">
-                <svg class="icon-svg search-icon" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
                 <input type="text" class="search-input" placeholder="搜索好友" id="search-input-friend">
             </div>
         </div>
@@ -955,32 +997,27 @@
         <div class="tab-bar" id="tab-bar">
             <div class="tab-item active" data-tab="msg-page">
                 <div class="tab-icon">
-                    <svg class="icon-svg" viewBox="0 0 24 24">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
+                    <img src="https://img.heliar.top/file/1772512170161_IMG_20260303_122659.png" alt="消息" class="tab-icon-img">
                 </div>
                 <div class="tab-text">消息</div>
             </div>
             <div class="tab-item" data-tab="friend-page">
                 <div class="tab-icon">
-                    <svg class="icon-svg" viewBox="0 0 24 24">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
+                    <img src="https://img.heliar.top/file/1772512176402_IMG_20260303_122742.png" alt="好友" class="tab-icon-img">
                 </div>
                 <div class="tab-text">好友</div>
             </div>
             <div class="tab-item" data-tab="moments-page">
                 <div class="tab-icon">
-                    <svg class="icon-svg" viewBox="0 0 24 24">
-                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <path d="M21 15l-5-5L5 21"></path>
-                    </svg>
+                    <img src="https://img.heliar.top/file/1772512167877_IMG_20260303_122718.png" alt="动态" class="tab-icon-img">
                 </div>
                 <div class="tab-text">动态</div>
+            </div>
+            <div class="tab-item" data-tab="channel-page">
+                <div class="tab-icon">
+                    <img src="https://img.heliar.top/file/1772512170486_IMG_20260303_122811.png" alt="频道" class="tab-icon-img">
+                </div>
+                <div class="tab-text">频道</div>
             </div>
         </div>
 
@@ -2120,6 +2157,20 @@
                             <button class="confirm-btn confirm-btn-delete" onclick="confirmDelete()">删除</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 频道页面（占位符） -->
+        <div class="main-content" id="channel-page">
+            <div class="sub-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px;">
+                <div style="text-align: center; color: #999;">
+                    <svg style="width: 80px; height: 80px; margin: 0 auto 20px; opacity: 0.3;" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2" stroke="white" stroke-width="2" fill="none"/>
+                    </svg>
+                    <h3 style="font-size: 18px; margin-bottom: 10px; color: #666;">频道功能</h3>
+                    <p style="font-size: 14px; line-height: 1.6;">敬请期待...</p>
                 </div>
             </div>
         </div>
@@ -3804,16 +3855,10 @@
 
             <div class="emoji-library" id="emoji-library" style="display:none;">
                 <div class="emoji-lib-header">
-                    <button class="emoji-lib-btn" id="emoji-add-btn" title="导入文件">
-                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                    <button class="emoji-lib-btn" id="emoji-add-url-btn" title="导入URL">
-                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <button class="emoji-lib-btn" id="emoji-manager-btn" title="表情包管理">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
                     <div class="emoji-groups-bar" id="emoji-groups-bar" style="display:none;"></div>
-                    <button class="emoji-lib-btn" id="emoji-group-btn" title="分组管理">
-                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#666;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;"><circle cx="6" cy="6" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle><line x1="8" y1="6" x2="16" y2="6"></line><line x1="8" y1="18" x2="16" y2="18"></line><line x1="6" y1="8" x2="6" y2="16"></line><line x1="18" y1="8" x2="18" y2="16"></line></svg>
-                    </button>
                 </div>
                 <div class="emoji-grid" id="emoji-grid"></div>
                 <input type="file" id="emoji-upload-input" accept="image/*,.json" multiple style="display:none">
@@ -3880,7 +3925,6 @@
             <div class="sub-nav">
                 <div class="back-btn" id="emoji-manager-back-btn">
                     <div class="back-arrow"></div>
-                    <span>返回</span>
                 </div>
                 <div class="sub-title">表情包管理</div>
             </div>
@@ -3916,6 +3960,14 @@
                 </div>
                 <!-- 第二行：批量操作按钮 -->
                 <div class="emoji-toolbar-row">
+                    <button class="emoji-manager-btn" id="emoji-manager-export-json">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                            <polyline points="8 17 12 21 16 17"></polyline>
+                            <line x1="12" y1="12" x2="12" y2="21"></line>
+                            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path>
+                        </svg>
+                        <span>导出JSON</span>
+                    </button>
                     <button class="emoji-manager-btn" id="emoji-manager-select-mode">
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
                             <polyline points="9 11 12 14 22 4"></polyline>

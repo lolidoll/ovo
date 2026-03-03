@@ -505,6 +505,9 @@
                     AppState.searchQuery = e.target.value.trim();
                     renderConversations();
                 });
+                searchInput.addEventListener('focus', function() {
+                    this.placeholder = '';
+                });
             }
 
             // 好友页面搜索
@@ -521,6 +524,9 @@
                             item.style.display = 'none';
                         }
                     });
+                });
+                friendSearchInput.addEventListener('focus', function() {
+                    this.placeholder = '';
                 });
             }
 
@@ -1262,30 +1268,13 @@
                 }, { passive: false });
             }
 
-            // 表情库按钮
-            const btnEmojiAdd = document.getElementById('emoji-add-btn');
-            if (btnEmojiAdd) btnEmojiAdd.addEventListener('click', function() {
-                document.getElementById('emoji-upload-input').click();
-            });
-
-            const btnEmojiAddUrl = document.getElementById('emoji-add-url-btn');
-            if (btnEmojiAddUrl) btnEmojiAddUrl.addEventListener('click', function() {
-                showUrlImportDialog('chat');
-            });
-
-            // 分组管理按钮
-            const btnEmojiGroup = document.getElementById('emoji-group-btn');
-            if (btnEmojiGroup) {
-                btnEmojiGroup.addEventListener('click', function() {
+            // 表情包管理按钮
+            const btnEmojiManager = document.getElementById('emoji-manager-btn');
+            if (btnEmojiManager) {
+                btnEmojiManager.addEventListener('click', function() {
                     openEmojiGroupManager();
                 });
             }
-
-            const emojiUploadInput = document.getElementById('emoji-upload-input');
-            if (emojiUploadInput) emojiUploadInput.addEventListener('change', function(e) {
-                handleEmojiImport(e.target.files, 'chat');
-                this.value = '';
-            });
 
             // 点击emoji库外部关闭
             document.addEventListener('click', function(e) {
@@ -11673,6 +11662,26 @@
                             </div>
                         </div>
                         
+                        <!-- 消息背景 -->
+                        <div class="decoration-option-card" id="open-message-background">
+                            <div class="decoration-option-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="M21 15l-5-5L5 21"/>
+                                </svg>
+                            </div>
+                            <div class="decoration-option-content">
+                                <div class="decoration-option-title">消息背景</div>
+                                <div class="decoration-option-desc">自定义消息页面背景图</div>
+                            </div>
+                            <div class="decoration-option-arrow">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
                         <!-- CSS主题管理 -->
                         <div class="decoration-option-card" id="open-theme-manager">
                             <div class="decoration-option-icon">
@@ -11710,24 +11719,7 @@
                             </div>
                         </div>
                         
-                        <!-- 顶部适配方案 -->
-                        <div class="decoration-option-card" id="open-viewport-adapter">
-                            <div class="decoration-option-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                    <path d="M3 9h18M9 3v18"/>
-                                </svg>
-                            </div>
-                            <div class="decoration-option-content">
-                                <div class="decoration-option-title">顶部适配</div>
-                                <div class="decoration-option-desc">选择适合您浏览器的顶部适配方案</div>
-                            </div>
-                            <div class="decoration-option-arrow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
                 
@@ -11925,12 +11917,51 @@
                 };
             }
             
-            // 绑定顶部适配方案按钮
-            const viewportBtn = page.querySelector('#open-viewport-adapter');
-            if (viewportBtn) {
-                viewportBtn.onclick = () => {
-                    openViewportAdapter();
+            // 绑定消息背景按钮
+            const messageBackgroundBtn = page.querySelector('#open-message-background');
+            if (messageBackgroundBtn) {
+                messageBackgroundBtn.onclick = () => {
+                    openMessageBackgroundManager();
                 };
+            }
+            
+
+        }
+        
+        // 打开消息背景管理器
+        function openMessageBackgroundManager() {
+            console.log('🔍 尝试打开消息背景管理器');
+            
+            // 检查管理器是否已加载，如果未加载则等待
+            if (!window.MessageBackgroundManager) {
+                console.warn('⏳ MessageBackgroundManager 还未加载，等待中...');
+                
+                // 等待管理器加载
+                let waitCount = 0;
+                const waitInterval = setInterval(() => {
+                    waitCount++;
+                    if (window.MessageBackgroundManager && window.MessageBackgroundManagerUI) {
+                        clearInterval(waitInterval);
+                        console.log('✅ 管理器加载完成');
+                        window.MessageBackgroundManagerUI.open();
+                    } else if (waitCount > 50) {
+                        clearInterval(waitInterval);
+                        console.error('❌ 超时：管理器加载失败');
+                        showToast('消息背景管理器加载失败，请刷新页面重试');
+                    }
+                }, 100);
+                return;
+            }
+            
+            console.log('MessageBackgroundManager:', !!window.MessageBackgroundManager);
+            console.log('MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
+            
+            if (window.MessageBackgroundManagerUI) {
+                console.log('✅ 打开消息背景管理器 UI');
+                window.MessageBackgroundManagerUI.open();
+            } else {
+                console.error('❌ MessageBackgroundManagerUI 未加载');
+                showToast('消息背景管理器加载失败（UI 模块未加载）');
             }
         }
         
@@ -12256,7 +12287,11 @@
             slider.oninput = function() {
                 const scale = this.value / 100;
                 scaleValue.textContent = Math.round(this.value) + '%';
-                previewContent.style.transform = `scale(${scale})`;
+                
+                // 只更新预览，不应用到实际页面
+                if (previewContent) {
+                    previewContent.style.transform = `scale(${scale})`;
+                }
                 
                 // 更新快捷按钮状态
                 document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -12273,21 +12308,78 @@
                     const scale = parseFloat(this.dataset.scale);
                     slider.value = scale * 100;
                     scaleValue.textContent = Math.round(scale * 100) + '%';
-                    previewContent.style.transform = `scale(${scale})`;
+                    
+                    // 只更新预览，不应用到实际页面
+                    if (previewContent) {
+                        previewContent.style.transform = `scale(${scale})`;
+                    }
                     
                     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                 };
             });
             
+            // 添加重置按钮
+            const resetBtn = page.querySelector('#reset-font-size');
+            if (resetBtn) {
+                resetBtn.onclick = function() {
+                    slider.value = 100;
+                    scaleValue.textContent = '100%';
+                    
+                    if (previewContent) {
+                        previewContent.style.transform = 'scale(1.0)';
+                    }
+                    
+                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.preset-btn[data-scale="1.0"]').classList.add('active');
+                    
+                    // 重置实际缩放
+                    localStorage.removeItem('pageZoomScale');
+                    
+                    // 移除缩放类
+                    document.documentElement.classList.remove('page-scaled');
+                    const appContainer = document.getElementById('app-container');
+                    if (appContainer) {
+                        appContainer.classList.remove('page-scaled');
+                    }
+                    
+                    // 重置缩放变量
+                    document.documentElement.style.removeProperty('--page-scale');
+                    
+                    showToast('页面缩放已重置');
+                    page.classList.remove('open');
+                };
+            }
+            
             // 应用按钮
             const applyBtn = page.querySelector('#apply-font-size');
             applyBtn.onclick = function() {
                 const scale = slider.value / 100;
+                
+                // 验证缩放值范围
+                if (scale < 0.8 || scale > 1.2) {
+                    showToast('缩放比例应在80%-120%之间');
+                    return;
+                }
+                
                 localStorage.setItem('pageZoomScale', scale);
-                // 使用CSS transform scale实现等比缩放
+                
+                // 移除旧的缩放类
+                document.documentElement.classList.remove('page-scaled');
+                const appContainer = document.getElementById('app-container');
+                if (appContainer) {
+                    appContainer.classList.remove('page-scaled');
+                }
+                
+                // 应用新的缩放到容器
                 document.documentElement.style.setProperty('--page-scale', scale);
-                document.documentElement.classList.add('page-scaled');
+                if (appContainer) {
+                    appContainer.classList.add('page-scaled');
+                }
+                
+                // 触发重绘确保样式生效
+                document.documentElement.offsetHeight;
+                
                 showToast('页面缩放已应用');
                 page.classList.remove('open');
             };
@@ -12296,368 +12388,7 @@
             previewContent.style.transform = `scale(${currentScale})`;
         }
         
-        // 打开顶部适配方案选择页面
-        function openViewportAdapter() {
-            let page = document.getElementById('viewport-adapter-page');
-            if (!page) {
-                page = document.createElement('div');
-                page.id = 'viewport-adapter-page';
-                page.className = 'sub-page';
-                document.getElementById('app-container').appendChild(page);
-            }
-            
-            // 获取当前适配方案
-            const currentMode = localStorage.getItem('viewportAdaptMode') || 'auto';
-            
-            page.innerHTML = `
-                <div class="sub-nav">
-                    <div class="back-btn" id="viewport-back-btn">
-                        <div class="back-arrow"></div>
-                        <span>返回</span>
-                    </div>
-                    <div class="sub-title">顶部适配方案</div>
-                </div>
-                <div class="sub-content" style="padding:20px;background:#f5f5f7;">
-                    <div class="viewport-adapter-container">
-                        <!-- 说明卡片 -->
-                        <div class="adapter-info-card">
-                            <div class="info-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 16v-4M12 8h.01"/>
-                                </svg>
-                            </div>
-                            <div class="info-text">
-                                <div class="info-title">为什么需要调整？</div>
-                                <div class="info-desc">不同浏览器和手机对顶部状态栏的处理方式不同，选择合适的适配方案可以避免顶部内容被遮挡或留白过多。</div>
-                            </div>
-                        </div>
-                        
-                        <!-- 适配方案列表 -->
-                        <div class="adapter-options">
-                            <!-- 自动适配 -->
-                            <div class="adapter-option ${currentMode === 'auto' ? 'active' : ''}" data-mode="auto">
-                                <div class="option-header">
-                                    <div class="option-radio"></div>
-                                    <div class="option-info">
-                                        <div class="option-title">自动适配（推荐）</div>
-                                        <div class="option-desc">根据设备和浏览器自动选择最佳方案</div>
-                                    </div>
-                                </div>
-                                <div class="option-details">
-                                    <div class="detail-item">• 适用于大多数情况</div>
-                                    <div class="detail-item">• iOS、Android自动识别</div>
-                                    <div class="detail-item">• 全屏模式自动调整</div>
-                                </div>
-                            </div>
-                            
-                            <!-- 标准模式 -->
-                            <div class="adapter-option ${currentMode === 'standard' ? 'active' : ''}" data-mode="standard">
-                                <div class="option-header">
-                                    <div class="option-radio"></div>
-                                    <div class="option-info">
-                                        <div class="option-title">标准模式</div>
-                                        <div class="option-desc">使用固定的顶部间距，适合大部分浏览器</div>
-                                    </div>
-                                </div>
-                                <div class="option-details">
-                                    <div class="detail-item">• 固定45px顶部高度</div>
-                                    <div class="detail-item">• 兼容性最好</div>
-                                    <div class="detail-item">• 适合Chrome、Edge等</div>
-                                </div>
-                            </div>
-                            
-                            <!-- iOS优化模式 -->
-                            <div class="adapter-option ${currentMode === 'ios' ? 'active' : ''}" data-mode="ios">
-                                <div class="option-header">
-                                    <div class="option-radio"></div>
-                                    <div class="option-info">
-                                        <div class="option-title">iOS优化模式</div>
-                                        <div class="option-desc">专为iOS Safari优化，使用安全区域</div>
-                                    </div>
-                                </div>
-                                <div class="option-details">
-                                    <div class="detail-item">• 使用safe-area-inset</div>
-                                    <div class="detail-item">• 适配刘海屏</div>
-                                    <div class="detail-item">• 适合iPhone Safari</div>
-                                </div>
-                            </div>
-                            
-                            <!-- 全屏模式 -->
-                            <div class="adapter-option ${currentMode === 'fullscreen' ? 'active' : ''}" data-mode="fullscreen">
-                                <div class="option-header">
-                                    <div class="option-radio"></div>
-                                    <div class="option-info">
-                                        <div class="option-title">全屏模式</div>
-                                        <div class="option-desc">适合PWA或全屏浏览器</div>
-                                    </div>
-                                </div>
-                                <div class="option-details">
-                                    <div class="detail-item">• 无顶部留白</div>
-                                    <div class="detail-item">• 适合PWA应用</div>
-                                    <div class="detail-item">• 适合全屏浏览器</div>
-                                </div>
-                            </div>
-                            
-                            <!-- 紧凑模式 -->
-                            <div class="adapter-option ${currentMode === 'compact' ? 'active' : ''}" data-mode="compact">
-                                <div class="option-header">
-                                    <div class="option-radio"></div>
-                                    <div class="option-info">
-                                        <div class="option-title">紧凑模式</div>
-                                        <div class="option-desc">减少顶部间距，增加内容显示区域</div>
-                                    </div>
-                                </div>
-                                <div class="option-details">
-                                    <div class="detail-item">• 35px顶部高度</div>
-                                    <div class="detail-item">• 更多内容空间</div>
-                                    <div class="detail-item">• 适合小屏手机</div>
-                                </div>
-                            </div>
-                            
-                            <!-- 宽松模式 -->
-                            <div class="adapter-option ${currentMode === 'loose' ? 'active' : ''}" data-mode="loose">
-                                <div class="option-header">
-                                    <div class="option-radio"></div>
-                                    <div class="option-info">
-                                        <div class="option-title">宽松模式</div>
-                                        <div class="option-desc">增加顶部间距，避免内容被遮挡</div>
-                                    </div>
-                                </div>
-                                <div class="option-details">
-                                    <div class="detail-item">• 55px顶部高度</div>
-                                    <div class="detail-item">• 更安全的间距</div>
-                                    <div class="detail-item">• 适合特殊浏览器</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 应用按钮 -->
-                        <button class="apply-adapter-btn" id="apply-adapter">应用设置并刷新</button>
-                    </div>
-                </div>
-                
-                <style>
-                    .viewport-adapter-container {
-                        max-width: 600px;
-                        margin: 0 auto;
-                    }
-                    
-                    .adapter-info-card {
-                        background: #f2f2f7;
-                        border-radius: 14px;
-                        padding: 16px;
-                        margin-bottom: 12px;
-                        display: flex;
-                        gap: 12px;
-                        align-items: flex-start;
-                    }
-                    
-                    .info-icon {
-                        flex-shrink: 0;
-                        width: 28px;
-                        height: 28px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #8e8e93;
-                    }
-                    
-                    .info-icon svg {
-                        stroke-width: 1.5;
-                    }
-                    
-                    .info-title {
-                        font-size: 15px;
-                        font-weight: 600;
-                        margin-bottom: 6px;
-                        color: #1c1c1e;
-                    }
-                    
-                    .info-desc {
-                        font-size: 13px;
-                        line-height: 1.5;
-                        color: #3a3a3c;
-                    }
-                    
-                    .adapter-options {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 8px;
-                        margin-bottom: 12px;
-                    }
-                    
-                    .adapter-option {
-                        background: rgba(255, 255, 255, 0.95);
-                        backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
-                        border-radius: 14px;
-                        padding: 14px;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        border: 0.5px solid rgba(0, 0, 0, 0.06);
-                    }
-                    
-                    .adapter-option:active {
-                        transform: scale(0.98);
-                        background: #f2f2f7;
-                    }
-                    
-                    .adapter-option.active {
-                        background: #1c1c1e;
-                        border-color: #1c1c1e;
-                    }
-                    
-                    .adapter-option.active .option-title,
-                    .adapter-option.active .option-desc,
-                    .adapter-option.active .detail-item {
-                        color: white;
-                    }
-                    
-                    .adapter-option.active .option-radio {
-                        border-color: white;
-                    }
-                    
-                    .adapter-option.active .option-radio::after {
-                        background: white;
-                    }
-                    
-                    .option-header {
-                        display: flex;
-                        align-items: flex-start;
-                        gap: 12px;
-                        margin-bottom: 12px;
-                    }
-                    
-                    .option-radio {
-                        width: 20px;
-                        height: 20px;
-                        border: 2px solid #d1d1d6;
-                        border-radius: 50%;
-                        flex-shrink: 0;
-                        margin-top: 1px;
-                        position: relative;
-                        transition: all 0.2s;
-                    }
-                    
-                    .adapter-option.active .option-radio {
-                        border-color: white;
-                    }
-                    
-                    .adapter-option.active .option-radio::after {
-                        content: '';
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        width: 10px;
-                        height: 10px;
-                        background: white;
-                        border-radius: 50%;
-                    }
-                    
-                    .option-info {
-                        flex: 1;
-                    }
-                    
-                    .option-title {
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #1c1c1e;
-                        margin-bottom: 4px;
-                    }
-                    
-                    .option-desc {
-                        font-size: 13px;
-                        color: #8e8e93;
-                        line-height: 1.5;
-                    }
-                    
-                    .option-details {
-                        padding-left: 32px;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 4px;
-                        margin-top: 8px;
-                    }
-                    
-                    .detail-item {
-                        font-size: 13px;
-                        color: #8e8e93;
-                        line-height: 1.5;
-                    }
-                    
-                    .adapter-option.active .detail-item {
-                        color: rgba(255, 255, 255, 0.85);
-                    }
-                    
-                    .apply-adapter-btn {
-                        width: 100%;
-                        padding: 15px;
-                        background: #1c1c1e;
-                        color: white;
-                        border: none;
-                        border-radius: 10px;
-                        font-size: 17px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        letter-spacing: -0.3px;
-                    }
-                    
-                    .apply-adapter-btn:active {
-                        transform: scale(0.98);
-                        background: #3a3a3c;
-                    }
-                    
-                    @media (max-width: 480px) {
-                        .adapter-info-card {
-                            padding: 16px;
-                        }
-                        
-                        .info-icon {
-                            font-size: 28px;
-                        }
-                        
-                        .adapter-option {
-                            padding: 14px;
-                        }
-                    }
-                </style>
-            `;
-            
-            page.classList.add('open');
-            
-            // 绑定返回按钮
-            const backBtn = page.querySelector('#viewport-back-btn');
-            if (backBtn) {
-                backBtn.onclick = () => {
-                    page.classList.remove('open');
-                };
-            }
-            
-            // 绑定选项点击
-            document.querySelectorAll('.adapter-option').forEach(option => {
-                option.onclick = function() {
-                    document.querySelectorAll('.adapter-option').forEach(opt => opt.classList.remove('active'));
-                    this.classList.add('active');
-                };
-            });
-            
-            // 应用按钮
-            const applyBtn = page.querySelector('#apply-adapter');
-            applyBtn.onclick = function() {
-                const selectedOption = page.querySelector('.adapter-option.active');
-                if (selectedOption) {
-                    const mode = selectedOption.dataset.mode;
-                    localStorage.setItem('viewportAdaptMode', mode);
-                    showToast('适配方案已保存，即将刷新页面...');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                }
-            };
-        }
+
 
         // 切换主题
         function switchTheme(themeId) {
@@ -12859,4 +12590,10 @@
         // 暴露消息菜单相关函数到 window 对象
         window.showMessageContextMenu = showMessageContextMenu;
         window.closeMessageContextMenu = closeMessageContextMenu;
-        window.endListenTogetherAndMarkClosed = endListenTogetherAndMarkClosed;
+        window.endListenTogetherAndMarkClosed = endListenTogetherAndMarkClosed;        
+        // 检查消息背景管理器是否加载
+        console.log('📝 app.js 初始化完成，检查消息背景管理器...');
+        setTimeout(() => {
+            console.log('✅ MessageBackgroundManager:', !!window.MessageBackgroundManager);
+            console.log('✅ MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
+        }, 1000);

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>安卓浏览器聊天页面修复测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+        
+        /* 测试用的聊天页面样式 */
+        .test-chat-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100vh;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            z-index: 9999;
+        }
+        
+        /* 导航栏 */
+        .test-nav {
+            height: 45px;
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 10;
+        }
+        
+        .test-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000000;
+        }
+        
+        /* 消息区域 */
+        .test-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            padding-bottom: 63px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+        
+        /* 测试消息 */
+        .test-message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        
+        .test-message.sent {
+            background: #007aff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .test-message.received {
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #e0e0e0;
+            align-self: flex-start;
+        }
+        
+        /* 输入区域 */
+        .test-input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            padding: 10px 12px 12px 12px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        
+        .test-input {
+            flex: 1;
+            min-height: 36px;
+            max-height: 100px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+        }
+        
+        .test-send-btn {
+            width: 36px;
+            height: 36px;
+            background: #007aff;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .test-send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 工具栏 */
+        .test-toolbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-around;
+            z-index: 999;
+        }
+        
+        .test-toolbar-btn {
+            padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .test-toolbar-btn.active {
+            color: #007aff;
+        }
+        
+        /* 测试信息 */
+        .test-info {
+            position: fixed;
+            top: 60px;
+            left: 16px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1001;
+            display: none;
+        }
+        
+        .test-info.show {
+            display: block;
+        }
+        
+        /* 模拟键盘按钮 */
+        .test-keyboard-toggle {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-chat-page">
+        <!-- 导航栏 -->
+        <div class="test-nav">
+            <div class="test-title">聊天页面修复测试</div>
+            <button class="test-keyboard-toggle" onclick="toggleKeyboard()">切换键盘状态</button>
+        </div>
+        
+        <!-- 消息区域 -->
+        <div class="test-messages" id="testMessages">
+            <div class="test-message received">你好！这是一个测试消息。</div>
+            <div class="test-message sent">你好！我来测试安卓浏览器的聊天页面修复。</div>
+            <div class="test-message received">这个修复解决了输入框被遮挡的问题。</div>
+            <div class="test-message sent">太好了！现在可以在安卓浏览器上正常使用了。</div>
+            <div class="test-message received">请继续输入消息测试...</div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="test-input-area" id="testInputArea">
+            <textarea class="test-input" id="testInput" placeholder="输入消息..." rows="1"></textarea>
+            <button class="test-send-btn" onclick="sendMessage()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                    <path d="M22 2L11 13"></path>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="test-toolbar">
+            <button class="test-toolbar-btn active">📱</button>
+            <button class="test-toolbar-btn">😊</button>
+            <button class="test-toolbar-btn">🎤</button>
+            <button class="test-toolbar-btn">📎</button>
+            <button class="test-toolbar-btn">⋯</button>
+        </div>
+        
+        <!-- 测试信息 -->
+        <div class="test-info" id="testInfo">
+            <div id="deviceInfo"></div>
+            <div id="keyboardInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        // 检测设备信息
+        function detectDeviceInfo() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isAndroid = /android/i.test(userAgent);
+            const deviceInfo = document.getElementById('deviceInfo');
+            
+            deviceInfo.innerHTML = `
+                设备: ${isAndroid ? '安卓设备' : '非安卓设备'}<br>
+                浏览器: ${userAgent}<br>
+                屏幕: ${window.innerWidth}x${window.innerHeight}
+            `;
+            
+            return { isAndroid, userAgent };
+        }
+        
+        // 检测键盘状态
+        function detectKeyboardState() {
+            const keyboardHeight = window.innerHeight - window.visualViewport?.height || 0;
+            const isOpen = keyboardHeight > 150;
+            
+            document.getElementById('keyboardInfo').innerHTML = `
+                键盘状态: ${isOpen ? '打开' : '关闭'}<br>
+                键盘高度: ${keyboardHeight}px
+            `;
+            
+            return { isOpen, height: keyboardHeight };
+        }
+        
+        // 切换键盘状态（测试用）
+        let keyboardOpen = false;
+        function toggleKeyboard() {
+            keyboardOpen = !keyboardOpen;
+            const inputArea = document.getElementById('testInputArea');
+            const messages = document.getElementById('testMessages');
+            
+            if (keyboardOpen) {
+                inputArea.style.transform = 'translateY(-200px)';
+                messages.style.paddingBottom = '20px';
+                document.body.classList.add('keyboard-open');
+            } else {
+                inputArea.style.transform = '';
+                messages.style.paddingBottom = '63px';
+                document.body.classList.remove('keyboard-open');
+            }
+            
+            detectKeyboardState();
+        }
+        
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('testInput');
+            const messages = document.getElementById('testMessages');
+            const message = input.value.trim();
+            
+            if (message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'test-message sent';
+                messageDiv.textContent = message;
+                messages.appendChild(messageDiv);
+                
+                input.value = '';
+                input.style.height = 'auto';
+                
+                // 滚动到底部
+                messages.scrollTop = messages.scrollHeight;
+                
+                // 模拟回复
+                setTimeout(() => {
+                    const replyDiv = document.createElement('div');
+                    replyDiv.className = 'test-message received';
+                    replyDiv.textContent = '收到你的消息：' + message;
+                    messages.appendChild(replyDiv);
+                    messages.scrollTop = messages.scrollHeight;
+                }, 1000);
+            }
+        }
+        
+        // 输入框自适应高度
+        document.getElementById('testInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+        
+        // 回车发送消息
+        document.getElementById('testInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // 监听键盘变化
+        window.visualViewport?.addEventListener('resize', () => {
+            detectKeyboardState();
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            const deviceInfo = detectDeviceInfo();
+            detectKeyboardState();
+            
+            // 显示测试信息
+            document.getElementById('testInfo').classList.add('show');
+            
+            // 如果是安卓设备，应用优化
+            if (deviceInfo.isAndroid) {
+                document.body.classList.add('android-browser');
+                console.log('安卓设备检测到，已应用优化');
+            }
+            
+            // 自动滚动到底部
+            setTimeout(() => {
+                document.getElementById('testMessages').scrollTop = document.getElementById('testMessages').scrollHeight;
+            }, 100);
+        });
+        
+        // 窗口大小变化处理
+        window.addEventListener('resize', () => {
+            detectDeviceInfo();
+            detectKeyboardState();
+        });
+    </script>
+</body>
+</html>

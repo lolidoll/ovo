@@ -30,13 +30,13 @@ const BrowserCompatibilityFix = {
         
         console.log('🍎 应用iOS Safari修复...');
         
-        // 1. 修复100vh问题
+        // 1. 修复100dvh问题
         const setIOSHeight = () => {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
             
             // 使用-webkit-fill-available作为备选
-            if (CSS.supports && CSS.supports('-webkit-fill-available', '100vh')) {
+            if (CSS.supports && CSS.supports('-webkit-fill-available', '100dvh')) {
                 document.documentElement.style.height = '-webkit-fill-available';
             }
         };

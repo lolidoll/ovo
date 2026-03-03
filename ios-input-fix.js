@@ -36,10 +36,7 @@
         
         console.log('✅ Flex 布局已设置');
     }
-    
-        console.log('✅ Flex 布局已设置');
-    }
-    
+
     /**
      * 修复iOS Safari输入框点击和键盘弹出问题
      */
@@ -257,10 +254,5 @@
     // 导出到全局，方便调试
     window.fixIOSChatInput = fixIOSChatInput;
     window.setupFlexLayout = setupFlexLayout;
-    
-})();
-    
-    // 导出到全局，方便调试
-    window.fixIOSChatInput = fixIOSChatInput;
     
 })();

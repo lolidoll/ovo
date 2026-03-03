@@ -249,7 +249,7 @@ body {
 @supports (-webkit-touch-callout: none) {
     .fiction-reader-container {
         /* iOS特定计算 */
-        height: 100vh;
+        height: 100dvh;
         height: 100dvh;
         height: 100svh;
     }

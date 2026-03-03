@@ -20,7 +20,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     position: relative;
 }
@@ -95,7 +95,7 @@ body {
         opacity: 1;
     }
     100% {
-        transform: translateY(calc(100vh + 60px)) rotate(90deg);
+        transform: translateY(calc(100dvh + 60px)) rotate(90deg);
         opacity: 0;
     }
 }

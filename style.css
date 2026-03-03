@@ -1,4 +1,4 @@
-﻿
+
         /* 世界书页面动画 */
         @keyframes fadeIn {
             from {
@@ -34,13 +34,19 @@
             --safe-area-inset-right: env(safe-area-inset-right);
         }
         
-        /* 等比缩放 - 应用到html元素，影响所有内容包括fixed元素 */
-        html.page-scaled {
+        /* 等比缩放 - 改为在容器层面实现，避免全局缩放导致的布局问题 */
+        #app-container.page-scaled {
             transform: scale(var(--page-scale));
             transform-origin: 0 0;
             width: calc(100vw / var(--page-scale));
             height: calc(100vh / var(--page-scale));
             overflow: hidden;
+        }
+        
+        html.page-scaled {
+            width: 100vw;
+            height: 100vh;
+            overflow: visible;
         }
         
         @supports (padding: max(0px)) {
@@ -106,6 +112,14 @@
             /* iOS: 使用 -webkit-fill-available 确保高度正确 */
             height: -webkit-fill-available;
         }
+
+        /* iOS PWA全屏模式：html添加底部安全区域 */
+        .is-standalone html,
+        .is-pwa html {
+            height: 100%;
+            height: -webkit-fill-available;
+            min-height: 100%;
+        }
         
         body {
             width: 100%;
@@ -120,6 +134,12 @@
             height: -webkit-fill-available;
             min-height: 100%;
         }
+
+        /* iOS PWA全屏模式：body添加底部安全区域 */
+        .is-standalone body,
+        .is-pwa body {
+            padding-bottom: var(--safe-area-inset-bottom);
+        }
         
         #app-container {
             width: 100%;
@@ -133,6 +153,12 @@
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
             box-sizing: border-box;
+        }
+
+        /* iOS PWA全屏模式：为底部安全区域添加padding */
+        .is-standalone #app-container,
+        .is-pwa #app-container {
+            padding-bottom: var(--safe-area-inset-bottom);
         }
 
         .icon-svg {
@@ -151,7 +177,7 @@
             min-height: var(--nav-total-height);
             width: 100%;
             background-color: #ffffff;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid transparent;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -687,7 +713,7 @@
         }
         
         .search-bar {
-            padding: 10px 15px;
+            padding: 3px 15px;
             background-color: #fff;
             flex-shrink: 0;
             position: fixed;
@@ -719,21 +745,26 @@
             
             /* 调整搜索输入框高度 */
             .search-input {
-                height: 36px !important;
+                height: 32px !important;
                 margin: 0 !important;
                 padding: 0 15px 0 40px !important;
             }
         }
         .search-input {
             width: 100%;
-            height: 36px;
-            background-color: #f5f5f5;
+            height: 26px;
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.15) 0%, rgba(255, 192, 203, 0.15) 100%);
             border: none;
-            border-radius: 18px;
-            padding: 0 15px 0 40px;
+            border-radius: 15px;
+            padding: 0 15px;
             font-size: 14px;
             color: #333;
             outline: none;
+            line-height: 26px;
+            text-align: center;
+        }
+        .search-input:focus {
+            text-align: left;
         }
         .search-input::placeholder {
             color: #999;
@@ -743,35 +774,18 @@
             display: flex;
             align-items: center;
         }
-        .search-icon {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
-            pointer-events: none;
-            z-index: 2;
-            flex-shrink: 0;
-            stroke: #666;
-            stroke-width: 1.8;
-            fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            display: block;
-        }
         
         /* 消息页面 */
         .msg-page {
             padding: 0;
-            margin-top: 56px;
+            margin-top: 30px;
             padding-top: 0;
-            padding-bottom: 48px;
+            padding-bottom: 0px;
             display: flex;
             flex-direction: column;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(56px) - 底部导航(48px) */
-            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
+            height: calc(100vh - var(--nav-total-height) - 30px);
+            height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
             flex: 1;
             overflow: hidden;
@@ -784,9 +798,9 @@
         /* 普通浏览器模式：消息页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .msg-page {
             flex: 1;
-            /* 正确计算高度 */
-            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
+            height: calc(100vh - var(--nav-total-height) - 30px);
+            height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
         }
         
@@ -803,13 +817,11 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            /* 正确计算高度：100vh - 顶部导航(45px) - 搜索栏(56px) - 底部导航(48px) */
-            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
-            max-height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            max-height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
+            height: calc(100vh - var(--nav-total-height) - 30px);
+            height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
-            padding-bottom: 0;
+            padding-bottom: 48px;
             box-sizing: border-box;
         }
         
@@ -839,7 +851,7 @@
             align-items: center;
             gap: 12px;
             background-color: #fff;
-            border-bottom: 1px solid #f5f5f5;
+            border-bottom: 1px solid transparent;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -977,12 +989,12 @@
         /* 好友页面 */
         .friend-page {
             padding: 0;
-            margin-top: 56px;
+            margin-top: 30px;
             padding-top: 0;
-            padding-bottom: 48px;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(56px) - 底部导航(48px) */
-            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            padding-bottom: 0px;
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
+            height: calc(100vh - var(--nav-total-height) - 30px);
+            height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
             flex: 1;
             overflow: hidden;
@@ -1016,13 +1028,11 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            /* 正确计算高度：100vh - 顶部导航(45px) - 搜索栏(56px) - 底部导航(48px) */
-            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
-            max-height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            max-height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
+            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
+            height: calc(100vh - var(--nav-total-height) - 30px);
+            height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
-            padding-bottom: 0;
+            padding-bottom: 48px;
             box-sizing: border-box;
             width: 100%;
         }
@@ -1312,25 +1322,151 @@
             height: calc(var(--app-height, 100vh) - 48px) !important;
         }
         
-        /* 缩放模式下，所有fixed定位元素都需要反向调整尺寸以正确铺满全屏 */
-        html.page-scaled .sub-page {
-            width: calc(100vw / var(--page-scale)) !important;
-            height: calc((100vh - 48px - env(safe-area-inset-bottom)) / var(--page-scale)) !important;
-            bottom: calc((48px + env(safe-area-inset-bottom)) / var(--page-scale)) !important;
+        /* 缩放模式下，子容器需要反向调整尺寸以正确显示 */
+        #app-container.page-scaled .sub-page {
+            width: 100% !important;
+            height: calc(100% - 48px) !important;
+            bottom: auto !important;
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
         }
         
-        html.page-scaled .side-menu {
-            height: calc(100vh / var(--page-scale)) !important;
+        #app-container.page-scaled .side-menu {
+            height: 100% !important;
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
         }
         
-        html.page-scaled .chat-page {
-            width: calc(100vw / var(--page-scale)) !important;
-            height: calc(100vh / var(--page-scale)) !important;
+        #app-container.page-scaled .chat-page {
+            width: 100% !important;
+            height: calc(100vh - 48px) !important;
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
         }
         
-        html.page-scaled .mask {
-            width: calc(100vw / var(--page-scale)) !important;
-            height: calc(100vh / var(--page-scale)) !important;
+        #app-container.page-scaled .mask {
+            width: 100vw !important;
+            height: 100vh !important;
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+        }
+        
+        /* 缩放模式下的滚动和布局修复 */
+        #app-container.page-scaled {
+            overflow: hidden !important;
+        }
+        
+        #app-container.page-scaled .sub-page {
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 修复缩放后的z-index问题 */
+        #app-container.page-scaled .sub-page {
+            z-index: 1 !important;
+        }
+        
+        /* 确保body和html在缩放模式下正常显示 */
+        html.page-scaled body {
+            overflow: visible !important;
+            height: 100vh !important;
+            width: 100vw !important;
+        }
+        
+        /* 修复缩放后的导航栏问题 */
+        #app-container.page-scaled .chat-nav,
+        #app-container.page-scaled .top-nav,
+        #app-container.page-scaled [data-nav="true"] {
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+            z-index: 1000 !important;
+        }
+        
+        /* 修复缩放后的输入框问题 */
+        #app-container.page-scaled input,
+        #app-container.page-scaled textarea,
+        #app-container.page-scaled [contenteditable="true"] {
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+        }
+        
+        /* 修复缩放后的按钮点击区域 */
+        #app-container.page-scaled button,
+        #app-container.page-scaled .clickable {
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+        }
+        
+        /* 用户设定管理页面需要显示在角色设置页面之上 */
+        #persona-manager-page,
+        #persona-editor-page {
+            z-index: 250;
+        }
+        .sub-page.open {
+            display: flex !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+        }
+        
+        #app-container.page-scaled .chat-page {
+            width: 100% !important;
+            height: calc(100vh - 48px) !important;
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+        }
+        
+        #app-container.page-scaled .mask {
+            width: 100vw !important;
+            height: 100vh !important;
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+        }
+        
+        /* 缩放模式下的滚动和布局修复 */
+        #app-container.page-scaled {
+            overflow: hidden !important;
+        }
+        
+        #app-container.page-scaled .sub-page {
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            position: relative !important;
+        }
+        
+        /* 修复缩放后的z-index问题 */
+        #app-container.page-scaled .sub-page {
+            z-index: 1 !important;
+        }
+        
+        /* 确保body和html在缩放模式下正常显示 */
+        html.page-scaled body {
+            overflow: visible !important;
+            height: 100vh !important;
+            width: 100vw !important;
+        }
+        
+        /* 修复缩放后的导航栏问题 */
+        #app-container.page-scaled .chat-nav,
+        #app-container.page-scaled .top-nav,
+        #app-container.page-scaled [data-nav="true"] {
+            transform: scale(calc(1 / var(--page-scale)));
+            transform-origin: 0 0;
+            z-index: 1000 !important;
+        }
+        
+        /* 修复缩放后的侧边栏和聊天页面 */
+        #app-container.page-scaled .side-menu {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 999 !important;
+        }
+        
+        #app-container.page-scaled .chat-page {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 998 !important;
         }
         
         /* 用户设定管理页面需要显示在角色设置页面之上 */
@@ -1442,7 +1578,6 @@
             font-size: 17px;
             font-weight: 600;
             color: #1a1a1a;
-            margin-right: 60px;
             letter-spacing: 0.5px;
         }
         
@@ -1519,7 +1654,7 @@
             min-height: calc(48px + env(safe-area-inset-bottom));
             width: 100%;
             background-color: #ffffff;
-            border-top: 1px solid #f0f0f0;
+            border-top: 1px solid transparent;
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -1612,7 +1747,13 @@
             justify-content: center;
             flex-shrink: 0;
         }
-        
+
+        .tab-icon-img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
         .tab-text {
             font-size: 11px;
             color: #333;
@@ -5195,6 +5336,11 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
     overflow: hidden;
 }
 
+/* 表情包管理页面导航栏标题居中 */
+.emoji-manager-page .sub-title {
+    text-align: center !important;
+}
+
 /* 功能按钮区 - 现代化工具栏 */
 .emoji-manager-toolbar {
     padding: 14px 16px;
@@ -7087,13 +7233,19 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
         right: auto !important;
         bottom: auto !important;
     }
-    
+
+    /* iOS PWA全屏模式：添加底部安全区域 */
+    .is-standalone body,
+    .is-pwa body {
+        padding-bottom: var(--safe-area-inset-bottom) !important;
+    }
+
     html {
         height: 100% !important;
         height: -webkit-fill-available !important;
         min-height: 100% !important;
     }
-    
+
     #app-container {
         flex: 1 !important;
         height: auto !important;
@@ -7101,6 +7253,12 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
         position: relative !important;
         top: auto !important;
         left: auto !important;
+    }
+
+    /* iOS PWA全屏模式：app-container添加底部安全区域 */
+    .is-standalone #app-container,
+    .is-pwa #app-container {
+        padding-bottom: var(--safe-area-inset-bottom) !important;
     }
 }
 
