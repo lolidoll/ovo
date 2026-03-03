@@ -734,28 +734,32 @@
             min-height: 0;
         }
         
-        /* PWA全屏模式：main-content（包括频道页面）使用dvh确保顶部栏完整显示 */
+        /* PWA全屏模式：main-content（频道页面）使用dvh确保顶部栏完整显示 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .main-content {
-                /* 频道页面没有搜索栏，但需要减去底部导航栏高度 */
-                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px) !important;
-                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px) !important;
+            /* 只应用于非 msg-page 和 friend-page 的 main-content（即频道页面） */
+            .main-content:not(.msg-page):not(.friend-page) {
+                /* 频道页面没有搜索栏，只需要减去底部导航栏 */
+                height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+                max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+                /* 添加 padding-top 为导航栏预留空间 */
+                padding-top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
             }
             
-            .main-content .sub-content {
-                padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+            .main-content:not(.msg-page):not(.friend-page) .sub-content {
+                padding-bottom: 48px !important;
             }
         }
         
-        .is-pwa .main-content,
-        .is-standalone .main-content {
-            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px) !important;
-            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px) !important;
+        .is-pwa .main-content:not(.msg-page):not(.friend-page),
+        .is-standalone .main-content:not(.msg-page):not(.friend-page) {
+            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+            max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+            padding-top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
         }
         
-        .is-pwa .main-content .sub-content,
-        .is-standalone .main-content .sub-content {
-            padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+        .is-pwa .main-content:not(.msg-page):not(.friend-page) .sub-content,
+        .is-standalone .main-content:not(.msg-page):not(.friend-page) .sub-content {
+            padding-bottom: 48px !important;
         }
         
         .search-bar {
@@ -843,18 +847,19 @@
             overflow: hidden;
         }
         
-        /* PWA全屏模式：移除margin-top，添加padding-top为搜索栏预留空间 */
+        /* PWA全屏模式：移除margin-top，添加padding-top为导航栏和搜索栏预留空间 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .msg-page {
+            .main-content.msg-page {
                 margin-top: 0 !important;
-                padding-top: 30px !important;
+                /* padding-top 需要包含导航栏高度和安全区域 */
+                padding-top: calc(var(--nav-height) + env(safe-area-inset-top) + 30px) !important;
             }
         }
         
-        .is-pwa .msg-page,
-        .is-standalone .msg-page {
+        .is-pwa .main-content.msg-page,
+        .is-standalone .main-content.msg-page {
             margin-top: 0 !important;
-            padding-top: 30px !important;
+            padding-top: calc(var(--nav-height) + env(safe-area-inset-top) + 30px) !important;
         }
         
         .msg-page:not(.active) {
@@ -870,19 +875,19 @@
             min-height: 0;
         }
         
-        /* PWA全屏模式：消息页面使用dvh确保顶部栏完整显示 */
+        /* PWA全屏模式：消息页面使用dvh，只减去底部导航栏 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .msg-page {
-                /* PWA模式下需要减去导航栏、搜索栏和底部导航栏高度 */
-                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
-                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
+            .main-content.msg-page {
+                /* padding-top 已预留导航栏和搜索栏空间，只需要减去底部导航栏 */
+                height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+                max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
             }
         }
         
-        .is-pwa .msg-page,
-        .is-standalone .msg-page {
-            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
-            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
+        .is-pwa .main-content.msg-page,
+        .is-standalone .main-content.msg-page {
+            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+            max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
         }
         
         /* 消息页面的搜索栏 */
@@ -906,13 +911,13 @@
             box-sizing: border-box;
         }
         
-        /* PWA全屏模式：消息列表使用dvh */
+        /* PWA全屏模式：消息列表使用100%高度 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .msg-list {
-                /* 消息列表是msg-page的子元素，使用100%高度，padding-bottom包含底部安全区域 */
+                /* 消息列表是msg-page的子元素，使用100%高度 */
                 height: 100% !important;
                 max-height: 100% !important;
-                padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+                padding-bottom: 48px !important;
             }
         }
         
@@ -920,7 +925,7 @@
         .is-standalone .msg-list {
             height: 100% !important;
             max-height: 100% !important;
-            padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+            padding-bottom: 48px !important;
         }
         
         .empty-state {
@@ -1100,18 +1105,19 @@
             flex-direction: column;
         }
         
-        /* PWA全屏模式：移除margin-top，添加padding-top为搜索栏预留空间 */
+        /* PWA全屏模式：移除margin-top，添加padding-top为导航栏和搜索栏预留空间 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .friend-page {
+            .main-content.friend-page {
                 margin-top: 0 !important;
-                padding-top: 30px !important;
+                /* padding-top 需要包含导航栏高度和安全区域 */
+                padding-top: calc(var(--nav-height) + env(safe-area-inset-top) + 30px) !important;
             }
         }
         
-        .is-pwa .friend-page,
-        .is-standalone .friend-page {
+        .is-pwa .main-content.friend-page,
+        .is-standalone .main-content.friend-page {
             margin-top: 0 !important;
-            padding-top: 30px !important;
+            padding-top: calc(var(--nav-height) + env(safe-area-inset-top) + 30px) !important;
         }
         
         .friend-page:not(.active) {
@@ -1127,19 +1133,19 @@
             min-height: 0;
         }
         
-        /* PWA全屏模式：好友页面使用dvh确保顶部栏完整显示 */
+        /* PWA全屏模式：好友页面使用dvh，只减去底部导航栏 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            .friend-page {
-                /* PWA模式下需要减去导航栏、搜索栏和底部导航栏高度 */
-                height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
-                max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
+            .main-content.friend-page {
+                /* padding-top 已预留导航栏和搜索栏空间，只需要减去底部导航栏 */
+                height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+                max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
             }
         }
         
-        .is-pwa .friend-page,
-        .is-standalone .friend-page {
-            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
-            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 30px - 48px) !important;
+        .is-pwa .main-content.friend-page,
+        .is-standalone .main-content.friend-page {
+            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+            max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
         }
         
         /* 好友页面激活时显示搜索栏 */
@@ -1164,13 +1170,13 @@
             width: 100%;
         }
         
-        /* PWA全屏模式：好友内容区域使用dvh */
+        /* PWA全屏模式：好友内容区域使用100%高度 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .friend-content {
-                /* 好友内容是friend-page的子元素，使用100%高度，padding-bottom包含底部安全区域 */
+                /* 好友内容是friend-page的子元素，使用100%高度 */
                 height: 100% !important;
                 max-height: 100% !important;
-                padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+                padding-bottom: 48px !important;
             }
         }
         
@@ -1178,7 +1184,7 @@
         .is-standalone .friend-content {
             height: 100% !important;
             max-height: 100% !important;
-            padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+            padding-bottom: 48px !important;
         }
         
         .friend-group {
