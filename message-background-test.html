@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息背景功能测试工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f7;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1a1a1a;
+            margin-top: 0;
+        }
+        
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #007AFF;
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            color: #007AFF;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0051d5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #e5e5ea;
+            color: #1a1a1a;
+        }
+        
+        .btn-secondary:hover {
+            background: #d1d1d6;
+        }
+        
+        .btn-danger {
+            background: #FF3B30;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #e60000;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e5ea;
+        }
+        
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        
+        .checklist li:before {
+            content: "□ ";
+            font-weight: bold;
+            color: #007AFF;
+            margin-right: 10px;
+        }
+        
+        .checklist li.done:before {
+            content: "✅ ";
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .code {
+            background: #f5f5f5;
+            border: 1px solid #e5e5ea;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        
+        .output {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        
+        .output-line {
+            margin: 4px 0;
+        }
+        
+        .success-text {
+            color: #00ff00;
+        }
+        
+        .error-text {
+            color: #ff4444;
+        }
+        
+        .warning-text {
+            color: #ffaa00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 消息背景功能测试工具</h1>
+        
+        <!-- 快速检查部分 -->
+        <div class="section">
+            <h2>⚡ 快速检查</h2>
+            <button class="btn-primary" onclick="runDiagnostics()">运行诊断</button>
+            <button class="btn-secondary" onclick="openInMain()">在主应用中打开</button>
+            <button class="btn-secondary" onclick="clearStatus()">清除输出</button>
+            <div id="status" class="status loading" style="display:none;"></div>
+            <div class="output" id="output" style="display:none;"></div>
+        </div>
+        
+        <!-- 诊断检查清单 -->
+        <div class="section">
+            <h2>📋 诊断检查清单</h2>
+            <ul class="checklist">
+                <li id="check-manager">MessageBackgroundManager 已加载</li>
+                <li id="check-ui">MessageBackgroundManagerUI 已加载</li>
+                <li id="check-button">消息背景按钮存在</li>
+                <li id="check-event">onclick 事件已绑定</li>
+                <li id="check-indexeddb">IndexedDB 可用</li>
+                <li id="check-dom">DOM 结构正确</li>
+            </ul>
+        </div>
+        
+        <!-- 功能测试 -->
+        <div class="section">
+            <h2>🧪 功能测试</h2>
+            <div class="info-box">
+                点击下面的按钮测试各项功能
+            </div>
+            <div class="button-group">
+                <button class="btn-secondary" onclick="testManager()">测试管理器</button>
+                <button class="btn-secondary" onclick="testUI()">测试 UI</button>
+                <button class="btn-secondary" onclick="testButton()">测试按钮</button>
+                <button class="btn-secondary" onclick="testStorage()">测试存储</button>
+            </div>
+        </div>
+        
+        <!-- 手动命令 -->
+        <div class="section">
+            <h2>💻 手动命令</h2>
+            <p>在浏览器控制台中执行以下命令：</p>
+            
+            <h3>打开诊断工具</h3>
+            <div class="code">window.MessageBackgroundDiagnostics.diagnose()</div>
+            
+            <h3>直接打开管理器</h3>
+            <div class="code">window.MessageBackgroundManagerUI?.open()</div>
+            
+            <h3>查看所有背景</h3>
+            <div class="code">window.MessageBackgroundManager?.getBackgrounds()</div>
+            
+            <h3>清除所有背景</h3>
+            <div class="code">window.MessageBackgroundManager?.clearBackground()</div>
+            
+            <h3>获取当前背景 ID</h3>
+            <div class="code">window.MessageBackgroundManager?.currentBackgroundId</div>
+        </div>
+        
+        <!-- 故障排除 -->
+        <div class="section">
+            <h2>🔧 故障排除</h2>
+            <div class="info-box">
+                如果点击"消息背景"没有反应，请按照以下步骤：
+            </div>
+            <ol>
+                <li>按 F12 打开开发者工具</li>
+                <li>切换到 Console 标签</li>
+                <li>点击上面的"运行诊断"按钮</li>
+                <li>查看输出结果</li>
+                <li>根据结果参考 MESSAGE_BACKGROUND_TROUBLESHOOTING.md</li>
+            </ol>
+            
+            <h3>常见解决方案</h3>
+            <ul>
+                <li><strong>清除浏览器缓存</strong>：按 Ctrl+Shift+Delete</li>
+                <li><strong>硬刷新</strong>：按 Ctrl+F5</li>
+                <li><strong>重启浏览器</strong>：完全关闭后重新打开</li>
+            </ul>
+        </div>
+        
+        <!-- 调试信息 -->
+        <div class="section">
+            <h2>📊 调试信息</h2>
+            <button class="btn-secondary" onclick="showDebugInfo()">显示完整调试信息</button>
+            <div id="debug-info" style="display:none; margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 诊断函数
+        async function runDiagnostics() {
+            clearStatus();
+            showStatus('正在运行诊断...', 'loading');
+            
+            const output = document.getElementById('output');
+            output.style.display = 'block';
+            output.innerHTML = '';
+            
+            function log(message, type = 'normal') {
+                const line = document.createElement('div');
+                line.className = 'output-line';
+                
+                switch(type) {
+                    case 'success':
+                        line.innerHTML = `<span class="success-text">✅ ${message}</span>`;
+                        break;
+                    case 'error':
+                        line.innerHTML = `<span class="error-text">❌ ${message}</span>`;
+                        break;
+                    case 'warning':
+                        line.innerHTML = `<span class="warning-text">⚠️  ${message}</span>`;
+                        break;
+                    default:
+                        line.innerHTML = message;
+                }
+                output.appendChild(line);
+                output.scrollTop = output.scrollHeight;
+            }
+            
+            log('='.repeat(60));
+            log('消息背景功能诊断开始');
+            log('='.repeat(60));
+            log('');
+            
+            // 检查管理器
+            const hasManager = !!window.MessageBackgroundManager;
+            log(hasManager ? '📦 MessageBackgroundManager 已加载' : '📦 MessageBackgroundManager 未加载', 
+                hasManager ? 'success' : 'error');
+            document.getElementById('check-manager').classList.toggle('done', hasManager);
+            
+            if (hasManager) {
+                log(`   DB 状态: ${window.MessageBackgroundManager.db ? '✅' : '❌'}`);
+                log(`   背景数量: ${window.MessageBackgroundManager.backgroundImages.length}`);
+            }
+            
+            // 检查 UI
+            const hasUI = !!window.MessageBackgroundManagerUI;
+            log(hasUI ? '🎨 MessageBackgroundManagerUI 已加载' : '🎨 MessageBackgroundManagerUI 未加载', 
+                hasUI ? 'success' : 'error');
+            document.getElementById('check-ui').classList.toggle('done', hasUI);
+            
+            // 检查按钮
+            const btn = document.querySelector('#open-message-background');
+            const hasButton = !!btn;
+            log(hasButton ? '🔘 消息背景按钮已找到' : '🔘 消息背景按钮未找到', 
+                hasButton ? 'success' : 'warning');
+            document.getElementById('check-button').classList.toggle('done', hasButton);
+            
+            // 检查事件
+            const hasEvent = btn && btn.onclick;
+            log(hasEvent ? '⚡ onclick 事件已绑定' : '⚡ onclick 事件未绑定', 
+                hasEvent ? 'success' : 'warning');
+            document.getElementById('check-event').classList.toggle('done', hasEvent);
+            
+            // 检查 IndexedDB
+            const hasIndexedDB = !!window.indexedDB;
+            log(hasIndexedDB ? '💾 IndexedDB 可用' : '💾 IndexedDB 不可用', 
+                hasIndexedDB ? 'success' : 'error');
+            document.getElementById('check-indexeddb').classList.toggle('done', hasIndexedDB);
+            
+            // 检查 DOM
+            const chatArea = document.querySelector('.chat-area');
+            const hasDOM = !!chatArea;
+            log(hasDOM ? '🌳 DOM 结构正确' : '🌳 DOM 结构可能不完整', 
+                hasDOM ? 'success' : 'warning');
+            document.getElementById('check-dom').classList.toggle('done', hasDOM);
+            
+            log('');
+            log('='.repeat(60));
+            log('诊断完成');
+            log('='.repeat(60));
+            
+            showStatus('诊断完成！查看上面的详细输出。', 'success');
+        }
+        
+        function testManager() {
+            console.log('测试管理器...');
+            if (window.MessageBackgroundManager) {
+                console.log('✅ 管理器可用');
+                console.log('背景数量:', window.MessageBackgroundManager.backgroundImages.length);
+            } else {
+                console.error('❌ 管理器未加载');
+            }
+        }
+        
+        function testUI() {
+            console.log('测试 UI...');
+            if (window.MessageBackgroundManagerUI) {
+                console.log('✅ UI 可用');
+                console.log('open 方法:', typeof window.MessageBackgroundManagerUI.open);
+            } else {
+                console.error('❌ UI 未加载');
+            }
+        }
+        
+        function testButton() {
+            console.log('测试按钮...');
+            const btn = document.querySelector('#open-message-background');
+            if (btn) {
+                console.log('✅ 按钮存在');
+                console.log('可见:', btn.offsetParent !== null);
+                console.log('事件绑定:', !!btn.onclick);
+            } else {
+                console.warn('⚠️ 按钮未找到 - 确保已打开个性装扮页面');
+            }
+        }
+        
+        function testStorage() {
+            console.log('测试存储...');
+            if (window.indexedDB) {
+                console.log('✅ IndexedDB 可用');
+                console.log('数据库:', window.MessageBackgroundManager?.db ? '已打开' : '未打开');
+            } else {
+                console.error('❌ IndexedDB 不可用');
+            }
+        }
+        
+        function openInMain() {
+            window.location.href = '/';
+        }
+        
+        function clearStatus() {
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('output').style.display = 'none';
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+        }
+        
+        function showDebugInfo() {
+            const info = document.getElementById('debug-info');
+            info.style.display = info.style.display === 'none' ? 'block' : 'none';
+            
+            if (info.style.display === 'block') {
+                const debugData = {
+                    'Browser': navigator.userAgent,
+                    'Platform': navigator.platform,
+                    'Language': navigator.language,
+                    'Online': navigator.onLine,
+                    'MessageBackgroundManager': !!window.MessageBackgroundManager,
+                    'MessageBackgroundManagerUI': !!window.MessageBackgroundManagerUI,
+                    'IndexedDB': !!window.indexedDB,
+                    'LocalStorage': !!window.localStorage,
+                    'SessionStorage': !!window.sessionStorage,
+                    'Diagnostics': !!window.MessageBackgroundDiagnostics
+                };
+                
+                info.innerHTML = '<pre>' + JSON.stringify(debugData, null, 2) + '</pre>';
+            }
+        }
+        
+        // 页面加载时提示
+        window.addEventListener('load', () => {
+            console.log('💡 消息背景功能测试工具已加载');
+            console.log('运行 runDiagnostics() 进行诊断');
+        });
+    </script>
+</body>
+</html>
