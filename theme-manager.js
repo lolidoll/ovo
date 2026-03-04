@@ -937,7 +937,7 @@ const ThemeManagerUI = {
                     background: #1a1a1a;
                 }
                 .custom-confirm-btn:active {
-                    transform: scale(0.98);
+                    transform: translateY(0);
                 }
             </style>
         `;

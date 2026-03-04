@@ -30,22 +30,7 @@ const BrowserCompatibilityFix = {
         
         console.log('🍎 应用iOS Safari修复...');
         
-        // 1. 修复100dvh问题
-        const setIOSHeight = () => {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-            
-            // 使用-webkit-fill-available作为备选
-            if (CSS.supports && CSS.supports('-webkit-fill-available', '100dvh')) {
-                document.documentElement.style.height = '-webkit-fill-available';
-            }
-        };
-        
-        setIOSHeight();
-        window.addEventListener('resize', setIOSHeight, { passive: true });
-        window.addEventListener('orientationchange', setIOSHeight, { passive: true });
-        
-        // 2. 修复输入框焦点问题
+        // 1. 输入框焦点问题
         document.addEventListener('focus', (e) => {
             if (e.target.matches('input, textarea')) {
                 setTimeout(() => {
@@ -91,16 +76,7 @@ const BrowserCompatibilityFix = {
         
         console.log('🤖 应用Android Chrome修复...');
         
-        // 1. 修复视口高度
-        const setAndroidHeight = () => {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        
-        setAndroidHeight();
-        window.addEventListener('resize', setAndroidHeight, { passive: true });
-        
-        // 2. 修复输入框弹出键盘时的问题
+        // 1. 输入框弹出键盘时的问题
         document.addEventListener('focus', (e) => {
             if (e.target.matches('input, textarea')) {
                 setTimeout(() => {

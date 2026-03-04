@@ -22,7 +22,7 @@
 
         :root {
             --vh: 1vh;
-            --app-height: 100vh;
+            --app-height: 100dvh;
             --top-padding: 45px;
             --nav-height: 45px;
             --nav-safe-top: 0px;
@@ -35,28 +35,20 @@
             --safe-area-inset-right: 0px;
         }
         
-        /* 支持env()的浏览器，优先使用env()值 */
-        @supports (padding: env(safe-area-inset-top)) {
-            :root {
-                --safe-area-inset-top: env(safe-area-inset-top);
-                --safe-area-inset-bottom: env(safe-area-inset-bottom);
-                --safe-area-inset-left: env(safe-area-inset-left);
-                --safe-area-inset-right: env(safe-area-inset-right);
-            }
-        }
+        /* 支持max()的浏览器，优先使用max()确保值非负 */
         
         /* 等比缩放 - 改为在容器层面实现，避免全局缩放导致的布局问题 */
         #app-container.page-scaled {
             transform: scale(var(--page-scale));
             transform-origin: 0 0;
             width: calc(100vw / var(--page-scale));
-            height: calc(100vh / var(--page-scale));
+            height: calc(100dvh / var(--page-scale));
             overflow: hidden;
         }
         
         html.page-scaled {
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             overflow: visible;
         }
         
@@ -69,24 +61,9 @@
             }
         }
         
-        /* iOS PWA 顶部安全区（仅全屏/桌面模式） */
-        .ios-standalone {
-            --nav-safe-top: var(--safe-area-inset-top);
-        }
+        /* iOS PWA 顶部安全区（由mobile-responsive.css统一处理） */
         
-        /* PWA模式：确保nav-safe-top使用安全区域值 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            :root {
-                --nav-safe-top: var(--safe-area-inset-top);
-                --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
-            }
-        }
-        
-        .is-pwa,
-        .is-standalone {
-            --nav-safe-top: var(--safe-area-inset-top);
-            --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
-        }
+        /* PWA模式：确保nav-safe-top使用安全区域值（由mobile-responsive.css统一处理） */
 
         * {
             margin: 0;
@@ -711,7 +688,6 @@
             top: 0;
             left: 0;
             width: 100vw;
-            height: 100vh;
             height: 100dvh;
             background-color: rgba(0, 0, 0, 0.4);
             z-index: 250;
@@ -759,33 +735,7 @@
             min-height: 0;
         }
         
-        /* PWA全屏模式：main-content（频道页面）使用dvh确保顶部栏完整显示 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            /* 只应用于非 msg-page 和 friend-page 的 main-content（即频道页面） */
-            .main-content:not(.msg-page):not(.friend-page) {
-                /* 频道页面没有搜索栏，只需要减去底部导航栏 */
-                height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-                max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-                /* 添加 padding-top 为导航栏预留空间 */
-                padding-top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-            }
-            
-            .main-content:not(.msg-page):not(.friend-page) .sub-content {
-                padding-bottom: 48px !important;
-            }
-        }
-        
-        .is-pwa .main-content:not(.msg-page):not(.friend-page),
-        .is-standalone .main-content:not(.msg-page):not(.friend-page) {
-            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-            max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-            padding-top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-        }
-        
-        .is-pwa .main-content:not(.msg-page):not(.friend-page) .sub-content,
-        .is-standalone .main-content:not(.msg-page):not(.friend-page) .sub-content {
-            padding-bottom: 48px !important;
-        }
+
         
         .search-bar {
             padding: 3px 15px;
@@ -827,10 +777,7 @@
             }
         }
         
-        .is-pwa .search-bar,
-        .is-standalone .search-bar {
-            top: calc(var(--nav-height) + env(safe-area-inset-top)) !important;
-        }
+        /* 搜索栏PWA适配（由mobile-responsive.css统一处理） */
         .search-input {
             width: 100%;
             height: 26px;
@@ -864,8 +811,7 @@
             padding-bottom: 0px;
             display: flex;
             flex-direction: column;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
-            height: calc(100vh - var(--nav-total-height) - 30px);
+            /* 正确计算高度：100dvh - 顶部导航 - 搜索栏(30px) */
             height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
             flex: 1;
@@ -894,25 +840,8 @@
         /* 普通浏览器模式：消息页面特殊处理 */
         html:not(.is-pwa):not(.is-standalone) .msg-page {
             flex: 1;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
-            height: calc(100vh - var(--nav-total-height) - 30px);
-            height: calc(100dvh - var(--nav-total-height) - 30px);
+            /* 由mobile-responsive.css统一处理高度适配 */
             min-height: 0;
-        }
-        
-        /* PWA全屏模式：消息页面使用dvh，只减去底部导航栏 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .main-content.msg-page {
-                /* padding-top 已预留导航栏和搜索栏空间，只需要减去底部导航栏 */
-                height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-                max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-            }
-        }
-        
-        .is-pwa .main-content.msg-page,
-        .is-standalone .main-content.msg-page {
-            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-            max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
         }
         
         /* 消息页面的搜索栏 */
@@ -928,29 +857,10 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
-            height: calc(100vh - var(--nav-total-height) - 30px);
-            height: calc(100dvh - var(--nav-total-height) - 30px);
+            /* 由mobile-responsive.css统一处理高度适配 */
             min-height: 0;
             padding-bottom: 48px;
             box-sizing: border-box;
-        }
-        
-        /* PWA全屏模式：消息列表使用100%高度 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .msg-list {
-                /* 消息列表是msg-page的子元素，使用100%高度 */
-                height: 100% !important;
-                max-height: 100% !important;
-                padding-bottom: 48px !important;
-            }
-        }
-        
-        .is-pwa .msg-list,
-        .is-standalone .msg-list {
-            height: 100% !important;
-            max-height: 100% !important;
-            padding-bottom: 48px !important;
         }
         
         .empty-state {
@@ -1120,9 +1030,7 @@
             margin-top: 30px;
             padding-top: 0;
             padding-bottom: 0px;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
-            height: calc(100vh - var(--nav-total-height) - 30px);
-            height: calc(100dvh - var(--nav-total-height) - 30px);
+            /* 由mobile-responsive.css统一处理高度适配 */
             min-height: 0;
             flex: 1;
             overflow: hidden;
@@ -1130,48 +1038,13 @@
             flex-direction: column;
         }
         
-        /* PWA全屏模式：移除margin-top，添加padding-top为导航栏和搜索栏预留空间 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .main-content.friend-page {
-                margin-top: 0 !important;
-                /* padding-top 需要包含导航栏高度和安全区域 */
-                padding-top: calc(var(--nav-height) + env(safe-area-inset-top) + 30px) !important;
-            }
-        }
-        
-        .is-pwa .main-content.friend-page,
-        .is-standalone .main-content.friend-page {
-            margin-top: 0 !important;
-            padding-top: calc(var(--nav-height) + env(safe-area-inset-top) + 30px) !important;
-        }
+
         
         .friend-page:not(.active) {
             display: none;
         }
         
-        /* 普通浏览器模式：好友页面特殊处理 */
-        html:not(.is-pwa):not(.is-standalone) .friend-page {
-            flex: 1;
-            /* 正确计算高度 */
-            height: calc(100vh - var(--nav-total-height) - 56px - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 56px - 48px);
-            min-height: 0;
-        }
-        
-        /* PWA全屏模式：好友页面使用dvh，只减去底部导航栏 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .main-content.friend-page {
-                /* padding-top 已预留导航栏和搜索栏空间，只需要减去底部导航栏 */
-                height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-                max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-            }
-        }
-        
-        .is-pwa .main-content.friend-page,
-        .is-standalone .main-content.friend-page {
-            height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-            max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-        }
+
         
         /* 好友页面激活时显示搜索栏 */
         .friend-page.active ~ .friend-search-bar {
@@ -1186,8 +1059,7 @@
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            /* 正确计算高度：100vh - 顶部导航 - 搜索栏(30px) */
-            height: calc(100vh - var(--nav-total-height) - 30px);
+            /* 正确计算高度：100dvh - 顶部导航 - 搜索栏(30px) */
             height: calc(100dvh - var(--nav-total-height) - 30px);
             min-height: 0;
             padding-bottom: 48px;
@@ -1333,10 +1205,8 @@
             padding: 0;
             margin-top: 0;
             padding-top: 0;
-            padding-bottom: 48px;
-            /* 正确计算高度：100vh - 顶部导航 - 底部导航(48px) */
-            height: calc(100vh - var(--nav-total-height) - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 48px);
+            padding-bottom: 0;
+            /* 由mobile-responsive.css统一处理高度适配 */
             min-height: 0;
             display: flex;
             flex-direction: column;
@@ -1347,13 +1217,7 @@
             display: none;
         }
         
-        /* 普通浏览器模式：动态页面特殊处理 */
-        html:not(.is-pwa):not(.is-standalone) .dynamic-page {
-            /* 正确计算高度 */
-            height: calc(100vh - var(--nav-total-height) - 48px);
-            height: calc(100dvh - var(--nav-total-height) - 48px);
-            min-height: 0;
-        }
+
         
         .dynamic-content {
             flex: 1;
@@ -1494,7 +1358,7 @@
         /* 非PWA模式下，子页面使用实际视口高度，避免底部被浏览器工具栏遮挡 */
         html:not(.is-pwa):not(.is-standalone) .sub-page {
             bottom: auto !important;
-            height: calc(var(--app-height, 100vh) - 48px) !important;
+            height: calc(var(--app-height, 100dvh) - 48px) !important;
         }
         
         /* 缩放模式下，子容器需要反向调整尺寸以正确显示 */

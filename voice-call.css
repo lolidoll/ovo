@@ -11,7 +11,6 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100vh;
     height: 100dvh;
     background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 50%, #ffd5e0 100%);
     z-index: 9999;
@@ -633,7 +632,6 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100vh;
     height: 100dvh;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);

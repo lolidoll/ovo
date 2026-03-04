@@ -33,13 +33,11 @@
     <title>喵机1号</title>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="android-chat-fix.css">
     <link rel="stylesheet" href="fiction-styles-v2.css">
     <link rel="stylesheet" href="fiction-reader.css">
     <link rel="stylesheet" href="fiction-comments.css">
     <link rel="stylesheet" href="moments.css">
     <link rel="stylesheet" href="login.css">
-    <script src="android-chat-fix.js" defer></script>
     <link rel="stylesheet" href="auth-modal.css">
     <link rel="stylesheet" href="api-settings-styles.css">
     <link rel="stylesheet" href="wallet.css">
@@ -325,9 +323,6 @@
     <script src="performance-utils.js" defer></script>
     <script src="chat-render-optimizer.js" defer></script>
     <script src="mobile-performance-optimizer.js" defer></script>
-    <script src="ios-paste-fix.js" defer></script>
-    <script src="ios-input-fix.js" defer></script>
-    <script src="ios-chat-fix.js" defer></script>
     <script src="mobile-touch-fix.js" defer></script>
     <script src="font-manager.js" defer></script>
     <script src="theme-manager.js" defer></script>
@@ -1260,6 +1255,10 @@
                     #moments-page {
                         padding: 0;
                         overflow: hidden;
+                        /* 使用100dvh全屏高度，不包含顶部导航栏 */
+                        height: 100dvh !important;
+                        max-height: 100dvh !important;
+                        min-height: 0;
                     }
                     
                     /* 朋友圈页面不需要顶部导航栏的padding - 抵消app-container的padding-top */
@@ -1269,6 +1268,7 @@
                     
                     #moments-page .sub-content {
                         height: 100%;
+                        overflow-y: auto;
                     }
                     
                     :root {

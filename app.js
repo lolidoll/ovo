@@ -1831,7 +1831,7 @@
                         // 更新顶部导航栏显示
                         const topNav = document.getElementById('top-nav');
                         if (topNav) {
-                            if (tabId === 'dynamic-page' || tabId === 'moments-page') {
+                            if (tabId === 'dynamic-page' || tabId === 'moments-page' || tabId === 'channel-page') {
                                 topNav.style.display = 'none';
                                 console.log('📱 隐藏顶部导航栏');
                             } else {

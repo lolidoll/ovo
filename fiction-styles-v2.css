@@ -46,7 +46,7 @@
   
   .fiction-container {
     top: calc(50px + env(safe-area-inset-top));
-    height: calc(100vh - 50px - env(safe-area-inset-top) - 60px - env(safe-area-inset-bottom));
+    height: calc(100dvh - 50px - env(safe-area-inset-top) - 60px - env(safe-area-inset-bottom));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
