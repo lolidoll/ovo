@@ -8,11 +8,17 @@ const MessageBackgroundManager = {
     backgroundImages: [],
     currentBackgroundId: null,
     db: null,
+    initialized: false,
     
     // 初始化
     async init() {
         try {
             console.log('🔄 消息背景管理器初始化...');
+            if (this.initialized) {
+                console.log('✅ 消息背景管理器已初始化');
+                return;
+            }
+            
             await this.initIndexedDB();
             console.log('✅ IndexedDB 初始化完成');
             
@@ -21,6 +27,11 @@ const MessageBackgroundManager = {
             
             await this.applyStoredBackground();
             console.log('✅ 消息背景管理器初始化成功');
+            
+            this.initialized = true;
+            
+            // 添加页面加载事件监听，以便在页面切换时重新应用背景
+            this.addPageLoadListener();
         } catch (error) {
             console.error('❌ 消息背景管理器初始化失败:', error);
         }
@@ -184,6 +195,43 @@ const MessageBackgroundManager = {
         }
     },
     
+    // 添加页面加载监听器
+    addPageLoadListener() {
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📱 页面隐藏，暂停背景应用');
+            } else {
+                console.log('📱 页面显示，重新应用背景');
+                setTimeout(() => {
+                    this.applyStoredBackground();
+                }, 500);
+            }
+        });
+        
+        // 监听导航变化
+        if (window.history) {
+            window.addEventListener('popstate', () => {
+                console.log('🔄 导航变化，重新应用背景');
+                setTimeout(() => {
+                    this.applyStoredBackground();
+                }, 500);
+            });
+        }
+        
+        // 监听路由变化（如果存在）
+        if (window.app && window.app.navigateToPage) {
+            const originalNavigate = window.app.navigateToPage;
+            window.app.navigateToPage = function(page) {
+                console.log('📱 页面切换到:', page);
+                setTimeout(() => {
+                    this.applyStoredBackground();
+                }.bind(this), 1000);
+                return originalNavigate.call(this, page);
+            };
+        }
+    },
+    
     // 应用背景图到页面
     applyBackground(background) {
         try {
@@ -265,26 +313,16 @@ const MessageBackgroundManager = {
                     chatToolbar.style.backgroundRepeat = 'no-repeat';
                     chatToolbar.style.backgroundAttachment = 'fixed';
                 }
-            
-            console.log('✅ 背景图应用完成');
-            this.currentBackgroundId = background.id;
+                
+                console.log('✅ 背景图应用完成');
+                this.currentBackgroundId = background.id;
+            }
         } catch (error) {
             console.error('❌ 应用背景图失败:', error);
         }
     },
-            
-            const chatInputArea = document.querySelector('.chat-input-area');
-            if (chatInputArea) {
-                chatInputArea.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(${background.imageData})`;
-                chatInputArea.style.backgroundSize = 'auto, cover';
-                chatInputArea.style.backgroundPosition = 'center';
-                chatInputArea.style.backgroundRepeat = 'no-repeat';
-                chatInputArea.style.backgroundAttachment = 'fixed';
-            }
-        }
-        
-        this.currentBackgroundId = background.id;
-    },
+    
+    // 其他方法...
     
     // 清除背景图
     clearBackground() {

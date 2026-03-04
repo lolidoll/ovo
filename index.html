@@ -730,7 +730,7 @@
         <!-- 消息页面搜索栏 -->
         <div class="search-bar msg-search-bar" id="msg-search-bar">
             <div class="search-wrapper">
-                <input type="text" class="search-input" placeholder="搜索" id="search-input-msg">
+                <input type="text" class="search-input" placeholder="" id="search-input-msg">
             </div>
         </div>
 
@@ -752,7 +752,7 @@
         <!-- 好友页面搜索栏 -->
         <div class="search-bar friend-search-bar" id="friend-search-bar" style="display: none;">
             <div class="search-wrapper">
-                <input type="text" class="search-input" placeholder="搜索好友" id="search-input-friend">
+                <input type="text" class="search-input" placeholder="" id="search-input-friend">
             </div>
         </div>
 
@@ -1255,10 +1255,10 @@
                     #moments-page {
                         padding: 0;
                         overflow: hidden;
-                        /* 使用100dvh全屏高度，不包含顶部导航栏 */
-                        height: 100dvh !important;
-                        max-height: 100dvh !important;
-                        min-height: 0;
+                        /* 使用100dvh全屏高度，不包含顶部导航栏，但要减去底部栏 */
+                        height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+                        max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
+                        min-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
                     }
                     
                     /* 朋友圈页面不需要顶部导航栏的padding - 抵消app-container的padding-top */
@@ -1269,6 +1269,22 @@
                     #moments-page .sub-content {
                         height: 100%;
                         overflow-y: auto;
+                    }
+                    
+                    /* PWA全屏模式：朋友圈页面也考虑底部栏高度 */
+                    @media (display-mode: fullscreen), (display-mode: standalone) {
+                        #moments-page {
+                            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+                            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+                            min-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+                        }
+                    }
+                    
+                    .is-pwa #moments-page,
+                    .is-standalone #moments-page {
+                        height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+                        max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
+                        min-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
                     }
                     
                     :root {
