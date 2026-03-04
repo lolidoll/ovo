@@ -18,7 +18,8 @@
 }
 
 /* 确保聊天区域支持背景图 */
-.chat-area {
+.chat-area,
+.msg-page {
     position: relative;
     overflow: hidden;
 }
@@ -34,6 +35,7 @@
 .chat-nav {
     background-attachment: fixed;
     background-repeat: no-repeat;
+    position: relative;
 }
 
 /* 底部工具栏背景配置 */
@@ -41,6 +43,25 @@
 .chat-input-area {
     background-attachment: fixed;
     background-repeat: no-repeat;
+    position: relative;
+}
+
+/* 确保内容在背景之上 */
+.chat-content,
+.message-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* 导航栏遮罩层 */
+.nav-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 1;
 }
 
 /* 响应式设计 - 移动端调整 */
@@ -48,6 +69,17 @@
     .message-bg-container,
     .chat-nav,
     .chat-toolbar,
+    .chat-input-area {
+        background-attachment: scroll;
+    }
+}
+
+/* 处理PWA全屏模式 */
+@media (display-mode: fullscreen), (display-mode: standalone) {
+    .message-bg-container {
+        background-attachment: scroll;
+    }
+}
     .chat-input-area {
         background-attachment: scroll;
     }

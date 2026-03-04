@@ -7,35 +7,55 @@ const MessageBackgroundManagerUI = {
     
     // 打开消息背景管理器
     open() {
-        let page = document.getElementById('message-background-manager-page');
-        if (!page) {
-            page = document.createElement('div');
-            page.id = 'message-background-manager-page';
-            page.className = 'sub-page';
-            document.getElementById('app-container').appendChild(page);
-        }
+        console.log('🔍 打开消息背景管理器UI');
         
-        const currentBg = MessageBackgroundManager.currentBackgroundId;
-        const backgrounds = MessageBackgroundManager.getBackgrounds();
-        
-        let backgroundsHTML = '';
-        if (backgrounds && backgrounds.length > 0) {
-            backgroundsHTML = backgrounds.map(bg => `
-                <div class="bg-item ${bg.id === currentBg ? 'active' : ''}" data-id="${bg.id}">
-                    <div class="bg-preview" style="background-image: url(${bg.imageData}); background-size: cover; background-position: center;"></div>
-                    <div class="bg-info">
-                        <div class="bg-name">${bg.name}</div>
-                        <div class="bg-size">${bg.size || '未知'}</div>
+        try {
+            // 检查依赖
+            if (!window.MessageBackgroundManager) {
+                console.error('❌ MessageBackgroundManager 未加载');
+                this.showError('消息背景管理器加载失败，请刷新页面');
+                return;
+            }
+            
+            // 移除页面检查限制 - 允许在任何页面管理背景图
+            // 背景图设置会应用到消息页面，即使当前不在聊天页面也能设置
+            console.log('✅ 依赖检查通过，准备创建/获取页面');
+            
+            let page = document.getElementById('message-background-manager-page');
+            if (!page) {
+                console.log('📝 创建新的消息背景管理器页面');
+                page = document.createElement('div');
+                page.id = 'message-background-manager-page';
+                page.className = 'sub-page';
+                document.getElementById('app-container').appendChild(page);
+            } else {
+                console.log('📝 使用已存在的消息背景管理器页面');
+            }
+            
+            const currentBg = MessageBackgroundManager.currentBackgroundId;
+            const backgrounds = MessageBackgroundManager.getBackgrounds();
+            
+            console.log('当前背景ID:', currentBg);
+            console.log('背景图列表:', backgrounds);
+            
+            let backgroundsHTML = '';
+            if (backgrounds && backgrounds.length > 0) {
+                backgroundsHTML = backgrounds.map(bg => `
+                    <div class="bg-item ${bg.id === currentBg ? 'active' : ''}" data-id="${bg.id}">
+                        <div class="bg-preview" style="background-image: url(${bg.imageData}); background-size: cover; background-position: center;"></div>
+                        <div class="bg-info">
+                            <div class="bg-name">${bg.name}</div>
+                            <div class="bg-size">${bg.size || '未知'}</div>
+                        </div>
+                        <div class="bg-actions">
+                            <button class="bg-apply-btn" data-id="${bg.id}">应用</button>
+                            <button class="bg-delete-btn" data-id="${bg.id}">删除</button>
+                        </div>
                     </div>
-                    <div class="bg-actions">
-                        <button class="bg-apply-btn" data-id="${bg.id}">应用</button>
-                        <button class="bg-delete-btn" data-id="${bg.id}">删除</button>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            backgroundsHTML = '<div class="no-backgrounds">暂无背景图，请上传一张</div>';
-        }
+                `).join('');
+            } else {
+                backgroundsHTML = '<div class="no-backgrounds">暂无背景图，请上传一张</div>';
+            }
         
         page.innerHTML = `
             <div class="sub-nav">
@@ -47,6 +67,9 @@ const MessageBackgroundManagerUI = {
             </div>
             <div class="sub-content" style="padding:0;background:#f5f5f7;overflow-y:auto;">
                 <div class="message-background-container">
+                    <!-- 错误提示区域 -->
+                    <div id="error-message" class="error-message" style="display: none;"></div>
+                    
                     <!-- 上传区域 -->
                     <div class="upload-section">
                         <div class="upload-title">上传背景图</div>
@@ -267,6 +290,35 @@ const MessageBackgroundManagerUI = {
                     font-size: 14px;
                 }
                 
+                /* 错误消息样式 */
+                .error-message {
+                    background: rgba(255, 59, 48, 0.1);
+                    border: 1px solid rgba(255, 59, 48, 0.3);
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin-bottom: 16px;
+                    color: #FF3B30;
+                    font-size: 14px;
+                    text-align: center;
+                    display: none;
+                }
+                
+                .error-message.show {
+                    display: block;
+                    animation: slideIn 0.3s ease-out;
+                }
+                
+                @keyframes slideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
                 /* 设置选项 */
                 .settings-section {
                     display: flex;
@@ -355,156 +407,224 @@ const MessageBackgroundManagerUI = {
         // 绑定事件
         this.bindEvents(page);
         
+        // 显示页面（添加open class）
+        console.log('🔍 准备添加open class到页面');
+        page.classList.add('open');
+        console.log('✅ open class已添加，页面应该可见');
+        
         // 更新显示
-        document.getElementById('app-container').style.display = 'block';
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) {
+            appContainer.style.display = 'block';
+        } else {
+            console.error('❌ 找不到app-container');
+        }
+        
+        console.log('✅ 消息背景管理器UI已打开，页面className:', page.className);
+        } catch (error) {
+            console.error('❌ 打开消息背景管理器时发生错误:', error);
+            console.error('错误堆栈:', error.stack);
+            if (window.showToast) {
+                window.showToast('打开消息背景管理器时发生错误: ' + error.message);
+            }
+        }
+    },
+    
+    // 显示错误信息
+    showError(message, duration = 3000) {
+        const errorDiv = document.getElementById('error-message');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.className = 'error-message show';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                errorDiv.className = 'error-message';
+            }, duration);
+        } else if (window.showToast) {
+            window.showToast(message);
+        }
+    },
+    
+    // 显示成功信息
+    showSuccess(message, duration = 2000) {
+        if (window.showToast) {
+            window.showToast(message);
+        }
     },
     
     // 绑定事件
     bindEvents(page) {
-        // 返回按钮
-        const backBtn = page.querySelector('#message-background-back-btn');
-        if (backBtn) {
-            backBtn.onclick = () => {
-                page.remove();
-            };
-        }
-        
-        // 上传区域
-        const uploadArea = page.querySelector('#upload-area');
-        const fileInput = page.querySelector('#background-file-input');
-        
-        if (uploadArea && fileInput) {
-            uploadArea.onclick = () => fileInput.click();
+        try {
+            // 返回按钮
+            const backBtn = page.querySelector('#message-background-back-btn');
+            if (backBtn) {
+                backBtn.onclick = () => {
+                    page.classList.remove('open');
+                    console.log('🔙 消息背景管理器已关闭');
+                };
+            }
             
-            // 拖拽上传
-            uploadArea.ondragover = (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.3)';
-                uploadArea.style.background = 'rgba(255, 255, 255, 1)';
-            };
+            // 上传区域
+            const uploadArea = page.querySelector('#upload-area');
+            const fileInput = page.querySelector('#background-file-input');
             
-            uploadArea.ondragleave = () => {
-                uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.1)';
-                uploadArea.style.background = 'rgba(255, 255, 255, 0.9)';
-            };
-            
-            uploadArea.ondrop = (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.1)';
-                uploadArea.style.background = 'rgba(255, 255, 255, 0.9)';
+            if (uploadArea && fileInput) {
+                uploadArea.onclick = () => fileInput.click();
                 
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    this.handleFileSelect(files[0]);
-                }
-            };
+                // 拖拽上传
+                uploadArea.ondragover = (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.3)';
+                    uploadArea.style.background = 'rgba(255, 255, 255, 1)';
+                };
+                
+                uploadArea.ondragleave = () => {
+                    uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+                    uploadArea.style.background = 'rgba(255, 255, 255, 0.9)';
+                };
+                
+                uploadArea.ondrop = (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+                    uploadArea.style.background = 'rgba(255, 255, 255, 0.9)';
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFileSelect(files[0]);
+                    }
+                };
+                
+                fileInput.onchange = () => {
+                    if (fileInput.files.length > 0) {
+                        this.handleFileSelect(fileInput.files[0]);
+                    }
+                };
+            }
             
-            fileInput.onchange = () => {
-                if (fileInput.files.length > 0) {
-                    this.handleFileSelect(fileInput.files[0]);
-                }
-            };
-        }
-        
-        // 应用背景按钮
-        const applyBtns = page.querySelectorAll('.bg-apply-btn');
-        applyBtns.forEach(btn => {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const bgId = btn.dataset.id;
-                const bg = MessageBackgroundManager.getBackground(bgId);
-                if (bg) {
-                    MessageBackgroundManager.applyBackground(bg);
-                    MessageBackgroundManager.saveCurrentBackgroundId(bgId);
-                    // 更新UI
-                    this.open();
-                    if (window.showToast) {
-                        window.showToast('背景已应用');
-                    }
-                }
-            };
-        });
-        
-        // 删除背景按钮
-        const deleteBtns = page.querySelectorAll('.bg-delete-btn');
-        deleteBtns.forEach(btn => {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const bgId = btn.dataset.id;
-                if (confirm('确定要删除这张背景图吗？')) {
-                    MessageBackgroundManager.deleteBackground(bgId).then(() => {
-                        this.open();
-                        if (window.showToast) {
-                            window.showToast('背景已删除');
+            // 应用背景按钮
+            const applyBtns = page.querySelectorAll('.bg-apply-btn');
+            applyBtns.forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const bgId = btn.dataset.id;
+                    const bg = MessageBackgroundManager.getBackground(bgId);
+                    if (bg) {
+                        try {
+                            MessageBackgroundManager.applyBackground(bg);
+                            MessageBackgroundManager.saveCurrentBackgroundId(bgId);
+                            this.showSuccess('背景已应用');
+                            this.open(); // 刷新列表
+                        } catch (error) {
+                            console.error('应用背景失败:', error);
+                            this.showError('应用背景失败: ' + error.message);
                         }
-                    });
-                }
-            };
-        });
-        
-        // 清除背景按钮
-        const clearBtn = page.querySelector('#clear-background-btn');
-        if (clearBtn) {
-            clearBtn.onclick = () => {
-                if (confirm('确定要清除所有背景设置吗？')) {
-                    MessageBackgroundManager.clearBackground();
-                    MessageBackgroundManager.saveCurrentBackgroundId(null);
-                    if (window.showToast) {
-                        window.showToast('背景已清除');
                     }
-                }
-            };
+                };
+            });
+            
+            // 删除背景按钮
+            const deleteBtns = page.querySelectorAll('.bg-delete-btn');
+            deleteBtns.forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const bgId = btn.dataset.id;
+                    if (confirm('确定要删除这张背景图吗？')) {
+                        MessageBackgroundManager.deleteBackground(bgId)
+                            .then(() => {
+                                this.showSuccess('背景已删除');
+                                this.open(); // 刷新列表
+                            })
+                            .catch(error => {
+                                console.error('删除背景失败:', error);
+                                this.showError('删除背景失败: ' + error.message);
+                            });
+                    }
+                };
+            });
+            
+            // 清除背景按钮
+            const clearBtn = page.querySelector('#clear-background-btn');
+            if (clearBtn) {
+                clearBtn.onclick = () => {
+                    if (confirm('确定要清除所有背景设置吗？')) {
+                        try {
+                            MessageBackgroundManager.clearBackground();
+                            MessageBackgroundManager.saveCurrentBackgroundId(null);
+                            this.showSuccess('背景已清除');
+                            this.open(); // 刷新列表
+                        } catch (error) {
+                            console.error('清除背景失败:', error);
+                            this.showError('清除背景失败: ' + error.message);
+                        }
+                    }
+                };
+            }
+            
+        } catch (error) {
+            console.error('❌ 绑定事件失败:', error);
+            this.showError('界面初始化失败: ' + error.message);
         }
     },
     
     // 处理文件选择
     handleFileSelect(file) {
-        if (!file.type.startsWith('image/')) {
-            if (window.showToast) {
-                window.showToast('请选择图片文件');
+        try {
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                this.showError('请选择图片文件 (JPG, PNG, GIF)');
+                return;
             }
-            return;
-        }
-        
-        if (file.size > 10 * 1024 * 1024) {
-            if (window.showToast) {
-                window.showToast('图片大小不能超过10MB');
+            
+            // 验证文件大小 (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                this.showError('图片大小不能超过10MB');
+                return;
             }
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const backgroundData = {
-                id: MessageBackgroundManager.generateId(),
-                name: file.name,
-                size: this.formatFileSize(file.size),
-                imageData: e.target.result,
-                createdAt: new Date().toISOString(),
-                applyToTopBar: false,
-                applyToBottomBar: false
+            
+            console.log('📁 开始处理文件:', file.name, file.size);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const backgroundData = {
+                        id: MessageBackgroundManager.generateId(),
+                        name: file.name,
+                        size: this.formatFileSize(file.size),
+                        imageData: e.target.result,
+                        createdAt: new Date().toISOString(),
+                        applyToTopBar: false,
+                        applyToBottomBar: false
+                    };
+                    
+                    MessageBackgroundManager.saveBackground(backgroundData)
+                        .then(() => {
+                            this.showSuccess('背景图已保存');
+                            console.log('✅ 背景图保存成功:', backgroundData.name);
+                            this.open(); // 刷新列表
+                        })
+                        .catch(error => {
+                            console.error('保存背景图失败:', error);
+                            this.showError('保存背景图失败: ' + error.message);
+                        });
+                } catch (error) {
+                    console.error('处理图片数据失败:', error);
+                    this.showError('处理图片数据失败');
+                }
             };
             
-            MessageBackgroundManager.saveBackground(backgroundData).then(() => {
-                if (window.showToast) {
-                    window.showToast('背景图已保存');
-                }
-                this.open();
-            }).catch(err => {
-                console.error('保存背景图失败:', err);
-                if (window.showToast) {
-                    window.showToast('保存背景图失败');
-                }
-            });
-        };
-        
-        reader.onerror = () => {
-            if (window.showToast) {
-                window.showToast('读取文件失败');
-            }
-        };
-        
-        reader.readAsDataURL(file);
+            reader.onerror = () => {
+                console.error('读取文件失败');
+                this.showError('读取文件失败');
+            };
+            
+            reader.readAsDataURL(file);
+            
+        } catch (error) {
+            console.error('文件选择处理失败:', error);
+            this.showError('文件处理失败: ' + error.message);
+        }
     },
     
     // 格式化文件大小
@@ -521,19 +641,22 @@ const MessageBackgroundManagerUI = {
 window.MessageBackgroundManagerUI = MessageBackgroundManagerUI;
 console.log('✅ MessageBackgroundManagerUI 已暴露到 window 对象');
 
-// 初始化时验证管理器是否已加载
+// 手动触发UI初始化
+function initMessageBackgroundManagerUI() {
+    console.log('🔄 手动初始化消息背景管理器UI...');
+    // 确保管理器已加载
+    if (window.MessageBackgroundManager) {
+        console.log('✅ 管理器已就绪');
+    } else {
+        console.warn('⚠️ 管理器还未加载');
+    }
+}
+
+// 多种方式触发UI初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        if (!window.MessageBackgroundManager) {
-            console.warn('⚠️ MessageBackgroundManager 还未加载');
-        } else {
-            console.log('✅ MessageBackgroundManagerUI 和 Manager 都已加载');
-        }
+        setTimeout(initMessageBackgroundManagerUI, 200);
     });
 } else {
-    if (!window.MessageBackgroundManager) {
-        console.warn('⚠️ MessageBackgroundManager 还未加载');
-    } else {
-        console.log('✅ MessageBackgroundManagerUI 和 Manager 都已加载');
-    }
+    setTimeout(initMessageBackgroundManagerUI, 200);
 }

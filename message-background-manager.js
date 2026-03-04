@@ -187,12 +187,34 @@ const MessageBackgroundManager = {
                     this.applyBackground(background);
                     console.log('✅ 应用存储的背景图:', background.name);
                 } else {
-                    console.warn('⚠️ 背景图不存在:', backgroundId);
+                    console.warn('⚠️ 背景图不存在:', backgroundId, '，应用默认背景');
+                    this.applyDefaultBackground();
                 }
+            } else {
+                // 没有存储的背景图时，应用默认背景
+                console.log('📋 没有存储的背景图，应用默认背景');
+                this.applyDefaultBackground();
             }
         } catch (error) {
             console.error('❌ 应用存储的背景图失败:', error);
+            console.log('应用默认背景');
+            this.applyDefaultBackground();
         }
+    },
+    
+    // 应用默认背景图
+    applyDefaultBackground() {
+        const defaultBgUrl = 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg';
+        const defaultBg = {
+            id: 'default-background',
+            name: '默认背景',
+            imageData: defaultBgUrl,
+            applyToTopBar: false,
+            applyToBottomBar: false
+        };
+        console.log('🖼️ 应用默认背景图:', defaultBgUrl);
+        this.applyBackground(defaultBg);
+        console.log('✅ 默认背景图已应用');
     },
     
     // 添加页面加载监听器
@@ -225,8 +247,8 @@ const MessageBackgroundManager = {
             window.app.navigateToPage = function(page) {
                 console.log('📱 页面切换到:', page);
                 setTimeout(() => {
-                    this.applyStoredBackground();
-                }.bind(this), 1000);
+                    MessageBackgroundManager.applyStoredBackground();
+                }, 1000);
                 return originalNavigate.call(this, page);
             };
         }
@@ -242,81 +264,160 @@ const MessageBackgroundManager = {
             
             console.log('🎨 开始应用背景图:', background.name);
             
-            // 创建或获取背景容器（应用到消息页面）
-            let bgContainer = document.querySelector('.message-bg-container');
-            if (!bgContainer) {
-                const chatArea = document.querySelector('.chat-area');
-                if (!chatArea) {
-                    console.warn('⚠️ 找不到 .chat-area 元素，消息页面可能还未加载');
-                    return;
-                }
-                
-                console.log('✅ 找到 chat-area，创建背景容器');
-                
-                bgContainer = document.createElement('div');
-                bgContainer.className = 'message-bg-container';
-                bgContainer.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-image: url(${background.imageData});
-                    background-size: cover;
-                    background-position: center;
-                    background-attachment: fixed;
-                    background-repeat: no-repeat;
-                    z-index: 0;
-                    pointer-events: none;
-                `;
-                
-                // 设置chat-area为相对定位以包含背景
-                if (chatArea.style.position !== 'relative' && chatArea.style.position !== 'absolute' && chatArea.style.position !== 'fixed') {
-                    chatArea.style.position = 'relative';
-                }
-                
-                chatArea.insertBefore(bgContainer, chatArea.firstChild);
-                console.log('✅ 背景容器已插入');
-                
-                // 确保所有消息在背景之上
-                const messageList = chatArea.querySelector('.chat-messages, .messages-list');
-                if (messageList) {
-                    messageList.style.position = 'relative';
-                    messageList.style.zIndex = '1';
-                }
-            } else {
-                // 更新已有背景容器
-                console.log('✅ 更新已存在的背景容器');
-                bgContainer.style.backgroundImage = `url(${background.imageData})`;
+            // 检查消息页面是否已加载
+            const msgPage = document.querySelector('.msg-page');
+            const chatArea = document.querySelector('.chat-area');
+            
+            if (!msgPage && !chatArea) {
+                console.warn('⚠️ 消息页面元素未找到，等待页面加载...');
+                // 等待页面加载后重试
+                setTimeout(() => {
+                    this.applyBackground(background);
+                }, 1000);
+                return;
             }
             
-            // 应用到顶部栏（可选）
+            // 使用msg-page优先，如果没有则使用chat-area
+            const targetArea = msgPage || chatArea;
+            console.log('✅ 使用目标区域:', targetArea.className, targetArea.id);
+            
+            // 检查目标区域的背景色
+            const targetAreaStyle = window.getComputedStyle(targetArea);
+            console.log('目标区域背景色:', targetAreaStyle.backgroundColor);
+            console.log('目标区域背景图:', targetAreaStyle.backgroundImage);
+            console.log('目标区域z-index:', targetAreaStyle.zIndex);
+            console.log('目标区域position:', targetAreaStyle.position);
+            
+            // 设置目标区域为透明
+            targetArea.style.backgroundColor = 'transparent';
+            targetArea.style.backgroundImage = 'none';
+            if (targetArea.style.position !== 'relative' && targetArea.style.position !== 'absolute' && targetArea.style.position !== 'fixed') {
+                targetArea.style.position = 'relative';
+            }
+            console.log('✅ 已设置目标区域背景为透明和position为relative');
+            
+            // 先清除旧背景容器（全局查找）
+            const oldContainer = document.querySelector('.message-bg-container');
+            if (oldContainer) {
+                oldContainer.remove();
+                console.log('✅ 旧背景容器已清除');
+            }
+            
+            // 创建背景容器
+            const bgContainer = document.createElement('div');
+            bgContainer.className = 'message-bg-container';
+            bgContainer.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url(${background.imageData});
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+                z-index: 0;
+                pointer-events: none;
+            `;
+            // 插入到msg-page内部，作为第一个子元素
+            targetArea.insertBefore(bgContainer, targetArea.firstChild);
+            console.log('✅ 背景容器已插入到', targetArea.className);
+            console.log('背景图片URL:', background.imageData);
+            
+            // 检查并设置所有子元素的背景色
+            const children = targetArea.children;
+            console.log('目标区域子元素数量:', children.length);
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child.className !== 'message-bg-container') {
+                    const childStyle = window.getComputedStyle(child);
+                    const childBg = childStyle.backgroundColor;
+                    const childZIndex = childStyle.zIndex;
+                    console.log(`子元素 ${i} [${child.className}] - 背景: ${childBg}, z-index: ${childZIndex}`);
+                    
+                    // 设置子元素背景透明（除了背景容器）
+                    if (childBg !== 'rgba(0, 0, 0, 0)' && childBg !== 'transparent') {
+                        child.style.backgroundColor = 'transparent';
+                        console.log(`  -> 已设置 ${child.className} 背景为透明`);
+                    }
+                    
+                    // 确保子元素有z-index
+                    if (childZIndex === 'auto' && child.className !== 'message-bg-container') {
+                        child.style.zIndex = '1';
+                        console.log(`  -> 已设置 ${child.className} z-index为1`);
+                    }
+                    
+                    // 递归设置所有后代元素的背景为透明
+                    const allDescendants = child.querySelectorAll('*');
+                    allDescendants.forEach(desc => {
+                        const descStyle = window.getComputedStyle(desc);
+                        const descBg = descStyle.backgroundColor;
+                        if (descBg !== 'rgba(0, 0, 0, 0)' && descBg !== 'transparent') {
+                            desc.style.backgroundColor = 'transparent';
+                        }
+                    });
+                    console.log(`  -> 已递归设置所有后代元素背景为透明`);
+                }
+            }
+            
+            // 专门处理对话项
+            const msgItems = targetArea.querySelectorAll('.msg-item');
+            console.log(`找到 ${msgItems.length} 个 .msg-item`);
+            msgItems.forEach((item, index) => {
+                item.style.backgroundColor = 'transparent';
+                console.log(`  -> 已设置 msg-item[${index}] 背景为透明`);
+            });
+            
+            // 应用顶部栏背景（如果启用）
             if (background.applyToTopBar) {
                 const chatNav = document.querySelector('.chat-nav');
                 if (chatNav) {
-                    // 创建半透明遮罩效果
-                    chatNav.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(${background.imageData})`;
-                    chatNav.style.backgroundSize = 'auto, cover';
+                    chatNav.style.backgroundImage = `url(${background.imageData})`;
+                    chatNav.style.backgroundSize = 'cover';
                     chatNav.style.backgroundPosition = 'center';
-                    chatNav.style.backgroundRepeat = 'no-repeat';
                     chatNav.style.backgroundAttachment = 'fixed';
+                    chatNav.style.backgroundRepeat = 'no-repeat';
+                    // 添加半透明遮罩确保文字可读
+                    if (!chatNav.querySelector('.nav-overlay')) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'nav-overlay';
+                        overlay.style.cssText = `
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: rgba(0, 0, 0, 0.3);
+                            z-index: 1;
+                        `;
+                        chatNav.appendChild(overlay);
+                    }
                 }
             }
             
-            // 应用到底部栏（可选）
+            // 应用底部栏背景（如果启用）
             if (background.applyToBottomBar) {
                 const chatToolbar = document.querySelector('.chat-toolbar');
-                if (chatToolbar) {
-                    chatToolbar.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url(${background.imageData})`;
-                    chatToolbar.style.backgroundSize = 'auto, cover';
-                    chatToolbar.style.backgroundPosition = 'center';
-                    chatToolbar.style.backgroundRepeat = 'no-repeat';
-                    chatToolbar.style.backgroundAttachment = 'fixed';
-                }
+                const chatInputArea = document.querySelector('.chat-input-area');
+                const bottomBars = [chatToolbar, chatInputArea].filter(Boolean);
                 
-                console.log('✅ 背景图应用完成');
-                this.currentBackgroundId = background.id;
+                bottomBars.forEach(bar => {
+                    if (bar) {
+                        bar.style.backgroundImage = `url(${background.imageData})`;
+                        bar.style.backgroundSize = 'cover';
+                        bar.style.backgroundPosition = 'center';
+                        bar.style.backgroundAttachment = 'fixed';
+                        bar.style.backgroundRepeat = 'no-repeat';
+                    }
+                });
             }
+            
+            this.currentBackgroundId = background.id;
+            console.log('✅ 背景应用完成');
+            
         } catch (error) {
             console.error('❌ 应用背景图失败:', error);
         }
@@ -326,28 +427,57 @@ const MessageBackgroundManager = {
     
     // 清除背景图
     clearBackground() {
-        // 清除背景容器
-        const bgContainer = document.querySelector('.message-bg-container');
-        if (bgContainer) {
-            bgContainer.remove();
+        try {
+            console.log('🧹 开始清除背景图');
+            
+            // 清除消息页面背景
+            const bgContainer = document.querySelector('.message-bg-container');
+            if (bgContainer) {
+                bgContainer.remove();
+                console.log('✅ 消息页面背景容器已清除');
+            }
+            
+            // 清除顶部栏背景
+            const chatNav = document.querySelector('.chat-nav');
+            if (chatNav) {
+                chatNav.style.backgroundImage = 'none';
+                const overlay = chatNav.querySelector('.nav-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+                console.log('✅ 顶部栏背景已清除');
+            }
+            
+            // 清除底部栏背景
+            const chatToolbar = document.querySelector('.chat-toolbar');
+            const chatInputArea = document.querySelector('.chat-input-area');
+            
+            if (chatToolbar) {
+                chatToolbar.style.backgroundImage = 'none';
+                console.log('✅ 底部工具栏背景已清除');
+            }
+            
+            if (chatInputArea) {
+                chatInputArea.style.backgroundImage = 'none';
+                console.log('✅ 输入区域背景已清除');
+            }
+            
+            // 清除其他可能相关的背景元素
+            const allBgElements = document.querySelectorAll('[style*="background-image"]');
+            allBgElements.forEach(element => {
+                const style = element.getAttribute('style');
+                if (style && style.includes('background-image') && !style.includes('url(data:')) {
+                    // 清除外部图片背景，但保留内联样式
+                    element.style.backgroundImage = 'none';
+                }
+            });
+            
+            this.currentBackgroundId = null;
+            console.log('✅ 所有背景设置已清除');
+            
+        } catch (error) {
+            console.error('❌ 清除背景图失败:', error);
         }
-        
-        const chatNav = document.querySelector('.chat-nav');
-        if (chatNav) {
-            chatNav.style.backgroundImage = 'none';
-        }
-        
-        const chatToolbar = document.querySelector('.chat-toolbar');
-        if (chatToolbar) {
-            chatToolbar.style.backgroundImage = 'none';
-        }
-        
-        const chatInputArea = document.querySelector('.chat-input-area');
-        if (chatInputArea) {
-            chatInputArea.style.backgroundImage = 'none';
-        }
-        
-        this.currentBackgroundId = null;
     },
     
     // 获取背景图列表
@@ -370,11 +500,20 @@ const MessageBackgroundManager = {
 window.MessageBackgroundManager = MessageBackgroundManager;
 console.log('✅ MessageBackgroundManager 已暴露到 window 对象');
 
-// 初始化（异步执行）
+// 手动触发初始化
+function initMessageBackgroundManager() {
+    console.log('🔄 手动初始化消息背景管理器...');
+    MessageBackgroundManager.init().catch(error => {
+        console.error('❌ 初始化失败:', error);
+    });
+}
+
+// 多种方式触发初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        MessageBackgroundManager.init().catch(console.error);
+        setTimeout(initMessageBackgroundManager, 100);
     });
 } else {
-    MessageBackgroundManager.init().catch(console.error);
+    // 立即初始化
+    setTimeout(initMessageBackgroundManager, 100);
 }

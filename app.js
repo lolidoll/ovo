@@ -11919,49 +11919,119 @@
             
             // 绑定消息背景按钮
             const messageBackgroundBtn = page.querySelector('#open-message-background');
+            console.log('🔍 查找消息背景按钮:', messageBackgroundBtn);
             if (messageBackgroundBtn) {
                 messageBackgroundBtn.onclick = () => {
+                    console.log('🖱️ 消息背景按钮被点击');
                     openMessageBackgroundManager();
                 };
+                console.log('✅ 消息背景按钮事件已绑定');
+            } else {
+                console.error('❌ 找不到消息背景按钮 #open-message-background');
             }
-            
 
         }
         
         // 打开消息背景管理器
         function openMessageBackgroundManager() {
             console.log('🔍 尝试打开消息背景管理器');
-            
-            // 检查管理器是否已加载，如果未加载则等待
-            if (!window.MessageBackgroundManager) {
-                console.warn('⏳ MessageBackgroundManager 还未加载，等待中...');
-                
-                // 等待管理器加载
-                let waitCount = 0;
-                const waitInterval = setInterval(() => {
-                    waitCount++;
-                    if (window.MessageBackgroundManager && window.MessageBackgroundManagerUI) {
-                        clearInterval(waitInterval);
-                        console.log('✅ 管理器加载完成');
-                        window.MessageBackgroundManagerUI.open();
-                    } else if (waitCount > 50) {
-                        clearInterval(waitInterval);
-                        console.error('❌ 超时：管理器加载失败');
-                        showToast('消息背景管理器加载失败，请刷新页面重试');
-                    }
-                }, 100);
-                return;
-            }
-            
             console.log('MessageBackgroundManager:', !!window.MessageBackgroundManager);
             console.log('MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
             
-            if (window.MessageBackgroundManagerUI) {
-                console.log('✅ 打开消息背景管理器 UI');
-                window.MessageBackgroundManagerUI.open();
-            } else {
-                console.error('❌ MessageBackgroundManagerUI 未加载');
-                showToast('消息背景管理器加载失败（UI 模块未加载）');
+            try {
+                // 立即显示加载提示
+                showToast('正在加载消息背景管理器...', 'info');
+                
+                // 检查管理器是否已加载
+                if (!window.MessageBackgroundManager || !window.MessageBackgroundManagerUI) {
+                    console.warn('⏳ 管理器未加载，尝试加载...');
+                    showToast('正在加载消息背景管理器...', 'info');
+                    
+                    // 获取当前路径
+                    const currentPath = window.location.pathname;
+                    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                    
+                    // 动态加载脚本 - 只加载缺失的模块
+                    const loadScript = (src) => {
+                        return new Promise((resolve, reject) => {
+                            // 如果模块已经存在，直接返回
+                            if (src === 'message-background-manager.js' && window.MessageBackgroundManager) {
+                                console.log(`✅ ${src} 模块已存在，跳过加载`);
+                                resolve();
+                                return;
+                            }
+                            if (src === 'message-background-manager-ui.js' && window.MessageBackgroundManagerUI) {
+                                console.log(`✅ ${src} 模块已存在，跳过加载`);
+                                resolve();
+                                return;
+                            }
+                            const fullSrc = basePath + src + '?t=' + Date.now();
+                            console.log(`📝 加载脚本: ${fullSrc}`);
+                            const script = document.createElement('script');
+                            script.src = fullSrc;
+                            script.async = false;
+                            script.onload = () => {
+                                console.log(`✅ 脚本 ${src} 加载完成`);
+                                setTimeout(() => resolve(), 50);
+                            };
+                            script.onerror = (e) => {
+                                console.error(`❌ 脚本 ${src} 加载失败:`, e);
+                                reject(new Error(`加载 ${src} 失败`));
+                            };
+                            document.head.appendChild(script);
+                        });
+                    };
+                    
+                    loadScript('message-background-manager.js')
+                        .then(() => {
+                            console.log('检查 MessageBackgroundManager:', !!window.MessageBackgroundManager);
+                            return loadScript('message-background-manager-ui.js');
+                        })
+                        .then(() => {
+                            console.log('检查 MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
+                            if (!window.MessageBackgroundManagerUI) {
+                                throw new Error('message-background-manager-ui.js 加载后未导出模块');
+                            }
+                            return new Promise((resolve) => {
+                                let count = 0;
+                                const checkInterval = setInterval(() => {
+                                    count++;
+                                    if (window.MessageBackgroundManagerUI || count >= 10) {
+                                        clearInterval(checkInterval);
+                                        resolve();
+                                    }
+                                }, 50);
+                            });
+                        })
+                        .then(() => {
+                            console.log('✅ 管理器加载完成');
+                            showToast('管理器加载完成', 'success');
+                            window.MessageBackgroundManagerUI.open();
+                        })
+                        .catch(error => {
+                            console.error('❌ 加载失败:', error);
+                            showToast('消息背景管理器加载失败: ' + error.message, 'error');
+                        });
+                    return;
+                }
+                
+                console.log('MessageBackgroundManager:', !!window.MessageBackgroundManager);
+                console.log('MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
+                
+                // 移除页面检查限制 - 允许在任何页面管理背景图
+                
+                if (window.MessageBackgroundManagerUI) {
+                    console.log('✅ 打开消息背景管理器 UI');
+                    showToast('正在打开消息背景管理器...', 'info');
+                    window.MessageBackgroundManagerUI.open();
+                } else {
+                    console.error('❌ MessageBackgroundManagerUI 未加载');
+                    showToast('消息背景管理器加载失败（UI 模块未加载）', 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ 打开消息背景管理器时发生异常:', error);
+                showToast('打开消息背景管理器时发生错误: ' + error.message, 'error');
             }
         }
         
