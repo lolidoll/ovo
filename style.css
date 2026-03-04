@@ -28,10 +28,21 @@
             --nav-safe-top: 0px;
             --nav-total-height: calc(var(--nav-height) + var(--nav-safe-top));
             --page-scale: 1;
-            --safe-area-inset-top: env(safe-area-inset-top);
-            --safe-area-inset-bottom: env(safe-area-inset-bottom);
-            --safe-area-inset-left: env(safe-area-inset-left);
-            --safe-area-inset-right: env(safe-area-inset-right);
+            /* 安全区域默认值设为0px，避免env()未加载时的计算错误 */
+            --safe-area-inset-top: 0px;
+            --safe-area-inset-bottom: 0px;
+            --safe-area-inset-left: 0px;
+            --safe-area-inset-right: 0px;
+        }
+        
+        /* 支持env()的浏览器，优先使用env()值 */
+        @supports (padding: env(safe-area-inset-top)) {
+            :root {
+                --safe-area-inset-top: env(safe-area-inset-top);
+                --safe-area-inset-bottom: env(safe-area-inset-bottom);
+                --safe-area-inset-left: env(safe-area-inset-left);
+                --safe-area-inset-right: env(safe-area-inset-right);
+            }
         }
         
         /* 等比缩放 - 改为在容器层面实现，避免全局缩放导致的布局问题 */
@@ -61,6 +72,20 @@
         /* iOS PWA 顶部安全区（仅全屏/桌面模式） */
         .ios-standalone {
             --nav-safe-top: var(--safe-area-inset-top);
+        }
+        
+        /* PWA模式：确保nav-safe-top使用安全区域值 */
+        @media (display-mode: fullscreen), (display-mode: standalone) {
+            :root {
+                --nav-safe-top: var(--safe-area-inset-top);
+                --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
+            }
+        }
+        
+        .is-pwa,
+        .is-standalone {
+            --nav-safe-top: var(--safe-area-inset-top);
+            --nav-total-height: calc(var(--nav-height) + var(--safe-area-inset-top));
         }
 
         * {
