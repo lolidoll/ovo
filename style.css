@@ -70,33 +70,6 @@
                 --safe-area-inset-right: env(safe-area-inset-right);
             }
         }
-        
-        /* ==================== 安卓专用适配 ==================== */
-        /* 安卓不支持env()的兜底：由JS动态设置，这里提供默认值 */
-        @supports not (padding: env(safe-area-inset-top)) {
-            :root {
-                /* 安卓状态栏默认高度，会被JS覆盖 */
-                --safe-area-inset-top: 0px;
-                --safe-area-inset-bottom: 0px;
-            }
-        }
-        
-        /* 安卓微信浏览器特殊处理 */
-        :root[data-device-type="android"] {
-            --safe-area-inset-top: 0px;
-            --safe-area-inset-bottom: 0px;
-        }
-        
-        /* ==================== iOS专用适配 ==================== */
-        /* iOS PWA全屏：状态栏隐藏，safe-area-inset-top为0 */
-        .is-ios.ios-standalone {
-            --safe-area-inset-top: 0px;
-        }
-        
-        /* iOS普通模式：状态栏显示 */
-        .is-ios:not(.ios-standalone) {
-            /* iOS会自动处理env()，无需手动设置 */
-        }
 
         * {
             margin: 0;
@@ -112,9 +85,6 @@
             -moz-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             text-size-adjust: 100%;
-            /* 全局滚动行为优化 */
-            overscroll-behavior: contain;
-            -webkit-overscroll-behavior: contain;
         }
         
         /* iOS Safari粘贴修复 - 输入框允许文本选择和粘贴 */
@@ -138,9 +108,6 @@
             -moz-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             text-size-adjust: 100%;
-            /* 防止滚动穿透 */
-            overscroll-behavior: contain;
-            -webkit-overscroll-behavior: contain;
         }
         
         html {
@@ -153,9 +120,6 @@
             overflow: hidden;
             -webkit-user-select: none;
             user-select: none;
-            /* 防止iOS弹性滚动导致的滚动穿透 */
-            overscroll-behavior: contain;
-            -webkit-overscroll-behavior: contain;
         }
         
         body {
@@ -256,29 +220,33 @@
             z-index: 100;
         }
         
-        /* PWA全屏模式：top-nav使用sticky替代fixed避免iOS抖动 */
+        /* PWA全屏模式：top-nav fixed定位 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
             .top-nav {
-                position: sticky;
+                position: fixed;
                 top: 0;
-                max-width: 100%;
+                left: 0;
+                right: 0;
+                z-index: 101;
             }
-            /* PWA模式：为main-content添加padding-top补偿 */
+            /* PWA模式：为main-content添加padding-top补偿fixed导航栏 */
             .main-content.active {
-                padding-top: 0; /* sticky定位不需要补偿 */
+                padding-top: var(--nav-total-height);
             }
         }
         
         .is-pwa .top-nav,
         .is-standalone .top-nav {
-            position: sticky;
+            position: fixed;
             top: 0;
-            max-width: 100%;
+            left: 0;
+            right: 0;
+            z-index: 101;
         }
         
         .is-pwa .main-content.active,
         .is-standalone .main-content.active {
-            padding-top: 0;
+            padding-top: var(--nav-total-height);
         }
         
         .user-info {
@@ -858,16 +826,12 @@
         .msg-list {
             flex: 1;
             overflow-y: auto;
-            /* 移除-webkit-overflow-scrolling: touch避免iOS滚动粘滞 */
-            -webkit-overflow-scrolling: auto;
+            -webkit-overflow-scrolling: touch;
             min-height: 0;
-            /* 使用margin-bottom而不是padding-bottom，避免flex布局压缩 */
-            margin-bottom: var(--tab-total-height);
+            /* 使用CSS变量 */
+            padding-bottom: var(--tab-total-height);
             box-sizing: border-box;
             background: transparent;
-            /* 防止滚动穿透 */
-            overscroll-behavior: contain;
-            -webkit-overscroll-behavior: contain;
         }
         
         .empty-state {
@@ -1063,16 +1027,11 @@
         .friend-content {
             flex: 1;
             overflow-y: auto;
-            /* 移除-webkit-overflow-scrolling: touch避免iOS滚动粘滞 */
-            -webkit-overflow-scrolling: auto;
+            -webkit-overflow-scrolling: touch;
             min-height: 0;
-            /* 使用margin-bottom而不是padding-bottom，避免flex布局压缩 */
-            margin-bottom: var(--tab-total-height);
+            padding-bottom: 48px;
             box-sizing: border-box;
             width: 100%;
-            /* 防止滚动穿透 */
-            overscroll-behavior: contain;
-            -webkit-overscroll-behavior: contain;
         }
         
         .friend-group {
@@ -1213,15 +1172,11 @@
         .dynamic-content {
             flex: 1;
             overflow-y: auto;
-            /* 移除-webkit-overflow-scrolling: touch避免iOS滚动粘滞 */
-            -webkit-overflow-scrolling: auto;
+            -webkit-overflow-scrolling: touch;
             padding-top: 10px;
-            margin-bottom: var(--tab-total-height);
+            padding-bottom: var(--tab-total-height);
             min-height: 0;
             box-sizing: border-box;
-            /* 防止滚动穿透 */
-            overscroll-behavior: contain;
-            -webkit-overscroll-behavior: contain;
         }
         
         .func-list {
