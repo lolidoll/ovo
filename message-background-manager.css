@@ -21,7 +21,6 @@
 .chat-area,
 .msg-page {
     position: relative;
-    overflow: hidden;
 }
 
 /* 确保消息列表在背景之上 */
