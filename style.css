@@ -861,8 +861,8 @@
             /* 移除-webkit-overflow-scrolling: touch避免iOS滚动粘滞 */
             -webkit-overflow-scrolling: auto;
             min-height: 0;
-            /* 使用CSS变量 */
-            padding-bottom: var(--tab-total-height);
+            /* 使用margin-bottom而不是padding-bottom，避免flex布局压缩 */
+            margin-bottom: var(--tab-total-height);
             box-sizing: border-box;
             background: transparent;
             /* 防止滚动穿透 */
@@ -1066,8 +1066,8 @@
             /* 移除-webkit-overflow-scrolling: touch避免iOS滚动粘滞 */
             -webkit-overflow-scrolling: auto;
             min-height: 0;
-            /* 使用CSS变量 */
-            padding-bottom: var(--tab-total-height);
+            /* 使用margin-bottom而不是padding-bottom，避免flex布局压缩 */
+            margin-bottom: var(--tab-total-height);
             box-sizing: border-box;
             width: 100%;
             /* 防止滚动穿透 */
@@ -1216,7 +1216,7 @@
             /* 移除-webkit-overflow-scrolling: touch避免iOS滚动粘滞 */
             -webkit-overflow-scrolling: auto;
             padding-top: 10px;
-            padding-bottom: var(--tab-total-height);
+            margin-bottom: var(--tab-total-height);
             min-height: 0;
             box-sizing: border-box;
             /* 防止滚动穿透 */
