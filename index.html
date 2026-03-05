@@ -205,35 +205,55 @@
                 });
             }
             
-            // 所有模式统一使用100dvh适配
-            const universalFixStyle = document.createElement('style');
-            universalFixStyle.id = 'universal-viewport-fix';
-            universalFixStyle.textContent = `
-                /* 统一使用100dvh适配所有设备和浏览器模式 */
-                html {
-                    height: 100dvh !important;
-                    min-height: 100dvh !important;
-                }
+            // 非PWA模式下，注入动态样式修复
+            if (!isPWA) {
+                const fixStyle = document.createElement('style');
+                fixStyle.id = 'non-pwa-viewport-fix';
+                fixStyle.textContent = `
+                    /* 非PWA模式：使用100dvh确保所有元素正确显示 */
+                    html:not(.is-pwa):not(.is-standalone) body {
+                        height: 100dvh;
+                        height: 100vh;
+                    }
 
-                body {
-                    height: 100dvh !important;
-                    min-height: 100dvh !important;
-                    padding-bottom: env(safe-area-inset-bottom) !important;
-                }
+                    html:not(.is-pwa):not(.is-standalone) #app-container {
+                        height: 100dvh;
+                        height: 100vh;
+                    }
+                `;
+                document.head.appendChild(fixStyle);
+            } else {
+                // PWA模式：添加底部安全区域支持
+                const pwaFixStyle = document.createElement('style');
+                pwaFixStyle.id = 'pwa-viewport-fix';
+                pwaFixStyle.textContent = `
+                    /* iOS PWA全屏模式：为body和html添加底部安全区域 */
+                    .is-standalone body,
+                    .is-pwa body {
+                        padding-bottom: env(safe-area-inset-bottom) !important;
+                    }
 
-                #app-container {
-                    height: 100dvh !important;
-                    min-height: 100dvh !important;
-                    max-height: 100dvh !important;
-                    padding-bottom: env(safe-area-inset-bottom) !important;
-                }
+                    .is-standalone #app-container,
+                    .is-pwa #app-container {
+                        padding-bottom: env(safe-area-inset-bottom) !important;
+                    }
 
-                .main-content {
-                    flex: 1 !important;
-                    min-height: 0 !important;
-                }
-            `;
-            document.head.appendChild(universalFixStyle);
+                    /* iOS PWA全屏模式：确保页面内容正确显示 */
+                    .is-standalone html,
+                    .is-pwa html {
+                        height: 100dvh !important;
+                        height: -webkit-fill-available !important;
+                        min-height: 100% !important;
+                    }
+
+                    .is-standalone .main-content,
+                    .is-pwa .main-content {
+                        flex: 1 !important;
+                        min-height: 0 !important;
+                    }
+                `;
+                document.head.appendChild(pwaFixStyle);
+            }
         })();
         
         // 应用保存的页面缩放设置 - 优化版本
