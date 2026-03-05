@@ -237,20 +237,6 @@
                     .is-pwa #app-container {
                         padding-bottom: env(safe-area-inset-bottom) !important;
                     }
-
-                    /* iOS PWA全屏模式：确保页面内容正确显示 */
-                    .is-standalone html,
-                    .is-pwa html {
-                        height: 100dvh !important;
-                        height: -webkit-fill-available !important;
-                        min-height: 100% !important;
-                    }
-
-                    .is-standalone .main-content,
-                    .is-pwa .main-content {
-                        flex: 1 !important;
-                        min-height: 0 !important;
-                    }
                 `;
                 document.head.appendChild(pwaFixStyle);
             }
