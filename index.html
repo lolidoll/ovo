@@ -108,7 +108,7 @@
             const isAndroid = /Android/.test(navigator.userAgent);
             const isEdgeAndroid = isEdge && isAndroid;
             
-            // 检测是否为全屏模式（PWA模式）- 统一检测所有设备
+            // ==================== 增强的PWA模式检测 ====================
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                                  window.matchMedia('(display-mode: fullscreen)').matches ||
                                  window.navigator.standalone === true;
@@ -116,13 +116,56 @@
             // 统一的PWA模式标识 - 用于CSS样式控制
             const isPWA = isStandalone;
             
+            // ==================== 设备类型增强检测 ====================
+            const deviceInfo = {
+                isIOS,
+                isAndroid,
+                isEdge,
+                isWeChat: /MicroMessenger/.test(navigator.userAgent),
+                isQQBrowser: /QQBrowser/.test(navigator.userAgent),
+                isUCBrowser: /UCBrowser/.test(navigator.userAgent),
+                isMiuiBrowser: /MiuiBrowser/.test(navigator.userAgent),
+                isHuaweiBrowser: /HuaweiBrowser/.test(navigator.userAgent),
+                isSamsungBrowser: /SamsungBrowser/.test(navigator.userAgent),
+            };
+            
+            // ==================== 动态安全区域检测 ====================
+            function detectSafeArea() {
+                // 创建测试元素检测env()支持
+                const testElem = document.createElement('div');
+                testElem.style.padding = 'env(safe-area-inset-top)';
+                testElem.style.padding = 'max(env(safe-area-inset-top), 0px)';
+                
+                const supportsEnv = CSS.supports('padding', 'env(safe-area-inset-top)') ||
+                                    CSS.supports('padding', 'max(env(safe-area-inset-top), 0px)');
+                
+                // 安卓兜底值（状态栏通常24-25dp，导航栏48dp）
+                const androidDefaults = {
+                    safeAreaTop: deviceInfo.isWeChat ? 0 : 24,
+                    safeAreaBottom: deviceInfo.isWeChat || deviceInfo.isMiuiBrowser ? 48 : 0,
+                };
+                
+                // iOS默认值（由系统自动处理env）
+                const iosDefaults = {
+                    safeAreaTop: isPWA ? 0 : 47, // iOS PWA全屏状态栏隐藏
+                    safeAreaBottom: 34, // iOS底部指示器区域
+                };
+                
+                return {
+                    supportsEnv,
+                    defaults: isIOS ? iosDefaults : androidDefaults,
+                };
+            }
+            
+            const safeAreaInfo = detectSafeArea();
+            
+            // ==================== 增强的视口高度计算 ====================
             function setViewportHeight() {
-                // 获取真实的视口高度 - 优先使用visualViewport (更精准)
+                // 获取真实的视口高度
                 let viewportHeight = window.innerHeight;
                 
-                // 对某些浏览器的特殊处理
+                // 优先使用visualViewport（更精准）
                 if (window.visualViewport) {
-                    // visualViewport更精准，包括地址栏的动态变化
                     viewportHeight = window.visualViewport.height;
                 }
                 
@@ -131,7 +174,7 @@
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
                 document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
                 
-                // 标记设备类型 - 统一的设备标识
+                // ==================== 设备类型标识 ====================
                 if (isIOS) {
                     document.documentElement.classList.add('is-ios');
                 }
@@ -144,23 +187,56 @@
                     document.documentElement.classList.add('is-edge');
                 }
                 
-                // PWA模式统一标识 - 所有设备共用
+                // 浏览器特殊标识
+                if (deviceInfo.isWeChat) document.documentElement.classList.add('is-wechat');
+                if (deviceInfo.isQQBrowser) document.documentElement.classList.add('is-qq-browser');
+                if (deviceInfo.isUCBrowser) document.documentElement.classList.add('is-uc-browser');
+                
+                // ==================== PWA模式标识 ====================
                 if (isPWA) {
                     document.documentElement.classList.add('is-pwa');
                     document.documentElement.classList.add('is-standalone');
                     
-                    // iOS特殊标识（保持兼容性）
                     if (isIOS) {
                         document.documentElement.classList.add('ios-standalone');
+                    } else if (isAndroid) {
+                        document.documentElement.classList.add('android-standalone');
                     }
                 }
                 
+                // ==================== 安全区域动态修正 ====================
+                // 对于不支持env()的安卓浏览器，使用JS设置安全区域变量
+                if (isAndroid && !safeAreaInfo.supportsEnv) {
+                    document.documentElement.style.setProperty('--safe-area-inset-top', `${safeAreaInfo.defaults.safeAreaTop}px`);
+                    document.documentElement.style.setProperty('--safe-area-inset-bottom', `${safeAreaInfo.defaults.safeAreaBottom}px`);
+                }
+                
+                // ==================== 重新计算导航栏和底部栏高度 ====================
+                // 触发CSS变量的重新计算
+                const navHeight = 45;
+                const navSafeTop = isPWA && isIOS ? 0 : (isAndroid && !safeAreaInfo.supportsEnv ? safeAreaInfo.defaults.safeAreaTop : 0);
+                const navTotalHeight = navHeight + navSafeTop;
+                
+                document.documentElement.style.setProperty('--nav-height', `${navHeight}px`);
+                document.documentElement.style.setProperty('--nav-safe-top', `${navSafeTop}px`);
+                document.documentElement.style.setProperty('--nav-total-height', `${navTotalHeight}px`);
+                
+                const tabBarHeight = 48;
+                const tabSafeBottom = isAndroid && !safeAreaInfo.supportsEnv ? safeAreaInfo.defaults.safeAreaBottom : 0;
+                const tabTotalHeight = tabBarHeight + tabSafeBottom;
+                
+                document.documentElement.style.setProperty('--tab-bar-height', `${tabBarHeight}px`);
+                document.documentElement.style.setProperty('--tab-safe-bottom', `${tabSafeBottom}px`);
+                document.documentElement.style.setProperty('--tab-total-height', `${tabTotalHeight}px`);
+                
                 // 标记适配模式
                 document.documentElement.setAttribute('data-adapt-mode', adaptMode);
+                document.documentElement.setAttribute('data-device-type', isIOS ? 'ios' : (isAndroid ? 'android' : 'other'));
                 
                 // 调试日志
                 if (window.__DEBUG_VIEWPORT__) {
                     console.log(`[Viewport] innerHeight: ${window.innerHeight}, visualViewport: ${window.visualViewport?.height || 'N/A'}, vh: ${vh}, isPWA: ${isPWA}`);
+                    console.log(`[SafeArea] supportsEnv: ${safeAreaInfo.supportsEnv}, navTotalHeight: ${navTotalHeight}, tabTotalHeight: ${tabTotalHeight}`);
                 }
             }
             
