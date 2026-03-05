@@ -48,116 +48,6 @@
             --safe-area-inset-bottom: 0px;
             --safe-area-inset-left: 0px;
             --safe-area-inset-right: 0px;
-            
-            /* ==================== PWA模式变量 ==================== */
-            --pwa-nav-height: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
-            --pwa-tab-height: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
-            --pwa-content-height: calc(100dvh - var(--pwa-nav-height) - var(--pwa-tab-height));
-        }
-        
-        /* ==================== PWA全屏模式适配 ==================== */
-        /* 检测PWA模式并添加相应类 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            :root {
-                --safe-area-inset-top: env(safe-area-inset-top, 0px);
-                --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-                --safe-area-inset-left: env(safe-area-inset-left, 0px);
-                --safe-area-inset-right: env(safe-area-inset-right, 0px);
-            }
-            
-            html {
-                height: 100dvh;
-                overflow: hidden;
-            }
-            
-            body {
-                height: 100dvh;
-                overflow: hidden;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-            }
-            
-            #app-container {
-                height: 100dvh;
-                overflow: hidden;
-                padding-top: var(--pwa-nav-height);
-                padding-bottom: var(--pwa-tab-height);
-            }
-            
-            /* PWA模式下msg-page和friend-page的特殊处理 */
-            .msg-page,
-            .friend-page {
-                height: 100%;
-                min-height: 0;
-            }
-            
-            .msg-list,
-            .friend-content {
-                height: var(--pwa-content-height);
-                min-height: 0;
-                padding: 0;
-            }
-        }
-        
-        /* 通过JavaScript检测PWA模式 */
-        .is-pwa,
-        .is-standalone {
-            --safe-area-inset-top: env(safe-area-inset-top, 0px);
-            --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-            --safe-area-inset-left: env(safe-area-inset-left, 0px);
-            --safe-area-inset-right: env(safe-area-inset-right, 0px);
-        }
-        
-        .is-pwa #app-container,
-        .is-standalone #app-container {
-            height: 100dvh;
-            overflow: hidden;
-            padding-top: var(--pwa-nav-height);
-            padding-bottom: var(--pwa-tab-height);
-        }
-        
-        /* 不同PWA状态下的样式 */
-        .is-pwa .top-nav,
-        .is-standalone .top-nav,
-        [data-display-mode="fullscreen"] .top-nav,
-        [data-display-mode="standalone"] .top-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 101;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-        }
-        
-        .is-pwa .tab-bar,
-        .is-standalone .tab-bar,
-        [data-display-mode="fullscreen"] .tab-bar,
-        [data-display-mode="standalone"] .tab-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 101;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
-        }
-        
-        /* PWA模式下的内容区域补偿 */
-        .is-pwa .msg-page.active,
-        .is-standalone .msg-page.active,
-        [data-display-mode="fullscreen"] .msg-page.active,
-        [data-display-mode="standalone"] .msg-page.active,
-        .is-pwa .friend-page.active,
-        .is-standalone .friend-page.active,
-        [data-display-mode="fullscreen"] .friend-page.active,
-        [data-display-mode="standalone"] .friend-page.active {
-            padding-top: var(--pwa-nav-height);
-            padding-bottom: var(--pwa-tab-height);
-            box-sizing: border-box;
-            height: 100dvh;
-        }
         }
         
         /* ==================== 安全区域能力检测 ==================== */
@@ -220,165 +110,72 @@
             text-size-adjust: 100%;
         }
         
+        /* ==================== HTML 根元素 ==================== */
         html {
             width: 100%;
             height: 100%;
-            /* dvh降级: 优先使用dvh，不支持则使用vh和-webkit-fill-available */
+            /* 动态视口高度，优先级最高 */
             height: 100dvh;
+            /* 降级：普通视口高度 */
             height: 100vh;
+            /* 再次降级：填充可用空间 */
             height: -webkit-fill-available;
             overflow: hidden;
             -webkit-user-select: none;
             user-select: none;
         }
         
+        /* ==================== BODY 基础样式 ==================== */
         body {
             width: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;
+            /* 核心Flex垂直布局 */
             display: flex;
             flex-direction: column;
-            /* 统一使用100%高度，避免重复计算 */
+            /* 高度继承自html */
             height: 100%;
             height: -webkit-fill-available;
+            /* 最小高度确保布局正常 */
             min-height: 100%;
-        }
-        
-        /* PWA模式：body添加底部安全区域（仅一次） */
-        .is-pwa body,
-        .is-standalone body {
-            padding-bottom: var(--safe-area-inset-bottom);
-        }
-        
-        /* ==================== 等比缩放 ==================== */
-        #app-container.page-scaled {
-            transform: scale(var(--page-scale));
-            transform-origin: 0 0;
-            width: calc(100vw / var(--page-scale));
-            height: calc(100dvh / var(--page-scale));
-            overflow: hidden;
-        }
-        
-        html.page-scaled {
-            width: 100vw;
-            height: 100dvh;
-            overflow: visible;
-        }
-        
-        /* ==================== 应用容器 ==================== */
-        #app-container {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            /* 统一使用100dvh，兼容降级 */
-            height: 100dvh;
-            height: 100vh;
-            height: -webkit-fill-available;
-            min-height: 0;
-            flex: 1;
-            overflow: hidden;
-            /* padding统一处理：左右安全区域，底部安全区域 */
-            padding: 0;
+            /* 安全区域内边距 - 避免内容被刘海/小黑条遮挡 */
             padding-left: var(--safe-area-inset-left);
             padding-right: var(--safe-area-inset-right);
-            padding-bottom: var(--safe-area-inset-bottom);
             box-sizing: border-box;
-            background: transparent;
         }
         
-        /* PWA模式：app-container不需要额外padding，因为body已经加了 */
+        /* PWA全屏模式：body安全区域适配 */
         @media (display-mode: fullscreen), (display-mode: standalone) {
-            #app-container {
-                padding-bottom: 0;
-                padding-top: var(--nav-safe-top);
+            body {
+                /* 顶部安全区域在top-nav中处理，这里只处理左右和底部 */
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
             }
         }
         
-        .is-pwa #app-container,
-        .is-standalone #app-container {
-            padding-bottom: 0;
-            padding-top: var(--nav-safe-top);
+        .is-pwa body,
+        .is-standalone body {
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
         }
         
-        /* 主内容区域 - 适配msg-page和friend-page */
-        .main-content {
-            flex: 1;
-            min-height: 0;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* msg-page和friend-page特殊处理 */
-        .msg-page,
-        .friend-page {
-            height: 100%;
-            min-height: 0;
+        /* ==================== 应用容器 APP-CONTAINER ==================== */
+        #app-container {
+            width: 100%;
+            /* 核心Flex垂直布局 */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-        }
-        
-        /* msg-page内容区域 */
-        .msg-list {
+            /* 占满剩余空间 */
             flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            /* 最小高度0，配合flex:1正常工作 */
             min-height: 0;
-            padding-bottom: var(--tab-total-height);
+            /* 隐藏容器滚动，内容区域单独滚动 */
+            overflow: hidden;
+            /* 重置padding，body已经处理了左右安全区域 */
+            padding: 0;
             box-sizing: border-box;
             background: transparent;
-        }
-        
-        /* friend-page内容区域 */
-        .friend-content {
-            flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            min-height: 0;
-            padding-bottom: var(--tab-total-height);
-            box-sizing: border-box;
-        }
-        
-        /* PWA模式下特殊处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .msg-list,
-            .friend-content {
-                padding-bottom: calc(var(--tab-total-height) + var(--tab-safe-bottom));
-            }
-        }
-        
-        .is-pwa .msg-list,
-        .is-standalone .msg-list,
-        .is-pwa .friend-content,
-        .is-standalone .friend-content {
-            padding-bottom: calc(var(--tab-total-height) + var(--tab-safe-bottom));
-        }
-        
-        /* 解决不同浏览器下的滚动问题 */
-        @supports (overscroll-behavior: none) {
-            .msg-list,
-            .friend-content {
-                overscroll-behavior: none;
-            }
-        }
-        
-        /* iOS Safari 特殊处理 */
-        @supports (-webkit-touch-callout: none) {
-            .msg-list,
-            .friend-content {
-                -webkit-overflow-scrolling: touch;
-                scroll-behavior: smooth;
-            }
-        }
-        
-        /* 安卓浏览器特殊处理 */
-        @supports (scrollbar-width: thin) {
-            .msg-list,
-            .friend-content {
-                scrollbar-width: thin;
-                scrollbar-color: rgba(0,0,0,0.3) transparent;
-            }
         }
 
         .icon-svg {
@@ -391,95 +188,28 @@
             stroke-linejoin: round;
         }
 
-        /* ==================== 顶部导航栏 ==================== */
+        /* ==================== 顶部导航栏 TOP-NAV ==================== */
         .top-nav {
-            /* 高度使用变量，自动包含安全区域 */
-            height: var(--nav-total-height);
-            min-height: var(--nav-total-height);
+            /* 固定高度：基础高度 + 顶部安全区域 */
+            height: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
+            min-height: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
             width: 100%;
             background-color: #ffffff;
             border-bottom: 1px solid transparent;
+            /* Flex水平布局 */
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: space-between;
-            padding: 0 15px;
-            /* 顶部内边距使用安全区域变量 */
-            padding-top: var(--nav-safe-top);
-            padding-left: max(15px, var(--safe-area-inset-left));
-            padding-right: max(15px, var(--safe-area-inset-right));
+            /* 内边距：顶部安全区域 + 左右padding */
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: 0;
+            padding-left: 15px;
+            padding-right: 15px;
+            box-sizing: border-box;
+            /* 固定定位：不参与Flex流，固定在顶部 */
             position: relative;
             flex-shrink: 0;
             z-index: 100;
-        }
-        
-        /* PWA全屏模式：top-nav fixed定位 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .top-nav {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                z-index: 101;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            }
-            /* PWA模式：为main-content添加padding-top补偿fixed导航栏 */
-            .main-content.active {
-                padding-top: var(--nav-total-height);
-            }
-            
-            /* PWA模式下msg-page和friend-page的特殊处理 */
-            .msg-page.active,
-            .friend-page.active {
-                padding-top: var(--nav-total-height);
-                box-sizing: border-box;
-            }
-        }
-        
-        .is-pwa .top-nav,
-        .is-standalone .top-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 101;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        
-        .is-pwa .main-content.active,
-        .is-standalone .main-content.active {
-            padding-top: var(--nav-total-height);
-        }
-        
-        /* PWA模式下msg-page和friend-page的特殊处理 */
-        .is-pwa .msg-page.active,
-        .is-standalone .msg-page.active,
-        .is-pwa .friend-page.active,
-        .is-standalone .friend-page.active {
-            padding-top: var(--nav-total-height);
-            box-sizing: border-box;
-        }
-        
-        /* 解决不同浏览器下的导航栏显示问题 */
-        @supports (backdrop-filter: blur(10px)) {
-            .top-nav {
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-            }
-        }
-        
-        /* iOS Safari 特殊处理 */
-        @supports (-webkit-touch-callout: none) {
-            .top-nav {
-                padding-top: calc(var(--nav-safe-top) + 5px);
-            }
-        }
-        
-        /* 安卓浏览器特殊处理 */
-        @supports (padding: env(safe-area-inset-top)) {
-            .top-nav {
-                padding-top: var(--nav-safe-top);
-            }
         }
         
         .user-info {
@@ -963,46 +693,53 @@
             pointer-events: auto;
         }
 
-/* ==================== 主内容区域 ==================== */
+        /* ==================== 主内容区域 MAIN-CONTENT ==================== */
         .main-content {
+            /* 核心布局：flex:1 让内容区域占满剩余空间 */
             flex: 1;
+            /* 最小高度0，配合flex:1解决部分浏览器高度计算问题 */
+            min-height: 0;
+            /* 开启滚动 */
             overflow-y: auto;
             overflow-x: hidden;
-            display: none;
+            /* 滚动优化 */
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 0;
-            position: relative;
-            min-height: 0;
+            /* Flex垂直布局，内部内容也用flex布局 */
+            display: none;
+            flex-direction: column;
+            /* 宽度100% */
             width: 100%;
+            /* 无额外padding，底部安全区域在tab-bar处理 */
+            padding: 0;
+            box-sizing: border-box;
+            /* 背景透明 */
             background: transparent;
         }
         
+        /* 激活状态显示 */
         .main-content.active {
             display: flex;
-            flex-direction: column;
-            /* 会在PWA模式下被覆盖添加padding-top */
         }
         
-        /* ==================== 搜索栏 ==================== */
+        /* ==================== 搜索栏 SEARCH-BAR ==================== */
         .search-bar {
-            padding: 3px 15px;
-            background-color: #fff;
-            flex-shrink: 0;
-            position: sticky;
-            top: 0;
-            width: 100%;
-            z-index: 50;
-            margin: 0;
-            box-sizing: border-box;
-            border-bottom: 1px solid transparent;
-            /* 使用CSS变量 */
+            /* 固定高度 */
             height: var(--search-bar-height);
             min-height: var(--search-bar-height);
+            /* 宽度100%，左右安全区域在body中已处理 */
+            width: 100%;
+            background-color: #fff;
+            /* Flex水平布局 */
             display: flex;
             align-items: center;
+            padding: 0 15px;
+            /* 不使用sticky，作为flex子项自然定位 */
+            position: relative;
+            box-sizing: border-box;
+            border-bottom: 1px solid transparent;
+            flex-shrink: 0;
+            z-index: 50;
         }
-        
-        /* 搜索栏PWA适配（由mobile-responsive.css统一处理） */
         .search-input {
             width: 100%;
             height: 26px;
@@ -1028,26 +765,29 @@
             align-items: center;
         }
         
-        /* 消息页面 - 统一适配所有模式 */
+        /* ==================== 消息页面 MSG-PAGE ==================== */
         .msg-page {
-            padding: 0;
-            margin: 0;
-            padding-top: 0;
-            padding-bottom: 0;
+            /* Flex垂直布局 */
             display: flex;
             flex-direction: column;
+            /* 占满父容器剩余空间 */
             flex: 1;
+            /* 最小高度0，配合flex:1正常工作 */
             min-height: 0;
+            /* 不在页面级别滚动，让子元素msg-list滚动 */
             overflow: hidden;
+            /* 无padding，全部重置 */
+            padding: 0;
+            margin: 0;
             background: transparent !important;
-            position: relative !important;
+            position: relative;
         }
         
         .msg-page:not(.active) {
             display: none;
         }
         
-        /* 消息页面的搜索栏 */
+        /* 搜索栏显示控制 */
         .msg-search-bar {
             display: block;
         }
@@ -1056,14 +796,21 @@
             display: none;
         }
         
+        /* ==================== 消息列表 MSG-LIST ==================== */
         .msg-list {
+            /* 核心布局：flex:1 让列表占满msg-page剩余空间 */
             flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            /* 最小高度0，配合flex:1正常工作 */
             min-height: 0;
-            /* 使用CSS变量 */
-            padding-bottom: var(--tab-total-height);
+            /* 开启滚动 */
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* 滚动优化 */
+            -webkit-overflow-scrolling: touch;
+            /* 内边距 */
+            padding: 0;
             box-sizing: border-box;
+            /* 背景透明 */
             background: transparent;
         }
         
@@ -1229,24 +976,26 @@
             text-overflow: ellipsis;
         }
 
-/* 好友页面 - 统一适配所有模式 */
+/* ==================== 好友页面 FRIEND-PAGE ==================== */
         .friend-page {
-            padding: 0;
-            margin: 0;
-            padding-top: 0;
-            padding-bottom: 0;
+            /* Flex垂直布局 */
             display: flex;
             flex-direction: column;
+            /* 占满父容器剩余空间 */
             flex: 1;
+            /* 最小高度0，配合flex:1正常工作 */
             min-height: 0;
+            /* 不在页面级别滚动，让子元素friend-content滚动 */
             overflow: hidden;
+            /* 无padding，全部重置 */
+            padding: 0;
+            margin: 0;
+            background: transparent;
         }
         
         .friend-page:not(.active) {
             display: none;
         }
-        
-
         
         /* 好友页面激活时显示搜索栏 */
         .friend-page.active ~ .friend-search-bar {
@@ -1257,14 +1006,22 @@
             display: block;
         }
         
+        /* ==================== 好友内容区域 FRIEND-CONTENT ==================== */
         .friend-content {
+            /* 核心布局：flex:1 让内容占满friend-page剩余空间 */
             flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            /* 最小高度0，配合flex:1正常工作 */
             min-height: 0;
-            padding-bottom: 48px;
-            box-sizing: border-box;
+            /* 开启滚动 */
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* 滚动优化 */
+            -webkit-overflow-scrolling: touch;
+            /* 宽度100% */
             width: 100%;
+            /* 内边距 */
+            padding: 0;
+            box-sizing: border-box;
         }
         
         .friend-group {
@@ -1850,92 +1607,30 @@
             line-height: 1.8;
         }
 
-        /* ==================== 底部标签栏 ==================== */
+        /* ==================== 底部标签栏 TAB-BAR ==================== */
         .tab-bar {
+            /* 固定定位在底部 */
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            /* 使用CSS变量 */
-            height: var(--tab-total-height);
-            min-height: var(--tab-total-height);
+            /* 高度：基础高度 + 底部安全区域 */
+            height: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
+            min-height: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
+            /* 宽度100% */
             width: 100%;
             background-color: #ffffff;
             border-top: 1px solid transparent;
+            /* Flex水平布局 */
             display: flex;
             justify-content: space-around;
             align-items: center;
-            /* 使用CSS变量 */
-            padding-bottom: var(--tab-safe-bottom);
-            padding-left: max(0px, var(--safe-area-inset-left));
-            padding-right: max(0px, var(--safe-area-inset-right));
+            /* 内边距：底部安全区域在height中已处理，左右由body处理 */
+            padding: 0;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            box-sizing: border-box;
             flex-shrink: 0;
             z-index: 100;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
-        }
-        
-        /* PWA全屏模式：tab-bar特殊处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .tab-bar {
-                background: rgba(255, 255, 255, 0.98);
-                box-shadow: 0 -2px 12px rgba(0,0,0,0.12);
-            }
-        }
-        
-        .is-pwa .tab-bar,
-        .is-standalone .tab-bar {
-            background: rgba(255, 255, 255, 0.98);
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.12);
-        }
-        
-        /* 非PWA模式：tab-bar不添加底部安全区域 */
-        html:not(.is-pwa):not(.is-standalone) .tab-bar {
-            padding-bottom: 0;
-        }
-        
-        /* 解决底部栏遮挡问题 - 为msg-page和friend-page添加底部内边距 */
-        .msg-page.active,
-        .friend-page.active {
-            padding-bottom: var(--tab-total-height);
-            box-sizing: border-box;
-        }
-        
-        /* PWA模式下特殊处理 */
-        @media (display-mode: fullscreen), (display-mode: standalone) {
-            .msg-page.active,
-            .friend-page.active {
-                padding-bottom: calc(var(--tab-total-height) + var(--tab-safe-bottom));
-            }
-        }
-        
-        .is-pwa .msg-page.active,
-        .is-standalone .msg-page.active,
-        .is-pwa .friend-page.active,
-        .is-standalone .friend-page.active {
-            padding-bottom: calc(var(--tab-total-height) + var(--tab-safe-bottom));
-        }
-        
-        /* 解决不同浏览器下的底部栏显示问题 */
-        @supports (backdrop-filter: blur(10px)) {
-            .tab-bar {
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-            }
-        }
-        
-        /* iOS Safari 特殊处理 */
-        @supports (-webkit-touch-callout: none) {
-            .tab-bar {
-                padding-bottom: calc(var(--tab-safe-bottom) + 5px);
-            }
-        }
-        
-        /* 安卓浏览器特殊处理 */
-        @supports (padding: env(safe-area-inset-bottom)) {
-            .tab-bar {
-                padding-bottom: var(--tab-safe-bottom);
-            }
         }
         
         .tab-item {
@@ -7715,392 +7410,5 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
         padding-bottom: 48px;
         box-sizing: border-box;
         width: 100%;
-    }
-}
-
-/* ==================== 浏览器特定适配 ==================== */
-
-/* iOS Safari 特定适配 */
-@supports (-webkit-touch-callout: none) {
-    /* iOS Safari 专用样式 */
-    html, body {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-    
-    .msg-page,
-    .friend-page {
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .msg-list,
-    .friend-content {
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-    }
-    
-    /* iOS Safari 输入框优化 */
-    input, textarea {
-        -webkit-appearance: none;
-        appearance: none;
-        border-radius: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-    }
-    
-    /* iOS Safari 导航栏优化 */
-    .top-nav {
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-        background: rgba(255, 255, 255, 0.95);
-    }
-    
-    /* iOS Safari 标签栏优化 */
-    .tab-bar {
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-        background: rgba(255, 255, 255, 0.95);
-    }
-    
-    /* iOS Safari 触摸反馈优化 */
-    .tab-item:active,
-    .msg-item:active,
-    .friend-item:active {
-        background-color: rgba(0, 0, 0, 0.05);
-        -webkit-tap-highlight-color: transparent;
-    }
-}
-
-/* 安卓浏览器特定适配 */
-@supports (padding: env(safe-area-inset-top)) and (not (-webkit-touch-callout: none)) {
-    /* 安卓浏览器专用样式 */
-    html, body {
-        background-color: #ffffff;
-    }
-    
-    #app-container {
-        background-color: #ffffff;
-    }
-    
-    .msg-page,
-    .friend-page {
-        background-color: #ffffff;
-    }
-    
-    /* 安卓浏览器滚动优化 */
-    .msg-list,
-    .friend-content {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
-    }
-    
-    /* 安卓浏览器输入框优化 */
-    input, textarea {
-        -webkit-appearance: none;
-        appearance: none;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 8px 12px;
-        font-size: 14px;
-    }
-    
-    /* 安卓浏览器导航栏优化 */
-    .top-nav {
-        background-color: #ffffff;
-        border-bottom: 1px solid #e0e0e0;
-    }
-    
-    /* 安卓浏览器标签栏优化 */
-    .tab-bar {
-        background-color: #ffffff;
-        border-top: 1px solid #e0e0e0;
-    }
-    
-    /* 安卓浏览器触摸反馈优化 */
-    .tab-item:active,
-    .msg-item:active,
-    .friend-item:active {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-}
-
-/* Chrome浏览器特定适配 */
-@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
-    /* Chrome 浏览器专用样式 */
-    html, body {
-        background-color: #ffffff;
-    }
-    
-    #app-container {
-        background-color: #ffffff;
-    }
-    
-    /* Chrome 导航栏优化 */
-    .top-nav {
-        background-color: #ffffff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Chrome 标签栏优化 */
-    .tab-bar {
-        background-color: #ffffff;
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Chrome 滚动优化 */
-    .msg-list,
-    .friend-content {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
-    }
-}
-
-/* Firefox浏览器特定适配 */
-@supports (-moz-appearance: none) {
-    /* Firefox 浏览器专用样式 */
-    .msg-page,
-    .friend-page {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
-    }
-    
-    /* Firefox 导航栏优化 */
-    .top-nav {
-        background-color: #ffffff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Firefox 标签栏优化 */
-    .tab-bar {
-        background-color: #ffffff;
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
-    }
-}
-
-/* 低版本浏览器降级适配 */
-@supports not (padding: env(safe-area-inset-top)) {
-    /* 旧版浏览器适配 */
-    :root {
-        --safe-area-inset-top: 0px;
-        --safe-area-inset-bottom: 0px;
-        --safe-area-inset-left: 0px;
-        --safe-area-inset-right: 0px;
-    }
-    
-    .msg-page,
-    .friend-page {
-        padding-top: 45px;
-        padding-bottom: 48px;
-    }
-    
-    .msg-list,
-    .friend-content {
-        padding-bottom: 48px;
-    }
-    
-    /* 添加兼容性警告 */
-    .compatibility-warning {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        background: #ff6b6b;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 12px;
-        z-index: 1000;
-        display: none;
-    }
-    
-    .compatibility-warning.show {
-        display: block;
-    }
-}
-
-/* 响应式设计优化 */
-@media (max-width: 375px) {
-    /* 小屏幕设备适配 */
-    .top-nav {
-        padding: 0 10px;
-    }
-    
-    .tab-item {
-        padding: 4px 12px;
-        font-size: 12px;
-    }
-    
-    .msg-avatar,
-    .friend-avatar {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        min-height: 40px;
-    }
-    
-    .msg-title,
-    .friend-name {
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 320px) {
-    /* 超小屏幕设备适配 */
-    .top-nav {
-        padding: 0 8px;
-        height: 40px;
-        min-height: 40px;
-    }
-    
-    .tab-item {
-        padding: 3px 8px;
-        font-size: 11px;
-    }
-    
-    .msg-avatar,
-    .friend-avatar {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-    }
-    
-    .msg-title,
-    .friend-name {
-        font-size: 12px;
-    }
-}
-
-/* 高DPI屏幕优化 */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    /* 高分辨率屏幕优化 */
-    .msg-item,
-    .friend-item {
-        border-bottom-color: rgba(0, 0, 0, 0.1);
-    }
-    
-    .top-nav,
-    .tab-bar {
-        border-bottom-color: rgba(0, 0, 0, 0.1);
-        border-top-color: rgba(0, 0, 0, 0.1);
-    }
-}
-
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-    /* 暗色模式适配 */
-    .top-nav {
-        background-color: #1a1a1a;
-        border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .tab-bar {
-        background-color: #1a1a1a;
-        border-top-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .msg-item {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .friend-item {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .msg-title,
-    .friend-name {
-        color: #ffffff;
-    }
-    
-    .msg-desc,
-    .friend-desc {
-        color: rgba(255, 255, 255, 0.7);
-    }
-    
-    .msg-time,
-    .friend-time {
-        color: rgba(255, 255, 255, 0.5);
-    }
-}
-
-/* 强制暗色模式 */
-.dark-mode .top-nav {
-    background-color: #1a1a1a;
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark-mode .tab-bar {
-    background-color: #1a1a1a;
-    border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark-mode .msg-page,
-.dark-mode .friend-page {
-    background-color: #0a0a0a;
-}
-
-.dark-mode .msg-item {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark-mode .friend-item {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 横屏模式适配 */
-@media (orientation: landscape) {
-    /* 横屏模式适配 */
-    .top-nav {
-        height: 40px;
-        min-height: 40px;
-    }
-    
-    .tab-bar {
-        height: 40px;
-        min-height: 40px;
-    }
-    
-    .msg-page,
-    .friend-page {
-        padding-top: 40px;
-        padding-bottom: 40px;
-    }
-    
-    .msg-list,
-    .friend-content {
-        padding-bottom: 40px;
-    }
-    
-    /* 横屏模式下的滚动优化 */
-    .msg-list,
-    .friend-content {
-        max-height: calc(100vh - 80px);
-    }
-}
-
-/* 全屏模式适配 */
-@media (max-width: 768px) and (max-height: 1024px) {
-    /* 平板设备适配 */
-    .top-nav {
-        height: 50px;
-        min-height: 50px;
-    }
-    
-    .tab-bar {
-        height: 50px;
-        min-height: 50px;
-    }
-    
-    .msg-page,
-    .friend-page {
-        padding-top: 50px;
-        padding-bottom: 50px;
-    }
-    
-    .msg-list,
-    .friend-content {
-        padding-bottom: 50px;
     }
 }
