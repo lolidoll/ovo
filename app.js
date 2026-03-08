@@ -72,11 +72,11 @@
             },
             user: {
                 name: '小喵1号',
+                nickname: '', // 用户网名（社交软件虚拟名称）
                 avatar: '', // 侧边栏头像
                 signature: '这个人很懒',
                 bgImage: '',
                 coins: 0, // 虚拟币余额
-                theme: 'light', // 主题: light(黑白灰简约), pink(白粉色系), dark(夜间模式)
                 visitorCount: 0, // 访客总量
                 personality: '' // 用户人设
             },
@@ -104,6 +104,163 @@
                 hideDelay: 5000  // 5秒后自动隐藏
             }
         };
+
+        function normalizeSingleGreetingText(entity) {
+            if (!entity) return '';
+            return String(entity.greeting || '').trim();
+        }
+
+        function openTextareaExpandEditor(targetTextarea, titleText = '放大编辑') {
+            const sourceTextarea = typeof targetTextarea === 'string'
+                ? document.getElementById(targetTextarea)
+                : targetTextarea;
+
+            if (!sourceTextarea) return;
+
+            const existing = document.getElementById('textarea-expand-editor-overlay');
+            if (existing) {
+                existing.remove();
+            }
+
+            const overlay = document.createElement('div');
+            overlay.id = 'textarea-expand-editor-overlay';
+            overlay.className = 'textarea-expand-editor-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = 'textarea-expand-editor-modal';
+
+            const header = document.createElement('div');
+            header.className = 'textarea-expand-editor-header';
+
+            const title = document.createElement('div');
+            title.className = 'textarea-expand-editor-title';
+            title.textContent = titleText || '放大编辑';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'textarea-expand-editor-close';
+            closeBtn.setAttribute('aria-label', '关闭');
+            closeBtn.textContent = '×';
+
+            header.appendChild(title);
+            header.appendChild(closeBtn);
+
+            const body = document.createElement('div');
+            body.className = 'textarea-expand-editor-body';
+
+            const editor = document.createElement('textarea');
+            editor.className = 'textarea-expand-editor-input';
+            editor.value = sourceTextarea.value || '';
+            editor.placeholder = sourceTextarea.placeholder || '';
+
+            body.appendChild(editor);
+
+            const footer = document.createElement('div');
+            footer.className = 'textarea-expand-editor-actions';
+
+            const meta = document.createElement('div');
+            meta.className = 'textarea-expand-editor-meta';
+
+            const countText = document.createElement('span');
+            countText.className = 'textarea-expand-editor-count';
+
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'textarea-expand-editor-clear';
+            clearBtn.textContent = '清空';
+
+            meta.appendChild(countText);
+            meta.appendChild(clearBtn);
+
+            const actionButtons = document.createElement('div');
+            actionButtons.className = 'textarea-expand-editor-action-buttons';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'textarea-expand-editor-cancel';
+            cancelBtn.textContent = '取消';
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = 'textarea-expand-editor-confirm';
+            confirmBtn.textContent = '应用';
+
+            actionButtons.appendChild(cancelBtn);
+            actionButtons.appendChild(confirmBtn);
+
+            footer.appendChild(meta);
+            footer.appendChild(actionButtons);
+
+            modal.appendChild(header);
+            modal.appendChild(body);
+            modal.appendChild(footer);
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const updateCount = function() {
+                const count = Array.from(editor.value || '').length;
+                countText.textContent = `字数：${count}`;
+                clearBtn.disabled = count === 0;
+            };
+
+            updateCount();
+
+            const escHandler = function(e) {
+                if (e.key === 'Escape') {
+                    closeModal(false);
+                }
+            };
+
+            const closeModal = function(shouldApply) {
+                if (shouldApply) {
+                    sourceTextarea.value = editor.value;
+                    sourceTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    sourceTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                document.removeEventListener('keydown', escHandler);
+                overlay.classList.add('closing');
+                setTimeout(() => {
+                    if (overlay.parentNode) {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                    if (shouldApply) {
+                        sourceTextarea.focus();
+                    }
+                }, 180);
+            };
+
+            closeBtn.addEventListener('click', function() {
+                closeModal(false);
+            });
+            cancelBtn.addEventListener('click', function() {
+                closeModal(false);
+            });
+            confirmBtn.addEventListener('click', function() {
+                closeModal(true);
+            });
+            clearBtn.addEventListener('click', function() {
+                if (!editor.value) return;
+                editor.value = '';
+                updateCount();
+                editor.focus();
+            });
+            editor.addEventListener('input', updateCount);
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeModal(false);
+                }
+            });
+            document.addEventListener('keydown', escHandler);
+
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+                editor.focus();
+                editor.setSelectionRange(editor.value.length, editor.value.length);
+            });
+        }
+
+        window.openTextareaExpandEditor = openTextareaExpandEditor;
 
         
         
@@ -305,6 +462,7 @@
                     if (parsed.user) {
                         AppState.user = {
                             name: parsed.user.hasOwnProperty('name') ? parsed.user.name : AppState.user.name,
+                            nickname: parsed.user.hasOwnProperty('nickname') ? parsed.user.nickname : (AppState.user.nickname || ''),
                             avatar: parsed.user.hasOwnProperty('avatar') ? parsed.user.avatar : AppState.user.avatar,
                             signature: parsed.user.hasOwnProperty('signature') ? parsed.user.signature : AppState.user.signature,
                             bgImage: parsed.user.hasOwnProperty('bgImage') ? parsed.user.bgImage : AppState.user.bgImage,
@@ -418,6 +576,7 @@
                     const cachedState = {
                         user: AppState.user ? {
                             name: AppState.user.name,
+                            nickname: AppState.user.nickname,
                             avatar: AppState.user.avatar,
                             signature: AppState.user.signature,
                             bgImage: AppState.user.bgImage,
@@ -713,6 +872,22 @@
                     const activePage = document.getElementById(currentTab);
                     if (activeTab) activeTab.classList.add('active');
                     if (activePage) activePage.classList.add('active');
+
+                    const topNav = document.getElementById('top-nav');
+                    const appContainer = document.getElementById('app-container');
+                    const shouldHideTopNav = currentTab === 'dynamic-page' || currentTab === 'moments-page' || currentTab === 'channel-page';
+
+                    if (topNav) {
+                        topNav.style.display = shouldHideTopNav ? 'none' : 'flex';
+                    }
+
+                    if (appContainer) {
+                        appContainer.classList.toggle('top-nav-hidden', shouldHideTopNav);
+                    }
+
+                    if (window.MessageBackgroundManager && typeof window.MessageBackgroundManager.setPageTypeByTab === 'function') {
+                        window.MessageBackgroundManager.setPageTypeByTab(currentTab);
+                    }
                 }
             };
 
@@ -831,6 +1006,15 @@
             document.getElementById('add-friend-submit').addEventListener('click', function() {
                 submitAddFriend();
             });
+
+            initAddFriendCardCollapse();
+
+            const friendDescExpandBtn = document.getElementById('friend-desc-expand-btn');
+            if (friendDescExpandBtn) {
+                friendDescExpandBtn.addEventListener('click', function() {
+                    openTextareaExpandEditor('friend-desc-input', '编辑人设描述');
+                });
+            }
 
             // 创建群聊相关
             document.getElementById('create-group-btn').addEventListener('click', function() {
@@ -1422,6 +1606,82 @@
 
 
         // 渲染会话列表 - 移动端性能优化版
+        function getConversationDisplayName(conv) {
+            if (!conv) return '未命名';
+            const remark = (conv.remark || '').trim();
+            const nickname = (conv.charNickname || '').trim();
+            const realName = (conv.name || '').trim();
+            return remark || nickname || realName || '未命名';
+        }
+
+        function getFriendDisplayName(friend) {
+            if (!friend) return '未命名';
+            const remark = (friend.remark || '').trim();
+            const nickname = (friend.charNickname || '').trim();
+            const realName = (friend.name || '').trim();
+            return remark || nickname || realName || '未命名';
+        }
+
+        // 网名变更提示（显示在聊天区中间，类似撤回提示）
+        function addNicknameChangeNotice(convId, modifierRole, targetRole, oldNickname, newNickname, persist = true) {
+            if (!convId) return false;
+
+            const conv = AppState.conversations && AppState.conversations.find(c => c.id === convId);
+            if (!conv) return false;
+
+            const oldName = String(oldNickname || '').trim();
+            const newName = String(newNickname || '').trim();
+            if (oldName === newName) return false;
+
+            const newText = newName ? `“${newName}”` : '清空';
+            const userRealName = String(conv.userNameForChar || (AppState.user && AppState.user.name) || '用户').trim();
+            const roleRealName = String(conv.name || '角色').trim();
+
+            let noticeContent = '';
+            if (modifierRole === 'user' && targetRole === 'user') {
+                // 用户改自己的网名
+                noticeContent = `${userRealName}将网名修改为了${newText}`;
+            } else if (modifierRole === 'user' && targetRole === 'assistant') {
+                // 用户改角色的网名
+                noticeContent = `${userRealName}登录你的账号并将你的网名修改为${newText}`;
+            } else if (modifierRole === 'assistant' && targetRole === 'assistant') {
+                // 角色改自己的网名
+                noticeContent = `${roleRealName}将网名修改为了${newText}`;
+            } else {
+                // 其他兜底场景
+                const modifierText = modifierRole === 'assistant' ? '角色' : (modifierRole === 'user' ? '用户' : '系统');
+                const targetText = targetRole === 'assistant' ? '角色' : '用户';
+                noticeContent = `${modifierText}将${targetText}网名修改为${newText}`;
+            }
+
+            if (!AppState.messages[convId]) {
+                AppState.messages[convId] = [];
+            }
+
+            AppState.messages[convId].push({
+                id: 'msg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                type: 'nickname_change',
+                sender: 'system',
+                modifierRole: modifierRole,
+                targetRole: targetRole,
+                oldNickname: oldName,
+                newNickname: newName,
+                content: noticeContent,
+                time: new Date().toISOString(),
+                readByUser: !!(AppState.currentChat && AppState.currentChat.id === convId)
+            });
+
+            if (persist) {
+                saveToStorage();
+                if (AppState.currentChat && AppState.currentChat.id === convId) {
+                    renderChatMessagesDebounced();
+                }
+                renderConversations();
+            }
+
+            return true;
+        }
+
         function renderConversations() {
             // 防抖：防止频繁渲染
             if (renderConversations._timer) {
@@ -1488,8 +1748,8 @@
                     ? `<img src="${conv.avatar}" alt="">`
                     : conv.name.charAt(0);
                 
-                // 优先显示备注，如果没有备注则显示角色名称
-                const displayName = conv.remark || conv.name;
+                // 显示优先级：备注 > 网名 > 真名
+                const displayName = getConversationDisplayName(conv);
                 
                 item.innerHTML = `
                     <div class="msg-item-content" style="display:flex;align-items:center;gap:12px;padding:12px 15px;background:#fff;position:relative;z-index:2;cursor:pointer;">
@@ -1628,8 +1888,8 @@
                         ? `<img src="${friend.avatar}" alt="">`
                         : friend.name.charAt(0);
                     
-                    // 优先显示备注，如果没有备注则显示角色名称
-                    const displayName = friend.remark || friend.name;
+                    // 显示优先级：备注 > 网名 > 真名
+                    const displayName = getFriendDisplayName(friend);
                     
                     item.innerHTML = `
                         <div class="friend-item-content" style="display:flex;align-items:center;gap:12px;padding:10px 15px;background:#fff;position:relative;z-index:2;">
@@ -1839,6 +2099,15 @@
                                 console.log('📱 显示顶部导航栏');
                             }
                         }
+
+                        const appContainer = document.getElementById('app-container');
+                        if (appContainer) {
+                            if (tabId === 'dynamic-page' || tabId === 'moments-page' || tabId === 'channel-page') {
+                                appContainer.classList.add('top-nav-hidden');
+                            } else {
+                                appContainer.classList.remove('top-nav-hidden');
+                            }
+                        }
                         
                         // 更新搜索栏显示
                         const msgSearchBar = document.getElementById('msg-search-bar');
@@ -1862,6 +2131,10 @@
                         // 立即更新应用状态，避免阻止后续操作
                         AppState.currentTab = tabId;
                         console.log('✅ 状态更新完成:', tabId);
+
+                        if (window.MessageBackgroundManager && typeof window.MessageBackgroundManager.setPageTypeByTab === 'function') {
+                            window.MessageBackgroundManager.setPageTypeByTab(tabId);
+                        }
 
                         // 震动反馈（如果支持）
                         if (navigator.vibrate) {
@@ -2079,9 +2352,10 @@
             if (!page) {
                 page = document.createElement('div');
                 page.id = 'settings-page';
-                page.className = 'sub-page';
+                page.className = 'sub-page settings-config-page';
                 document.getElementById('app-container').appendChild(page);
             }
+            page.classList.add('settings-config-page');
             
             // 检测设备类型和浏览器
             const ua = navigator.userAgent;
@@ -2115,15 +2389,12 @@
             const swSupported = 'serviceWorker' in navigator;
             
             page.innerHTML = `
-                <div class="sub-nav">
-                    <div class="back-btn" id="settings-back-btn">
-                        <div class="back-arrow"></div>
-                        <span>返回</span>
-                    </div>
-                    <div class="sub-title">设置</div>
+                <div class="sub-nav friend-nav settings-config-nav">
+                    <div class="back-btn" id="settings-back-btn" aria-label="返回"></div>
+                    <div class="sub-title">通知与数据</div>
                 </div>
                 
-                <div class="sub-content" style="padding:0;background-color:#f5f5f5;">
+                <div class="sub-content settings-config-content">
                     <!-- 通知设置区域 -->
                     <div class="settings-section">
                         <div class="settings-section-header">
@@ -2754,36 +3025,275 @@
         }
 
         // 添加好友页面
+        function initAddFriendPersonaSection() {
+            if (window.UserPersonaManager && typeof window.UserPersonaManager.initUserPersonas === 'function') {
+                window.UserPersonaManager.initUserPersonas();
+            }
+
+            const personaSelect = document.getElementById('af-user-persona-select');
+            const userNameInput = document.getElementById('af-user-name-input');
+            const userNicknameInput = document.getElementById('af-user-nickname-input');
+            const userDescInput = document.getElementById('af-user-desc-input');
+
+            const personas = Array.isArray(AppState.userPersonas) ? AppState.userPersonas : [];
+            const defaultPersona = personas.find(p => p.id === AppState.defaultPersonaId) || personas[0] || null;
+
+            if (personaSelect) {
+                personaSelect.innerHTML = `
+                    <option value="">使用默认人设</option>
+                    ${personas.map(p => `
+                        <option value="${p.id}">
+                            ${escapeHtml(p.name)}${p.id === AppState.defaultPersonaId ? ' (默认)' : ''}
+                        </option>
+                    `).join('')}
+                `;
+                personaSelect.value = '';
+            }
+
+            if (userNameInput) {
+                userNameInput.value = (defaultPersona && defaultPersona.userName) || (AppState.user && AppState.user.name) || '用户';
+            }
+
+            if (userNicknameInput) {
+                userNicknameInput.value = (AppState.user && AppState.user.nickname) || '';
+            }
+
+            if (userDescInput) {
+                userDescInput.value = (defaultPersona && defaultPersona.personality) || (AppState.user && AppState.user.personality) || '';
+            }
+
+            const manageBtn = document.getElementById('af-manage-personas-btn');
+            if (manageBtn) {
+                manageBtn.onclick = function() {
+                    if (window.UserPersonaManager && typeof window.UserPersonaManager.openPersonaManager === 'function') {
+                        window.UserPersonaManager.openPersonaManager();
+                    } else {
+                        showToast('人设管理器未加载');
+                    }
+                };
+            }
+
+            const applyBtn = document.getElementById('af-apply-persona-btn');
+            if (applyBtn) {
+                applyBtn.onclick = function() {
+                    applyAddFriendPersonaSelection();
+                };
+            }
+        }
+
+        function applyAddFriendPersonaSelection() {
+            const personaSelect = document.getElementById('af-user-persona-select');
+            const userNameInput = document.getElementById('af-user-name-input');
+            const userDescInput = document.getElementById('af-user-desc-input');
+
+            if (!personaSelect) return;
+
+            const personas = Array.isArray(AppState.userPersonas) ? AppState.userPersonas : [];
+            const selectedPersonaId = personaSelect.value;
+
+            if (selectedPersonaId) {
+                const persona = personas.find(p => p.id === selectedPersonaId);
+                if (!persona) {
+                    showToast('所选人设不存在');
+                    return;
+                }
+
+                if (userNameInput) userNameInput.value = persona.userName || (AppState.user && AppState.user.name) || '用户';
+                if (userDescInput) userDescInput.value = persona.personality || '';
+                showToast('已应用人设: ' + persona.name);
+                return;
+            }
+
+            const defaultPersona = personas.find(p => p.id === AppState.defaultPersonaId) || personas[0] || null;
+            if (userNameInput) userNameInput.value = (defaultPersona && defaultPersona.userName) || (AppState.user && AppState.user.name) || '用户';
+            if (userDescInput) userDescInput.value = (defaultPersona && defaultPersona.personality) || (AppState.user && AppState.user.personality) || '';
+            showToast('已应用默认人设');
+        }
+
+        function setAddFriendCardCollapsed(card, collapsed) {
+            if (!card) return;
+
+            const header = card.querySelector('.card-header');
+            card.classList.toggle('af-collapsed', !!collapsed);
+
+            if (header) {
+                header.setAttribute('aria-expanded', String(!collapsed));
+            }
+        }
+
+        function resetAddFriendCardCollapseState() {
+            const addFriendPage = document.getElementById('add-friend-page');
+            if (!addFriendPage) return;
+
+            addFriendPage.querySelectorAll('.settings-card').forEach(card => {
+                setAddFriendCardCollapsed(card, true);
+            });
+        }
+
+        function initAddFriendCardCollapse() {
+            const addFriendPage = document.getElementById('add-friend-page');
+            if (!addFriendPage) return;
+
+            const cards = addFriendPage.querySelectorAll('.settings-card');
+            cards.forEach((card, index) => {
+                const header = card.querySelector('.card-header');
+                const body = card.querySelector('.card-body');
+                if (!header || !body) return;
+
+                header.classList.add('af-collapsible-header');
+                header.setAttribute('role', 'button');
+                header.setAttribute('tabindex', '0');
+
+                if (!body.id) {
+                    body.id = `af-card-body-${index + 1}`;
+                }
+                header.setAttribute('aria-controls', body.id);
+
+                if (header.dataset.afCollapseBound === '1') {
+                    return;
+                }
+                header.dataset.afCollapseBound = '1';
+
+                const toggleCard = function() {
+                    const isCollapsed = card.classList.contains('af-collapsed');
+                    setAddFriendCardCollapsed(card, !isCollapsed);
+                };
+
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleCard();
+                });
+
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleCard();
+                    }
+                });
+            });
+
+            resetAddFriendCardCollapseState();
+        }
+
         function openAddFriendPage() {
             document.getElementById('add-friend-page').classList.add('open');
+            resetAddFriendCardCollapseState();
+            initAddFriendPersonaSection();
+            
+            // 初始化头像选择器
+            setTimeout(() => {
+                // 好友头像处理
+                const afAvatarPicker = document.getElementById('af-avatar-picker');
+                const afFileInput = document.getElementById('af-avatar-file-input');
+                
+                if (afAvatarPicker && afFileInput) {
+                    afAvatarPicker.addEventListener('click', function() {
+                        afFileInput.click();
+                    });
+                    
+                    afFileInput.addEventListener('change', function() {
+                        const file = this.files[0];
+                        if (!file || !file.type.startsWith('image/')) return;
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('friend-avatar-input').value = e.target.result;
+                            afAvatarPicker.innerHTML = '<img src="' + e.target.result + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+                            const afAvatarLabel = afAvatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
+                            if (afAvatarLabel) afAvatarLabel.textContent = '点击更换头像';
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+                
+                // 用户头像处理
+                const afUserAvatarPicker = document.getElementById('af-user-avatar-picker');
+                const afUserFileInput = document.getElementById('af-user-avatar-file-input');
+                
+                if (afUserAvatarPicker && afUserFileInput) {
+                    afUserAvatarPicker.addEventListener('click', function() {
+                        afUserFileInput.click();
+                    });
+                    
+                    afUserFileInput.addEventListener('change', function() {
+                        const file = this.files[0];
+                        if (!file || !file.type.startsWith('image/')) return;
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('friend-user-avatar-input').value = e.target.result;
+                            afUserAvatarPicker.innerHTML = '<img src="' + e.target.result + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+                            const afUserAvatarLabel = afUserAvatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
+                            if (afUserAvatarLabel) afUserAvatarLabel.textContent = '点击更换头像';
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }, 100);
         }
 
         function closeAddFriendPage() {
             document.getElementById('add-friend-page').classList.remove('open');
             // 清空输入
             document.getElementById('friend-name-input').value = '';
+            document.getElementById('friend-char-nickname-input').value = '';
+            document.getElementById('friend-remark-input').value = '';
             document.getElementById('friend-avatar-input').value = '';
+            document.getElementById('friend-user-avatar-input').value = '';
             document.getElementById('friend-desc-input').value = '';
+            document.getElementById('af-user-name-input').value = '';
+            document.getElementById('af-user-nickname-input').value = '';
+            document.getElementById('af-user-desc-input').value = '';
+            const afPersonaSelect = document.getElementById('af-user-persona-select');
+            if (afPersonaSelect) afPersonaSelect.value = '';
             document.getElementById('friend-greeting-input').value = '';
+            
+            // 重置头像预览
+            const afAvatarPicker = document.getElementById('af-avatar-picker');
+            if (afAvatarPicker) {
+                afAvatarPicker.innerHTML = '';
+            }
+            // 重置头像标签
+            const afAvatarLabel = afAvatarPicker && afAvatarPicker.closest('.avatar-wrapper') && afAvatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
+            if (afAvatarLabel) afAvatarLabel.textContent = '好友头像';
+            
+            // 重置用户头像预览
+            const afUserAvatarPicker = document.getElementById('af-user-avatar-picker');
+            if (afUserAvatarPicker) {
+                afUserAvatarPicker.innerHTML = '';
+            }
+            // 重置用户头像标签
+            const afUserAvatarLabel = afUserAvatarPicker && afUserAvatarPicker.closest('.avatar-wrapper') && afUserAvatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
+            if (afUserAvatarLabel) afUserAvatarLabel.textContent = '我的头像';
         }
 
         function submitAddFriend() {
             const name = document.getElementById('friend-name-input').value.trim();
+            const charNickname = document.getElementById('friend-char-nickname-input').value.trim();
+            const remark = document.getElementById('friend-remark-input').value.trim();
             const avatar = document.getElementById('friend-avatar-input').value.trim();
             const desc = document.getElementById('friend-desc-input').value.trim();
+            const userAvatar = document.getElementById('friend-user-avatar-input').value.trim();
+            const userNameForChar = document.getElementById('af-user-name-input').value.trim() || (AppState.user && AppState.user.name) || '用户';
+            const userNicknameForChar = document.getElementById('af-user-nickname-input').value.trim();
+            const userPersonality = document.getElementById('af-user-desc-input').value.trim();
+            const selectedPersonaId = document.getElementById('af-user-persona-select').value;
             const greeting = document.getElementById('friend-greeting-input').value.trim();
             
             if (!name) {
-                showToast('请输入AI好友名称');
+                showToast('未输入TA的名字');
                 return;
             }
             
             const friend = {
                 id: 'friend_' + Date.now(),
                 name: name,
-                remark: '',  // 初始化备注为空
+                charNickname: charNickname,
+                remark: remark,  // 使用用户输入的备注
                 avatar: avatar,
                 description: desc,
+                userNameForChar: userNameForChar,
+                userNicknameForChar: userNicknameForChar,
                 greeting: greeting,
                 status: desc ? desc.substring(0, 20) + (desc.length > 20 ? '...' : '') : '',
                 createdAt: new Date().toISOString()
@@ -2796,15 +3306,29 @@
                 id: friend.id,
                 type: 'friend',
                 name: friend.name,
-                remark: '',  // 初始化备注为空
+                charNickname: friend.charNickname,
+                remark: friend.remark,  // 同步备注
                 avatar: friend.avatar,
                 description: friend.description,
-                userAvatar: '',  // 该对话的用户头像
+                userAvatar: userAvatar,  // 该对话的用户头像
+                userNameForChar: userNameForChar,
+                userNicknameForChar: userNicknameForChar,
+                greeting: greeting,
                 lastMsg: friend.greeting || '',
                 time: formatTime(new Date()),
                 lastMessageTime: new Date().toISOString(),  // 保存完整时间戳用于排序
                 unread: 0
             };
+
+            if (selectedPersonaId) {
+                conv.boundPersonaId = selectedPersonaId;
+            }
+
+            if (AppState.user) {
+                AppState.user.personality = userPersonality;
+                AppState.user.nickname = userNicknameForChar;
+            }
+
             AppState.conversations.unshift(conv);
             
             // 初始化消息并添加开场白
@@ -2816,6 +3340,7 @@
                         id: 'msg_' + Date.now(),
                         type: 'received',
                         content: greeting,
+                        isGreeting: true,
                         time: new Date().toISOString()
                     });
                 }
@@ -3413,10 +3938,10 @@
                 tabBar.style.pointerEvents = 'none';
             }
             
-            // 优先显示备注，如果没有备注则显示角色名称
-            const displayName = conv.remark || conv.name;
+            // 聊天头部显示优先级：备注 > 网名 > 真名
+            const displayName = getConversationDisplayName(conv);
             document.getElementById('chat-title').textContent = displayName;
-            
+
             // 清除未读
             conv.unread = 0;
             
@@ -3536,17 +4061,22 @@
         function openChatWithFriend(friend) {
             // 查找或创建会话
             let conv = AppState.conversations.find(c => c.id === friend.id);
+
+            const friendGreeting = normalizeSingleGreetingText(friend);
             
             if (!conv) {
                 conv = {
                     id: friend.id,
                     type: 'friend',
                     name: friend.name,
+                    charNickname: friend.charNickname || '',
                     remark: friend.remark || '',  // 保存备注
                     avatar: friend.avatar,
                     description: friend.description || '',
                     userAvatar: '',  // 该对话的用户头像
-                    lastMsg: friend.greeting || '',
+                    userNicknameForChar: friend.userNicknameForChar || '',
+                    greeting: friendGreeting,
+                    lastMsg: friendGreeting || '',
                     time: formatTime(new Date()),
                     lastMessageTime: new Date().toISOString(),  // 保存完整时间戳用于排序
                     unread: 0
@@ -3557,11 +4087,12 @@
                 if (!AppState.messages[friend.id]) {
                     AppState.messages[friend.id] = [];
                     // 如果有开场白，添加为首条消息（由角色主动发出）
-                    if (friend.greeting) {
+                    if (friendGreeting) {
                         AppState.messages[friend.id].push({
                             id: 'msg_' + Date.now(),
                             type: 'received',
-                            content: friend.greeting,
+                            content: friendGreeting,
+                            isGreeting: true,
                             time: new Date().toISOString()
                         });
                     }
@@ -3570,6 +4101,9 @@
                 saveToStorage();
                 renderConversations();
             }
+
+            // 会话已存在时，同步单开场白
+            conv.greeting = friendGreeting;
             
             openChat(conv);
         }
@@ -3626,7 +4160,7 @@
                 tabBar.style.visibility = '';
                 tabBar.style.pointerEvents = '';
             }
-            
+
             // 不清除AppState.currentChat，让打字状态保持为该对话的状态
             // 这样当用户返回时，打字状态会被正确恢复
         }
@@ -3677,6 +4211,37 @@
                 // 系统消息通常不显示给用户
                 if (msg.type === 'system') {
                     return;
+                }
+
+                // 网名变更消息：显示为中心提示（类似撤回消息）
+                if (msg.type === 'nickname_change') {
+                    const nicknameWrapper = document.createElement('div');
+                    nicknameWrapper.className = 'nickname-change-message-wrapper';
+                    nicknameWrapper.dataset.messageId = msg.id;
+                    nicknameWrapper.style.cssText = `
+                        text-align: center;
+                        margin: 8px 0;
+                        padding: 8px 0;
+                        user-select: none;
+                        -webkit-user-select: none;
+                        -webkit-touch-callout: none;
+                    `;
+
+                    const nicknameNotice = document.createElement('div');
+                    nicknameNotice.style.cssText = `
+                        color: #999;
+                        font-size: 12px;
+                        display: inline-block;
+                        padding: 6px 12px;
+                        border-radius: 12px;
+                        background: rgba(0, 0, 0, 0.04);
+                        max-width: 86%;
+                        word-break: break-word;
+                    `;
+                    nicknameNotice.textContent = msg.content || '网名已更新';
+
+                    nicknameWrapper.appendChild(nicknameNotice);
+                    return nicknameWrapper;
                 }
                 
                 // 一起听邀请消息用listen_invite类型处理（卡片样式）
@@ -6758,6 +7323,45 @@
             renderChatMessagesDebounced();
         }
 
+        // 处理AI主动修改角色网名指令：[SET_CHAR_NICKNAME]新网名
+        function handleAISetCharNickname(convId, rawNickname) {
+            if (!convId) return;
+
+            const conv = AppState.conversations && AppState.conversations.find(c => c.id === convId);
+            if (!conv) return;
+
+            const oldNickname = (conv.charNickname || '').trim();
+
+            const nickname = String(rawNickname || '')
+                .replace(/[\[\]【】]/g, '')
+                .replace(/^[:：\-\s]+/, '')
+                .trim()
+                .slice(0, 30);
+
+            if (!nickname) return;
+            if (nickname === oldNickname) return;
+
+            conv.charNickname = nickname;
+
+            // 同步到好友数据
+            const friend = AppState.friends && AppState.friends.find(f => f.id === convId);
+            if (friend) {
+                friend.charNickname = nickname;
+            }
+
+            // 同步当前聊天引用
+            if (AppState.currentChat && AppState.currentChat.id === convId) {
+                AppState.currentChat.charNickname = nickname;
+                const titleEl = document.getElementById('chat-title');
+                if (titleEl) {
+                    titleEl.textContent = getConversationDisplayName(conv);
+                }
+            }
+
+            addNicknameChangeNotice(convId, 'assistant', 'assistant', oldNickname, nickname, true);
+            showToast('对方更新了网名：' + nickname);
+        }
+
         // 处理一起听邀请
         function handleListenTogetherInvitation(invitationText) {
             if (window.ListenTogether && window.ListenTogether.getState) {
@@ -7281,92 +7885,89 @@
 
         // 工具函数
         // ---------- API 设置相关 ----------
+
+        function getApiSettingsCardBody(card) {
+            if (!card) return null;
+
+            if (card.classList.contains('api-params-card')) {
+                return card.querySelector('#api-params-container, #secondary-api-params-container');
+            }
+
+            return card.querySelector(':scope > div');
+        }
+
+        function setApiSettingsCardCollapsed(card, collapsed) {
+            if (!card) return;
+
+            const header = card.querySelector('.card-title, .api-params-header');
+            const body = getApiSettingsCardBody(card);
+
+            card.classList.toggle('af-collapsed', !!collapsed);
+
+            if (header) {
+                header.setAttribute('aria-expanded', String(!collapsed));
+            }
+
+            if (!body) return;
+
+            if (collapsed) {
+                body.style.display = 'none';
+            } else {
+                body.style.removeProperty('display');
+            }
+        }
+
+        function bindApiSettingsCardCollapse(card) {
+            if (!card) return;
+
+            const header = card.querySelector('.card-title, .api-params-header');
+            if (!header || header.dataset.apiCollapseBound === '1') return;
+
+            header.dataset.apiCollapseBound = '1';
+            header.classList.add('af-collapsible-header');
+            header.setAttribute('role', 'button');
+            header.setAttribute('tabindex', '0');
+
+            header.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCardContent(header);
+                }
+            });
+        }
         
         // 折叠/展开卡片内容
         function toggleCardContent(clickedElement) {
-            // 只有点击标题区域(h3)才触发折叠/展开
-            const titleElement = clickedElement.closest('.card-title') || clickedElement.closest('h3');
-            if (!titleElement) return;
-            
-            const card = titleElement.closest('.settings-card');
+            const headerElement = clickedElement.closest('.card-title') || clickedElement.closest('.api-params-header') || clickedElement;
+            if (!headerElement) return;
+
+            const card = headerElement.closest('.settings-card, .api-params-card');
             if (!card) return;
-            
-            const icon = titleElement.querySelector('.collapse-icon');
-            const contents = Array.from(card.children).slice(1); // 除了title之外的所有元素
-            
-            // 检查是否已折叠
-            const isCollapsed = contents.length > 0 && contents[0].style.display === 'none';
-            
-            contents.forEach((el, index) => {
-                if (isCollapsed) {
-                    // 展开
-                    el.style.removeProperty('display');
-                } else {
-                    // 折叠
-                    el.style.display = 'none';
-                }
-            });
-            
-            if (icon) {
-                icon.textContent = isCollapsed ? '−' : '+';
-            }
+
+            const isCollapsed = card.classList.contains('af-collapsed');
+            setApiSettingsCardCollapsed(card, !isCollapsed);
         }
         
         // 折叠/展开主API参数内容（特殊处理）
         function toggleApiParamsContent(headerElement) {
-            const icon = headerElement.querySelector('.collapse-icon');
-            const outerDiv = headerElement.closest('div').parentElement;
-            const container = outerDiv.querySelector('#api-params-container');
-            
-            if (!container) return;
-            
-            const isCollapsed = container.style.display === 'none';
-            
-            container.style.display = isCollapsed ? '' : 'none';
-            if (icon) {
-                icon.textContent = isCollapsed ? '−' : '+';
-            }
+            toggleCardContent(headerElement);
         }
         
         // 折叠/展开副API参数内容（特殊处理）
         function toggleSecondaryApiParamsContent(headerElement) {
-            const icon = headerElement.querySelector('.collapse-icon');
-            const outerDiv = headerElement.closest('div').parentElement;
-            const container = outerDiv.querySelector('#secondary-api-params-container');
-            
-            if (!container) return;
-            
-            const isCollapsed = container.style.display === 'none';
-            
-            container.style.display = isCollapsed ? '' : 'none';
-            if (icon) {
-                icon.textContent = isCollapsed ? '−' : '+';
-            }
+            toggleCardContent(headerElement);
         }
         
         function initApiSettingsUI() {
-            // 初始化API设置页面内的settings-card为折叠状态（只限api-settings-page内的卡片）
+            // 初始化API设置页面内的折叠卡片（样式和交互与添加好友页一致）
             const apiSettingsPage = document.getElementById('api-settings-page');
             if (!apiSettingsPage) return;
-            
-            const settingsCards = apiSettingsPage.querySelectorAll('.settings-card');
-            settingsCards.forEach(card => {
-                const contents = Array.from(card.children).slice(1); // 除了title之外的所有元素
-                contents.forEach((el, index) => {
-                    el.style.display = 'none';
-                });
+
+            const collapsibleCards = apiSettingsPage.querySelectorAll('.settings-card, .api-params-card');
+            collapsibleCards.forEach(card => {
+                bindApiSettingsCardCollapse(card);
+                setApiSettingsCardCollapsed(card, true);
             });
-            
-            // 初始化特殊的参数设置卡片
-            const apiParamsContainer = document.getElementById('api-params-container');
-            if (apiParamsContainer) {
-                apiParamsContainer.style.display = 'none';
-            }
-            
-            const secondaryApiParamsContainer = document.getElementById('secondary-api-params-container');
-            if (secondaryApiParamsContainer) {
-                secondaryApiParamsContainer.style.display = 'none';
-            }
             
             // 将存储的设置填入界面
             loadApiSettingsToUI();
@@ -7544,25 +8145,31 @@
             if (!listContainer) return;
             
             const presets = AppState.apiSettings?.presets || [];
+            const currentPresetId = AppState.apiSettings?.currentPresetId || null;
             
             if (presets.length === 0) {
-                listContainer.innerHTML = '<div style="text-align:center;color:#999;padding:12px;font-size:13px;">暂无预设</div>';
+                listContainer.innerHTML = '<div class="api-preset-empty">暂无预设</div>';
                 return;
             }
             
             let html = '';
             presets.forEach((preset) => {
+                const isActive = currentPresetId === preset.id;
+                const endpointText = preset.endpoint
+                    ? `${preset.endpoint.substring(0, 30)}${preset.endpoint.length > 30 ? '...' : ''}`
+                    : '未填写';
+
                 html += `
-                    <div style="padding:12px;background:#f9f9f9;border-radius:8px;border-left:3px solid #666;">
-                        <div style="margin-bottom:8px;">
-                            <div style="font-weight:600;color:#333;margin-bottom:6px;word-break:break-all;">${preset.name}</div>
-                            <div style="font-size:12px;color:#666;margin-bottom:4px;word-break:break-all;">主API: ${preset.endpoint.substring(0, 30)}${preset.endpoint.length > 30 ? '...' : ''}</div>
-                            ${preset.selectedModel ? `<div style="font-size:12px;color:#666;word-break:break-all;">模型: ${preset.selectedModel}</div>` : ''}
+                    <div class="api-preset-item ${isActive ? 'is-active' : ''}">
+                        <div class="api-preset-meta">
+                            <div class="api-preset-name">${preset.name}</div>
+                            <div class="api-preset-line">主API: ${endpointText}</div>
+                            ${preset.selectedModel ? `<div class="api-preset-line">模型: ${preset.selectedModel}</div>` : ''}
                         </div>
-                        <div style="display:flex;gap:6px;justify-content:center;">
-                            <button class="modern-btn modern-btn-small" style="flex:1;padding:6px 10px;font-size:12px;height:auto;" onclick="selectApiPreset('${preset.id}');">使用</button>
-                            <button class="modern-btn modern-btn-small" style="flex:1;padding:6px 10px;font-size:12px;height:auto;" onclick="updateApiPreset('${preset.id}');">更新</button>
-                            <button class="modern-btn modern-btn-small" style="flex:1;padding:6px 10px;font-size:12px;height:auto;" onclick="deleteApiPreset('${preset.id}');">删除</button>
+                        <div class="api-preset-actions">
+                            <button class="modern-btn modern-btn-small api-preset-action-btn" onclick="selectApiPreset('${preset.id}');">使用</button>
+                            <button class="modern-btn modern-btn-small api-preset-action-btn" onclick="updateApiPreset('${preset.id}');">更新</button>
+                            <button class="modern-btn modern-btn-small api-preset-action-btn is-danger" onclick="deleteApiPreset('${preset.id}');">删除</button>
                         </div>
                     </div>
                 `;
@@ -7600,11 +8207,11 @@
                     </button>
                     
                     <label>预设名称</label>
-                    <input type="text" id="new-preset-name-input" placeholder="请输入预设名称" style="width:100%;padding:12px 16px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:15px;color:#1a1a1a;background:#fafafa;outline:none;margin-bottom:16px;">
+                    <input type="text" id="new-preset-name-input" class="api-preset-name-input" placeholder="请输入预设名称">
                     
-                    <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <div class="api-preset-modal-actions">
                         <button class="emoji-mgmt-btn" onclick="document.getElementById('new-preset-name-modal').remove();">取消</button>
-                        <button class="emoji-mgmt-btn" style="background:linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%);color:#fff;border:none;" onclick="confirmNewPresetName();">确定</button>
+                        <button class="emoji-mgmt-btn api-preset-confirm-btn" onclick="confirmNewPresetName();">确定</button>
                     </div>
                 </div>
             `;
@@ -7797,19 +8404,19 @@
             });
             
             modal.innerHTML = `
-                <div class="emoji-mgmt-content" style="max-width:350px;">
-                    <div class="emoji-mgmt-header">
-                        <h3 style="margin:0;flex:1;">确认删除</h3>
+                <div class="emoji-mgmt-content api-preset-delete-content">
+                    <div class="emoji-mgmt-header api-preset-delete-header">
+                        <h3 class="api-preset-delete-title">确认删除</h3>
                         <button class="emoji-mgmt-close" onclick="document.getElementById('delete-api-preset-modal').remove();">
                             <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
-                    <div style="padding:20px;flex:1;">
-                        <p style="margin:0;color:#333;font-size:14px;line-height:1.6;">确定要删除该预设吗？删除后将无法恢复。</p>
+                    <div class="api-preset-delete-body">
+                        <p class="api-preset-delete-text">确定要删除该预设吗？删除后将无法恢复。</p>
                     </div>
-                    <div style="display:flex;gap:12px;padding:16px;border-top:1px solid #f0f0f0;background:#fafafa;">
+                    <div class="api-preset-delete-actions">
                         <button class="emoji-mgmt-btn" onclick="document.getElementById('delete-api-preset-modal').remove();">取消</button>
-                        <button class="emoji-mgmt-btn" style="background:#ff4444;color:#fff;border-color:#ff4444;" onclick="confirmDeleteApiPreset('${presetId}');">删除</button>
+                        <button class="emoji-mgmt-btn api-preset-danger-btn" onclick="confirmDeleteApiPreset('${presetId}');">删除</button>
                     </div>
                 </div>
             `;
@@ -8452,7 +9059,9 @@
                 // CHANGE_SONG: 只提取歌曲名（到逗号、句号或下一个[为止）
                 { pattern: /\[CHANGE_SONG\]([^\[\n,，。.]*?)(?=[,，。.\[]|$)/s, type: 'CHANGE_SONG', removePattern: /\[CHANGE_SONG\][^\[\n,，。.]*/ },
                 // ADD_FAVORITE_SONG: 只提取歌曲名（到逗号、句号或下一个[为止）
-                { pattern: /\[ADD_FAVORITE_SONG\]([^\[\n,，。.]*?)(?=[,，。.\[]|$)/s, type: 'ADD_FAVORITE_SONG', removePattern: /\[ADD_FAVORITE_SONG\][^\[\n,，。.]*/ }
+                { pattern: /\[ADD_FAVORITE_SONG\]([^\[\n,，。.]*?)(?=[,，。.\[]|$)/s, type: 'ADD_FAVORITE_SONG', removePattern: /\[ADD_FAVORITE_SONG\][^\[\n,，。.]*/ },
+                // SET_CHAR_NICKNAME: AI主动修改自己的角色网名
+                { pattern: /\[SET_CHAR_NICKNAME\](.*?)(?=\[|【|$)/s, type: 'SET_CHAR_NICKNAME', removePattern: /\[SET_CHAR_NICKNAME\][^\[\n]*/ }
             ];
             
             // 找到所有指令及其内容
@@ -8461,7 +9070,7 @@
                 if (match) {
                     directives.push({
                         type: type,
-                        content: match[1].trim()
+                        content: (match[1] || '').trim()
                     });
                 }
             }
@@ -8492,7 +9101,7 @@
             
             // 处理其他一起听指令
             const otherDirectives = directives.filter(d => 
-                d.type === 'INVITE_LISTEN' || d.type === 'CHANGE_SONG' || d.type === 'ADD_FAVORITE_SONG'
+                d.type === 'INVITE_LISTEN' || d.type === 'CHANGE_SONG' || d.type === 'ADD_FAVORITE_SONG' || d.type === 'SET_CHAR_NICKNAME'
             );
             
             for (const directive of otherDirectives) {
@@ -8502,6 +9111,8 @@
                     handleSongChange(directive.content);
                 } else if (directive.type === 'ADD_FAVORITE_SONG') {
                     handleAIAddFavoriteSong(directive.content);
+                } else if (directive.type === 'SET_CHAR_NICKNAME') {
+                    handleAISetCharNickname(convId, directive.content);
                 }
             }
             
@@ -8527,8 +9138,11 @@
             
             // 4. 删除收藏指令、歌曲名和后面的逗号，保留逗号后的内容
             cleanText = cleanText.replace(/\[ADD_FAVORITE_SONG\][^\[\n,，。.]*[,，。.]?\s*/g, '');
+
+            // 5. 删除修改网名指令及其参数
+            cleanText = cleanText.replace(/\[SET_CHAR_NICKNAME\][^\[\n]*\s*/g, '');
             
-            // 5. 移除多余的空格和换行
+            // 6. 移除多余的空格和换行
             cleanText = cleanText.trim();
             
             // 如果处理了指令但没有其他内容，直接返回
@@ -10777,8 +11391,8 @@
                 }
                 
                 renderChatMessages(charId);
-                // 更新聊天标题（优先显示备注）
-                const displayName = conv.remark || conv.name;
+                // 更新聊天标题（备注 > 网名 > 真名）
+                const displayName = getConversationDisplayName(conv);
                 document.getElementById('chat-title').textContent = displayName;
             }
             
@@ -11294,7 +11908,7 @@
 
             const notificationData = {
                 convId: convId,
-                name: conv.remark || conv.name || '未命名', // 优先显示备注
+                name: getConversationDisplayName(conv),
                 avatar: conv.avatar || '',
                 message: messagePreview,
                 time: formatTime(new Date(lastMessage.time))
@@ -11681,6 +12295,25 @@
                                 </svg>
                             </div>
                         </div>
+
+                        <!-- 好友背景 -->
+                        <div class="decoration-option-card" id="open-friend-background">
+                            <div class="decoration-option-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <path d="M8 16l3-3 2 2 3-4"/>
+                                </svg>
+                            </div>
+                            <div class="decoration-option-content">
+                                <div class="decoration-option-title">好友背景</div>
+                                <div class="decoration-option-desc">自定义好友页面背景图</div>
+                            </div>
+                            <div class="decoration-option-arrow">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </div>
+                        </div>
                         
                         <!-- CSS主题管理 -->
                         <div class="decoration-option-card" id="open-theme-manager">
@@ -11919,119 +12552,58 @@
             
             // 绑定消息背景按钮
             const messageBackgroundBtn = page.querySelector('#open-message-background');
-            console.log('🔍 查找消息背景按钮:', messageBackgroundBtn);
             if (messageBackgroundBtn) {
                 messageBackgroundBtn.onclick = () => {
-                    console.log('🖱️ 消息背景按钮被点击');
-                    openMessageBackgroundManager();
+                    openMessageBackgroundManager('msg');
                 };
-                console.log('✅ 消息背景按钮事件已绑定');
-            } else {
-                console.error('❌ 找不到消息背景按钮 #open-message-background');
             }
+
+            // 绑定好友背景按钮
+            const friendBackgroundBtn = page.querySelector('#open-friend-background');
+            if (friendBackgroundBtn) {
+                friendBackgroundBtn.onclick = () => {
+                    openMessageBackgroundManager('friend');
+                };
+            }
+            
 
         }
         
         // 打开消息背景管理器
-        function openMessageBackgroundManager() {
-            console.log('🔍 尝试打开消息背景管理器');
+        function openMessageBackgroundManager(pageType = 'msg') {
+            const targetPageType = pageType === 'friend' ? 'friend' : 'msg';
+            console.log('🔍 尝试打开背景管理器:', targetPageType);
+            
+            // 检查管理器是否已加载，如果未加载则等待
+            if (!window.MessageBackgroundManager) {
+                console.warn('⏳ MessageBackgroundManager 还未加载，等待中...');
+                
+                // 等待管理器加载
+                let waitCount = 0;
+                const waitInterval = setInterval(() => {
+                    waitCount++;
+                    if (window.MessageBackgroundManager && window.MessageBackgroundManagerUI) {
+                        clearInterval(waitInterval);
+                        console.log('✅ 管理器加载完成');
+                        window.MessageBackgroundManagerUI.open(targetPageType);
+                    } else if (waitCount > 50) {
+                        clearInterval(waitInterval);
+                        console.error('❌ 超时：管理器加载失败');
+                        showToast('消息背景管理器加载失败，请刷新页面重试');
+                    }
+                }, 100);
+                return;
+            }
+            
             console.log('MessageBackgroundManager:', !!window.MessageBackgroundManager);
             console.log('MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
             
-            try {
-                // 立即显示加载提示
-                showToast('正在加载消息背景管理器...', 'info');
-                
-                // 检查管理器是否已加载
-                if (!window.MessageBackgroundManager || !window.MessageBackgroundManagerUI) {
-                    console.warn('⏳ 管理器未加载，尝试加载...');
-                    showToast('正在加载消息背景管理器...', 'info');
-                    
-                    // 获取当前路径
-                    const currentPath = window.location.pathname;
-                    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-                    
-                    // 动态加载脚本 - 只加载缺失的模块
-                    const loadScript = (src) => {
-                        return new Promise((resolve, reject) => {
-                            // 如果模块已经存在，直接返回
-                            if (src === 'message-background-manager.js' && window.MessageBackgroundManager) {
-                                console.log(`✅ ${src} 模块已存在，跳过加载`);
-                                resolve();
-                                return;
-                            }
-                            if (src === 'message-background-manager-ui.js' && window.MessageBackgroundManagerUI) {
-                                console.log(`✅ ${src} 模块已存在，跳过加载`);
-                                resolve();
-                                return;
-                            }
-                            const fullSrc = basePath + src + '?t=' + Date.now();
-                            console.log(`📝 加载脚本: ${fullSrc}`);
-                            const script = document.createElement('script');
-                            script.src = fullSrc;
-                            script.async = false;
-                            script.onload = () => {
-                                console.log(`✅ 脚本 ${src} 加载完成`);
-                                setTimeout(() => resolve(), 50);
-                            };
-                            script.onerror = (e) => {
-                                console.error(`❌ 脚本 ${src} 加载失败:`, e);
-                                reject(new Error(`加载 ${src} 失败`));
-                            };
-                            document.head.appendChild(script);
-                        });
-                    };
-                    
-                    loadScript('message-background-manager.js')
-                        .then(() => {
-                            console.log('检查 MessageBackgroundManager:', !!window.MessageBackgroundManager);
-                            return loadScript('message-background-manager-ui.js');
-                        })
-                        .then(() => {
-                            console.log('检查 MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
-                            if (!window.MessageBackgroundManagerUI) {
-                                throw new Error('message-background-manager-ui.js 加载后未导出模块');
-                            }
-                            return new Promise((resolve) => {
-                                let count = 0;
-                                const checkInterval = setInterval(() => {
-                                    count++;
-                                    if (window.MessageBackgroundManagerUI || count >= 10) {
-                                        clearInterval(checkInterval);
-                                        resolve();
-                                    }
-                                }, 50);
-                            });
-                        })
-                        .then(() => {
-                            console.log('✅ 管理器加载完成');
-                            showToast('管理器加载完成', 'success');
-                            window.MessageBackgroundManagerUI.open();
-                        })
-                        .catch(error => {
-                            console.error('❌ 加载失败:', error);
-                            showToast('消息背景管理器加载失败: ' + error.message, 'error');
-                        });
-                    return;
-                }
-                
-                console.log('MessageBackgroundManager:', !!window.MessageBackgroundManager);
-                console.log('MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
-                
-                // 移除页面检查限制 - 允许在任何页面管理背景图
-                
-                if (window.MessageBackgroundManagerUI) {
-                    console.log('✅ 打开消息背景管理器 UI');
-                    showToast('正在打开消息背景管理器...', 'info');
-                    window.MessageBackgroundManagerUI.open();
-                } else {
-                    console.error('❌ MessageBackgroundManagerUI 未加载');
-                    showToast('消息背景管理器加载失败（UI 模块未加载）', 'error');
-                }
-                
-            } catch (error) {
-                console.error('❌ 打开消息背景管理器时发生异常:', error);
-                showToast('打开消息背景管理器时发生错误: ' + error.message, 'error');
+            if (window.MessageBackgroundManagerUI) {
+                console.log('✅ 打开消息背景管理器 UI');
+                window.MessageBackgroundManagerUI.open(targetPageType);
+            } else {
+                console.error('❌ MessageBackgroundManagerUI 未加载');
+                showToast('消息背景管理器加载失败（UI 模块未加载）');
             }
         }
         
@@ -12646,6 +13218,8 @@
         window.replaceNamePlaceholders = replaceNamePlaceholders;
         window.extractGenderInfo = extractGenderInfo;
         window.getEmojiInstructions = getEmojiInstructions;
+        window.getConversationDisplayName = getConversationDisplayName;
+        window.addNicknameChangeNotice = addNicknameChangeNotice;
         window.renderChatMessages = renderChatMessages;
         window.renderConversations = renderConversations;
         

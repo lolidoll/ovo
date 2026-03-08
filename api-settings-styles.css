@@ -968,62 +968,9 @@
     #api-preset-edit-modal button:active {
         transform: scale(0.98);
     }
-}/* ========================================
-   Token统计样式
-   ======================================== */
-
-#api-settings-page {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
 }
 
-.token-stats-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.token-stat-item {
-    padding: 16px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-radius: 12px;
-    border: 1px solid #e8e8e8;
-    transition: all 0.3s ease;
-}
-
-.token-stat-item:hover {
-    border-color: #0066cc;
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
-    transform: translateY(-2px);
-}
-
-.token-stat-label {
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.token-stat-value {
-    font-size: 24px;
-    color: #0066cc;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-
-.token-stats-container .form-hint {
-    margin-top: 8px;
-    font-size: 12px;
-    color: #999;
-}
-
-.token-stats-container .btn-full {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}/* ========================================
+/* ========================================
    Token统计样式 - 粉色公主风格
    ======================================== */
 
@@ -1081,4 +1028,670 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+}
+
+/* ========================================
+   设置与配置页面主题覆盖（参考添加好友页面）
+   追加在文件末尾，确保覆盖前置重复规则
+   ======================================== */
+
+#api-settings-page {
+    background: linear-gradient(180deg, #fff5f9 0%, #f8f0f4 100%) !important;
+}
+
+#api-settings-page .sub-nav {
+    background: linear-gradient(180deg, #fff5f9 0%, #ffe4ed 100%) !important;
+    border-bottom: 1px solid #ffd4e0 !important;
+    box-shadow: 0 2px 12px rgba(255, 107, 157, 0.15) !important;
+    backdrop-filter: none !important;
+}
+
+#api-settings-page .sub-title {
+    color: #ffb6c8 !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+}
+
+#api-settings-page .back-btn {
+    color: #ff9db8 !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-radius: 20px !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.2) !important;
+}
+
+#api-settings-page .back-btn:hover {
+    color: #ff8fb0 !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    transform: none !important;
+}
+
+#api-settings-page .back-btn:active {
+    transform: scale(0.98) !important;
+}
+
+#api-settings-page .sub-content {
+    background: transparent !important;
+}
+
+#api-settings-page .api-settings-container {
+    padding: 20px 16px 100px !important;
+}
+
+#api-settings-page .settings-card {
+    background: #ffffff !important;
+    border: 1px solid #ffe9f3 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 16px rgba(255, 182, 193, 0.12) !important;
+}
+
+#api-settings-page .settings-card::before {
+    background: linear-gradient(90deg, #ffdce9, #ffeef5, #ffdce9) !important;
+}
+
+#api-settings-page .settings-card:hover {
+    border-color: #ffd4e4 !important;
+    box-shadow: 0 6px 18px rgba(255, 182, 193, 0.16) !important;
+    transform: translateY(-1px) !important;
+}
+
+#api-settings-page .card-title {
+    color: #ff9db8 !important;
+    font-weight: 700 !important;
+}
+
+#api-settings-page .title-indicator {
+    background: linear-gradient(180deg, #ffb6c8 0%, #ff9db8 100%) !important;
+    box-shadow: none !important;
+}
+
+#api-settings-page .modern-label,
+#api-settings-page .setting-label {
+    color: #c292a7 !important;
+    font-weight: 600 !important;
+}
+
+#api-settings-page .modern-input,
+#api-settings-page .modern-select {
+    border: 1.5px solid #ffe0ec !important;
+    background: #fff9fc !important;
+    color: #555 !important;
+}
+
+#api-settings-page .modern-input::placeholder {
+    color: #d3a7ba !important;
+}
+
+#api-settings-page .modern-input:focus,
+#api-settings-page .modern-select:focus {
+    border-color: #ffb6c8 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(255, 182, 200, 0.15) !important;
+    transform: none !important;
+}
+
+#api-settings-page .modern-select {
+    background-image:
+        linear-gradient(45deg, transparent 50%, #ffb6c8 50%),
+        linear-gradient(135deg, #ffb6c8 50%, transparent 50%),
+        linear-gradient(180deg, #fff9fc 0%, #ffffff 100%) !important;
+    background-position:
+        calc(100% - 18px) calc(50% - 2px),
+        calc(100% - 12px) calc(50% - 2px),
+        0 0 !important;
+    background-size: 6px 6px, 6px 6px, 100% 100% !important;
+    background-repeat: no-repeat !important;
+    padding-right: 42px !important;
+}
+
+#api-settings-page .modern-btn,
+#api-settings-page .small-btn {
+    background: linear-gradient(135deg, #fff2f7 0%, #ffe6ef 100%) !important;
+    border: 1px solid #ffd4e4 !important;
+    color: #c98fa4 !important;
+    box-shadow: 0 2px 8px rgba(255, 182, 200, 0.18) !important;
+}
+
+#api-settings-page .modern-btn:hover,
+#api-settings-page .small-btn:hover {
+    background: linear-gradient(135deg, #ffe9f2 0%, #ffdbe9 100%) !important;
+    border-color: #ffc6da !important;
+    transform: translateY(-1px) !important;
+}
+
+#api-settings-page .primary-btn-modern {
+    background: linear-gradient(135deg, #ffd5e0, #ffb6c8) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(255, 182, 200, 0.35) !important;
+}
+
+#api-settings-page .primary-btn-modern:hover {
+    background: linear-gradient(135deg, #ffc7d7, #ffabc1) !important;
+    transform: translateY(-1px) !important;
+}
+
+#api-settings-page .range-value,
+#api-settings-page .setting-label span:last-child {
+    color: #c98fa4 !important;
+    background: linear-gradient(135deg, #fff1f7 0%, #ffe5ef 100%) !important;
+    border: 1px solid #ffd9e8 !important;
+    box-shadow: none !important;
+}
+
+#api-settings-page .info-box,
+#api-settings-page .tip-box,
+#api-settings-page #current-prompt-display {
+    background: #fff8fc !important;
+    border-color: #ffe2ee !important;
+    color: #b7849a !important;
+}
+
+#api-settings-page .info-box .highlight {
+    color: #ff9db8 !important;
+}
+
+#api-settings-page input[type="checkbox"] {
+    accent-color: #ffb6c8 !important;
+}
+
+/* 参数设置区（主API/副API） */
+#api-settings-page .api-params-card {
+    background: #ffffff !important;
+    border: 1px solid #ffe9f3 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 16px rgba(255, 182, 193, 0.12) !important;
+    padding: 18px !important;
+}
+
+#api-settings-page .api-params-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+#api-settings-page .api-params-title {
+    margin: 0;
+    font-size: 16px !important;
+    color: #ff9db8 !important;
+    font-weight: 700 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+#api-settings-page .api-params-indicator {
+    width: 4px !important;
+    height: 18px !important;
+    border-radius: 3px !important;
+    background: linear-gradient(180deg, #ffb6c8 0%, #ff9db8 100%) !important;
+}
+
+#api-settings-page .api-params-card .collapse-icon {
+    color: #ff9db8 !important;
+    font-weight: 700;
+}
+
+#api-settings-page #api-params-container,
+#api-settings-page #secondary-api-params-container {
+    margin-top: 16px !important;
+}
+
+#api-settings-page #api-params-container .setting-row,
+#api-settings-page #secondary-api-params-container .setting-row {
+    margin-bottom: 22px !important;
+}
+
+#api-settings-page #api-params-container .setting-row:last-child,
+#api-settings-page #secondary-api-params-container .setting-row:last-child {
+    margin-bottom: 0 !important;
+}
+
+#api-settings-page #api-params-container [id$="-value"],
+#api-settings-page #secondary-api-params-container [id$="-value"] {
+    color: #c98fa4 !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    background: linear-gradient(135deg, #fff1f7 0%, #ffe5ef 100%) !important;
+    border: 1px solid #ffd9e8 !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+}
+
+#api-settings-page #api-params-container input[type="range"],
+#api-settings-page #secondary-api-params-container input[type="range"] {
+    background: linear-gradient(90deg, #ffe3ef, #ffcde0) !important;
+    height: 6px !important;
+    border-radius: 999px !important;
+}
+
+#api-settings-page #api-params-container input[type="range"]::-webkit-slider-thumb,
+#api-settings-page #secondary-api-params-container input[type="range"]::-webkit-slider-thumb {
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff93b0 100%) !important;
+    box-shadow: 0 2px 8px rgba(255, 148, 182, 0.45), 0 0 0 4px rgba(255, 255, 255, 1) !important;
+}
+
+#api-settings-page #api-params-container input[type="range"]::-webkit-slider-thumb:hover,
+#api-settings-page #secondary-api-params-container input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+#api-settings-page #api-params-container input[type="range"]::-moz-range-thumb,
+#api-settings-page #secondary-api-params-container input[type="range"]::-moz-range-thumb {
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff93b0 100%) !important;
+    box-shadow: 0 2px 8px rgba(255, 148, 182, 0.45);
+}
+
+#api-settings-page #api-params-container input[type="range"] + div,
+#api-settings-page #secondary-api-params-container input[type="range"] + div {
+    color: #c596ab !important;
+    font-size: 12px !important;
+    margin-top: 8px !important;
+}
+
+/* 预设列表显示 */
+#api-settings-page #api-presets-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+}
+
+#api-settings-page .api-preset-empty {
+    text-align: center;
+    color: #c59aae;
+    padding: 14px;
+    font-size: 13px;
+    background: #fff8fc;
+    border: 1px dashed #ffd9e8;
+    border-radius: 12px;
+}
+
+#api-settings-page .api-preset-item {
+    padding: 13px;
+    border-radius: 14px;
+    border: 1px solid #ffe1ee;
+    border-left: 4px solid #ffb6c8;
+    background: linear-gradient(135deg, #fff8fc 0%, #fff2f7 100%);
+    transition: all 0.2s ease;
+}
+
+#api-settings-page .api-preset-item.is-active {
+    border-color: #ffb6c8;
+    border-left-color: #ff95b2;
+    box-shadow: 0 4px 12px rgba(255, 182, 200, 0.2);
+    background: linear-gradient(135deg, #fff4f9 0%, #ffeaf2 100%);
+}
+
+#api-settings-page .api-preset-meta {
+    margin-bottom: 10px;
+}
+
+#api-settings-page .api-preset-name {
+    font-weight: 700;
+    color: #ff9db8;
+    margin-bottom: 6px;
+    word-break: break-all;
+}
+
+#api-settings-page .api-preset-line {
+    font-size: 12px;
+    color: #b7859b;
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+
+#api-settings-page .api-preset-line:last-child {
+    margin-bottom: 0;
+}
+
+#api-settings-page .api-preset-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+#api-settings-page .api-preset-action-btn {
+    flex: 1 !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+    height: auto !important;
+}
+
+#api-settings-page .api-preset-action-btn.is-danger {
+    background: linear-gradient(135deg, #ffe9f1 0%, #ffd8e7 100%) !important;
+    border-color: #ffc6da !important;
+    color: #d26f93 !important;
+}
+
+#api-settings-page .api-preset-action-btn.is-danger:hover {
+    background: linear-gradient(135deg, #ffe1ec 0%, #ffcfe2 100%) !important;
+}
+
+/* 新增/删除预设弹窗 */
+#new-preset-name-modal,
+#delete-api-preset-modal {
+    background: rgba(255, 149, 187, 0.24) !important;
+    backdrop-filter: blur(7px) !important;
+}
+
+#new-preset-name-modal .emoji-mgmt-content,
+#delete-api-preset-modal .emoji-mgmt-content {
+    background: #ffffff !important;
+    border: 1px solid #ffe3ee !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 36px rgba(255, 146, 184, 0.22) !important;
+}
+
+#new-preset-name-modal h3,
+#delete-api-preset-modal h3 {
+    color: #ff9db8 !important;
+    font-weight: 700 !important;
+    margin-bottom: 16px !important;
+}
+
+#new-preset-name-modal h3::before,
+#delete-api-preset-modal h3::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ffb6c8 0%, #ff9db8 100%);
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+#new-preset-name-modal .emoji-mgmt-close,
+#delete-api-preset-modal .emoji-mgmt-close {
+    background: linear-gradient(135deg, #fff4f9 0%, #ffe8f1 100%) !important;
+    border: 1px solid #ffd8e7 !important;
+}
+
+#new-preset-name-modal .emoji-mgmt-close svg,
+#delete-api-preset-modal .emoji-mgmt-close svg {
+    stroke: #d495ad !important;
+}
+
+#new-preset-name-modal label {
+    color: #c292a7 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+}
+
+#new-preset-name-modal .api-preset-name-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid #ffe0ec;
+    border-radius: 12px;
+    font-size: 15px;
+    color: #555;
+    background: #fff9fc;
+    outline: none;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+}
+
+#new-preset-name-modal .api-preset-name-input:focus {
+    border-color: #ffb6c8;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 182, 200, 0.15);
+}
+
+#new-preset-name-modal .api-preset-modal-actions,
+#delete-api-preset-modal .api-preset-delete-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+#new-preset-name-modal .emoji-mgmt-btn,
+#delete-api-preset-modal .emoji-mgmt-btn {
+    background: linear-gradient(135deg, #fff2f7 0%, #ffe7f0 100%) !important;
+    border: 1px solid #ffd4e4 !important;
+    color: #c98fa4 !important;
+}
+
+#new-preset-name-modal .emoji-mgmt-btn:hover,
+#delete-api-preset-modal .emoji-mgmt-btn:hover {
+    background: linear-gradient(135deg, #ffe8f2 0%, #ffdeec 100%) !important;
+    border-color: #ffc5da !important;
+}
+
+#new-preset-name-modal .api-preset-confirm-btn {
+    background: linear-gradient(135deg, #ffd5e0, #ffb6c8) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+#new-preset-name-modal .api-preset-confirm-btn:hover {
+    background: linear-gradient(135deg, #ffc7d7, #ffabc1) !important;
+}
+
+#delete-api-preset-modal .api-preset-delete-content {
+    max-width: 350px !important;
+}
+
+#delete-api-preset-modal .api-preset-delete-header {
+    display: flex;
+    align-items: center;
+}
+
+#delete-api-preset-modal .api-preset-delete-title {
+    margin: 0 !important;
+    flex: 1;
+}
+
+#delete-api-preset-modal .api-preset-delete-body {
+    padding: 20px 0 16px;
+}
+
+#delete-api-preset-modal .api-preset-delete-text {
+    margin: 0;
+    color: #b7849a;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+#delete-api-preset-modal .api-preset-delete-actions {
+    padding-top: 14px;
+    border-top: 1px solid #ffe4ed;
+}
+
+#delete-api-preset-modal .api-preset-danger-btn {
+    background: linear-gradient(135deg, #ff90b2 0%, #ff6f99 100%) !important;
+    border: none !important;
+    color: #fff !important;
+}
+
+#delete-api-preset-modal .api-preset-danger-btn:hover {
+    background: linear-gradient(135deg, #ff84aa 0%, #ff618f 100%) !important;
+}
+
+/* 折叠展开卡片（与添加好友页一致） */
+#api-settings-page .settings-card .card-title,
+#api-settings-page .api-params-card .api-params-header {
+    justify-content: space-between !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+#api-settings-page .settings-card .card-title::after,
+#api-settings-page .api-params-card .api-params-header::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #ffb6c8;
+    border-bottom: 2px solid #ffb6c8;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+#api-settings-page .settings-card.af-collapsed .card-title::after,
+#api-settings-page .api-params-card.af-collapsed .api-params-header::after {
+    transform: rotate(-45deg);
+}
+
+#api-settings-page .settings-card .card-title .collapse-icon,
+#api-settings-page .api-params-card .api-params-header .collapse-icon {
+    display: none !important;
+}
+
+#api-settings-page .settings-card.af-collapsed > :not(.card-title) {
+    display: none;
+}
+
+#api-settings-page .api-params-card.af-collapsed #api-params-container,
+#api-settings-page .api-params-card.af-collapsed #secondary-api-params-container {
+    display: none !important;
+}
+
+/* 时间感知和MiniMax复选框：去掉选中后的✔符号 */
+#api-settings-page #ai-time-aware,
+#api-settings-page #offline-time-aware,
+#api-settings-page #minimax-tts-enabled {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border: 2px solid #ffd4e4 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#api-settings-page #ai-time-aware:checked,
+#api-settings-page #offline-time-aware:checked,
+#api-settings-page #minimax-tts-enabled:checked {
+    border-color: #ffb6c8 !important;
+    background: linear-gradient(135deg, #ffcfe0 0%, #ffb6c8 100%) !important;
+}
+
+#api-settings-page #ai-time-aware:checked::after,
+#api-settings-page #offline-time-aware:checked::after,
+#api-settings-page #minimax-tts-enabled:checked::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+#api-settings-page #ai-time-aware:focus-visible,
+#api-settings-page #offline-time-aware:focus-visible,
+#api-settings-page #minimax-tts-enabled:focus-visible {
+    box-shadow: 0 0 0 4px rgba(255, 182, 200, 0.2);
+}
+
+/* MiniMax 语速/音量拉动条样式 */
+#api-settings-page #minimax-speed-value,
+#api-settings-page #minimax-volume-value {
+    color: #c98fa4 !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    background: linear-gradient(135deg, #fff1f7 0%, #ffe5ef 100%) !important;
+    border: 1px solid #ffd9e8 !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+}
+
+#api-settings-page #minimax-speed-input,
+#api-settings-page #minimax-volume-input {
+    width: 100% !important;
+    height: 6px !important;
+    border-radius: 999px !important;
+    outline: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: linear-gradient(90deg, #ffe3ef, #ffcde0) !important;
+    cursor: pointer !important;
+}
+
+#api-settings-page #minimax-speed-input::-webkit-slider-thumb,
+#api-settings-page #minimax-volume-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff93b0 100%);
+    box-shadow: 0 2px 8px rgba(255, 148, 182, 0.45), 0 0 0 4px rgba(255, 255, 255, 1);
+    margin-top: -7px;
+}
+
+#api-settings-page #minimax-speed-input::-webkit-slider-thumb:hover,
+#api-settings-page #minimax-volume-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+#api-settings-page #minimax-speed-input::-moz-range-thumb,
+#api-settings-page #minimax-volume-input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff93b0 100%);
+    box-shadow: 0 2px 8px rgba(255, 148, 182, 0.45);
+}
+
+#api-settings-page #minimax-speed-input::-moz-range-track,
+#api-settings-page #minimax-volume-input::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ffe3ef, #ffcde0);
+}
+
+#api-settings-page #minimax-speed-input + div,
+#api-settings-page #minimax-volume-input + div {
+    color: #c596ab !important;
+    font-size: 12px !important;
+    margin-top: 8px !important;
+}
+
+/* 线上/线下时间感知行尺寸统一 */
+#api-settings-page .time-aware-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 1px solid #ffe2ee;
+    border-radius: 12px;
+    background: #fff9fc;
+}
+
+#api-settings-page .time-aware-option > div {
+    color: #b7849a !important;
+    font-size: 13px !important;
+    line-height: 1.4;
+}
+
+#api-settings-page .setting-row.time-aware-row {
+    margin-bottom: 16px !important;
+    padding-bottom: 10px !important;
+}
+
+#api-settings-page .setting-row.time-aware-row:last-of-type {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+}
+
+/* 去除所有卡片外层灰色背景 */
+#api-settings-page {
+    background: linear-gradient(180deg, #fff5f9 0%, #f8f0f4 100%) !important;
+}
+
+#api-settings-page .sub-content,
+#api-settings-page .api-settings-container {
+    background: transparent !important;
+    box-shadow: none !important;
 }

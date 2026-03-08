@@ -33,11 +33,13 @@
     <title>喵机1号</title>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="android-chat-fix.css">
     <link rel="stylesheet" href="fiction-styles-v2.css">
     <link rel="stylesheet" href="fiction-reader.css">
     <link rel="stylesheet" href="fiction-comments.css">
     <link rel="stylesheet" href="moments.css">
     <link rel="stylesheet" href="login.css">
+    <script src="android-chat-fix.js" defer></script>
     <link rel="stylesheet" href="auth-modal.css">
     <link rel="stylesheet" href="api-settings-styles.css">
     <link rel="stylesheet" href="wallet.css">
@@ -237,6 +239,20 @@
                     .is-pwa #app-container {
                         padding-bottom: env(safe-area-inset-bottom) !important;
                     }
+
+                    /* iOS PWA全屏模式：确保页面内容正确显示 */
+                    .is-standalone html,
+                    .is-pwa html {
+                        height: 100dvh !important;
+                        height: -webkit-fill-available !important;
+                        min-height: 100% !important;
+                    }
+
+                    .is-standalone .main-content,
+                    .is-pwa .main-content {
+                        flex: 1 !important;
+                        min-height: 0 !important;
+                    }
                 `;
                 document.head.appendChild(pwaFixStyle);
             }
@@ -309,12 +325,14 @@
     <script src="performance-utils.js" defer></script>
     <script src="chat-render-optimizer.js" defer></script>
     <script src="mobile-performance-optimizer.js" defer></script>
+    <script src="ios-paste-fix.js" defer></script>
+    <script src="ios-input-fix.js" defer></script>
+    <script src="ios-chat-fix.js" defer></script>
     <script src="mobile-touch-fix.js" defer></script>
     <script src="font-manager.js" defer></script>
     <script src="theme-manager.js" defer></script>
     <script src="message-background-manager.js" defer></script>
     <script src="message-background-manager-ui.js" defer></script>
-    <script src="emergency-message-background.js" defer></script>
     <script src="message-background-diagnostics.js" defer></script>
     <script src="iphone-simulator.js" defer></script>
     <script src="iphone-settings.js" defer></script>
@@ -330,8 +348,6 @@
     <script src="iphone-browser.js" defer></script>
     <script src="iphone-phone.js" defer></script>
     <script src="mobile-responsive-adapter.js" defer></script>
-    <!-- 在app.js之前先加载toast功能 -->
-    <script src="toast-notifications.js" defer></script>
     <script src="app.js" defer></script>
   
 </head>
@@ -1007,47 +1023,134 @@
 
         <!-- 添加好友页面 -->
         <div class="add-friend-page" id="add-friend-page">
-            <div class="sub-nav">
+            <div class="sub-nav friend-nav">
                 <div class="back-btn" id="add-friend-back-btn">
-                    <div class="back-arrow"></div>
-                    <span>返回</span>
                 </div>
                 <div class="sub-title">添加好友</div>
             </div>
-            <div class="add-page-content">
-                <div class="add-section">
-                    <div class="add-section-header">基本信息</div>
-                    <div class="add-input-group">
-                        <label class="add-input-label">名称 *</label>
-                        <input type="text" class="add-input" id="friend-name-input" placeholder="输入好友名称">
+            <div class="add-friend-content">
+                <!-- 好友头像区域 -->
+                <div class="char-avatar-section">
+                    <div class="avatar-container" style="justify-content:center;">
+                        <!-- 角色头像 -->
+                        <div class="avatar-wrapper char-avatar-wrapper">
+                            <div class="avatar-glow"></div>
+                            <div id="af-avatar-picker" class="avatar-display clickable-avatar" style="width:72px;height:72px;" title="点击上传好友头像">
+                                <!-- 初始文字 -->
+                            </div>
+                            <div class="avatar-label">好友头像</div>
+                        </div>
+                        
+                        <!-- 用户头像 -->
+                        <div class="avatar-wrapper user-avatar-wrapper">
+                            <div class="avatar-glow"></div>
+                            <div id="af-user-avatar-picker" class="avatar-display clickable-avatar" style="width:72px;height:72px;" title="点击上传你的头像">
+                                <!-- 初始文字 -->
+                            </div>
+                            <div class="avatar-label">我的头像</div>
+                        </div>
                     </div>
-                    <div class="add-input-group">
-                        <label class="add-input-label">头像URL（可选）</label>
-                        <input type="text" class="add-input" id="friend-avatar-input" placeholder="输入头像图片链接">
+                    
+                    <!-- 隐藏的输入元素 -->
+                    <input type="file" id="af-avatar-file-input" accept="image/*" style="display:none;">
+                    <input type="text" id="friend-avatar-input" style="display:none;">
+                    <input type="file" id="af-user-avatar-file-input" accept="image/*" style="display:none;">
+                    <input type="text" id="friend-user-avatar-input" style="display:none;">
+                </div>
+
+                <!-- 好友信息卡片 -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span>好友信息</span>
                     </div>
-                    <div class="add-input-group">
-                        <label class="add-input-label">人设描述（可选）</label>
-                        <textarea class="add-textarea" id="friend-desc-input" placeholder="描述TA的性格、背景等..."></textarea>
-                    </div>
-                    <div class="add-input-group">
-                        <label class="add-input-label">开场白（可选）</label>
-                        <textarea class="add-textarea" id="friend-greeting-input" placeholder="TA第一次说的话..."></textarea>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">好友名称</label>
+                            <input type="text" class="form-input" id="friend-name-input" placeholder="TA的名字">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">TA的网名（可选）</label>
+                            <input type="text" class="form-input" id="friend-char-nickname-input" placeholder="TA在社交软件里的网名">
+                            <div class="form-hint">网名是社交软件里的虚拟称呼，不等于角色真名</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注名（可选）</label>
+                            <input type="text" class="form-input" id="friend-remark-input" placeholder="设置备注后将优先显示备注">
+                            <div class="form-hint">设置备注后，优先显示备注而非角色名</div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-label-row">
+                                <label class="form-label" for="friend-desc-input">人设描述</label>
+                                <button type="button" class="textarea-expand-btn" id="friend-desc-expand-btn">放大编辑</button>
+                            </div>
+                            <textarea class="form-textarea" id="friend-desc-input" placeholder="TA的性别、性格、背景等" style="min-height:100px;"></textarea>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="add-btn-group">
-                    <button class="add-cancel-btn" id="add-friend-cancel">取消</button>
-                    <button class="add-submit-btn" id="add-friend-submit">添加好友</button>
+
+                <!-- 用户人设卡片 -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span>你的信息</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">你的名字</label>
+                            <input type="text" id="af-user-name-input" class="form-input" placeholder="在与该角色对话时使用此名称">
+                            <div class="form-hint">在与该角色对话时使用此名称</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">你的网名（可选）</label>
+                            <input type="text" id="af-user-nickname-input" class="form-input" placeholder="你在社交软件中的网名">
+                            <div class="form-hint">网名用于社交场景称呼，不等于你的真名</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">选择人设</label>
+                            <select id="af-user-persona-select" class="form-select af-theme-select">
+                                <option value="">使用默认人设</option>
+                            </select>
+                            <div class="button-group">
+                                <button id="af-manage-personas-btn" class="btn-secondary">管理人设</button>
+                                <button id="af-apply-persona-btn" class="btn-primary">应用人设</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">人设内容</label>
+                            <textarea id="af-user-desc-input" class="form-textarea" style="min-height:80px;" placeholder="你的性格、身份、背景等"></textarea>
+                            <div class="form-hint">当前显示的是实际使用的人设内容</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 对话设置卡片 -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span>对话设置</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">开场白（可选）</label>
+                            <textarea class="form-textarea" id="friend-greeting-input" placeholder="TA第一次说的话" style="min-height:100px;"></textarea>
+                            <div class="form-hint">留空则不自动发送开场白</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部操作按钮 -->
+                <div class="add-friend-btn-group">
+                    <button class="add-friend-cancel-btn" id="add-friend-cancel">取消</button>
+                    <button class="add-friend-submit-btn" id="add-friend-submit">添加好友</button>
                 </div>
             </div>
         </div>
 
         <!-- 创建群聊页面（多成员选择） -->
         <div class="create-group-page" id="create-group-page">
-            <div class="sub-nav">
+            <div class="sub-nav group-nav">
                 <div class="back-btn" id="create-group-back-btn">
-                    <div class="back-arrow"></div>
-                    <span>返回</span>
                 </div>
                 <div class="sub-title">创建群聊</div>
             </div>
@@ -1058,9 +1161,8 @@
                         <div class="avatar-wrapper char-avatar-wrapper">
                             <div class="avatar-glow"></div>
                             <div class="avatar-display clickable-avatar" id="cg-avatar-picker" style="width:72px;height:72px;" title="点击上传群头像">
-                                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"><path d="M23 19V5a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2z"/><circle cx="12" cy="13" r="4"/></svg>
                             </div>
-                            <div class="avatar-label">点击上传头像</div>
+                            <div class="avatar-label">点击上传群头像</div>
                         </div>
                     </div>
                     <input type="file" id="cg-avatar-file-input" accept="image/*" style="display:none;">
@@ -1070,13 +1172,12 @@
                 <!-- 群聊信息卡片 -->
                 <div class="settings-card">
                     <div class="card-header">
-                        <svg viewBox="0 0 24 24" class="card-icon"><circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/><path d="M3 19c0-3 3-5 6-5"/><path d="M15 14c3 0 6 2 6 5"/></svg>
                         <span>群聊信息</span>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
                             <label class="form-label">群名称</label>
-                            <input type="text" class="form-input" id="group-name-input" placeholder="请输入群名称">
+                            <input type="text" class="form-input" id="group-name-input" placeholder="输入群名...">
                         </div>
                         <div class="form-group">
                             <label class="form-label">群公告</label>
@@ -1088,7 +1189,6 @@
                 <!-- 从好友中选择成员 -->
                 <div class="settings-card">
                     <div class="card-header">
-                        <svg viewBox="0 0 24 24" class="card-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         <span>选择群成员 <span style="color:#999;font-weight:400;font-size:12px;" id="cg-member-count">(已选 0 人)</span></span>
                     </div>
                     <div class="card-body">
@@ -1106,7 +1206,6 @@
                 <!-- 额外添加自定义角色 -->
                 <div class="settings-card">
                     <div class="card-header">
-                        <svg viewBox="0 0 24 24" class="card-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         <span>额外添加角色</span>
                     </div>
                     <div class="card-body">
@@ -1134,8 +1233,8 @@
                 <div class="cg-custom-modal-header">添加自定义角色</div>
                 <div class="cg-custom-modal-body">
                     <div class="cg-custom-avatar-row">
-                        <div class="cg-custom-avatar-preview" id="cg-custom-avatar-preview" title="点击上传头像">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <div class="cg-custom-avatar-preview" id="cg-custom-avatar-preview" title="点击上传群头像">
+                            <!-- 删除SVG图标 -->
                         </div>
                         <input type="file" id="cg-custom-avatar-file" accept="image/*" style="display:none;">
                         <input type="text" class="form-input" id="cg-custom-avatar-url" placeholder="或输入头像URL">
@@ -1238,42 +1337,22 @@
                     <button class="moments-icon-btn" id="settingBtn">设置</button>
                 </div>
             </div>
-            <div class="sub-content" style="padding: 0; background: #ffffff; overflow-y: auto; flex: 1;">
+            <div class="sub-content moments-sub-content">
                 <style>
                     /* 朋友圈页面作为main-content的特殊样式 */
                     #moments-page {
                         padding: 0;
                         overflow: hidden;
-                        /* 使用100dvh全屏高度，不包含顶部导航栏，但要减去底部栏 */
-                        height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-                        max-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
-                        min-height: calc(100dvh - 48px - env(safe-area-inset-bottom)) !important;
                     }
                     
-                    /* 朋友圈页面不需要顶部导航栏的padding - 抵消app-container的padding-top */
+                    /* 朋友圈页面不需要顶部导航栏的padding - class 方案兼容不支持 :has() 的浏览器 */
+                    #app-container.top-nav-hidden,
                     #app-container:has(#moments-page.active) {
                         padding-top: 0 !important;
                     }
                     
                     #moments-page .sub-content {
                         height: 100%;
-                        overflow-y: auto;
-                    }
-                    
-                    /* PWA全屏模式：朋友圈页面也考虑底部栏高度 */
-                    @media (display-mode: fullscreen), (display-mode: standalone) {
-                        #moments-page {
-                            height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
-                            max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
-                            min-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
-                        }
-                    }
-                    
-                    .is-pwa #moments-page,
-                    .is-standalone #moments-page {
-                        height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
-                        max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
-                        min-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-top) - 48px - env(safe-area-inset-bottom)) !important;
                     }
                     
                     :root {
@@ -2168,14 +2247,14 @@
 
         <!-- 频道页面（占位符） -->
         <div class="main-content" id="channel-page">
-            <div class="sub-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px;">
-                <div style="text-align: center; color: #999;">
-                    <svg style="width: 80px; height: 80px; margin: 0 auto 20px; opacity: 0.3;" viewBox="0 0 24 24" fill="currentColor">
+            <div class="sub-content channel-sub-content">
+                <div class="channel-placeholder">
+                    <svg class="channel-placeholder-icon" viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M12 6v6l4 2" stroke="white" stroke-width="2" fill="none"/>
                     </svg>
-                    <h3 style="font-size: 18px; margin-bottom: 10px; color: #666;">频道功能</h3>
-                    <p style="font-size: 14px; line-height: 1.6;">敬请期待...</p>
+                    <h3 class="channel-placeholder-title">频道功能</h3>
+                    <p class="channel-placeholder-desc">敬请期待...</p>
                 </div>
             </div>
         </div>
@@ -3093,10 +3172,8 @@
         <!-- 子页面 - API设置 -->
         <div class="sub-page" id="api-settings-page">
             <div class="sub-nav">
-                <div class="back-btn" data-back="api-settings-page">
-                    <span>返回</span>
-                </div>
-                <div class="sub-title">设置</div>
+                <div class="back-btn" data-back="api-settings-page"></div>
+                <div class="sub-title">设置与配置</div>
             </div>
             <div class="sub-content">
                 <div class="api-settings-container">
@@ -3154,10 +3231,10 @@
                     </div>
 
                     <!-- 主API参数设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleApiParamsContent(this)">
-                            <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
-                                <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                    <div class="api-params-card" style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="api-params-header" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleApiParamsContent(this)">
+                            <h3 class="api-params-title" style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="api-params-indicator" style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
                                 主API参数设置
                             </h3>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
@@ -3250,10 +3327,10 @@
                     </div>
 
                     <!-- 副API参数设置 -->
-                    <div style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleSecondaryApiParamsContent(this)">
-                            <h3 style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
-                                <span style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
+                    <div class="api-params-card" style="margin-bottom:20px;padding:18px;background:#ffffff;border-radius:12px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="api-params-header" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;" onclick="toggleSecondaryApiParamsContent(this)">
+                            <h3 class="api-params-title" style="margin:0;font-size:16px;color:#555;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;">
+                                <span class="api-params-indicator" style="display:inline-block;width:3px;height:16px;background:#999;border-radius:2px;"></span>
                                 副API参数设置
                             </h3>
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
@@ -3319,19 +3396,19 @@
                             <span class="collapse-icon" style="font-size:18px;transition:transform 0.3s;">+</span>
                         </h3>
                         <div onclick="event.stopPropagation()">
-                        <div class="setting-row" style="margin-top:16px;">
+                        <div class="setting-row time-aware-row" style="margin-top:16px;">
                             <label class="modern-label">线上时间感知</label>
-                            <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="time-aware-option" style="display:flex;align-items:center;gap:10px;">
                                 <input type="checkbox" id="ai-time-aware" checked style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
-                                <div style="color:#666;font-size:13px;">开启后在线上模式发送时会包含时间信息</div>
+                                <div style="color:#666;font-size:13px;">线上模式角色能够感知现实时间</div>
                             </div>
                         </div>
                         
-                        <div class="setting-row" style="">
+                        <div class="setting-row time-aware-row" style="">
                             <label class="modern-label">线下时间感知</label>
-                            <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="time-aware-option" style="display:flex;align-items:center;gap:10px;">
                                 <input type="checkbox" id="offline-time-aware" style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
-                                <div style="color:#666;font-size:13px;">开启后在线下模式发送时会包含时间信息</div>
+                                <div style="color:#666;font-size:13px;">线下模式角色能够感知现实时间</div>
                             </div>
                         </div>
                         </div>
@@ -3351,7 +3428,7 @@
                             <label class="modern-label">启用 MiniMax TTS</label>
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <input type="checkbox" id="minimax-tts-enabled" style="width:18px;height:18px;cursor:pointer;accent-color:#666;">
-                                <div style="color:#666;font-size:13px;">开启后角色语音将使用 MiniMax 真实语音播放</div>
+                                <div style="color:#666;font-size:13px;">语音条等将使用真实语音播放</div>
                             </div>
                         </div>
 
@@ -3371,9 +3448,6 @@
                         <div class="setting-row" style="">
                             <label class="modern-label">声音模型 (Voice ID)</label>
                             <input id="minimax-voice-id" class="modern-input" placeholder="例如：female-tianmei" value="female-tianmei">
-                            <div style="margin-top:8px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:12px;color:#666;">
-                                常用声音：female-tianmei (甜美女声), male-qn-qingse (青涩男声), female-shaonv (少女), male-qn-jingying (精英男声)
-                            </div>
                         </div>
 
                         <div class="setting-row" style="">

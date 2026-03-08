@@ -28,11 +28,11 @@
         // 重置头像预览
         const avatarPicker = document.getElementById('cg-avatar-picker');
         if (avatarPicker) {
-            avatarPicker.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"><path d="M23 19V5a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2z"/><circle cx="12" cy="13" r="4"/></svg>';
+            avatarPicker.innerHTML = '';
         }
         // 重置头像标签
         const avatarLabel = avatarPicker && avatarPicker.closest('.avatar-wrapper') && avatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
-        if (avatarLabel) avatarLabel.textContent = '点击上传头像';
+        if (avatarLabel) avatarLabel.textContent = '点击上传群头像';
 
         renderFriendSelection();
         renderSelectedBar();
@@ -164,7 +164,7 @@
         if (nameInput) nameInput.value = '';
         if (avatarInput) avatarInput.value = '';
         if (descInput) descInput.value = '';
-        if (preview) preview.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#999" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        if (preview) preview.innerHTML = '';
         modal.style.display = 'flex';
     }
 
@@ -323,7 +323,7 @@
         var fileInput = document.getElementById('cg-avatar-file-input');
         if (!avatarPicker) return;
 
-        var defaultSvg = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"><path d="M23 19V5a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2z"/><circle cx="12" cy="13" r="4"/></svg>';
+        var defaultSvg = '';
         var avatarLabel = avatarPicker.closest('.avatar-wrapper') && avatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
 
         // 点击头像区域 -> 弹出文件选择
@@ -354,8 +354,8 @@
                     avatarPicker.innerHTML = '<img src="' + url + '" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.remove()">';
                     if (avatarLabel) avatarLabel.textContent = '点击更换头像';
                 } else if (!url) {
-                    avatarPicker.innerHTML = defaultSvg;
-                    if (avatarLabel) avatarLabel.textContent = '点击上传头像';
+                    avatarPicker.innerHTML = '';
+                    if (avatarLabel) avatarLabel.textContent = '点击上传群头像';
                 }
             });
         }
@@ -368,7 +368,7 @@
         var fileInput = document.getElementById('cg-custom-avatar-file');
         if (!preview) return;
 
-        var defaultSvg = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        var defaultSvg = '';
 
         // 点击头像预览 -> 弹出文件选择
         preview.addEventListener('click', function() {
@@ -396,7 +396,7 @@
                 if (url && !url.startsWith('data:')) {
                     preview.innerHTML = '<img src="' + url + '" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.remove()">';
                 } else if (!url) {
-                    preview.innerHTML = defaultSvg;
+                    preview.innerHTML = '';
                 }
             });
         }

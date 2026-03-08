@@ -94,13 +94,40 @@ const MobileResponsiveAdapter = {
         console.log('✅ 移动端适配系统初始化完成');
     },
 
-    // 设置视口高度 - 统一使用100dvh适配所有浏览器
+    // 设置视口高度
     setupViewportHeight: function() {
-        // 100dvh已经能够很好地适配所有浏览器，不需要额外修复
-        // 只需要确保CSS变量正确设置
-        document.documentElement.style.setProperty('--app-height', '100dvh');
+        const setHeight = () => {
+            // 获取真实视口高度
+            let vh = window.innerHeight * 0.01;
+            let appHeight = window.innerHeight;
+            
+            // 处理iOS Safari地址栏问题
+            if (this.browsers.isIOS && this.displayModes.isBrowserMode()) {
+                // iOS Safari在滚动时会改变视口高度，使用最大值
+                appHeight = Math.max(window.innerHeight, window.screen.height * 0.9);
+            }
+            
+            // 处理Android浏览器
+            if (this.browsers.isAndroid && this.displayModes.isBrowserMode()) {
+                // Android某些浏览器的视口计算不准确
+                appHeight = window.innerHeight;
+            }
+            
+            // 设置CSS变量
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
+            document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
+            document.documentElement.style.setProperty('--screen-height', `${window.screen.height}px`);
+        };
         
-        console.log('📱 视口高度已设置为100dvh');
+        setHeight();
+        
+        // 防止重复调用
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(setHeight, 100);
+        }, { passive: true });
     },
 
     // 设置设备标识类

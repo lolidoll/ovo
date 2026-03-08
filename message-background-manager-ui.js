@@ -1,662 +1,564 @@
-/**
- * 消息背景管理器UI
- * 提供上传、预览、管理背景图的用户界面
+﻿/**
+ * 消息/好友页面背景管理器 UI
  */
 
 const MessageBackgroundManagerUI = {
-    
-    // 打开消息背景管理器
-    open() {
-        console.log('🔍 打开消息背景管理器UI');
-        
-        try {
-            // 检查依赖
-            if (!window.MessageBackgroundManager) {
-                console.error('❌ MessageBackgroundManager 未加载');
-                this.showError('消息背景管理器加载失败，请刷新页面');
-                return;
-            }
-            
-            // 移除页面检查限制 - 允许在任何页面管理背景图
-            // 背景图设置会应用到消息页面，即使当前不在聊天页面也能设置
-            console.log('✅ 依赖检查通过，准备创建/获取页面');
-            
-            let page = document.getElementById('message-background-manager-page');
-            if (!page) {
-                console.log('📝 创建新的消息背景管理器页面');
-                page = document.createElement('div');
-                page.id = 'message-background-manager-page';
-                page.className = 'sub-page';
-                document.getElementById('app-container').appendChild(page);
-            } else {
-                console.log('📝 使用已存在的消息背景管理器页面');
-            }
-            
-            const currentBg = MessageBackgroundManager.currentBackgroundId;
-            const backgrounds = MessageBackgroundManager.getBackgrounds();
-            
-            console.log('当前背景ID:', currentBg);
-            console.log('背景图列表:', backgrounds);
-            
-            let backgroundsHTML = '';
-            if (backgrounds && backgrounds.length > 0) {
-                backgroundsHTML = backgrounds.map(bg => `
-                    <div class="bg-item ${bg.id === currentBg ? 'active' : ''}" data-id="${bg.id}">
-                        <div class="bg-preview" style="background-image: url(${bg.imageData}); background-size: cover; background-position: center;"></div>
+    open(pageType = 'msg') {
+        if (!window.MessageBackgroundManager) {
+            console.error('MessageBackgroundManager 未加载');
+            return;
+        }
+
+        const targetPageType = MessageBackgroundManager.normalizePageType(pageType);
+        MessageBackgroundManager.setCurrentPageType(targetPageType);
+
+        let page = document.getElementById('message-background-manager-page');
+        if (!page) {
+            page = document.createElement('div');
+            page.id = 'message-background-manager-page';
+            page.className = 'sub-page';
+            document.getElementById('app-container').appendChild(page);
+        }
+
+        const scopeLabel = targetPageType === 'friend' ? '好友页面' : '消息页面';
+        const title = targetPageType === 'friend' ? '好友背景' : '消息背景';
+        const backgrounds = MessageBackgroundManager.getBackgrounds(targetPageType);
+        const currentBackgroundId = MessageBackgroundManager.getStoredBackgroundId(targetPageType);
+        const currentSearchInputStyle = MessageBackgroundManager.getSearchInputStyle(targetPageType);
+
+        let backgroundsHTML = '';
+        if (backgrounds.length > 0) {
+            backgroundsHTML = backgrounds
+                .slice()
+                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                .map((bg) => `
+                    <div class="bg-item ${bg.id === currentBackgroundId ? 'active' : ''}" data-id="${bg.id}">
+                        <div class="bg-preview" style="background-image:url('${bg.imageData}')"></div>
                         <div class="bg-info">
-                            <div class="bg-name">${bg.name}</div>
-                            <div class="bg-size">${bg.size || '未知'}</div>
+                            <div class="bg-name" title="${this.escapeHtml(bg.name)}">${this.escapeHtml(bg.name)}</div>
+                            <div class="bg-size">${this.escapeHtml(bg.size || '未知大小')}</div>
                         </div>
                         <div class="bg-actions">
                             <button class="bg-apply-btn" data-id="${bg.id}">应用</button>
                             <button class="bg-delete-btn" data-id="${bg.id}">删除</button>
                         </div>
                     </div>
-                `).join('');
-            } else {
-                backgroundsHTML = '<div class="no-backgrounds">暂无背景图，请上传一张</div>';
-            }
-        
+                `)
+                .join('');
+        } else {
+            backgroundsHTML = '<div class="no-backgrounds">当前页面还没有背景图，先上传一张吧</div>';
+        }
+
         page.innerHTML = `
             <div class="sub-nav">
                 <div class="back-btn" id="message-background-back-btn">
                     <div class="back-arrow"></div>
                     <span>返回</span>
                 </div>
-                <div class="sub-title">消息背景</div>
+                <div class="sub-title">${title}</div>
             </div>
             <div class="sub-content" style="padding:0;background:#f5f5f7;overflow-y:auto;">
                 <div class="message-background-container">
-                    <!-- 错误提示区域 -->
-                    <div id="error-message" class="error-message" style="display: none;"></div>
-                    
-                    <!-- 上传区域 -->
+                    <div class="scope-switch">
+                        <button class="scope-btn ${targetPageType === 'msg' ? 'active' : ''}" data-scope="msg">消息页面</button>
+                        <button class="scope-btn ${targetPageType === 'friend' ? 'active' : ''}" data-scope="friend">好友页面</button>
+                    </div>
+
+                    <div class="scope-hint">背景会覆盖整个 app-container（包含顶部栏、搜索栏、底部栏）。当前编辑：${scopeLabel}</div>
+
+                    <div class="search-style-section">
+                        <div class="list-title">${scopeLabel} 搜索框样式</div>
+                        <div class="search-style-panel">
+                            <label class="search-style-field">
+                                <span>背景颜色</span>
+                                <input type="color" id="search-bg-color" value="${currentSearchInputStyle.color}">
+                            </label>
+                            <label class="search-style-field">
+                                <span>透明度 <em id="search-bg-opacity-value"></em></span>
+                                <input type="range" id="search-bg-opacity" min="0" max="1" step="0.01" value="${currentSearchInputStyle.opacity}">
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="upload-section">
-                        <div class="upload-title">上传背景图</div>
+                        <div class="upload-title">上传 ${scopeLabel} 背景图</div>
                         <div class="upload-area" id="upload-area">
-                            <div class="upload-icon">
-                                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                    <polyline points="17 8 12 3 7 8"/>
-                                    <line x1="12" y1="3" x2="12" y2="15"/>
-                                </svg>
-                            </div>
+                            <div class="upload-icon">+</div>
                             <div class="upload-text">点击上传或拖拽图片到此</div>
-                            <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
+                            <div class="upload-hint">支持 JPG/PNG/GIF，最大 10MB</div>
                             <input type="file" id="background-file-input" accept="image/*" style="display:none;">
                         </div>
                     </div>
-                    
-                    <!-- 背景图列表 -->
+
                     <div class="backgrounds-list-section">
-                        <div class="list-title">已上传的背景图</div>
+                        <div class="list-title">${scopeLabel} 已上传背景</div>
                         <div class="backgrounds-list">
                             ${backgroundsHTML}
                         </div>
                     </div>
-                    
-                    <!-- 设置选项 -->
-                    <div class="settings-section">
-                        <div class="settings-title">应用范围</div>
-                        <div class="settings-options">
-                            <label class="option-label">
-                                <input type="checkbox" id="apply-to-chat-area" checked>
-                                <span>消息页面</span>
-                            </label>
-                            <label class="option-label">
-                                <input type="checkbox" id="apply-to-top-bar">
-                                <span>顶部栏</span>
-                            </label>
-                            <label class="option-label">
-                                <input type="checkbox" id="apply-to-bottom-bar">
-                                <span>底部栏</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- 清除按钮 -->
+
                     <div class="actions-section">
-                        <button class="clear-background-btn" id="clear-background-btn">清除所有背景</button>
+                        <button class="clear-background-btn" id="clear-current-background-btn">清除当前页面背景</button>
                     </div>
                 </div>
             </div>
-            
+
             <style>
-                /* ========================================
-                   消息背景管理器 - iOS风格设计
-                ======================================== */
-                
                 .message-background-container {
                     padding: 20px;
                     display: flex;
                     flex-direction: column;
-                    gap: 24px;
+                    gap: 18px;
                 }
-                
-                /* 上传区域 */
-                .upload-section {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
+
+                .scope-switch {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 8px;
                 }
-                
-                .upload-title {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: #1a1a1a;
-                }
-                
-                .upload-area {
-                    background: rgba(255, 255, 255, 0.9);
-                    border: 2px dashed rgba(0, 0, 0, 0.1);
-                    border-radius: 12px;
-                    padding: 32px 20px;
-                    text-align: center;
+
+                .scope-btn {
+                    border: 1px solid #d8d8dd;
+                    background: #fff;
+                    color: #333;
+                    border-radius: 10px;
+                    padding: 10px 12px;
+                    font-size: 13px;
                     cursor: pointer;
-                    transition: all 0.3s ease;
+                }
+
+                .scope-btn.active {
+                    background: #111;
+                    color: #fff;
+                    border-color: #111;
+                }
+
+                .scope-hint {
+                    font-size: 12px;
+                    color: #666;
+                    line-height: 1.5;
+                }
+
+                .upload-section,
+                .backgrounds-list-section,
+                .search-style-section {
                     display: flex;
                     flex-direction: column;
-                    align-items: center;
+                    gap: 10px;
+                }
+
+                .upload-title,
+                .list-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #111;
+                }
+
+                .search-style-panel {
+                    border: 1px solid #e5e5ea;
+                    border-radius: 12px;
+                    background: #fff;
+                    padding: 12px;
+                    display: flex;
+                    flex-direction: column;
                     gap: 12px;
                 }
-                
-                .upload-area:hover {
-                    border-color: rgba(0, 0, 0, 0.3);
-                    background: rgba(255, 255, 255, 1);
-                }
-                
-                .upload-icon {
-                    color: #86868b;
+
+                .search-style-field {
                     display: flex;
-                    justify-content: center;
+                    flex-direction: column;
+                    gap: 8px;
                 }
-                
-                .upload-text {
-                    font-size: 15px;
-                    color: #1a1a1a;
+
+                .search-style-field span {
+                    font-size: 13px;
+                    color: #333;
                     font-weight: 500;
                 }
-                
+
+                .search-style-field em {
+                    font-style: normal;
+                    color: #666;
+                }
+
+                #search-bg-color {
+                    width: 100%;
+                    height: 38px;
+                    border: 1px solid #d8d8dd;
+                    border-radius: 8px;
+                    background: #fff;
+                    padding: 2px;
+                    cursor: pointer;
+                }
+
+                #search-bg-opacity {
+                    width: 100%;
+                }
+
+                .upload-area {
+                    border: 2px dashed #d6d6db;
+                    border-radius: 12px;
+                    padding: 24px 16px;
+                    text-align: center;
+                    background: #fff;
+                    cursor: pointer;
+                    transition: border-color .2s ease, background .2s ease;
+                }
+
+                .upload-area:hover {
+                    border-color: #aaa;
+                    background: #fafafa;
+                }
+
+                .upload-icon {
+                    width: 36px;
+                    height: 36px;
+                    line-height: 36px;
+                    border-radius: 50%;
+                    margin: 0 auto 8px;
+                    background: #f0f0f3;
+                    font-size: 22px;
+                    color: #666;
+                }
+
+                .upload-text {
+                    font-size: 14px;
+                    color: #222;
+                }
+
                 .upload-hint {
+                    margin-top: 6px;
                     font-size: 12px;
-                    color: #86868b;
+                    color: #888;
                 }
-                
-                /* 背景图列表 */
-                .backgrounds-list-section {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                
-                .list-title {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: #1a1a1a;
-                }
-                
+
                 .backgrounds-list {
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
+                    gap: 10px;
                 }
-                
+
                 .bg-item {
-                    background: rgba(255, 255, 255, 0.9);
-                    border-radius: 12px;
-                    padding: 12px;
                     display: flex;
-                    gap: 12px;
                     align-items: center;
-                    border: 2px solid transparent;
-                    transition: all 0.3s ease;
+                    gap: 10px;
+                    border: 1px solid #e5e5ea;
+                    border-radius: 12px;
+                    padding: 10px;
+                    background: #fff;
                 }
-                
+
                 .bg-item.active {
-                    border-color: #007AFF;
-                    background: rgba(0, 122, 255, 0.05);
+                    border-color: #111;
                 }
-                
+
                 .bg-preview {
-                    width: 60px;
-                    height: 60px;
+                    width: 56px;
+                    height: 56px;
                     border-radius: 8px;
                     flex-shrink: 0;
-                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    border: 1px solid #ececf0;
                 }
-                
+
                 .bg-info {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
                     min-width: 0;
+                    flex: 1;
                 }
-                
+
                 .bg-name {
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: #1a1a1a;
+                    font-size: 13px;
+                    color: #111;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
-                
+
                 .bg-size {
+                    margin-top: 2px;
                     font-size: 12px;
-                    color: #86868b;
+                    color: #888;
                 }
-                
+
                 .bg-actions {
                     display: flex;
-                    gap: 8px;
+                    gap: 6px;
                     flex-shrink: 0;
                 }
-                
+
                 .bg-apply-btn,
                 .bg-delete-btn {
-                    padding: 6px 12px;
-                    border: none;
-                    border-radius: 6px;
+                    border: 1px solid #d4d4d8;
+                    background: #fff;
+                    color: #222;
+                    border-radius: 8px;
                     font-size: 12px;
-                    font-weight: 500;
+                    padding: 6px 10px;
                     cursor: pointer;
-                    transition: all 0.3s ease;
                 }
-                
+
                 .bg-apply-btn {
-                    background: #007AFF;
-                    color: white;
+                    background: #111;
+                    color: #fff;
+                    border-color: #111;
                 }
-                
-                .bg-apply-btn:hover {
-                    background: #0051d5;
-                    transform: scale(1.05);
-                }
-                
-                .bg-delete-btn {
-                    background: rgba(0, 0, 0, 0.08);
-                    color: #1a1a1a;
-                }
-                
-                .bg-delete-btn:hover {
-                    background: rgba(0, 0, 0, 0.12);
-                }
-                
+
                 .no-backgrounds {
+                    font-size: 13px;
+                    color: #888;
                     text-align: center;
-                    padding: 40px 20px;
-                    color: #86868b;
-                    font-size: 14px;
-                }
-                
-                /* 错误消息样式 */
-                .error-message {
-                    background: rgba(255, 59, 48, 0.1);
-                    border: 1px solid rgba(255, 59, 48, 0.3);
+                    background: #fff;
+                    border: 1px dashed #d8d8dd;
                     border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 16px;
-                    color: #FF3B30;
-                    font-size: 14px;
-                    text-align: center;
-                    display: none;
+                    padding: 22px 12px;
                 }
-                
-                .error-message.show {
-                    display: block;
-                    animation: slideIn 0.3s ease-out;
-                }
-                
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                /* 设置选项 */
-                .settings-section {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                
-                .settings-title {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: #1a1a1a;
-                }
-                
-                .settings-options {
-                    background: rgba(255, 255, 255, 0.9);
-                    border-radius: 12px;
-                    padding: 16px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                
-                .option-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    color: #1a1a1a;
-                }
-                
-                .option-label input[type="checkbox"] {
-                    width: 18px;
-                    height: 18px;
-                    cursor: pointer;
-                    accent-color: #007AFF;
-                }
-                
-                /* 操作按钮 */
-                .actions-section {
-                    display: flex;
-                    gap: 12px;
-                }
-                
+
                 .clear-background-btn {
-                    flex: 1;
-                    padding: 14px;
-                    background: rgba(255, 59, 48, 0.1);
-                    border: 1px solid rgba(255, 59, 48, 0.3);
+                    width: 100%;
+                    border: 1px solid #ffb8b8;
+                    background: #fff5f5;
+                    color: #c73434;
                     border-radius: 12px;
-                    color: #FF3B30;
-                    font-weight: 600;
+                    padding: 12px 14px;
                     font-size: 14px;
+                    font-weight: 600;
                     cursor: pointer;
-                    transition: all 0.3s ease;
                 }
-                
-                .clear-background-btn:hover {
-                    background: rgba(255, 59, 48, 0.2);
-                    border-color: rgba(255, 59, 48, 0.5);
-                }
-                
-                /* 响应式 */
+
                 @media (max-width: 480px) {
                     .message-background-container {
-                        padding: 16px;
-                        gap: 20px;
+                        padding: 16px 12px;
                     }
-                    
+
                     .bg-item {
                         flex-wrap: wrap;
                     }
-                    
+
                     .bg-actions {
                         width: 100%;
-                        order: 3;
-                    }
-                    
-                    .upload-area {
-                        padding: 24px 16px;
                     }
                 }
             </style>
         `;
-        
-        // 绑定事件
-        this.bindEvents(page);
-        
-        // 显示页面（添加open class）
-        console.log('🔍 准备添加open class到页面');
+
         page.classList.add('open');
-        console.log('✅ open class已添加，页面应该可见');
-        
-        // 更新显示
-        const appContainer = document.getElementById('app-container');
-        if (appContainer) {
-            appContainer.style.display = 'block';
-        } else {
-            console.error('❌ 找不到app-container');
-        }
-        
-        console.log('✅ 消息背景管理器UI已打开，页面className:', page.className);
-        } catch (error) {
-            console.error('❌ 打开消息背景管理器时发生错误:', error);
-            console.error('错误堆栈:', error.stack);
-            if (window.showToast) {
-                window.showToast('打开消息背景管理器时发生错误: ' + error.message);
-            }
-        }
+        this.bindEvents(page, targetPageType);
     },
-    
-    // 显示错误信息
-    showError(message, duration = 3000) {
-        const errorDiv = document.getElementById('error-message');
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            errorDiv.className = 'error-message show';
-            
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-                errorDiv.className = 'error-message';
-            }, duration);
-        } else if (window.showToast) {
-            window.showToast(message);
+
+    bindEvents(page, pageType) {
+        const backBtn = page.querySelector('#message-background-back-btn');
+        if (backBtn) {
+            backBtn.onclick = () => page.remove();
         }
-    },
-    
-    // 显示成功信息
-    showSuccess(message, duration = 2000) {
-        if (window.showToast) {
-            window.showToast(message);
+
+        const scopeBtns = page.querySelectorAll('.scope-btn');
+        scopeBtns.forEach((btn) => {
+            btn.onclick = () => {
+                this.open(btn.dataset.scope);
+            };
+        });
+
+        const searchBgColorInput = page.querySelector('#search-bg-color');
+        const searchBgOpacityInput = page.querySelector('#search-bg-opacity');
+        const searchBgOpacityValue = page.querySelector('#search-bg-opacity-value');
+        if (searchBgColorInput && searchBgOpacityInput && searchBgOpacityValue) {
+            let saveStyleTimer = null;
+
+            const updateOpacityValue = () => {
+                const opacity = Number(searchBgOpacityInput.value);
+                const percent = Math.round(opacity * 100);
+                searchBgOpacityValue.textContent = `${percent}%`;
+            };
+
+            const queueSaveSearchStyle = () => {
+                updateOpacityValue();
+                clearTimeout(saveStyleTimer);
+                saveStyleTimer = setTimeout(() => {
+                    MessageBackgroundManager.saveSearchInputStyle(pageType, {
+                        color: searchBgColorInput.value,
+                        opacity: Number(searchBgOpacityInput.value)
+                    }).catch((error) => {
+                        console.error('保存搜索框样式失败:', error);
+                    });
+                }, 120);
+            };
+
+            searchBgColorInput.oninput = queueSaveSearchStyle;
+            searchBgOpacityInput.oninput = queueSaveSearchStyle;
+            updateOpacityValue();
         }
-    },
-    
-    // 绑定事件
-    bindEvents(page) {
-        try {
-            // 返回按钮
-            const backBtn = page.querySelector('#message-background-back-btn');
-            if (backBtn) {
-                backBtn.onclick = () => {
-                    page.classList.remove('open');
-                    console.log('🔙 消息背景管理器已关闭');
-                };
-            }
-            
-            // 上传区域
-            const uploadArea = page.querySelector('#upload-area');
-            const fileInput = page.querySelector('#background-file-input');
-            
-            if (uploadArea && fileInput) {
-                uploadArea.onclick = () => fileInput.click();
-                
-                // 拖拽上传
-                uploadArea.ondragover = (e) => {
-                    e.preventDefault();
-                    uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.3)';
-                    uploadArea.style.background = 'rgba(255, 255, 255, 1)';
-                };
-                
-                uploadArea.ondragleave = () => {
-                    uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.1)';
-                    uploadArea.style.background = 'rgba(255, 255, 255, 0.9)';
-                };
-                
-                uploadArea.ondrop = (e) => {
-                    e.preventDefault();
-                    uploadArea.style.borderColor = 'rgba(0, 0, 0, 0.1)';
-                    uploadArea.style.background = 'rgba(255, 255, 255, 0.9)';
-                    
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) {
-                        this.handleFileSelect(files[0]);
-                    }
-                };
-                
-                fileInput.onchange = () => {
-                    if (fileInput.files.length > 0) {
-                        this.handleFileSelect(fileInput.files[0]);
-                    }
-                };
-            }
-            
-            // 应用背景按钮
-            const applyBtns = page.querySelectorAll('.bg-apply-btn');
-            applyBtns.forEach(btn => {
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    const bgId = btn.dataset.id;
-                    const bg = MessageBackgroundManager.getBackground(bgId);
-                    if (bg) {
-                        try {
-                            MessageBackgroundManager.applyBackground(bg);
-                            MessageBackgroundManager.saveCurrentBackgroundId(bgId);
-                            this.showSuccess('背景已应用');
-                            this.open(); // 刷新列表
-                        } catch (error) {
-                            console.error('应用背景失败:', error);
-                            this.showError('应用背景失败: ' + error.message);
-                        }
-                    }
-                };
-            });
-            
-            // 删除背景按钮
-            const deleteBtns = page.querySelectorAll('.bg-delete-btn');
-            deleteBtns.forEach(btn => {
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    const bgId = btn.dataset.id;
-                    if (confirm('确定要删除这张背景图吗？')) {
-                        MessageBackgroundManager.deleteBackground(bgId)
-                            .then(() => {
-                                this.showSuccess('背景已删除');
-                                this.open(); // 刷新列表
-                            })
-                            .catch(error => {
-                                console.error('删除背景失败:', error);
-                                this.showError('删除背景失败: ' + error.message);
-                            });
-                    }
-                };
-            });
-            
-            // 清除背景按钮
-            const clearBtn = page.querySelector('#clear-background-btn');
-            if (clearBtn) {
-                clearBtn.onclick = () => {
-                    if (confirm('确定要清除所有背景设置吗？')) {
-                        try {
-                            MessageBackgroundManager.clearBackground();
-                            MessageBackgroundManager.saveCurrentBackgroundId(null);
-                            this.showSuccess('背景已清除');
-                            this.open(); // 刷新列表
-                        } catch (error) {
-                            console.error('清除背景失败:', error);
-                            this.showError('清除背景失败: ' + error.message);
-                        }
-                    }
-                };
-            }
-            
-        } catch (error) {
-            console.error('❌ 绑定事件失败:', error);
-            this.showError('界面初始化失败: ' + error.message);
-        }
-    },
-    
-    // 处理文件选择
-    handleFileSelect(file) {
-        try {
-            // 验证文件类型
-            if (!file.type.startsWith('image/')) {
-                this.showError('请选择图片文件 (JPG, PNG, GIF)');
-                return;
-            }
-            
-            // 验证文件大小 (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                this.showError('图片大小不能超过10MB');
-                return;
-            }
-            
-            console.log('📁 开始处理文件:', file.name, file.size);
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const backgroundData = {
-                        id: MessageBackgroundManager.generateId(),
-                        name: file.name,
-                        size: this.formatFileSize(file.size),
-                        imageData: e.target.result,
-                        createdAt: new Date().toISOString(),
-                        applyToTopBar: false,
-                        applyToBottomBar: false
-                    };
-                    
-                    MessageBackgroundManager.saveBackground(backgroundData)
-                        .then(() => {
-                            this.showSuccess('背景图已保存');
-                            console.log('✅ 背景图保存成功:', backgroundData.name);
-                            this.open(); // 刷新列表
-                        })
-                        .catch(error => {
-                            console.error('保存背景图失败:', error);
-                            this.showError('保存背景图失败: ' + error.message);
-                        });
-                } catch (error) {
-                    console.error('处理图片数据失败:', error);
-                    this.showError('处理图片数据失败');
+
+        const uploadArea = page.querySelector('#upload-area');
+        const fileInput = page.querySelector('#background-file-input');
+
+        if (uploadArea && fileInput) {
+            uploadArea.onclick = () => fileInput.click();
+
+            uploadArea.ondragover = (event) => {
+                event.preventDefault();
+                uploadArea.style.borderColor = '#999';
+                uploadArea.style.background = '#f8f8f8';
+            };
+
+            uploadArea.ondragleave = () => {
+                uploadArea.style.borderColor = '#d6d6db';
+                uploadArea.style.background = '#fff';
+            };
+
+            uploadArea.ondrop = (event) => {
+                event.preventDefault();
+                uploadArea.style.borderColor = '#d6d6db';
+                uploadArea.style.background = '#fff';
+
+                const files = event.dataTransfer.files;
+                if (files && files[0]) {
+                    this.handleFileSelect(files[0], pageType);
                 }
             };
-            
-            reader.onerror = () => {
-                console.error('读取文件失败');
-                this.showError('读取文件失败');
+
+            fileInput.onchange = () => {
+                if (fileInput.files && fileInput.files[0]) {
+                    this.handleFileSelect(fileInput.files[0], pageType);
+                }
             };
-            
-            reader.readAsDataURL(file);
-            
-        } catch (error) {
-            console.error('文件选择处理失败:', error);
-            this.showError('文件处理失败: ' + error.message);
+        }
+
+        const applyBtns = page.querySelectorAll('.bg-apply-btn');
+        applyBtns.forEach((btn) => {
+            btn.onclick = async (event) => {
+                event.stopPropagation();
+                const bgId = btn.dataset.id;
+                const bg = MessageBackgroundManager.getBackground(bgId, pageType);
+                if (!bg) {
+                    return;
+                }
+
+                MessageBackgroundManager.applyBackground(bg, pageType);
+                await MessageBackgroundManager.saveCurrentBackgroundId(bgId, pageType);
+                this.open(pageType);
+
+                if (window.showToast) {
+                    window.showToast('背景已应用');
+                }
+            };
+        });
+
+        const deleteBtns = page.querySelectorAll('.bg-delete-btn');
+        deleteBtns.forEach((btn) => {
+            btn.onclick = async (event) => {
+                event.stopPropagation();
+                const bgId = btn.dataset.id;
+                if (!confirm('确定删除这张背景图吗？')) {
+                    return;
+                }
+
+                await MessageBackgroundManager.deleteBackground(bgId, pageType);
+                this.open(pageType);
+
+                if (window.showToast) {
+                    window.showToast('背景已删除');
+                }
+            };
+        });
+
+        const clearBtn = page.querySelector('#clear-current-background-btn');
+        if (clearBtn) {
+            clearBtn.onclick = async () => {
+                if (!confirm('确定清除当前页面已应用的背景吗？')) {
+                    return;
+                }
+
+                await MessageBackgroundManager.saveCurrentBackgroundId(null, pageType);
+                MessageBackgroundManager.applyCurrentTabBackground();
+                this.open(pageType);
+
+                if (window.showToast) {
+                    window.showToast('当前页面背景已清除');
+                }
+            };
         }
     },
-    
-    // 格式化文件大小
+
+    handleFileSelect(file, pageType) {
+        if (!file || !file.type.startsWith('image/')) {
+            if (window.showToast) {
+                window.showToast('请选择图片文件');
+            }
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            if (window.showToast) {
+                window.showToast('图片大小不能超过 10MB');
+            }
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const backgroundData = {
+                id: MessageBackgroundManager.generateId(),
+                name: file.name,
+                size: this.formatFileSize(file.size),
+                imageData: event.target.result,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await MessageBackgroundManager.saveBackground(backgroundData, pageType);
+                MessageBackgroundManager.applyBackground(backgroundData, pageType);
+                await MessageBackgroundManager.saveCurrentBackgroundId(backgroundData.id, pageType);
+
+                if (window.showToast) {
+                    window.showToast('背景上传并应用成功');
+                }
+
+                this.open(pageType);
+            } catch (error) {
+                console.error('保存背景图失败:', error);
+                if (window.showToast) {
+                    window.showToast('保存背景图失败');
+                }
+            }
+        };
+
+        reader.onerror = () => {
+            if (window.showToast) {
+                window.showToast('读取图片失败');
+            }
+        };
+
+        reader.readAsDataURL(file);
+    },
+
     formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        if (!bytes) {
+            return '0 B';
+        }
+
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex += 1;
+        }
+
+        return `${Math.round(size * 100) / 100} ${units[unitIndex]}`;
+    },
+
+    escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 };
 
-// 暴露到window对象
 window.MessageBackgroundManagerUI = MessageBackgroundManagerUI;
 console.log('✅ MessageBackgroundManagerUI 已暴露到 window 对象');
-
-// 手动触发UI初始化
-function initMessageBackgroundManagerUI() {
-    console.log('🔄 手动初始化消息背景管理器UI...');
-    // 确保管理器已加载
-    if (window.MessageBackgroundManager) {
-        console.log('✅ 管理器已就绪');
-    } else {
-        console.warn('⚠️ 管理器还未加载');
-    }
-}
-
-// 多种方式触发UI初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initMessageBackgroundManagerUI, 200);
-    });
-} else {
-    setTimeout(initMessageBackgroundManagerUI, 200);
-}

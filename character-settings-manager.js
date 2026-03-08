@@ -41,7 +41,7 @@
                     window.AppState.userPersonas = [];
                 }
                 if (!window.AppState.user) {
-                    window.AppState.user = { name: '用户', personality: '' };
+                    window.AppState.user = { name: '用户', nickname: '', personality: '' };
                 }
 
                 // 使用全屏子页面方案
@@ -86,6 +86,9 @@
                 if (conv) {
                     chat = conv;
                 }
+
+                const charNickname = chat.charNickname || '';
+                const userNicknameForChar = chat.userNicknameForChar || (window.AppState.user && window.AppState.user.nickname) || '';
             
                 // 判断是否为群聊
                 const isGroupChat = chat.type === 'group';
@@ -196,6 +199,12 @@
                                 <label class="form-label">角色名称</label>
                                 <input type="text" id="char-name-input" value="${this.escapeHtml(chat.name || '')}" class="form-input">
                             </div>
+
+                            <div class="form-group">
+                                <label class="form-label">角色网名（可选）</label>
+                                <input type="text" id="char-nickname-input" value="${this.escapeHtml(charNickname)}" placeholder="角色在社交软件里的网名" class="form-input">
+                                <div class="form-hint">网名是社交场景称呼，不等于角色真名</div>
+                            </div>
                             
                             <div class="form-group">
                                 <label class="form-label">备注名称</label>
@@ -204,7 +213,10 @@
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">角色设定</label>
+                                <div class="form-label-row">
+                                    <label class="form-label" for="char-desc-input">角色设定</label>
+                                    <button type="button" class="textarea-expand-btn" id="char-desc-expand-btn">放大编辑</button>
+                                </div>
                                 <textarea id="char-desc-input" class="form-textarea">${this.escapeHtml(chat.description || '')}</textarea>
                             </div>
                         </div>
@@ -228,6 +240,12 @@
                                 <label class="form-label">用户名称</label>
                                 <input type="text" id="user-name-for-char" value="${this.escapeHtml(userNameForChar)}" class="form-input">
                                 <div class="form-hint">在与该角色对话时使用此名称</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">用户网名（可选）</label>
+                                <input type="text" id="user-nickname-for-char" value="${this.escapeHtml(userNicknameForChar)}" class="form-input" placeholder="你在社交软件里的网名">
+                                <div class="form-hint">网名是社交场景称呼，不等于你的真名</div>
                             </div>
                             ` : ''}
                             
@@ -976,6 +994,20 @@
             if (applyPersonaBtn) {
                 applyPersonaBtn.addEventListener('click', () => {
                     this.applyPersona(chat.id);
+                });
+            }
+
+            const charDescExpandBtn = document.getElementById('char-desc-expand-btn');
+            if (charDescExpandBtn) {
+                charDescExpandBtn.addEventListener('click', () => {
+                    const descInput = document.getElementById('char-desc-input');
+                    if (!descInput) return;
+
+                    if (typeof window.openTextareaExpandEditor === 'function') {
+                        window.openTextareaExpandEditor(descInput, '编辑角色设定');
+                    } else {
+                        showToast('放大编辑器未加载');
+                    }
                 });
             }
 
@@ -1821,6 +1853,9 @@
             const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === charId);
             if (!conv) return;
 
+            const prevCharNickname = (conv.charNickname || '').trim();
+            const prevUserNickname = (conv.userNicknameForChar || (window.AppState.user && window.AppState.user.nickname) || '').trim();
+
             const isGroupChat = conv.type === 'group';
 
             // 保存基本信息
@@ -1836,6 +1871,14 @@
             const userNameInput = document.getElementById('user-name-for-char');
             if (userNameInput) conv.userNameForChar = userNameInput.value || window.AppState.user.name;
 
+            const charNicknameInput = document.getElementById('char-nickname-input');
+            if (charNicknameInput) conv.charNickname = charNicknameInput.value.trim();
+
+            const userNicknameInput = document.getElementById('user-nickname-for-char');
+            if (userNicknameInput) {
+                conv.userNicknameForChar = userNicknameInput.value.trim();
+            }
+
             // 群聊特有设置保存
             if (isGroupChat) {
                 this.saveGroupSettings(charId);
@@ -1845,6 +1888,21 @@
             const friend = window.AppState.friends && window.AppState.friends.find(f => f.id === charId);
             if (friend) {
                 friend.remark = conv.remark;
+                friend.charNickname = conv.charNickname || '';
+                friend.userNicknameForChar = conv.userNicknameForChar || '';
+            }
+
+            if (window.AppState.user && userNicknameInput) {
+                window.AppState.user.nickname = conv.userNicknameForChar || '';
+            }
+
+            const nextCharNickname = (conv.charNickname || '').trim();
+            const nextUserNickname = (conv.userNicknameForChar || '').trim();
+
+            // 追加网名变更提示消息（显示在聊天页面中间）
+            if (window.addNicknameChangeNotice) {
+                window.addNicknameChangeNotice(charId, 'user', 'assistant', prevCharNickname, nextCharNickname, false);
+                window.addNicknameChangeNotice(charId, 'user', 'user', prevUserNickname, nextUserNickname, false);
             }
 
             // 保存绑定的表情包分组
@@ -2065,7 +2123,9 @@
                 this.applyBubbleColors(conv);
                 
                 renderChatMessages(charId);
-                const displayName = conv.remark || conv.name;
+                const displayName = window.getConversationDisplayName
+                    ? window.getConversationDisplayName(conv)
+                    : (conv.remark || conv.charNickname || conv.name);
                 document.getElementById('chat-title').textContent = displayName;
 
                 // 群聊：刷新成员数显示
