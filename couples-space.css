@@ -22,7 +22,7 @@
 /* 容器 */
 .couples-space-container {
   background: var(--bg-white);
-  min-height: 100dvh;
+  min-height: 100vh;
   font-family: var(--pixel-font);
   color: var(--text-dark);
   overflow-x: hidden;
