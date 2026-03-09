@@ -284,7 +284,16 @@
                 }
                 
                 await loadFromStorage();
-                applyInitialTheme(); // 应用保存的主题
+
+                // 清理已下线的页面缩放遗留状态
+                localStorage.removeItem('pageZoomScale');
+                document.documentElement.classList.remove('page-scaled');
+                document.documentElement.style.removeProperty('--page-scale');
+                const appContainer = document.getElementById('app-container');
+                if (appContainer) {
+                    appContainer.classList.remove('page-scaled');
+                }
+
                 initEventListeners();
                 initNotificationSystem();
                 initApiSettingsUI();
@@ -467,7 +476,6 @@
                             signature: parsed.user.hasOwnProperty('signature') ? parsed.user.signature : AppState.user.signature,
                             bgImage: parsed.user.hasOwnProperty('bgImage') ? parsed.user.bgImage : AppState.user.bgImage,
                             coins: parsed.user.hasOwnProperty('coins') ? parsed.user.coins : AppState.user.coins,
-                            theme: parsed.user.hasOwnProperty('theme') ? parsed.user.theme : AppState.user.theme,
                             personality: parsed.user.hasOwnProperty('personality') ? parsed.user.personality : '',
                             visitorCount: parsed.user.hasOwnProperty('visitorCount') ? parsed.user.visitorCount : AppState.user.visitorCount
                         };
@@ -2394,9 +2402,9 @@
                     <div class="sub-title">通知与数据</div>
                 </div>
                 
-                <div class="sub-content settings-config-content">
+                <div class="sub-content settings-config-content" style="padding:10px 16px 100px;">
                     <!-- 通知设置区域 -->
-                    <div class="settings-section">
+                    <div class="settings-section" style="margin-top:0;">
                         <div class="settings-section-header">
                             <svg viewBox="0 0 24 24" class="settings-section-icon">
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -7839,23 +7847,129 @@
             closeImagePicker();
         }
 
-        function editUserName() {
-            const newName = prompt('请输入新昵称', AppState.user.name);
-            if (newName && newName.trim()) {
-                AppState.user.name = newName.trim();
-                saveToStorage();
-                updateUserDisplay();
-                // 注意：朋友圈个人资料现在完全独立，不再同步
+        function openProfileTextEditModal(options = {}) {
+            const {
+                title = '编辑资料',
+                value = '',
+                placeholder = '',
+                multiline = false,
+                maxLength = 80,
+                onConfirm = null
+            } = options;
+
+            const existingModal = document.getElementById('profile-text-edit-modal');
+            if (existingModal) {
+                existingModal.remove();
             }
+
+            const modal = document.createElement('div');
+            modal.id = 'profile-text-edit-modal';
+            modal.className = 'profile-edit-modal';
+            modal.innerHTML = `
+                <div class="profile-edit-modal-panel">
+                    <div class="profile-edit-modal-header">
+                        <div class="profile-edit-modal-title">${title}</div>
+                        <button type="button" class="profile-edit-modal-close" aria-label="关闭">×</button>
+                    </div>
+                    <div class="profile-edit-modal-body"></div>
+                    <div class="profile-edit-modal-actions">
+                        <button type="button" class="profile-edit-modal-btn ghost">取消</button>
+                        <button type="button" class="profile-edit-modal-btn primary">保存</button>
+                    </div>
+                </div>
+            `;
+
+            const modalBody = modal.querySelector('.profile-edit-modal-body');
+            const inputElement = document.createElement(multiline ? 'textarea' : 'input');
+            inputElement.className = multiline ? 'profile-edit-modal-textarea' : 'profile-edit-modal-input';
+            if (!multiline) {
+                inputElement.type = 'text';
+            }
+            inputElement.placeholder = placeholder;
+            inputElement.maxLength = maxLength;
+            inputElement.value = value || '';
+            modalBody.appendChild(inputElement);
+
+            const closeModal = () => {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.remove();
+                }, 240);
+            };
+
+            const handleConfirm = () => {
+                const nextValue = inputElement.value.trim();
+                if (typeof onConfirm === 'function') {
+                    const accepted = onConfirm(nextValue);
+                    if (accepted === false) {
+                        return;
+                    }
+                }
+                closeModal();
+            };
+
+            modal.querySelector('.profile-edit-modal-close').addEventListener('click', closeModal);
+            modal.querySelector('.profile-edit-modal-btn.ghost').addEventListener('click', closeModal);
+            modal.querySelector('.profile-edit-modal-btn.primary').addEventListener('click', handleConfirm);
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            inputElement.addEventListener('keydown', function(e) {
+                if (!multiline && e.key === 'Enter') {
+                    e.preventDefault();
+                    handleConfirm();
+                }
+            });
+
+            document.body.appendChild(modal);
+
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+                inputElement.focus();
+                if (!multiline) {
+                    inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length);
+                }
+            });
+        }
+
+        function editUserName() {
+            openProfileTextEditModal({
+                title: '编辑昵称',
+                value: AppState.user.name || '',
+                placeholder: '请输入新昵称',
+                multiline: false,
+                maxLength: 20,
+                onConfirm: function(newName) {
+                    if (!newName) {
+                        showToast('昵称不能为空');
+                        return false;
+                    }
+                    AppState.user.name = newName;
+                    saveToStorage();
+                    updateUserDisplay();
+                    return true;
+                }
+            });
         }
 
         function editUserSignature() {
-            const newSig = prompt('请输入个性签名', AppState.user.signature);
-            if (newSig !== null) {
-                AppState.user.signature = newSig.trim();
-                saveToStorage();
-                updateUserDisplay();
-            }
+            openProfileTextEditModal({
+                title: '编辑个性签名',
+                value: AppState.user.signature || '',
+                placeholder: '请输入个性签名',
+                multiline: true,
+                maxLength: 80,
+                onConfirm: function(newSig) {
+                    AppState.user.signature = newSig;
+                    saveToStorage();
+                    updateUserDisplay();
+                    return true;
+                }
+            });
         }
 
         // 角色头像编辑
@@ -12237,8 +12351,8 @@
         }
 
 
-        // 打开个性装扮页面（字体管理器和CSS主题管理）
-        function openDecorationPage() {
+        // 打开个性装扮页面
+        function openDecorationPage(defaultTab = 'font') {
             let page = document.getElementById('decoration-main-page');
             if (!page) {
                 page = document.createElement('div');
@@ -12246,261 +12360,583 @@
                 page.className = 'sub-page';
                 document.getElementById('app-container').appendChild(page);
             }
+
+            const allowedTabs = ['font', 'msg', 'friend'];
+            const initialTab = allowedTabs.includes(defaultTab) ? defaultTab : 'font';
+
+            const state = {
+                activeTab: initialTab
+            };
             
             page.innerHTML = `
-                <div class="sub-nav">
-                    <div class="back-btn" id="decoration-main-back-btn">
-                        <div class="back-arrow"></div>
-                        <span>返回</span>
-                    </div>
+                <div class="sub-nav friend-nav settings-config-nav">
+                    <div class="back-btn" id="decoration-main-back-btn" aria-label="返回"></div>
                     <div class="sub-title">个性装扮</div>
                 </div>
-                <div class="sub-content" style="padding:0;background:#f5f5f7;overflow-y:auto;">
-                    <!-- 功能卡片区域 -->
-                    <div class="decoration-cards-container" style="padding-top:20px;">
-                        <!-- 字体管理 -->
-                        <div class="decoration-option-card" id="open-font-manager">
-                            <div class="decoration-option-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
-                                </svg>
-                            </div>
-                            <div class="decoration-option-content">
-                                <div class="decoration-option-title">字体管理</div>
-                                <div class="decoration-option-desc">导入和管理自定义字体</div>
-                            </div>
-                            <div class="decoration-option-arrow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </div>
-                        </div>
-                        
-                        <!-- 消息背景 -->
-                        <div class="decoration-option-card" id="open-message-background">
-                            <div class="decoration-option-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                                    <path d="M21 15l-5-5L5 21"/>
-                                </svg>
-                            </div>
-                            <div class="decoration-option-content">
-                                <div class="decoration-option-title">消息背景</div>
-                                <div class="decoration-option-desc">自定义消息页面背景图</div>
-                            </div>
-                            <div class="decoration-option-arrow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </div>
-                        </div>
+                <div class="sub-content decoration-tab-main-content">
+                    <div class="decoration-tab-nav" role="tablist" aria-label="个性装扮导航">
+                        <button class="decoration-tab-btn active" data-tab="font" role="tab" aria-selected="true">字体</button>
+                        <button class="decoration-tab-btn" data-tab="msg" role="tab" aria-selected="false">消息页面</button>
+                        <button class="decoration-tab-btn" data-tab="friend" role="tab" aria-selected="false">好友页面</button>
+                    </div>
 
-                        <!-- 好友背景 -->
-                        <div class="decoration-option-card" id="open-friend-background">
-                            <div class="decoration-option-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                    <path d="M8 16l3-3 2 2 3-4"/>
-                                </svg>
-                            </div>
-                            <div class="decoration-option-content">
-                                <div class="decoration-option-title">好友背景</div>
-                                <div class="decoration-option-desc">自定义好友页面背景图</div>
-                            </div>
-                            <div class="decoration-option-arrow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </div>
-                        </div>
-                        
-                        <!-- CSS主题管理 -->
-                        <div class="decoration-option-card" id="open-theme-manager">
-                            <div class="decoration-option-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-                                </svg>
-                            </div>
-                            <div class="decoration-option-content">
-                                <div class="decoration-option-title">CSS主题管理</div>
-                                <div class="decoration-option-desc">自定义聊天页面样式</div>
-                            </div>
-                            <div class="decoration-option-arrow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </div>
-                        </div>
-                        
-                        <!-- 页面缩放调整 -->
-                        <div class="decoration-option-card" id="open-font-size-adjuster">
-                            <div class="decoration-option-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <text x="4" y="18" font-size="14" fill="currentColor" stroke="none">A</text>
-                                    <text x="14" y="18" font-size="10" fill="currentColor" stroke="none">A</text>
-                                </svg>
-                            </div>
-                            <div class="decoration-option-content">
-                                <div class="decoration-option-title">页面缩放</div>
-                                <div class="decoration-option-desc">调整整体页面显示大小</div>
-                            </div>
-                            <div class="decoration-option-arrow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </div>
-                        </div>
-                        
+                    <div class="decoration-tab-panels">
+                        <section class="decoration-tab-panel active" data-panel="font"></section>
+                        <section class="decoration-tab-panel" data-panel="msg"></section>
+                        <section class="decoration-tab-panel" data-panel="friend"></section>
+                    </div>
 
+                    <div class="decoration-modal-mask hidden" id="decoration-modal-mask">
+                        <div class="decoration-modal-card" role="dialog" aria-modal="true" aria-labelledby="decoration-modal-title">
+                            <div class="decoration-modal-title" id="decoration-modal-title">提示</div>
+                            <div class="decoration-modal-text" id="decoration-modal-text"></div>
+                            <div class="decoration-modal-actions">
+                                <button class="decoration-btn" id="decoration-modal-cancel">取消</button>
+                                <button class="decoration-btn primary" id="decoration-modal-confirm">确定</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
                 <style>
-                    /* ========================================
-                       个性装扮主页面 - 磨砂玻璃高级设计
-                       黑白灰配色 | iOS风格 | 极简主义
-                    ======================================== */
-                    
-                    /* 卡片容器 */
-                    .decoration-cards-container {
-                        padding: 20px;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 12px;
+                    #decoration-main-page .decoration-tab-main-content {
+                        padding: 10px 10px calc(88px + env(safe-area-inset-bottom));
+                        overflow-y: auto;
+                        background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 58%, #fffdfd 100%);
                     }
-                    
-                    /* 功能卡片 */
-                    .decoration-option-card {
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px) saturate(180%);
-                        -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+                    #decoration-main-page .decoration-tab-nav {
+                        position: sticky;
+                        top: 0;
+                        z-index: 6;
+                        display: flex;
+                        flex-wrap: nowrap;
+                        gap: 6px;
+                        overflow-x: auto;
+                        overflow-y: hidden;
+                        white-space: nowrap;
+                        -webkit-overflow-scrolling: touch;
+                        margin-bottom: 10px;
+                        padding: 4px 0 10px;
+                        background: linear-gradient(180deg, rgba(255, 248, 252, 0.96) 0%, rgba(255, 248, 252, 0.78) 75%, rgba(255, 248, 252, 0) 100%);
+                        scrollbar-width: none;
+                    }
+
+                    #decoration-main-page .decoration-tab-nav::-webkit-scrollbar {
+                        display: none;
+                    }
+
+                    #decoration-main-page .decoration-tab-btn {
+                        flex: 0 0 auto;
+                        min-width: 62px;
+                        height: 30px;
+                        padding: 0 10px;
+                        border: none;
+                        border-radius: 999px;
+                        background: #fff;
+                        color: #bd7a97;
+                        font-size: 12px;
+                        font-weight: 600;
+                        letter-spacing: 0.1px;
+                        box-shadow: 0 2px 8px rgba(249, 161, 192, 0.18);
+                        cursor: pointer;
+                        transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+                        -webkit-tap-highlight-color: transparent;
+                    }
+
+                    #decoration-main-page .decoration-tab-btn:active {
+                        transform: scale(0.96);
+                    }
+
+                    #decoration-main-page .decoration-tab-btn.active {
+                        color: #fff;
+                        background: linear-gradient(135deg, #ffbbd2 0%, #ff99bc 100%);
+                        box-shadow: 0 5px 14px rgba(255, 150, 187, 0.34);
+                    }
+
+                    #decoration-main-page .decoration-tab-panel {
+                        display: none;
+                    }
+
+                    #decoration-main-page .decoration-tab-panel.active {
+                        display: block;
+                    }
+
+                    #decoration-main-page .decoration-card {
+                        background: linear-gradient(180deg, #fffefe 0%, #fff8fc 100%);
+                        border: 1px solid #ffdced;
                         border-radius: 16px;
-                        padding: 20px;
+                        padding: 14px;
+                        box-shadow: 0 5px 16px rgba(248, 157, 189, 0.14);
+                        margin-bottom: 10px;
+                    }
+
+                    #decoration-main-page .decoration-card-title {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #cb628a;
+                        margin-bottom: 4px;
+                    }
+
+                    #decoration-main-page .decoration-card-desc {
+                        font-size: 12px;
+                        color: #bf89a1;
+                        line-height: 1.55;
+                        margin-bottom: 12px;
+                    }
+
+                    #decoration-main-page .decoration-field {
+                        margin-bottom: 12px;
+                    }
+
+                    #decoration-main-page .decoration-label {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        font-size: 12px;
+                        color: #ba7f98;
+                        margin-bottom: 6px;
+                    }
+
+                    #decoration-main-page .decoration-input,
+                    #decoration-main-page .decoration-range,
+                    #decoration-main-page .decoration-color {
+                        width: 100%;
+                        box-sizing: border-box;
+                    }
+
+                    #decoration-main-page .decoration-input {
+                        height: 36px;
+                        border: 1px solid #ffdce9;
+                        border-radius: 10px;
+                        background: #fff;
+                        color: #9c5878;
+                        font-size: 13px;
+                        padding: 0 10px;
+                        outline: none;
+                    }
+
+                    #decoration-main-page .decoration-input:focus {
+                        border-color: #ffb0cc;
+                        box-shadow: 0 0 0 2px rgba(255, 176, 204, 0.2);
+                    }
+
+                    #decoration-main-page .decoration-color {
+                        height: 38px;
+                        border: 1px solid #ffdce9;
+                        border-radius: 10px;
+                        padding: 4px;
+                        background: #fff;
+                    }
+
+                    #decoration-main-page .decoration-range {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        height: 7px;
+                        border-radius: 999px;
+                        background: linear-gradient(90deg, #ffb8d1 0%, #ffb8d1 50%, #ffe2ee 50%, #ffe2ee 100%);
+                        outline: none;
+                    }
+
+                    #decoration-main-page .decoration-range::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 50%;
+                        border: 2px solid #fff;
+                        background: #ff9fc4;
+                        box-shadow: 0 3px 8px rgba(255, 152, 189, 0.35);
+                    }
+
+                    #decoration-main-page .decoration-range::-moz-range-thumb {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 50%;
+                        border: 2px solid #fff;
+                        background: #ff9fc4;
+                        box-shadow: 0 3px 8px rgba(255, 152, 189, 0.35);
+                    }
+
+                    #decoration-main-page .decoration-action-row {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                    }
+
+                    #decoration-main-page .decoration-btn {
+                        min-height: 32px;
+                        padding: 0 12px;
+                        border-radius: 10px;
+                        border: 1px solid #ffd7e7;
+                        background: #fff;
+                        color: #be7394;
+                        font-size: 12px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    }
+
+                    #decoration-main-page .decoration-btn:active {
+                        transform: scale(0.97);
+                    }
+
+                    #decoration-main-page .decoration-btn.primary {
+                        border: none;
+                        color: #fff;
+                        background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+                    }
+
+                    #decoration-main-page .decoration-btn.danger {
+                        background: #fff4f8;
+                        color: #d96a94;
+                        border-color: #ffc9dd;
+                    }
+
+                    #decoration-main-page .decoration-upload {
+                        border: 1.5px dashed #ffc8de;
+                        border-radius: 12px;
+                        background: #fffafd;
+                        text-align: center;
+                        padding: 14px 12px;
+                        color: #c57f9d;
+                        cursor: pointer;
+                        margin-bottom: 12px;
+                    }
+
+                    #decoration-main-page .decoration-upload-hint {
+                        font-size: 12px;
+                        color: #cfa0b5;
+                        margin-top: 4px;
+                    }
+
+                    #decoration-main-page .decoration-list-empty {
+                        border: 1px dashed #ffdbe9;
+                        border-radius: 12px;
+                        background: #fffafd;
+                        padding: 16px 12px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #c896ad;
+                    }
+
+                    #decoration-main-page .decoration-bg-item,
+                    #decoration-main-page .decoration-font-item {
+                        border: 1px solid #ffe2ee;
+                        border-radius: 12px;
+                        background: #fff;
+                        padding: 10px;
+                        margin-bottom: 8px;
+                    }
+
+                    #decoration-main-page .decoration-bg-item.active {
+                        border-color: #ffafcb;
+                        box-shadow: 0 4px 10px rgba(255, 170, 199, 0.2);
+                    }
+
+                    #decoration-main-page .decoration-bg-head {
                         display: flex;
                         align-items: center;
-                        gap: 16px;
-                        cursor: pointer;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        border: 0.5px solid rgba(0, 0, 0, 0.06);
-                        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+                        gap: 10px;
                     }
-                    
-                    .decoration-option-card:hover {
-                        transform: translateY(-4px);
-                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-                        border-color: rgba(0, 0, 0, 0.12);
+
+                    #decoration-main-page .decoration-bg-preview {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 8px;
+                        border: 1px solid #ffd9e8;
+                        background-size: cover;
+                        background-position: center;
+                        flex-shrink: 0;
                     }
-                    
-                    .decoration-option-card:active {
-                        transform: translateY(-2px);
+
+                    #decoration-main-page .decoration-grow {
+                        flex: 1;
+                        min-width: 0;
                     }
-                    
-                    /* 图标样式 */
-                    .decoration-option-icon {
+
+                    #decoration-main-page .decoration-item-name {
+                        font-size: 13px;
+                        color: #b65f83;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    #decoration-main-page .decoration-item-meta {
+                        font-size: 11px;
+                        color: #c89eb0;
+                        margin-top: 2px;
+                    }
+
+                    #decoration-main-page .decoration-font-preview {
+                        margin-top: 8px;
+                        padding: 8px;
+                        border-radius: 8px;
+                        background: #fff8fc;
+                        color: #a35e7c;
+                        font-size: 12px;
+                        line-height: 1.5;
+                    }
+
+                    #decoration-main-page .decoration-font-hero {
+                        background: linear-gradient(135deg, #fff9fd 0%, #ffeef6 100%);
+                    }
+
+                    #decoration-main-page .decoration-font-hero-head {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        margin-bottom: 10px;
+                    }
+
+                    #decoration-main-page .decoration-font-hero-title {
+                        font-size: 17px;
+                        font-weight: 700;
+                        color: #ca638b;
+                    }
+
+                    #decoration-main-page .decoration-font-hero-sub {
+                        font-size: 12px;
+                        color: #be8aa1;
+                        line-height: 1.5;
+                    }
+
+                    #decoration-main-page .decoration-font-current {
+                        margin-top: 8px;
+                        padding: 10px;
+                        border-radius: 10px;
+                        border: 1px solid #ffd8e8;
+                        background: #fff;
+                    }
+
+                    #decoration-main-page .decoration-font-current-label {
+                        font-size: 11px;
+                        color: #bf89a0;
+                        margin-bottom: 4px;
+                    }
+
+                    #decoration-main-page .decoration-font-current-name {
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: #ae597d;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    #decoration-main-page .decoration-font-action-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 8px;
+                    }
+
+                    #decoration-main-page .decoration-font-btn {
+                        min-height: 40px;
+                        border-radius: 12px;
+                        font-size: 13px;
+                        font-weight: 700;
+                        letter-spacing: 0.1px;
+                    }
+
+                    #decoration-main-page .decoration-font-url-wrap {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+
+                    #decoration-main-page .decoration-font-url-btn {
+                        align-self: flex-start;
+                        min-height: 38px;
+                        border-radius: 11px;
+                        font-size: 13px;
+                        font-weight: 700;
+                        padding: 0 14px;
+                    }
+
+                    #decoration-main-page .decoration-font-list-title {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        font-size: 13px;
+                        color: #b87795;
+                        font-weight: 600;
+                    }
+
+                    #decoration-main-page .decoration-font-item {
+                        padding: 12px;
+                        border-radius: 13px;
+                    }
+
+                    #decoration-main-page .decoration-font-item .decoration-action-row {
+                        margin-top: 10px !important;
+                    }
+
+                    #decoration-main-page .decoration-font-item .decoration-btn {
+                        min-height: 36px;
+                        border-radius: 11px;
+                        font-size: 12px;
+                        font-weight: 700;
+                    }
+
+                    #decoration-main-page .decoration-bg-hero {
+                        background: linear-gradient(135deg, #fff9fd 0%, #ffeef6 100%);
+                    }
+
+                    #decoration-main-page .decoration-bg-hero-head {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        margin-bottom: 10px;
+                    }
+
+                    #decoration-main-page .decoration-bg-hero-title {
+                        font-size: 17px;
+                        font-weight: 700;
+                        color: #ca638b;
+                    }
+
+                    #decoration-main-page .decoration-bg-hero-sub {
+                        font-size: 12px;
+                        color: #be8aa1;
+                        line-height: 1.5;
+                    }
+
+                    #decoration-main-page .decoration-bg-current {
+                        margin-top: 8px;
+                        padding: 10px;
+                        border-radius: 10px;
+                        border: 1px solid #ffd8e8;
+                        background: #fff;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+
+                    #decoration-main-page .decoration-bg-current-preview {
                         width: 56px;
                         height: 56px;
-                        border-radius: 14px;
-                        background: rgba(0, 0, 0, 0.06);
+                        border-radius: 10px;
+                        border: 1px solid #ffd8e8;
+                        background-size: cover;
+                        background-position: center;
+                        background-repeat: no-repeat;
+                        flex-shrink: 0;
+                    }
+
+                    #decoration-main-page .decoration-bg-item {
+                        padding: 12px;
+                        border-radius: 13px;
+                    }
+
+                    #decoration-main-page .decoration-bg-item-actions {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 8px;
+                        margin-top: 10px;
+                    }
+
+                    #decoration-main-page .decoration-bg-item-btn {
+                        min-height: 36px;
+                        border-radius: 11px;
+                        font-size: 12px;
+                        font-weight: 700;
+                    }
+
+                    #decoration-main-page .decoration-bg-main-actions {
+                        margin-top: 10px;
+                    }
+
+                    #decoration-main-page .decoration-bg-main-btn {
+                        width: 100%;
+                        min-height: 40px;
+                        border-radius: 12px;
+                        font-size: 13px;
+                        font-weight: 700;
+                    }
+
+                    #decoration-main-page .decoration-inline-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        height: 21px;
+                        padding: 0 8px;
+                        border-radius: 999px;
+                        border: 1px solid #ffbfd7;
+                        background: #fff3f9;
+                        font-size: 11px;
+                        color: #cc6f98;
+                    }
+
+                    #decoration-main-page .decoration-modal-mask {
+                        position: fixed;
+                        inset: 0;
+                        background: rgba(84, 24, 47, 0.2);
+                        backdrop-filter: blur(4px);
+                        -webkit-backdrop-filter: blur(4px);
+                        z-index: 99999;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        color: #1a1a1a;
-                        flex-shrink: 0;
-                        transition: all 0.3s;
+                        padding: 14px;
                     }
-                    
-                    .decoration-option-card:hover .decoration-option-icon {
-                        background: rgba(0, 0, 0, 0.1);
-                        transform: scale(1.05);
+
+                    #decoration-main-page .decoration-modal-card {
+                        width: min(92vw, 320px);
+                        border-radius: 16px;
+                        border: 1px solid #ffd7e8;
+                        background: #fff;
+                        box-shadow: 0 8px 26px rgba(237, 136, 177, 0.26);
+                        padding: 14px;
                     }
-                    
-                    /* 内容区域 */
-                    .decoration-option-content {
-                        flex: 1;
+
+                    #decoration-main-page .decoration-modal-title {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #c95f89;
                     }
-                    
-                    .decoration-option-title {
-                        font-size: 17px;
-                        font-weight: 600;
-                        color: #1a1a1a;
-                        margin-bottom: 4px;
-                        letter-spacing: 0.2px;
-                    }
-                    
-                    .decoration-option-desc {
+
+                    #decoration-main-page .decoration-modal-text {
+                        margin-top: 8px;
                         font-size: 13px;
-                        color: #86868b;
-                        line-height: 1.4;
-                        letter-spacing: 0.1px;
+                        line-height: 1.6;
+                        color: #b57b95;
                     }
-                    
-                    /* 箭头 */
-                    .decoration-option-arrow {
-                        flex-shrink: 0;
-                        color: #86868b;
-                        transition: all 0.3s;
+
+                    #decoration-main-page .decoration-modal-actions {
+                        margin-top: 12px;
                         display: flex;
-                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 8px;
                     }
-                    
-                    .decoration-option-card:hover .decoration-option-arrow {
-                        color: #1a1a1a;
-                        transform: translateX(4px);
-                    }
-                    
-                    /* 响应式设计 - 移动端优化 */
-                    @media (max-width: 768px) {
-                        .decoration-cards-container {
-                            padding: 18px 16px;
-                        }
-                        
-                        .decoration-option-card {
-                            padding: 18px;
-                        }
-                    }
-                    
+
                     @media (max-width: 480px) {
-                        .decoration-cards-container {
-                            padding: 16px 12px;
-                            gap: 12px;
+                        #decoration-main-page .decoration-tab-main-content {
+                            padding: 8px 8px calc(82px + env(safe-area-inset-bottom));
                         }
-                        
-                        .decoration-option-card {
-                            padding: 16px;
+
+                        #decoration-main-page .decoration-card {
+                            padding: 12px;
                             border-radius: 14px;
                         }
-                        
-                        .decoration-option-icon {
-                            width: 48px;
-                            height: 48px;
-                            border-radius: 12px;
+
+                        #decoration-main-page .decoration-tab-btn {
+                            min-width: 58px;
+                            height: 28px;
+                            padding: 0 9px;
                         }
-                        
-                        .decoration-option-title {
-                            font-size: 16px;
+
+                        #decoration-main-page .decoration-font-action-grid {
+                            grid-template-columns: 1fr;
                         }
-                        
-                        .decoration-option-desc {
-                            font-size: 12px;
+
+                        #decoration-main-page .decoration-font-btn,
+                        #decoration-main-page .decoration-font-url-btn {
+                            width: 100%;
                         }
-                    }
-                    
-                    /* 触摸设备优化 */
-                    @media (hover: none) and (pointer: coarse) {
-                        .decoration-option-card {
-                            min-height: 88px;
-                            touch-action: manipulation;
-                            -webkit-tap-highlight-color: transparent;
-                        }
-                        
-                        .decoration-option-card:hover {
-                            transform: none;
-                        }
-                        
-                        .decoration-option-card:active {
-                            transform: scale(0.98);
-                            opacity: 0.9;
+
+                        #decoration-main-page .decoration-bg-item-actions {
+                            grid-template-columns: 1fr;
                         }
                     }
                 </style>
@@ -12508,669 +12944,623 @@
             
             page.classList.add('open');
             
-            // 绑定返回按钮
             const backBtn = page.querySelector('#decoration-main-back-btn');
             if (backBtn) {
                 backBtn.onclick = () => {
                     page.classList.remove('open');
                 };
             }
-            
-            // 绑定字体管理按钮
-            const fontManagerBtn = page.querySelector('#open-font-manager');
-            if (fontManagerBtn) {
-                fontManagerBtn.onclick = () => {
-                    if (window.FontManagerUI) {
-                        window.FontManagerUI.open();
-                    } else {
-                        console.error('字体管理器未加载');
-                        showToast('字体管理器加载失败');
-                    }
-                };
-            }
-            
-            // 绑定CSS主题管理按钮
-            const themeManagerBtn = page.querySelector('#open-theme-manager');
-            if (themeManagerBtn) {
-                themeManagerBtn.onclick = () => {
-                    if (window.ThemeManagerUI) {
-                        window.ThemeManagerUI.open();
-                    } else {
-                        console.error('CSS主题管理器未加载');
-                        showToast('CSS主题管理器加载失败');
-                    }
-                };
-            }
-            
-            // 绑定页面缩放调整按钮
-            const fontSizeBtn = page.querySelector('#open-font-size-adjuster');
-            if (fontSizeBtn) {
-                fontSizeBtn.onclick = () => {
-                    openPageZoomAdjuster();
-                };
-            }
-            
-            // 绑定消息背景按钮
-            const messageBackgroundBtn = page.querySelector('#open-message-background');
-            if (messageBackgroundBtn) {
-                messageBackgroundBtn.onclick = () => {
-                    openMessageBackgroundManager('msg');
-                };
+
+            const tabButtons = page.querySelectorAll('.decoration-tab-btn');
+            tabButtons.forEach((btn) => {
+                btn.onclick = () => switchTab(btn.dataset.tab);
+            });
+
+            switchTab(state.activeTab);
+
+            function switchTab(tabName) {
+                state.activeTab = tabName;
+                tabButtons.forEach((btn) => {
+                    const active = btn.dataset.tab === tabName;
+                    btn.classList.toggle('active', active);
+                    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+
+                page.querySelectorAll('.decoration-tab-panel').forEach((panel) => {
+                    panel.classList.toggle('active', panel.dataset.panel === tabName);
+                });
+
+                renderActivePanel();
             }
 
-            // 绑定好友背景按钮
-            const friendBackgroundBtn = page.querySelector('#open-friend-background');
-            if (friendBackgroundBtn) {
-                friendBackgroundBtn.onclick = () => {
-                    openMessageBackgroundManager('friend');
-                };
+            function renderActivePanel() {
+                if (state.activeTab === 'font') {
+                    renderFontPanel();
+                    return;
+                }
+                if (state.activeTab === 'msg') {
+                    renderBackgroundPanel('msg');
+                    return;
+                }
+                if (state.activeTab === 'friend') {
+                    renderBackgroundPanel('friend');
+                    return;
+                }
+                renderFontPanel();
             }
-            
+
+            function setRangeProgress(rangeEl) {
+                if (!rangeEl) {
+                    return;
+                }
+                const min = Number(rangeEl.min || 0);
+                const max = Number(rangeEl.max || 100);
+                const value = Number(rangeEl.value || min);
+                const percent = Math.max(0, Math.min(100, ((value - min) / (max - min || 1)) * 100));
+                rangeEl.style.background = `linear-gradient(90deg, #ffb8d1 0%, #ffb8d1 ${percent}%, #ffe2ee ${percent}%, #ffe2ee 100%)`;
+            }
+
+            function showDecorationDialog({ title = '提示', message = '', confirmText = '确定', cancelText = '取消', danger = false } = {}) {
+                const mask = page.querySelector('#decoration-modal-mask');
+                const titleEl = page.querySelector('#decoration-modal-title');
+                const textEl = page.querySelector('#decoration-modal-text');
+                const cancelBtn = page.querySelector('#decoration-modal-cancel');
+                const confirmBtn = page.querySelector('#decoration-modal-confirm');
+
+                if (!mask || !titleEl || !textEl || !cancelBtn || !confirmBtn) {
+                    return Promise.resolve(confirm(message || title));
+                }
+
+                titleEl.textContent = title;
+                textEl.textContent = message;
+                cancelBtn.textContent = cancelText;
+                confirmBtn.textContent = confirmText;
+                confirmBtn.classList.toggle('danger', danger);
+                confirmBtn.classList.toggle('primary', !danger);
+                mask.classList.remove('hidden');
+
+                return new Promise((resolve) => {
+                    const close = (result) => {
+                        mask.classList.add('hidden');
+                        cancelBtn.onclick = null;
+                        confirmBtn.onclick = null;
+                        mask.onclick = null;
+                        resolve(result);
+                    };
+
+                    cancelBtn.onclick = () => close(false);
+                    confirmBtn.onclick = () => close(true);
+                    mask.onclick = (event) => {
+                        if (event.target === mask) {
+                            close(false);
+                        }
+                    };
+                });
+            }
+
+            function renderBackgroundPanel(pageType = 'msg') {
+                const currentScope = pageType === 'friend' ? 'friend' : 'msg';
+                const panel = page.querySelector(`[data-panel="${currentScope}"]`);
+                if (!panel) {
+                    return;
+                }
+
+                if (!window.MessageBackgroundManager) {
+                    panel.innerHTML = `
+                        <div class="decoration-card">
+                            <div class="decoration-card-title">页面背景</div>
+                            <div class="decoration-list-empty">背景管理模块未加载，请刷新页面后重试</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const manager = window.MessageBackgroundManager;
+                const scopeLabel = currentScope === 'friend' ? '好友页面' : '消息页面';
+                const scopeBadge = currentScope === 'friend' ? '好友' : '消息';
+                const scopeHeroSubtitle = currentScope === 'friend'
+                    ? '管理好友页面背景与搜索框样式'
+                    : '管理消息页面背景与搜索框样式';
+                const currentBackgroundLabel = currentScope === 'friend' ? '当前好友背景' : '当前消息背景';
+                const emptyBackgroundText = currentScope === 'friend'
+                    ? '未设置，显示默认好友背景'
+                    : '未设置，显示默认消息背景';
+                const backgrounds = manager
+                    .getBackgrounds(currentScope)
+                    .slice()
+                    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                const currentBackgroundId = manager.getStoredBackgroundId(currentScope);
+                const currentSearchInputStyle = manager.getSearchInputStyle(currentScope) || { color: '#ffffff', opacity: 0.6 };
+                const currentBackground = currentBackgroundId
+                    ? manager.getBackground(currentBackgroundId, currentScope)
+                    : null;
+
+                const backgroundsHTML = backgrounds.length > 0
+                    ? backgrounds.map((background) => `
+                        <div class="decoration-bg-item ${background.id === currentBackgroundId ? 'active' : ''}">
+                            <div class="decoration-bg-head">
+                                <div class="decoration-bg-preview" style="background-image:url('${background.imageData}')"></div>
+                                <div class="decoration-grow">
+                                    <div class="decoration-item-name" title="${escapeHtml(background.name)}">${escapeHtml(background.name)}</div>
+                                    <div class="decoration-item-meta">${escapeHtml(background.size || '未知大小')}</div>
+                                </div>
+                                ${background.id === currentBackgroundId ? '<span class="decoration-inline-badge">当前</span>' : ''}
+                            </div>
+                            <div class="decoration-bg-item-actions">
+                                <button class="decoration-btn primary decoration-bg-item-btn" data-bg-action="apply" data-bg-id="${background.id}">设为当前</button>
+                                <button class="decoration-btn danger decoration-bg-item-btn" data-bg-action="delete" data-bg-id="${background.id}">删除</button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<div class="decoration-list-empty">当前页面暂无背景图，先上传一张吧</div>';
+
+                panel.innerHTML = `
+                    <div class="decoration-card decoration-bg-hero">
+                        <div class="decoration-bg-hero-head">
+                            <div>
+                                <div class="decoration-bg-hero-title">${scopeLabel}装扮</div>
+                                <div class="decoration-bg-hero-sub">${scopeHeroSubtitle}</div>
+                            </div>
+                            <span class="decoration-inline-badge">${scopeBadge}</span>
+                        </div>
+
+                        <div class="decoration-bg-current">
+                            ${currentBackground ? `
+                                <div class="decoration-bg-current-preview" style="background-image:url('${currentBackground.imageData}')"></div>
+                                <div class="decoration-grow">
+                                    <div class="decoration-font-current-label">${currentBackgroundLabel}</div>
+                                    <div class="decoration-font-current-name" title="${escapeHtml(currentBackground.name)}">${escapeHtml(currentBackground.name)}</div>
+                                    <div class="decoration-item-meta">${escapeHtml(currentBackground.size || '未知大小')}</div>
+                                </div>
+                            ` : `
+                                <div class="decoration-grow">
+                                    <div class="decoration-font-current-label">${currentBackgroundLabel}</div>
+                                    <div class="decoration-font-current-name">${emptyBackgroundText}</div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <div class="decoration-card">
+                        <div class="decoration-field">
+                            <div class="decoration-label">
+                                <span>搜索框背景色</span>
+                            </div>
+                            <input type="color" class="decoration-color" id="decoration-search-bg-color-${currentScope}" value="${currentSearchInputStyle.color}">
+                        </div>
+
+                        <div class="decoration-field">
+                            <div class="decoration-label">
+                                <span>搜索框透明度</span>
+                                <span id="decoration-search-opacity-value-${currentScope}">${Math.round(Number(currentSearchInputStyle.opacity) * 100)}%</span>
+                            </div>
+                            <input type="range" class="decoration-range" id="decoration-search-opacity-${currentScope}" min="0" max="1" step="0.01" value="${currentSearchInputStyle.opacity}">
+                        </div>
+
+                        <div class="decoration-upload" id="decoration-bg-upload-area-${currentScope}">
+                            <div>点击上传 ${scopeLabel} 背景图</div>
+                            <div class="decoration-upload-hint">支持 JPG/PNG/GIF，大小不超过 10MB</div>
+                            <input type="file" id="decoration-bg-file-input-${currentScope}" accept="image/*" style="display:none;">
+                        </div>
+                    </div>
+
+                    <div class="decoration-card">
+                        <div class="decoration-font-list-title">
+                            <span>${scopeLabel}背景库 (${backgrounds.length})</span>
+                            <span>${currentBackground ? `${scopeBadge}页已设置` : `${scopeBadge}页未设置`}</span>
+                        </div>
+                        ${backgroundsHTML}
+
+                        <div class="decoration-bg-main-actions">
+                            <button class="decoration-btn danger decoration-bg-main-btn" id="decoration-clear-current-bg-${currentScope}">清除当前页面背景</button>
+                        </div>
+                    </div>
+                `;
+
+                const colorInput = panel.querySelector(`#decoration-search-bg-color-${currentScope}`);
+                const opacityInput = panel.querySelector(`#decoration-search-opacity-${currentScope}`);
+                const opacityValue = panel.querySelector(`#decoration-search-opacity-value-${currentScope}`);
+                let saveStyleTimer = null;
+
+                const queueSaveSearchStyle = () => {
+                    if (!colorInput || !opacityInput || !opacityValue) {
+                        return;
+                    }
+                    const opacity = Number(opacityInput.value);
+                    opacityValue.textContent = `${Math.round(opacity * 100)}%`;
+
+                    clearTimeout(saveStyleTimer);
+                    saveStyleTimer = setTimeout(() => {
+                        manager.saveSearchInputStyle(currentScope, {
+                            color: colorInput.value,
+                            opacity
+                        }).catch((error) => {
+                            console.error('保存搜索框样式失败:', error);
+                        });
+                    }, 120);
+                };
+
+                if (colorInput) {
+                    colorInput.oninput = queueSaveSearchStyle;
+                }
+                if (opacityInput) {
+                    setRangeProgress(opacityInput);
+                    opacityInput.oninput = () => {
+                        setRangeProgress(opacityInput);
+                        queueSaveSearchStyle();
+                    };
+                }
+
+                const uploadArea = panel.querySelector(`#decoration-bg-upload-area-${currentScope}`);
+                const fileInput = panel.querySelector(`#decoration-bg-file-input-${currentScope}`);
+                if (uploadArea && fileInput) {
+                    uploadArea.onclick = () => fileInput.click();
+                    uploadArea.ondragover = (event) => {
+                        event.preventDefault();
+                    };
+                    uploadArea.ondrop = (event) => {
+                        event.preventDefault();
+                        const files = event.dataTransfer && event.dataTransfer.files;
+                        if (files && files[0]) {
+                            handleBackgroundUpload(files[0], currentScope);
+                        }
+                    };
+                    fileInput.onchange = () => {
+                        if (fileInput.files && fileInput.files[0]) {
+                            handleBackgroundUpload(fileInput.files[0], currentScope);
+                        }
+                    };
+                }
+
+                panel.querySelectorAll('[data-bg-action]').forEach((button) => {
+                    button.onclick = async () => {
+                        const action = button.dataset.bgAction;
+                        const backgroundId = button.dataset.bgId;
+                        if (!backgroundId) {
+                            return;
+                        }
+
+                        if (action === 'apply') {
+                            const background = manager.getBackground(backgroundId, currentScope);
+                            if (!background) {
+                                return;
+                            }
+                            manager.applyBackground(background, currentScope);
+                            await manager.saveCurrentBackgroundId(backgroundId, currentScope);
+                            showToast('背景已应用');
+                            renderBackgroundPanel(currentScope);
+                            return;
+                        }
+
+                        if (action === 'delete') {
+                            const confirmed = await showDecorationDialog({
+                                title: '删除背景',
+                                message: '确定删除这张背景图吗？删除后不可恢复。',
+                                confirmText: '删除',
+                                cancelText: '取消',
+                                danger: true
+                            });
+                            if (!confirmed) {
+                                return;
+                            }
+                            await manager.deleteBackground(backgroundId, currentScope);
+                            showToast('背景已删除');
+                            renderBackgroundPanel(currentScope);
+                        }
+                    };
+                });
+
+                const clearButton = panel.querySelector(`#decoration-clear-current-bg-${currentScope}`);
+                if (clearButton) {
+                    clearButton.onclick = async () => {
+                        const confirmed = await showDecorationDialog({
+                            title: '清除背景',
+                            message: `确定清除${scopeLabel}当前已应用背景吗？`,
+                            confirmText: '清除',
+                            cancelText: '保留',
+                            danger: true
+                        });
+                        if (!confirmed) {
+                            return;
+                        }
+                        await manager.saveCurrentBackgroundId(null, currentScope);
+                        manager.applyCurrentTabBackground();
+                        showToast('当前页面背景已清除');
+                        renderBackgroundPanel(currentScope);
+                    };
+                }
+            }
+
+            function renderFontPanel() {
+                const panel = page.querySelector('[data-panel="font"]');
+                if (!panel) {
+                    return;
+                }
+
+                if (!window.FontManager) {
+                    panel.innerHTML = `
+                        <div class="decoration-card">
+                            <div class="decoration-card-title">字体管理</div>
+                            <div class="decoration-list-empty">字体管理模块未加载，请刷新页面后重试</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const manager = window.FontManager;
+                const fonts = manager
+                    .getAllFonts()
+                    .slice()
+                    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                const activeFont = manager.getActiveFont();
+
+                const fontsHTML = fonts.length > 0
+                    ? fonts.map((font) => {
+                        const fontName = String(font.name || '未命名字体').replace(/["'\\]/g, '');
+                        const isActive = font.id === manager.currentFontId;
+                        return `
+                            <div class="decoration-font-item">
+                                <div class="decoration-bg-head">
+                                    <div class="decoration-grow">
+                                        <div class="decoration-item-name" title="${escapeHtml(font.name)}">${escapeHtml(font.name)}</div>
+                                        <div class="decoration-item-meta">${new Date(font.createdAt).toLocaleDateString('zh-CN')}</div>
+                                    </div>
+                                    ${isActive ? '<span class="decoration-inline-badge">使用中</span>' : ''}
+                                </div>
+                                <div class="decoration-font-preview" style="font-family:'${fontName}',sans-serif;">
+                                    字体效果预览：你好，世界！ 0123456789 ABC
+                                </div>
+                                <div class="decoration-action-row" style="margin-top:8px;">
+                                    ${isActive ? '' : `<button class="decoration-btn primary" data-font-action="apply" data-font-id="${font.id}">应用</button>`}
+                                    <button class="decoration-btn danger" data-font-action="delete" data-font-id="${font.id}">删除</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<div class="decoration-list-empty">暂无字体，请导入 TTF 字体文件</div>';
+
+                panel.innerHTML = `
+                    <div class="decoration-card decoration-font-hero">
+                        <div class="decoration-font-hero-head">
+                            <div>
+                                <div class="decoration-font-hero-title">字体</div>
+                                <div class="decoration-font-hero-sub">全局字体设置</div>
+                            </div>
+                            <span class="decoration-inline-badge">喵机1号</span>
+                        </div>
+
+                        <div class="decoration-font-current">
+                            <div class="decoration-font-current-label">当前字体</div>
+                            <div class="decoration-font-current-name">${activeFont ? escapeHtml(activeFont.name) : '系统默认字体'}</div>
+                        </div>
+                    </div>
+
+                    <div class="decoration-card">
+                        <div class="decoration-field">
+                            <div class="decoration-label"><span>本地字体文件</span></div>
+                            <div class="decoration-font-action-grid">
+                                <button class="decoration-btn primary decoration-font-btn" id="decoration-font-import-trigger">导入TTF</button>
+                                <button class="decoration-btn decoration-font-btn" id="decoration-font-reset">恢复默认</button>
+                            </div>
+                            <input type="file" id="decoration-font-file-input" accept=".ttf" multiple style="display:none;">
+                        </div>
+
+                        <div class="decoration-field">
+                            <div class="decoration-label"><span>在线导入</span></div>
+                            <div class="decoration-font-url-wrap">
+                                <input class="decoration-input" id="decoration-font-url" placeholder="字体URL（必填）">
+                                <input class="decoration-input" id="decoration-font-url-name" placeholder="字体名称（必填）">
+                                <button class="decoration-btn decoration-font-url-btn" id="decoration-font-import-url">URL导入</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="decoration-card">
+                        <div class="decoration-font-list-title">
+                            <span>字体库 (${fonts.length})</span>
+                            <span>${activeFont ? '已应用 1 款' : '当前未应用自定义字体'}</span>
+                        </div>
+                        ${fontsHTML}
+                    </div>
+                `;
+
+                const importTrigger = panel.querySelector('#decoration-font-import-trigger');
+                const fileInput = panel.querySelector('#decoration-font-file-input');
+                if (importTrigger && fileInput) {
+                    importTrigger.onclick = () => fileInput.click();
+                    fileInput.onchange = async () => {
+                        if (!fileInput.files || fileInput.files.length === 0) {
+                            return;
+                        }
+                        let success = 0;
+                        let failed = 0;
+                        for (const file of Array.from(fileInput.files)) {
+                            try {
+                                await manager.importFontFile(file);
+                                success += 1;
+                            } catch (error) {
+                                console.error('导入字体失败:', error);
+                                failed += 1;
+                            }
+                        }
+                        showToast(`字体导入完成：成功${success}${failed > 0 ? `，失败${failed}` : ''}`);
+                        renderFontPanel();
+                    };
+                }
+
+                const importUrlButton = panel.querySelector('#decoration-font-import-url');
+                if (importUrlButton) {
+                    importUrlButton.onclick = async () => {
+                        const urlInput = panel.querySelector('#decoration-font-url');
+                        const nameInput = panel.querySelector('#decoration-font-url-name');
+                        const url = urlInput ? urlInput.value.trim() : '';
+                        const name = nameInput ? nameInput.value.trim() : '';
+                        if (!url || !name) {
+                            showToast('请填写字体URL和字体名称');
+                            return;
+                        }
+                        try {
+                            await manager.importFontFromURL(url, name);
+                            showToast('在线字体导入成功');
+                            renderFontPanel();
+                        } catch (error) {
+                            console.error('在线导入字体失败:', error);
+                            showToast('在线导入失败');
+                        }
+                    };
+                }
+
+                const resetButton = panel.querySelector('#decoration-font-reset');
+                if (resetButton) {
+                    resetButton.onclick = async () => {
+                        const confirmed = await showDecorationDialog({
+                            title: '恢复默认字体',
+                            message: '确定取消当前字体并恢复默认吗？',
+                            confirmText: '恢复',
+                            cancelText: '取消'
+                        });
+                        if (!confirmed) {
+                            return;
+                        }
+                        manager.currentFontId = null;
+                        localStorage.removeItem('activeFontId');
+                        localStorage.removeItem('activeFontName');
+                        manager.removeGlobalFont();
+                        const syncTasks = [];
+                        manager.fonts.forEach((font) => {
+                            if (font.isActive) {
+                                font.isActive = false;
+                                syncTasks.push(manager.saveFont(font).catch(() => {}));
+                            }
+                        });
+                        if (syncTasks.length > 0) {
+                            await Promise.all(syncTasks);
+                        }
+                        showToast('已恢复默认字体');
+                        renderFontPanel();
+                    };
+                }
+
+                panel.querySelectorAll('[data-font-action]').forEach((button) => {
+                    button.onclick = async () => {
+                        const action = button.dataset.fontAction;
+                        const fontId = button.dataset.fontId;
+                        if (!fontId) {
+                            return;
+                        }
+
+                        if (action === 'apply') {
+                            try {
+                                await manager.applyFont(fontId);
+                                showToast('字体已应用');
+                                renderFontPanel();
+                            } catch (error) {
+                                console.error('应用字体失败:', error);
+                                showToast('字体应用失败');
+                            }
+                            return;
+                        }
+
+                        if (action === 'delete') {
+                            const confirmed = await showDecorationDialog({
+                                title: '删除字体',
+                                message: '确定删除这个字体吗？删除后不可恢复。',
+                                confirmText: '删除',
+                                cancelText: '取消',
+                                danger: true
+                            });
+                            if (!confirmed) {
+                                return;
+                            }
+                            try {
+                                await manager.deleteFont(fontId);
+                                showToast('字体已删除');
+                                renderFontPanel();
+                            } catch (error) {
+                                console.error('删除字体失败:', error);
+                                showToast('删除字体失败');
+                            }
+                        }
+                    };
+                });
+            }
+
+            function handleBackgroundUpload(file, pageType = 'msg') {
+                if (!window.MessageBackgroundManager) {
+                    return;
+                }
+
+                if (!file || !file.type.startsWith('image/')) {
+                    showToast('请选择图片文件');
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast('图片大小不能超过10MB');
+                    return;
+                }
+
+                const manager = window.MessageBackgroundManager;
+                const reader = new FileReader();
+
+                reader.onload = async (event) => {
+                    const backgroundData = {
+                        id: manager.generateId(),
+                        name: file.name,
+                        size: formatFileSize(file.size),
+                        imageData: event.target.result,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    const currentScope = pageType === 'friend' ? 'friend' : 'msg';
+
+                    try {
+                        await manager.saveBackground(backgroundData, currentScope);
+                        manager.applyBackground(backgroundData, currentScope);
+                        await manager.saveCurrentBackgroundId(backgroundData.id, currentScope);
+                        showToast('背景上传并应用成功');
+                        renderBackgroundPanel(currentScope);
+                    } catch (error) {
+                        console.error('上传背景失败:', error);
+                        showToast('保存背景图失败');
+                    }
+                };
+
+                reader.onerror = () => {
+                    showToast('读取图片失败');
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+            function formatFileSize(bytes) {
+                if (!bytes) {
+                    return '0 B';
+                }
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let size = bytes;
+                let unitIndex = 0;
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex += 1;
+                }
+                return `${Math.round(size * 100) / 100} ${units[unitIndex]}`;
+            }
+
+            function escapeHtml(text) {
+                return String(text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
 
         }
         
         // 打开消息背景管理器
         function openMessageBackgroundManager(pageType = 'msg') {
-            const targetPageType = pageType === 'friend' ? 'friend' : 'msg';
-            console.log('🔍 尝试打开背景管理器:', targetPageType);
-            
-            // 检查管理器是否已加载，如果未加载则等待
-            if (!window.MessageBackgroundManager) {
-                console.warn('⏳ MessageBackgroundManager 还未加载，等待中...');
-                
-                // 等待管理器加载
-                let waitCount = 0;
-                const waitInterval = setInterval(() => {
-                    waitCount++;
-                    if (window.MessageBackgroundManager && window.MessageBackgroundManagerUI) {
-                        clearInterval(waitInterval);
-                        console.log('✅ 管理器加载完成');
-                        window.MessageBackgroundManagerUI.open(targetPageType);
-                    } else if (waitCount > 50) {
-                        clearInterval(waitInterval);
-                        console.error('❌ 超时：管理器加载失败');
-                        showToast('消息背景管理器加载失败，请刷新页面重试');
-                    }
-                }, 100);
-                return;
-            }
-            
-            console.log('MessageBackgroundManager:', !!window.MessageBackgroundManager);
-            console.log('MessageBackgroundManagerUI:', !!window.MessageBackgroundManagerUI);
-            
-            if (window.MessageBackgroundManagerUI) {
-                console.log('✅ 打开消息背景管理器 UI');
-                window.MessageBackgroundManagerUI.open(targetPageType);
-            } else {
-                console.error('❌ MessageBackgroundManagerUI 未加载');
-                showToast('消息背景管理器加载失败（UI 模块未加载）');
-            }
-        }
-        
-        // 打开页面缩放调整页面
-        function openPageZoomAdjuster() {
-            let page = document.getElementById('font-size-adjuster-page');
-            if (!page) {
-                page = document.createElement('div');
-                page.id = 'font-size-adjuster-page';
-                page.className = 'sub-page';
-                document.getElementById('app-container').appendChild(page);
-            }
-            
-            // 获取当前页面缩放比例
-            const currentScale = parseFloat(localStorage.getItem('pageZoomScale') || '1.0');
-            
-            page.innerHTML = `
-                <div class="sub-nav">
-                    <div class="back-btn" id="font-size-back-btn">
-                        <div class="back-arrow"></div>
-                        <span>返回</span>
-                    </div>
-                    <div class="sub-title">页面缩放</div>
-                </div>
-                <div class="sub-content" style="padding:20px;background:#f5f5f7;">
-                    <div class="font-size-adjuster-container">
-                        <!-- 预览区域 -->
-                        <div class="font-size-preview">
-                            <div class="preview-title">预览效果</div>
-                            <div class="preview-content" id="preview-content">
-                                <div class="preview-card">
-                                    <div class="preview-avatar"></div>
-                                    <div class="preview-info">
-                                        <div class="preview-name">用户名称</div>
-                                        <div class="preview-msg">这是一条消息预览</div>
-                                    </div>
-                                </div>
-                                <div class="preview-icons">
-                                    <div class="preview-icon"></div>
-                                    <div class="preview-icon"></div>
-                                    <div class="preview-icon"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 滑块控制 -->
-                        <div class="font-size-control">
-                            <div class="control-header">
-                                <span class="control-label">缩放比例</span>
-                                <span class="control-value" id="scale-value">${Math.round(currentScale * 100)}%</span>
-                            </div>
-                            <div class="slider-container">
-                                <span class="slider-label">小</span>
-                                <input type="range" id="font-size-slider" min="80" max="120" value="${currentScale * 100}" step="5">
-                                <span class="slider-label">大</span>
-                            </div>
-                        </div>
-                        
-                        <!-- 快捷按钮 -->
-                        <div class="font-size-presets">
-                            <button class="preset-btn ${currentScale === 0.9 ? 'active' : ''}" data-scale="0.9">较小</button>
-                            <button class="preset-btn ${currentScale === 1.0 ? 'active' : ''}" data-scale="1.0">标准</button>
-                            <button class="preset-btn ${currentScale === 1.1 ? 'active' : ''}" data-scale="1.1">较大</button>
-                        </div>
-                        
-                        <!-- 说明文字 -->
-                        <div class="font-size-note">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 16v-4M12 8h.01"/>
-                            </svg>
-                            <span>调整页面缩放可以解决不同浏览器显示不一致的问题，包括字体、图标、按钮等所有元素</span>
-                        </div>
-                        
-                        <!-- 应用按钮 -->
-                        <button class="apply-font-size-btn" id="apply-font-size">应用设置</button>
-                    </div>
-                </div>
-                
-                <style>
-                    .font-size-adjuster-container {
-                        max-width: 500px;
-                        margin: 0 auto;
-                    }
-                    
-                    .font-size-preview {
-                        background: rgba(255, 255, 255, 0.95);
-                        backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
-                        border-radius: 14px;
-                        padding: 18px;
-                        margin-bottom: 12px;
-                        border: 0.5px solid rgba(0, 0, 0, 0.06);
-                        overflow: hidden;
-                    }
-                    
-                    .preview-title {
-                        font-size: 13px;
-                        font-weight: 600;
-                        color: #8e8e93;
-                        margin-bottom: 14px;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                    }
-                    
-                    .preview-content {
-                        transform-origin: top left;
-                        transition: transform 0.2s ease;
-                    }
-                    
-                    .preview-card {
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        padding: 14px;
-                        background: #f2f2f7;
-                        border-radius: 10px;
-                        margin-bottom: 12px;
-                    }
-                    
-                    .preview-avatar {
-                        width: 40px;
-                        height: 40px;
-                        min-width: 40px;
-                        min-height: 40px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #3a3a3c 0%, #1c1c1e 100%);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                    
-                    .preview-info {
-                        flex: 1;
-                    }
-                    
-                    .preview-name {
-                        font-size: 15px;
-                        font-weight: 600;
-                        color: #1c1c1e;
-                        margin-bottom: 4px;
-                    }
-                    
-                    .preview-msg {
-                        font-size: 13px;
-                        color: #8e8e93;
-                    }
-                    
-                    .preview-icons {
-                        display: flex;
-                        gap: 10px;
-                        justify-content: center;
-                    }
-                    
-                    .preview-icon {
-                        width: 34px;
-                        height: 34px;
-                        background: linear-gradient(135deg, #e5e5ea 0%, #d1d1d6 100%);
-                        border-radius: 8px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                    
-                    .font-size-control {
-                        background: rgba(255, 255, 255, 0.95);
-                        backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
-                        border-radius: 14px;
-                        padding: 18px;
-                        margin-bottom: 12px;
-                        border: 0.5px solid rgba(0, 0, 0, 0.06);
-                    }
-                    
-                    .control-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 14px;
-                    }
-                    
-                    .control-label {
-                        font-size: 15px;
-                        font-weight: 600;
-                        color: #1c1c1e;
-                    }
-                    
-                    .control-value {
-                        font-size: 17px;
-                        font-weight: 600;
-                        color: #1c1c1e;
-                    }
-                    
-                    .slider-container {
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                    }
-                    
-                    .slider-label {
-                        font-size: 13px;
-                        color: #8e8e93;
-                        font-weight: 500;
-                    }
-                    
-                    #font-size-slider {
-                        flex: 1;
-                        height: 4px;
-                        border-radius: 2px;
-                        background: #d1d1d6;
-                        outline: none;
-                        -webkit-appearance: none;
-                    }
-                    
-                    #font-size-slider::-webkit-slider-thumb {
-                        -webkit-appearance: none;
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        background: white;
-                        cursor: pointer;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0.5px rgba(0, 0, 0, 0.04);
-                    }
-                    
-                    #font-size-slider::-moz-range-thumb {
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        background: white;
-                        cursor: pointer;
-                        border: none;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
-                    }
-                    
-                    .font-size-presets {
-                        display: flex;
-                        gap: 8px;
-                        margin-bottom: 12px;
-                    }
-                    
-                    .preset-btn {
-                        flex: 1;
-                        padding: 11px;
-                        border: none;
-                        background: #f2f2f7;
-                        border-radius: 10px;
-                        font-size: 15px;
-                        font-weight: 500;
-                        color: #1c1c1e;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-                    
-                    .preset-btn:active {
-                        transform: scale(0.96);
-                        background: #e5e5ea;
-                    }
-                    
-                    .preset-btn.active {
-                        background: #1c1c1e;
-                        color: white;
-                    }
-                    
-                    .font-size-note {
-                        display: flex;
-                        align-items: flex-start;
-                        gap: 10px;
-                        padding: 14px;
-                        background: #f2f2f7;
-                        border-radius: 10px;
-                        margin-bottom: 12px;
-                    }
-                    
-                    .font-size-note svg {
-                        flex-shrink: 0;
-                        margin-top: 1px;
-                        color: #8e8e93;
-                        stroke-width: 1.5;
-                    }
-                    
-                    .font-size-note span {
-                        font-size: 13px;
-                        color: #3a3a3c;
-                        line-height: 1.5;
-                    }
-                    
-                    .apply-font-size-btn {
-                        width: 100%;
-                        padding: 15px;
-                        background: #1c1c1e;
-                        color: white;
-                        border: none;
-                        border-radius: 10px;
-                        font-size: 17px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        letter-spacing: -0.3px;
-                    }
-                    
-                    .apply-font-size-btn:active {
-                        transform: scale(0.98);
-                        background: #3a3a3c;
-                    }
-                </style>
-            `;
-            
-            page.classList.add('open');
-            
-            // 绑定返回按钮
-            const backBtn = page.querySelector('#font-size-back-btn');
-            if (backBtn) {
-                backBtn.onclick = () => {
-                    page.classList.remove('open');
-                };
-            }
-            
-            // 滑块控制
-            const slider = page.querySelector('#font-size-slider');
-            const scaleValue = page.querySelector('#scale-value');
-            const previewContent = page.querySelector('#preview-content');
-            
-            slider.oninput = function() {
-                const scale = this.value / 100;
-                scaleValue.textContent = Math.round(this.value) + '%';
-                
-                // 只更新预览，不应用到实际页面
-                if (previewContent) {
-                    previewContent.style.transform = `scale(${scale})`;
-                }
-                
-                // 更新快捷按钮状态
-                document.querySelectorAll('.preset-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (parseFloat(btn.dataset.scale) === scale) {
-                        btn.classList.add('active');
-                    }
-                });
-            };
-            
-            // 快捷按钮
-            document.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.onclick = function() {
-                    const scale = parseFloat(this.dataset.scale);
-                    slider.value = scale * 100;
-                    scaleValue.textContent = Math.round(scale * 100) + '%';
-                    
-                    // 只更新预览，不应用到实际页面
-                    if (previewContent) {
-                        previewContent.style.transform = `scale(${scale})`;
-                    }
-                    
-                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                };
-            });
-            
-            // 添加重置按钮
-            const resetBtn = page.querySelector('#reset-font-size');
-            if (resetBtn) {
-                resetBtn.onclick = function() {
-                    slider.value = 100;
-                    scaleValue.textContent = '100%';
-                    
-                    if (previewContent) {
-                        previewContent.style.transform = 'scale(1.0)';
-                    }
-                    
-                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelector('.preset-btn[data-scale="1.0"]').classList.add('active');
-                    
-                    // 重置实际缩放
-                    localStorage.removeItem('pageZoomScale');
-                    
-                    // 移除缩放类
-                    document.documentElement.classList.remove('page-scaled');
-                    const appContainer = document.getElementById('app-container');
-                    if (appContainer) {
-                        appContainer.classList.remove('page-scaled');
-                    }
-                    
-                    // 重置缩放变量
-                    document.documentElement.style.removeProperty('--page-scale');
-                    
-                    showToast('页面缩放已重置');
-                    page.classList.remove('open');
-                };
-            }
-            
-            // 应用按钮
-            const applyBtn = page.querySelector('#apply-font-size');
-            applyBtn.onclick = function() {
-                const scale = slider.value / 100;
-                
-                // 验证缩放值范围
-                if (scale < 0.8 || scale > 1.2) {
-                    showToast('缩放比例应在80%-120%之间');
-                    return;
-                }
-                
-                localStorage.setItem('pageZoomScale', scale);
-                
-                // 移除旧的缩放类
-                document.documentElement.classList.remove('page-scaled');
-                const appContainer = document.getElementById('app-container');
-                if (appContainer) {
-                    appContainer.classList.remove('page-scaled');
-                }
-                
-                // 应用新的缩放到容器
-                document.documentElement.style.setProperty('--page-scale', scale);
-                if (appContainer) {
-                    appContainer.classList.add('page-scaled');
-                }
-                
-                // 触发重绘确保样式生效
-                document.documentElement.offsetHeight;
-                
-                showToast('页面缩放已应用');
-                page.classList.remove('open');
-            };
-            
-            // 初始化预览
-            previewContent.style.transform = `scale(${currentScale})`;
-        }
-        
-
-
-        // 切换主题
-        function switchTheme(themeId) {
-            AppState.user.theme = themeId;
-            saveToStorage();
-            applyTheme(themeId);
-            showToast('主题已切换');
-            setTimeout(() => {
-                openDecorationPage(); // 刷新页面
-            }, 200);
-        }
-
-        // 应用主题
-        function applyTheme(themeId) {
-            const root = document.documentElement;
-            let themeConfig = {};
-
-            switch(themeId) {
-                case 'light':
-                    themeConfig = {
-                        '--bg-primary': '#ffffff',
-                        '--bg-secondary': '#f5f5f5',
-                        '--text-primary': '#000000',
-                        '--text-secondary': '#666666',
-                        '--border-color': '#f0f0f0'
-                    };
-                    document.documentElement.style.backgroundColor = '#ffffff';
-                    document.documentElement.style.color = '#000000';
-                    break;
-                case 'pink':
-                    themeConfig = {
-                        '--bg-primary': '#fff9fc',
-                        '--bg-secondary': '#fce4ec',
-                        '--text-primary': '#8b3a62',
-                        '--text-secondary': '#d81b60',
-                        '--border-color': '#f8bbd0'
-                    };
-                    document.documentElement.style.backgroundColor = '#fff9fc';
-                    document.documentElement.style.color = '#8b3a62';
-                    break;
-                case 'dark':
-                    themeConfig = {
-                        '--bg-primary': '#1a1a1a',
-                        '--bg-secondary': '#2a2a2a',
-                        '--text-primary': '#e0e0e0',
-                        '--text-secondary': '#a0a0a0',
-                        '--border-color': '#3a3a3a'
-                    };
-                    document.documentElement.style.backgroundColor = '#1a1a1a';
-                    document.documentElement.style.color = '#e0e0e0';
-                    break;
-                case 'blue':
-                    themeConfig = {
-                        '--bg-primary': '#e3f2fd',
-                        '--bg-secondary': '#bbdefb',
-                        '--text-primary': '#0d47a1',
-                        '--text-secondary': '#1565c0',
-                        '--border-color': '#90caf9'
-                    };
-                    document.documentElement.style.backgroundColor = '#e3f2fd';
-                    document.documentElement.style.color = '#0d47a1';
-                    break;
-                case 'green':
-                    themeConfig = {
-                        '--bg-primary': '#e8f5e9',
-                        '--bg-secondary': '#c8e6c9',
-                        '--text-primary': '#1b5e20',
-                        '--text-secondary': '#2e7d32',
-                        '--border-color': '#81c784'
-                    };
-                    document.documentElement.style.backgroundColor = '#e8f5e9';
-                    document.documentElement.style.color = '#1b5e20';
-                    break;
-                case 'purple':
-                    themeConfig = {
-                        '--bg-primary': '#f3e5f5',
-                        '--bg-secondary': '#e1bee7',
-                        '--text-primary': '#4a148c',
-                        '--text-secondary': '#6a1b9a',
-                        '--border-color': '#ce93d8'
-                    };
-                    document.documentElement.style.backgroundColor = '#f3e5f5';
-                    document.documentElement.style.color = '#4a148c';
-                    break;
-                case 'orange':
-                    themeConfig = {
-                        '--bg-primary': '#ffe0b2',
-                        '--bg-secondary': '#ffcc80',
-                        '--text-primary': '#e65100',
-                        '--text-secondary': '#f57c00',
-                        '--border-color': '#ffb74d'
-                    };
-                    document.documentElement.style.backgroundColor = '#ffe0b2';
-                    document.documentElement.style.color = '#e65100';
-                    break;
-                case 'grey':
-                    themeConfig = {
-                        '--bg-primary': '#eceff1',
-                        '--bg-secondary': '#cfd8dc',
-                        '--text-primary': '#263238',
-                        '--text-secondary': '#455a64',
-                        '--border-color': '#b0bec5'
-                    };
-                    document.documentElement.style.backgroundColor = '#eceff1';
-                    document.documentElement.style.color = '#263238';
-                    break;
-                default:
-                    themeConfig = {
-                        '--bg-primary': '#ffffff',
-                        '--bg-secondary': '#f5f5f5',
-                        '--text-primary': '#000000',
-                        '--text-secondary': '#666666',
-                        '--border-color': '#f0f0f0'
-                    };
-                    document.documentElement.style.backgroundColor = '#ffffff';
-                    document.documentElement.style.color = '#000000';
-            }
-
-            // 应用主题变量到根元素
-            Object.keys(themeConfig).forEach(key => {
-                root.style.setProperty(key, themeConfig[key]);
-            });
-
-            // 更新所有包含文本内容的元素
-            setTimeout(() => {
-                document.querySelectorAll('*').forEach(el => {
-                    if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
-                        if (window.getComputedStyle(el).color === 'rgb(0, 0, 0)' || window.getComputedStyle(el).color === 'rgb(255, 255, 255)') {
-                            // 让浏览器自然使用继承的颜色
-                        }
-                    }
-                });
-            }, 50);
-        }
-
-        // 应用保存的主题（在初始化时调用）
-        function applyInitialTheme() {
-            if (AppState.user.theme) {
-                applyTheme(AppState.user.theme);
-            }
+            openDecorationPage(pageType === 'friend' ? 'friend' : 'msg');
         }
 
         // 检查并执行自动总结

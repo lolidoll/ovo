@@ -25,9 +25,6 @@
     --safe-area-inset-left: 0px;
     --safe-area-inset-right: 0px;
     
-    /* 页面缩放 */
-    --page-scale: 1;
-    
     /* 字体 */
     --global-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
 }
@@ -136,9 +133,6 @@ body {
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
 }
-
-/* 页面缩放模式 - 移动到style.css中统一管理 */
-        /* 相关样式已移至style.css */
 
 /* ============================================
    5. 导航栏适配

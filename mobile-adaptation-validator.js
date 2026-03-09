@@ -178,20 +178,6 @@ const MobileAdaptationValidator = {
         console.groupEnd();
     },
 
-    // 验证页面缩放
-    validatePageZoom: function() {
-        console.group('🔍 页面缩放验证');
-        
-        const scale = parseFloat(localStorage.getItem('pageZoomScale') || '1.0');
-        const styles = getComputedStyle(document.documentElement);
-        const pageScale = styles.getPropertyValue('--page-scale');
-        
-        console.log(`✅ 保存的缩放比例: ${scale}`);
-        console.log(`✅ 当前缩放比例: ${pageScale}`);
-        
-        console.groupEnd();
-    },
-
     // 获取完整的设备信息
     getFullDeviceInfo: function() {
         console.clear();
@@ -225,7 +211,6 @@ const MobileAdaptationValidator = {
             '--safe-area-inset-bottom',
             '--safe-area-inset-left',
             '--safe-area-inset-right',
-            '--page-scale',
         ];
         
         const data = {};

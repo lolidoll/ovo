@@ -1695,3 +1695,32 @@
     background: transparent !important;
     box-shadow: none !important;
 }
+
+/* 手机端卡片底部显示修复（防止底边看不完整） */
+@media (max-width: 768px) {
+    #api-settings-page .sub-content,
+    #api-settings-page .api-settings-container {
+        overflow: visible !important;
+        padding-bottom: max(120px, calc(96px + env(safe-area-inset-bottom))) !important;
+    }
+
+    #api-settings-page .settings-card,
+    #api-settings-page .api-params-card {
+        overflow: visible !important;
+        margin-bottom: 18px !important;
+        padding-bottom: 18px !important;
+        transform: none !important;
+    }
+
+    #api-settings-page .settings-card > div,
+    #api-settings-page #api-params-container,
+    #api-settings-page #secondary-api-params-container {
+        margin-bottom: 2px !important;
+        padding-bottom: 2px !important;
+    }
+
+    #api-settings-page .settings-card:active,
+    #api-settings-page .api-params-card:active {
+        transform: none !important;
+    }
+}

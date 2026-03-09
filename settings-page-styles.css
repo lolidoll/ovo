@@ -9,8 +9,12 @@
 }
 
 #settings-page .settings-config-content {
-    padding: 20px 16px 100px !important;
+    padding: 10px 16px 100px !important;
     background: transparent !important;
+}
+
+#settings-page .settings-section:first-child {
+    margin-top: 0;
 }
 
 /* 设置区域容器 - 仅应用于主设置页面 */

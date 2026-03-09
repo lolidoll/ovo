@@ -133,10 +133,10 @@
         toolbar.style.setProperty('bottom', 'auto', 'important');
         toolbar.style.setProperty('min-height', '44px', 'important');
         toolbar.style.setProperty('height', 'auto', 'important');
-        toolbar.style.setProperty('padding', '8px 0', 'important');
+        toolbar.style.setProperty('padding', '2px 0', 'important');
         
-        // 5. 添加iOS安全区域支持
-        toolbar.style.setProperty('padding-bottom', `calc(8px + env(safe-area-inset-bottom, 0px))`, 'important');
+        // 5. 底部间距收敛：安全区由页面统一处理，避免输入区和工具栏重复叠加
+        toolbar.style.setProperty('padding-bottom', '0px', 'important');
         
         // 6. 确保工具栏按钮可以被点击
         toolbar.style.setProperty('pointer-events', 'auto', 'important');
@@ -155,7 +155,7 @@
         
         // 8. 修复输入区域
         if (inputArea) {
-            inputArea.style.setProperty('padding-bottom', `calc(8px + env(safe-area-inset-bottom, 0px))`, 'important');
+            inputArea.style.setProperty('padding-bottom', '2px', 'important');
         }
         
         console.log('✅ 底部工具栏修复完成');

@@ -197,7 +197,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.4);
+                background: rgba(255, 162, 194, 0.28);
+                backdrop-filter: blur(4px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -207,12 +208,13 @@
             
             const dialog = document.createElement('div');
             dialog.style.cssText = `
-                background: #ffffff;
-                border-radius: 12px;
+                background: linear-gradient(180deg, #ffffff 0%, #fff6fb 100%);
+                border: 1px solid #ffd9e7;
+                border-radius: 14px;
                 padding: 20px;
                 max-width: 320px;
                 width: 85%;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                box-shadow: 0 10px 30px rgba(255, 162, 194, 0.28);
                 animation: slideUp 0.3s ease;
             `;
             
@@ -223,7 +225,7 @@
                 title.style.cssText = `
                     font-size: 16px;
                     font-weight: 600;
-                    color: #333;
+                    color: #b86c8e;
                     margin-bottom: 12px;
                     text-align: center;
                 `;
@@ -236,7 +238,7 @@
                 message.innerHTML = options.message.replace(/\n/g, '<br>');
                 message.style.cssText = `
                     font-size: 14px;
-                    color: #666;
+                    color: #9f7a8f;
                     line-height: 1.6;
                     margin-bottom: ${options.input ? '16px' : '20px'};
                     text-align: left;
@@ -254,18 +256,22 @@
                 input.style.cssText = `
                     width: 100%;
                     padding: 10px 12px;
-                    border: 1px solid #e0e0e0;
+                    border: 1px solid #ffd3e4;
                     border-radius: 8px;
                     font-size: 14px;
+                    color: #8f5f79;
+                    background: #fff;
                     margin-bottom: 20px;
                     box-sizing: border-box;
                     outline: none;
                 `;
                 input.addEventListener('focus', () => {
-                    input.style.borderColor = '#667eea';
+                    input.style.borderColor = '#ff9fbe';
+                    input.style.boxShadow = '0 0 0 3px rgba(255, 159, 190, 0.18)';
                 });
                 input.addEventListener('blur', () => {
-                    input.style.borderColor = '#e0e0e0';
+                    input.style.borderColor = '#ffd3e4';
+                    input.style.boxShadow = 'none';
                 });
                 dialog.appendChild(input);
                 setTimeout(() => input.focus(), 100);
@@ -286,32 +292,32 @@
                 btn.style.cssText = `
                     flex: 1;
                     padding: 11px 20px;
-                    border: none;
+                    border: ${btnConfig.primary ? 'none' : '1px solid #ffd5e5'};
                     border-radius: 8px;
                     font-size: 14px;
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
                     ${btnConfig.primary ?
-                        'background: #667eea; color: #ffffff;' :
-                        'background: #f5f5f5; color: #666;'}
+                        'background: linear-gradient(135deg, #ffbfd6 0%, #ff9fbe 100%); color: #ffffff;' :
+                        'background: #fff3f9; color: #b06f8e;'}
                 `;
                 
                 btn.addEventListener('mouseenter', () => {
                     btn.style.transform = 'translateY(-1px)';
                     if (btnConfig.primary) {
-                        btn.style.background = '#5568d3';
+                        btn.style.background = 'linear-gradient(135deg, #ffb3ce 0%, #ff92b5 100%)';
                     } else {
-                        btn.style.background = '#ebebeb';
+                        btn.style.background = '#ffeaf3';
                     }
                 });
                 
                 btn.addEventListener('mouseleave', () => {
                     btn.style.transform = 'translateY(0)';
                     if (btnConfig.primary) {
-                        btn.style.background = '#667eea';
+                        btn.style.background = 'linear-gradient(135deg, #ffbfd6 0%, #ff9fbe 100%)';
                     } else {
-                        btn.style.background = '#f5f5f5';
+                        btn.style.background = '#fff3f9';
                     }
                 });
                 
@@ -485,7 +491,7 @@
                 contentArea.innerHTML = `
                     <div class="emoji-manager-empty">
                         <div>该分组下暂无表情包</div>
-                        <div style="font-size:12px;color:#999;margin-top:8px;">长按表情包可修改描述、移动分组、删除</div>
+                        <div style="font-size:12px;color:#c296aa;margin-top:8px;">长按表情包可修改描述、移动分组、删除</div>
                     </div>
                 `;
                 return;
@@ -586,11 +592,12 @@
             menu.id = 'emoji-context-menu';
             menu.style.cssText = `
                 position: fixed;
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                background: linear-gradient(180deg, #ffffff 0%, #fff6fb 100%);
+                border: 1px solid #ffd8e7;
+                border-radius: 10px;
+                box-shadow: 0 8px 22px rgba(255, 162, 194, 0.3);
                 z-index: 10001;
-                padding: 0;
+                padding: 4px;
                 display: inline-block;
             `;
             
@@ -611,7 +618,7 @@
                 },
                 {
                     text: '删除',
-                    color: '#ff4757',
+                    color: '#e35f8f',
                     action: () => {
                         menu.remove();
                         this.showConfirm('确定要删除这个表情包吗？', () => {
@@ -630,16 +637,16 @@
                 const btn = document.createElement('button');
                 btn.style.cssText = `
                     display: block;
-                    padding: 8px 10px;
+                    padding: 9px 12px;
                     border: none;
                     background: transparent;
                     text-align: center;
                     cursor: pointer;
-                    border-radius: 0;
+                    border-radius: 8px;
                     font-size: 14px;
-                    color: ${opt.color || '#333'};
+                    color: ${opt.color || '#a06583'};
                     transition: all 0.2s;
-                    font-weight: 500;
+                    font-weight: 600;
                     white-space: nowrap;
                     margin: 0;
                     line-height: 1.2;
@@ -648,13 +655,13 @@
                 btn.textContent = opt.text;
                 btn.addEventListener('click', opt.action);
                 btn.addEventListener('mouseenter', () => {
-                    btn.style.background = opt.color ? '#fff5f5' : '#f5f5f5';
+                    btn.style.background = opt.color ? '#ffeaf2' : '#fff0f8';
                 });
                 btn.addEventListener('mouseleave', () => {
                     btn.style.background = 'transparent';
                 });
                 btn.addEventListener('touchstart', () => {
-                    btn.style.background = opt.color ? '#fff5f5' : '#f5f5f5';
+                    btn.style.background = opt.color ? '#ffeaf2' : '#fff0f8';
                 });
                 btn.addEventListener('touchend', () => {
                     setTimeout(() => {
@@ -770,7 +777,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.5);
+                background: rgba(255, 162, 194, 0.28);
+                backdrop-filter: blur(4px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -779,31 +787,36 @@
             
             const content = document.createElement('div');
             content.style.cssText = `
-                background: white;
-                border-radius: 12px;
+                background: linear-gradient(180deg, #ffffff 0%, #fff6fb 100%);
+                border: 1px solid #ffd9e7;
+                border-radius: 14px;
                 padding: 20px;
                 max-width: 500px;
                 width: 90%;
                 max-height: 70vh;
                 overflow-y: auto;
+                box-shadow: 0 10px 30px rgba(255, 162, 194, 0.26);
             `;
             
             let contentHtml = `
-                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">修改表情包文字描述</h3>
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;color:#b86c8e;">修改表情包文字描述</h3>
                 <div style="margin-bottom: 16px;">
             `;
             
             emojisData.forEach((emoji, index) => {
                 contentHtml += `
                     <div style="margin-bottom: 12px;">
-                        <label style="display: block; margin-bottom: 4px; font-size: 13px; color: #666;">表情包 ${index + 1}</label>
+                        <label style="display: block; margin-bottom: 4px; font-size: 13px; color: #a97c92;">表情包 ${index + 1}</label>
                         <input type="text" data-index="${index}" class="emoji-text-input" value="${emoji.text}" style="
                             width: 100%;
                             padding: 10px;
-                            border: 1px solid #ddd;
-                            border-radius: 6px;
+                            border: 1px solid #ffd5e5;
+                            border-radius: 8px;
                             font-size: 14px;
+                            color: #8f5f79;
+                            background: #fff;
                             box-sizing: border-box;
+                            outline: none;
                         ">
                     </div>
                 `;
@@ -815,24 +828,27 @@
                     <button id="emoji-edit-cancel" style="
                         flex: 1;
                         padding: 12px;
-                        border: 1px solid #ddd;
-                        border-radius: 6px;
-                        background: #f5f5f5;
-                        color: #333;
+                        border: 1px solid #ffd5e5;
+                        border-radius: 8px;
+                        background: #fff3f9;
+                        color: #b06f8e;
                         cursor: pointer;
                         font-size: 14px;
                         font-weight: 500;
+                        transition: all 0.2s;
                     ">取消</button>
                     <button id="emoji-edit-confirm" style="
                         flex: 1;
                         padding: 12px;
                         border: none;
-                        border-radius: 6px;
-                        background: #007AFF;
+                        border-radius: 8px;
+                        background: linear-gradient(135deg, #ffbfd6 0%, #ff9fbe 100%);
                         color: white;
                         cursor: pointer;
                         font-size: 14px;
                         font-weight: 500;
+                        box-shadow: 0 4px 12px rgba(255, 159, 190, 0.28);
+                        transition: all 0.2s;
                     ">确定</button>
                 </div>
             `;
@@ -840,13 +856,43 @@
             content.innerHTML = contentHtml;
             modal.appendChild(content);
             document.body.appendChild(modal);
+
+            content.querySelectorAll('.emoji-text-input').forEach((input) => {
+                input.addEventListener('focus', () => {
+                    input.style.borderColor = '#ff9fbe';
+                    input.style.boxShadow = '0 0 0 3px rgba(255, 159, 190, 0.16)';
+                });
+                input.addEventListener('blur', () => {
+                    input.style.borderColor = '#ffd5e5';
+                    input.style.boxShadow = 'none';
+                });
+            });
             
             // 绑定事件
-            document.getElementById('emoji-edit-cancel').addEventListener('click', () => {
+            const cancelBtn = document.getElementById('emoji-edit-cancel');
+            const confirmBtn = document.getElementById('emoji-edit-confirm');
+
+            cancelBtn.addEventListener('mouseenter', () => {
+                cancelBtn.style.background = '#ffeaf3';
+            });
+            cancelBtn.addEventListener('mouseleave', () => {
+                cancelBtn.style.background = '#fff3f9';
+            });
+
+            confirmBtn.addEventListener('mouseenter', () => {
+                confirmBtn.style.background = 'linear-gradient(135deg, #ffb3ce 0%, #ff92b5 100%)';
+                confirmBtn.style.transform = 'translateY(-1px)';
+            });
+            confirmBtn.addEventListener('mouseleave', () => {
+                confirmBtn.style.background = 'linear-gradient(135deg, #ffbfd6 0%, #ff9fbe 100%)';
+                confirmBtn.style.transform = 'translateY(0)';
+            });
+
+            cancelBtn.addEventListener('click', () => {
                 modal.remove();
             });
             
-            document.getElementById('emoji-edit-confirm').addEventListener('click', () => {
+            confirmBtn.addEventListener('click', () => {
                 // 获取修改后的文字
                 const inputs = content.querySelectorAll('.emoji-text-input');
                 inputs.forEach(input => {
@@ -997,7 +1043,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.5);
+                background: rgba(255, 162, 194, 0.28);
+                backdrop-filter: blur(4px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1006,15 +1053,17 @@
             
             const content = document.createElement('div');
             content.style.cssText = `
-                background: white;
-                border-radius: 12px;
+                background: linear-gradient(180deg, #ffffff 0%, #fff6fb 100%);
+                border: 1px solid #ffd9e7;
+                border-radius: 14px;
                 padding: 20px;
                 max-width: 300px;
                 width: 90%;
+                box-shadow: 0 10px 30px rgba(255, 162, 194, 0.26);
             `;
             
             content.innerHTML = `
-                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">${title}</h3>
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;color:#b86c8e;">${title}</h3>
                 <div id="group-select-list"></div>
             `;
             
@@ -1028,10 +1077,10 @@
                     width: 100%;
                     padding: 14px;
                     margin-bottom: 10px;
-                    border: none;
+                    border: 1px solid #ffdbe8;
                     border-radius: 10px;
-                    background: #f5f5f5;
-                    color: #333;
+                    background: #fff3f9;
+                    color: #b06f8e;
                     cursor: pointer;
                     font-size: 15px;
                     font-weight: 500;
@@ -1043,10 +1092,10 @@
                     callback(group.id);
                 });
                 btn.addEventListener('mouseenter', () => {
-                    btn.style.background = '#e8e8e8';
+                    btn.style.background = '#ffeaf3';
                 });
                 btn.addEventListener('mouseleave', () => {
-                    btn.style.background = '#f5f5f5';
+                    btn.style.background = '#fff3f9';
                 });
                 list.appendChild(btn);
             });
@@ -1101,7 +1150,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.5);
+                background: rgba(255, 162, 194, 0.28);
+                backdrop-filter: blur(4px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1110,15 +1160,17 @@
             
             const content = document.createElement('div');
             content.style.cssText = `
-                background: white;
-                border-radius: 12px;
+                background: linear-gradient(180deg, #ffffff 0%, #fff6fb 100%);
+                border: 1px solid #ffd9e7;
+                border-radius: 14px;
                 padding: 20px;
                 max-width: 400px;
                 width: 90%;
+                box-shadow: 0 10px 30px rgba(255, 162, 194, 0.26);
             `;
             
             content.innerHTML = `
-                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">导出表情包</h3>
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;color:#b86c8e;">导出表情包</h3>
                 <div id="export-option-list" style="margin-bottom:16px;"></div>
             `;
             
@@ -1133,10 +1185,10 @@
                 width: 100%;
                 padding: 14px;
                 margin-bottom: 10px;
-                border: none;
+                border: 1px solid #ffdbe8;
                 border-radius: 10px;
-                background: #f5f5f5;
-                color: #333;
+                background: #fff3f9;
+                color: #b06f8e;
                 cursor: pointer;
                 font-size: 15px;
                 font-weight: 500;
@@ -1147,8 +1199,8 @@
                 modal.remove();
                 this.exportEmojis(null);
             });
-            allBtn.addEventListener('mouseenter', () => { allBtn.style.background = '#e8e8e8'; });
-            allBtn.addEventListener('mouseleave', () => { allBtn.style.background = '#f5f5f5'; });
+            allBtn.addEventListener('mouseenter', () => { allBtn.style.background = '#ffeaf3'; });
+            allBtn.addEventListener('mouseleave', () => { allBtn.style.background = '#fff3f9'; });
             list.appendChild(allBtn);
             
             // 单个分组选项
@@ -1158,10 +1210,10 @@
                     width: 100%;
                     padding: 14px;
                     margin-bottom: 10px;
-                    border: none;
+                    border: 1px solid #ffdbe8;
                     border-radius: 10px;
-                    background: #f5f5f5;
-                    color: #333;
+                    background: #fff3f9;
+                    color: #b06f8e;
                     cursor: pointer;
                     font-size: 15px;
                     font-weight: 500;
@@ -1172,8 +1224,8 @@
                     modal.remove();
                     this.exportEmojis([group.id]);
                 });
-                btn.addEventListener('mouseenter', () => { btn.style.background = '#e8e8e8'; });
-                btn.addEventListener('mouseleave', () => { btn.style.background = '#f5f5f5'; });
+                btn.addEventListener('mouseenter', () => { btn.style.background = '#ffeaf3'; });
+                btn.addEventListener('mouseleave', () => { btn.style.background = '#fff3f9'; });
                 list.appendChild(btn);
             });
             
@@ -1183,10 +1235,10 @@
                 width: 100%;
                 padding: 14px;
                 margin-bottom: 10px;
-                border: none;
+                border: 1px solid #ffdbe8;
                 border-radius: 10px;
-                background: #f5f5f5;
-                color: #333;
+                background: #fff3f9;
+                color: #b06f8e;
                 cursor: pointer;
                 font-size: 15px;
                 font-weight: 500;
@@ -1197,8 +1249,8 @@
                 modal.remove();
                 this.showMultiGroupExportDialog();
             });
-            multiBtn.addEventListener('mouseenter', () => { multiBtn.style.background = '#e8e8e8'; });
-            multiBtn.addEventListener('mouseleave', () => { multiBtn.style.background = '#f5f5f5'; });
+            multiBtn.addEventListener('mouseenter', () => { multiBtn.style.background = '#ffeaf3'; });
+            multiBtn.addEventListener('mouseleave', () => { multiBtn.style.background = '#fff3f9'; });
             list.appendChild(multiBtn);
             
             // 点击外部关闭
@@ -1222,7 +1274,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.5);
+                background: rgba(255, 162, 194, 0.28);
+                backdrop-filter: blur(4px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1231,27 +1284,29 @@
             
             const content = document.createElement('div');
             content.style.cssText = `
-                background: white;
-                border-radius: 12px;
+                background: linear-gradient(180deg, #ffffff 0%, #fff6fb 100%);
+                border: 1px solid #ffd9e7;
+                border-radius: 14px;
                 padding: 20px;
                 max-width: 400px;
                 width: 90%;
                 max-height: 70vh;
                 overflow-y: auto;
+                box-shadow: 0 10px 30px rgba(255, 162, 194, 0.26);
             `;
             
             let html = `
-                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;">选择要导出的分组</h3>
+                <h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600;text-align:center;color:#b86c8e;">选择要导出的分组</h3>
                 <div id="multi-group-list" style="margin-bottom:16px;">
             `;
             
             AppState.emojiGroups.forEach(group => {
                 const emojiCount = AppState.emojis.filter(e => e.groupId === group.id).length;
                 html += `
-                    <label style="display:flex;align-items:center;padding:10px;margin-bottom:8px;background:#f5f5f5;border-radius:8px;cursor:pointer;">
-                        <input type="checkbox" data-group-id="${group.id}" style="margin-right:10px;cursor:pointer;">
+                    <label style="display:flex;align-items:center;padding:10px;margin-bottom:8px;background:#fff3f9;border:1px solid #ffdbe8;border-radius:10px;cursor:pointer;color:#8f5f79;">
+                        <input type="checkbox" data-group-id="${group.id}" style="margin-right:10px;cursor:pointer;accent-color:#ff9fbe;">
                         <span>${group.name}</span>
-                        <span style="margin-left:auto;color:#999;font-size:12px;">${emojiCount}个</span>
+                        <span style="margin-left:auto;color:#c493a9;font-size:12px;">${emojiCount}个</span>
                     </label>
                 `;
             });
@@ -1262,24 +1317,27 @@
                     <button id="multi-export-cancel" style="
                         flex: 1;
                         padding: 12px;
-                        border: 1px solid #ddd;
-                        border-radius: 6px;
-                        background: #f5f5f5;
-                        color: #333;
+                        border: 1px solid #ffd5e5;
+                        border-radius: 8px;
+                        background: #fff3f9;
+                        color: #b06f8e;
                         cursor: pointer;
                         font-size: 14px;
                         font-weight: 500;
+                        transition: all 0.2s;
                     ">取消</button>
                     <button id="multi-export-confirm" style="
                         flex: 1;
                         padding: 12px;
                         border: none;
-                        border-radius: 6px;
-                        background: #007AFF;
+                        border-radius: 8px;
+                        background: linear-gradient(135deg, #ffbfd6 0%, #ff9fbe 100%);
                         color: white;
                         cursor: pointer;
                         font-size: 14px;
                         font-weight: 500;
+                        box-shadow: 0 4px 12px rgba(255, 159, 190, 0.28);
+                        transition: all 0.2s;
                     ">导出</button>
                 </div>
             `;
@@ -1289,11 +1347,30 @@
             document.body.appendChild(modal);
             
             // 绑定事件
-            document.getElementById('multi-export-cancel').addEventListener('click', () => {
+            const multiCancelBtn = document.getElementById('multi-export-cancel');
+            const multiConfirmBtn = document.getElementById('multi-export-confirm');
+
+            multiCancelBtn.addEventListener('mouseenter', () => {
+                multiCancelBtn.style.background = '#ffeaf3';
+            });
+            multiCancelBtn.addEventListener('mouseleave', () => {
+                multiCancelBtn.style.background = '#fff3f9';
+            });
+
+            multiConfirmBtn.addEventListener('mouseenter', () => {
+                multiConfirmBtn.style.background = 'linear-gradient(135deg, #ffb3ce 0%, #ff92b5 100%)';
+                multiConfirmBtn.style.transform = 'translateY(-1px)';
+            });
+            multiConfirmBtn.addEventListener('mouseleave', () => {
+                multiConfirmBtn.style.background = 'linear-gradient(135deg, #ffbfd6 0%, #ff9fbe 100%)';
+                multiConfirmBtn.style.transform = 'translateY(0)';
+            });
+
+            multiCancelBtn.addEventListener('click', () => {
                 modal.remove();
             });
             
-            document.getElementById('multi-export-confirm').addEventListener('click', () => {
+            multiConfirmBtn.addEventListener('click', () => {
                 const checkboxes = content.querySelectorAll('input[type="checkbox"]:checked');
                 if (checkboxes.length === 0) {
                     this.showAlert('请选择至少一个分组');
