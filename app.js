@@ -94,7 +94,7 @@
     ideaLibrary: true,    // 灵感库
     thirdParty: true      // 第三方
 },
-            collections: [], // 收藏的消息 [{ id, convId, messageId, messageContent, senderName, senderAvatar, collectedAt, originalMessageTime }]
+            collections: [], // 收藏的消息 [{ id, convId, messageId, messageContent, senderName, senderAvatar, senderType, isGroup, groupSenderName, collectedAt, originalMessageTime }]
             walletHistory: [], // 钱包充值记录
             importedCards: [],
             conversationStates: {},  // 运行时状态：{ convId: { isApiCalling, isTyping, isVoiceCallApiCalling } }
@@ -2320,7 +2320,7 @@
                         if (window.UserPersonaManager) {
                             window.UserPersonaManager.openPersonaManager();
                         } else {
-                            showToast('用户设定管理模块未加载');
+                            showToast('我的人设模块未加载');
                         }
                         break;
                     case 'shopping':
@@ -12234,13 +12234,29 @@
                 return;
             }
 
+            const senderDrivenTypes = new Set(['voice', 'location', 'voicecall', 'videocall', 'redenvelope', 'transfer', 'goods_card', 'listen_invite']);
+            const isSentMessage = senderDrivenTypes.has(msg.type) ? msg.sender === 'sent' : msg.type === 'sent';
+            const isGroupChat = conv.type === 'group';
+            const groupSenderName = !isSentMessage ? String(msg.groupSenderName || '').trim() : '';
+
+            const senderName = isGroupChat
+                ? (isSentMessage ? (AppState.user?.name || '我') : (groupSenderName || conv.name || '成员'))
+                : (isSentMessage ? (AppState.user?.name || '我') : (conv.name || '角色'));
+
+            const senderAvatar = isGroupChat
+                ? (conv.avatar || '')
+                : (isSentMessage ? (conv.userAvatar || AppState.user?.avatar || '') : (conv.avatar || ''));
+
             const collectionItem = {
                 id: 'col_' + Date.now(),
                 convId: convId,
                 messageId: messageId,
                 messageContent: msg.content || msg.text || '',
-                senderName: msg.type === 'sent' ? AppState.user.name : conv.name,
-                senderAvatar: msg.type === 'sent' ? AppState.user.avatar : conv.avatar,
+                senderName: senderName,
+                senderAvatar: senderAvatar,
+                senderType: isSentMessage ? 'sent' : 'received',
+                isGroup: isGroupChat,
+                groupSenderName: groupSenderName,
                 collectedAt: new Date().toISOString(),
                 originalMessageTime: msg.time || msg.timestamp || new Date().toISOString()
             };
@@ -12253,7 +12269,120 @@
             closeMessageContextMenu();
         }
 
-        // 打开收藏页面 - 现代化设计
+        function escapeCollectionHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatCollectionTime(value, withYear = false) {
+            if (!value) return '未知时间';
+            const time = new Date(value);
+            if (Number.isNaN(time.getTime())) return '未知时间';
+
+            const options = withYear
+                ? { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+                : { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return time.toLocaleString('zh-CN', options);
+        }
+
+        function isCollectionSentMessage(msg) {
+            if (!msg) return false;
+            const senderDrivenTypes = new Set(['voice', 'location', 'voicecall', 'videocall', 'redenvelope', 'transfer', 'goods_card', 'listen_invite']);
+            return senderDrivenTypes.has(msg.type) ? msg.sender === 'sent' : msg.type === 'sent';
+        }
+
+        function findCollectionConversation(convId) {
+            return (AppState.conversations || []).find((conv) => String(conv.id) === String(convId)) || null;
+        }
+
+        function findCollectionSourceMessage(item) {
+            if (!item || !item.convId || !item.messageId) return null;
+            const messages = AppState.messages?.[item.convId];
+            if (!Array.isArray(messages)) return null;
+            return messages.find((msg) => String(msg.id) === String(item.messageId)) || null;
+        }
+
+        function showCollectionDeleteConfirm(page, collectionId) {
+            if (!page || !collectionId) return;
+
+            const collections = Array.isArray(AppState.collections) ? AppState.collections : [];
+            const target = collections.find((item) => String(item.id) === String(collectionId));
+            if (!target) return;
+
+            const mask = page.querySelector('#collection-delete-confirm-mask');
+            const textNode = page.querySelector('#collection-delete-confirm-text');
+            if (!mask || !textNode) return;
+
+            textNode.textContent = '确定要删除这条收藏吗？';
+            page.dataset.pendingDeleteCollectionId = String(collectionId);
+            mask.classList.remove('hidden');
+        }
+
+        function hideCollectionDeleteConfirm(page) {
+            if (!page) return;
+            const mask = page.querySelector('#collection-delete-confirm-mask');
+            if (mask) {
+                mask.classList.add('hidden');
+            }
+            delete page.dataset.pendingDeleteCollectionId;
+        }
+
+        function resolveCollectionDisplayMeta(item) {
+            const conv = findCollectionConversation(item?.convId);
+            const sourceMsg = findCollectionSourceMessage(item);
+            const isGroup = (conv && conv.type === 'group') || !!item?.isGroup;
+            const isSent = sourceMsg
+                ? isCollectionSentMessage(sourceMsg)
+                : (item?.senderType === 'sent' || item?.senderName === AppState.user?.name);
+
+            if (isGroup) {
+                const groupName = String((conv && conv.name) || item?.senderName || '群聊').trim() || '群聊';
+
+                let roleName = '';
+                if (sourceMsg) {
+                    if (isCollectionSentMessage(sourceMsg)) {
+                        roleName = String(AppState.user?.name || '我');
+                    } else {
+                        roleName = String(sourceMsg.groupSenderName || item?.groupSenderName || item?.senderName || '成员');
+                    }
+                } else if (item?.groupSenderName) {
+                    roleName = String(item.groupSenderName);
+                } else if (isSent) {
+                    roleName = String(AppState.user?.name || item?.senderName || '我');
+                } else {
+                    roleName = String(item?.senderName || '成员');
+                }
+
+                roleName = roleName.trim() || '成员';
+                if (conv && roleName === conv.name) {
+                    roleName = item?.groupSenderName ? String(item.groupSenderName).trim() || '成员' : '成员';
+                }
+
+                const group = (AppState.groups || []).find((g) => String(g.id) === String(item?.convId));
+                const groupAvatar = String((conv && conv.avatar) || (group && group.avatar) || item?.senderAvatar || '').trim();
+                return {
+                    displayName: `${groupName}-${roleName}`,
+                    avatarUrl: groupAvatar
+                };
+            }
+
+            const displayName = isSent
+                ? String(AppState.user?.name || item?.senderName || '我').trim() || '我'
+                : String((conv && conv.name) || item?.senderName || '未命名').trim() || '未命名';
+
+            const avatarUrl = String((conv && conv.avatar) || item?.senderAvatar || '').trim();
+
+            return {
+                displayName,
+                avatarUrl
+            };
+        }
+
+        // 打开收藏页面 - 浅粉白主题
         function openCollectionPage() {
             let page = document.getElementById('collection-page');
             if (!page) {
@@ -12263,88 +12392,114 @@
                 document.getElementById('app-container').appendChild(page);
             }
 
-            const collectionsHTML = AppState.collections.length === 0 ?
-                `<div class="empty-state" style="padding:80px 40px;text-align:center;">
-                    <div style="width:120px;height:120px;margin:0 auto 24px;background:linear-gradient(135deg,#f5f5f5 0%,#ffffff 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,0.08);">
-                        <svg viewBox="0 0 24 24" style="width:60px;height:60px;stroke:#666;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;">
+            const collections = Array.isArray(AppState.collections) ? AppState.collections : [];
+            const hasCollections = collections.length > 0;
+            const collectionsHTML = hasCollections
+                ? `<div class="collection-list">
+                    ${collections.map((item) => {
+                const displayMeta = resolveCollectionDisplayMeta(item);
+                const senderName = String(displayMeta.displayName || '未命名').trim() || '未命名';
+                const senderAvatar = String(displayMeta.avatarUrl || '').trim();
+                const messageText = String(item.messageContent || '').trim() || '（空消息）';
+                const previewText = messageText.length > 150 ? `${messageText.slice(0, 150)}...` : messageText;
+                const collectionId = String(item.id || '');
+
+                return `
+                    <article class="collection-item" data-collection-id="${escapeCollectionHtml(collectionId)}">
+                        <div class="collection-item-accent"></div>
+                        <div class="collection-item-main">
+                            <div class="collection-item-content">
+                                <div class="collection-item-head">
+                                    <div class="collection-avatar">
+                                        ${senderAvatar ? `<img src="${escapeCollectionHtml(senderAvatar)}" alt="">` : escapeCollectionHtml(senderName.charAt(0) || '匿')}
+                                    </div>
+                                    <div class="collection-meta">
+                                        <div class="collection-sender">${escapeCollectionHtml(senderName)}</div>
+                                    </div>
+                                </div>
+                                <div class="collection-message">${escapeCollectionHtml(previewText)}</div>
+                                ${item.originalMessageTime ? `
+                                    <div class="collection-origin-time">原消息时间: ${escapeCollectionHtml(formatCollectionTime(item.originalMessageTime, true))}</div>
+                                ` : ''}
+                            </div>
+                            <button class="delete-collection-btn" type="button" data-collection-action="delete" data-collection-id="${escapeCollectionHtml(collectionId)}" aria-label="删除收藏">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </article>
+                `;
+                    }).join('')}
+                </div>`
+                : `<div class="empty-state">
+                    <div class="empty-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                         </svg>
                     </div>
-                    <div style="font-size:16px;color:#999;font-weight:500;margin-bottom:8px;">暂无收藏</div>
-                    <div style="font-size:13px;color:#ccc;">收藏的消息会显示在这里</div>
-                </div>` :
-                `<div class="collection-list" style="padding:16px;">
-                    ${AppState.collections.map((item, index) => `
-                        <div class="collection-item" style="background:linear-gradient(135deg,#ffffff 0%,#f8f8f8 100%);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #e8e8e8;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)'">
-                            <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,#333 0%,#1a1a1a 100%);"></div>
-                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-                                <div style="flex:1;min-width:0;">
-                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#333 0%,#1a1a1a 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
-                                            ${item.senderName.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <div style="font-size:14px;color:#333;font-weight:600;margin-bottom:2px;">${item.senderName}</div>
-                                            <div style="font-size:11px;color:#999;">
-                                                <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;stroke-width:2;fill:none;display:inline-block;vertical-align:middle;margin-right:4px;">
-                                                    <circle cx="12" cy="12" r="10"></circle>
-                                                    <path d="M12 6v6l4 2"></path>
-                                                </svg>
-                                                ${new Date(item.collectedAt).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="font-size:14px;color:#555;line-height:1.6;word-break:break-all;padding-left:40px;margin-bottom:8px;">
-                                        ${item.messageContent.length > 150 ? item.messageContent.substring(0, 150) + '...' : item.messageContent}
-                                    </div>
-                                    ${item.originalMessageTime ? `
-                                        <div style="font-size:11px;color:#bbb;padding-left:40px;display:flex;align-items:center;gap:4px;">
-                                            <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none;">
-                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                            </svg>
-                                            原消息时间: ${new Date(item.originalMessageTime).toLocaleString('zh-CN')}
-                                        </div>
-                                    ` : ''}
-                                </div>
-                                <button class="delete-collection-btn" onclick="deleteCollectionItem('${item.id}')" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#666 0%,#444 100%);border:none;color:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.1) rotate(90deg)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)'">
-                                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none;stroke-linecap:round;">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
+                    <div class="empty-title">暂无收藏</div>
+                    <div class="empty-desc">收藏的消息会显示在这里</div>
                 </div>`;
 
             page.innerHTML = `
-                <div class="sub-nav" style="background:linear-gradient(135deg,#2c2c2c 0%,#1a1a1a 100%);border:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:space-between;position:relative;">
-                    <div class="back-btn" id="collection-back-btn" style="color:#fff;background:transparent;border:none;padding:6px 14px;transition:all 0.3s ease;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-                        <div class="back-arrow" style="border-left-color:#fff;border-bottom-color:#fff;"></div>
-                        <span>返回</span>
-                    </div>
-                    <div class="sub-title" style="color:#fff;font-weight:600;letter-spacing:0.5px;font-size:17px;position:absolute;left:50%;transform:translateX(-50%);">
-                        我的收藏
-                    </div>
-                    <div style="width:60px;"></div>
+                <div class="sub-nav friend-nav settings-config-nav">
+                    <div class="back-btn" id="collection-back-btn" aria-label="返回"></div>
+                    <div class="sub-title">我的收藏</div>
                 </div>
-                <div class="sub-content" style="overflow-y:auto;padding:0;background:linear-gradient(180deg,#f8f8f8 0%,#ffffff 100%);">
+                <div class="sub-content collection-main-content">
                     ${collectionsHTML}
+                </div>
+                <div class="collection-confirm-mask hidden" id="collection-delete-confirm-mask">
+                    <div class="collection-confirm-dialog" role="dialog" aria-modal="true" aria-label="删除收藏确认">
+                        <div class="collection-confirm-text" id="collection-delete-confirm-text"></div>
+                        <div class="collection-confirm-actions">
+                            <button class="collection-confirm-btn" id="collection-delete-cancel-btn" type="button">取消</button>
+                            <button class="collection-confirm-btn danger" id="collection-delete-confirm-btn" type="button">删除</button>
+                        </div>
+                    </div>
                 </div>
             `;
 
             page.classList.add('open');
-
-            page.addEventListener('click', function(e) {
-                if (e.target.closest('#collection-back-btn')) {
+            page.onclick = function(event) {
+                if (event.target.closest('#collection-back-btn')) {
+                    hideCollectionDeleteConfirm(page);
                     page.classList.remove('open');
+                    return;
                 }
-            });
+
+                const deleteBtn = event.target.closest('[data-collection-action="delete"]');
+                if (deleteBtn) {
+                    showCollectionDeleteConfirm(page, deleteBtn.dataset.collectionId);
+                    return;
+                }
+
+                if (event.target.id === 'collection-delete-confirm-mask' || event.target.closest('#collection-delete-cancel-btn')) {
+                    hideCollectionDeleteConfirm(page);
+                    return;
+                }
+
+                if (event.target.closest('#collection-delete-confirm-btn')) {
+                    const pendingDeleteId = page.dataset.pendingDeleteCollectionId;
+                    hideCollectionDeleteConfirm(page);
+                    if (pendingDeleteId) {
+                        deleteCollectionItem(pendingDeleteId);
+                    }
+                }
+            };
         }
 
         // 删除单个收藏
         function deleteCollectionItem(collectionId) {
-            AppState.collections = AppState.collections.filter(c => c.id !== collectionId);
+            const before = Array.isArray(AppState.collections) ? AppState.collections.length : 0;
+            AppState.collections = (AppState.collections || []).filter(c => String(c.id) !== String(collectionId));
+
+            if (AppState.collections.length === before) {
+                return;
+            }
+
             saveToStorage();
             showToast('已删除');
             openCollectionPage(); // 刷新页面

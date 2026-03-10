@@ -170,9 +170,9 @@
         },
         
         // 自定义Prompt弹窗
-        showPrompt: function(message, defaultValue, onConfirm) {
+        showPrompt: function(message, defaultValue, onConfirm, title) {
             this.showDialog({
-                title: '输入',
+                title: title || '输入',
                 message: message,
                 input: true,
                 defaultValue: defaultValue || '',
@@ -619,6 +619,7 @@
                 {
                     text: '删除',
                     color: '#e35f8f',
+                    fullWidth: true,
                     action: () => {
                         menu.remove();
                         this.showConfirm('确定要删除这个表情包吗？', () => {
@@ -650,7 +651,7 @@
                     white-space: nowrap;
                     margin: 0;
                     line-height: 1.2;
-                    width: auto;
+                    width: ${opt.fullWidth ? '100%' : 'auto'};
                 `;
                 btn.textContent = opt.text;
                 btn.addEventListener('click', opt.action);
@@ -1134,7 +1135,7 @@
                     this.renderGroups();
                     this.showAlert('已导入 ' + emojis.length + ' 个表情包');
                 });
-            });
+            }, '通过url链接导入表情包');
         },
         
         // 显示导出对话框
@@ -1563,7 +1564,7 @@
                 
                 this.renderGroups();
                 this.renderEmojis(newGroup.id);
-            });
+            }, '添加分组');
         },
         
         // 编辑分组名称
@@ -1578,7 +1579,7 @@
                 saveToStorage();
                 
                 this.renderGroups();
-            });
+            }, '修改分组名');
         },
         
         // 删除分组
@@ -1608,7 +1609,7 @@
                         this.renderEmojis(activeGroup.dataset.groupId);
                     }
                 }
-            });
+            }, '修改表情包文字描述');
         }
     };
 })();

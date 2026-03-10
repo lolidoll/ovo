@@ -1,87 +1,295 @@
-/* ==================== 收藏页面样式 - 现代化设计 ==================== */
+/* 收藏页样式：保留原布局，改为浅粉白主题 */
 
-/* 页面整体背景 */
 #collection-page {
-    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff 100%) !important;
-    bottom: 0 !important;
+    background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 58%, #fffdfd 100%);
 }
 
-/* PWA全屏模式 - 完全覆盖整个屏幕，不预留底部空间 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
-    #collection-page {
-        bottom: 0 !important;
-        height: calc(100dvh - env(safe-area-inset-top)) !important;
-    }
+#collection-page .collection-main-content {
+    padding: 0;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #fff8fc 0%, #fff2f8 62%, #fffdfd 100%);
 }
 
-/* 通过class添加的额外适配 */
-.is-pwa #collection-page,
-.is-standalone #collection-page {
-    bottom: 0 !important;
-    height: calc(100dvh - env(safe-area-inset-top)) !important;
+#collection-page .collection-main-content::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* ==================== 内容容器 ==================== */
-#collection-page .sub-content {
+#collection-page .collection-main-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffb6d1 0%, #ff95bd 100%);
+    border-radius: 999px;
+}
+
+#collection-page .empty-state {
+    padding: 80px 40px;
+    text-align: center;
+}
+
+#collection-page .empty-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ffe0ed;
+    background: linear-gradient(135deg, #fffefe 0%, #fff3f9 100%);
+    box-shadow: 0 8px 24px rgba(240, 151, 187, 0.18);
+}
+
+#collection-page .empty-icon svg {
+    width: 60px;
+    height: 60px;
+    fill: none;
+    stroke: #d98dae;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#collection-page .empty-title {
+    font-size: 16px;
+    color: #cc6f98;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#collection-page .empty-desc {
+    font-size: 13px;
+    color: #c899b2;
+}
+
+#collection-page .collection-list {
+    padding: 16px;
+}
+
+#collection-page .collection-item {
+    background: linear-gradient(135deg, #ffffff 0%, #fff7fb 100%);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(236, 143, 180, 0.14);
+    border: 1px solid #ffe0ed;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#collection-page .collection-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(236, 143, 180, 0.22);
+}
+
+#collection-page .collection-item-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #ffaccb 0%, #ff86b4 100%);
+}
+
+#collection-page .collection-item-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+#collection-page .collection-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+#collection-page .collection-item-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+#collection-page .collection-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb3d1 0%, #ff8eb8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(241, 138, 178, 0.28);
+    overflow: hidden;
+}
+
+#collection-page .collection-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+#collection-page .collection-meta {
+    min-width: 0;
+}
+
+#collection-page .collection-sender {
+    font-size: 14px;
+    color: #cb628a;
+    font-weight: 600;
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+#collection-page .collection-message {
+    font-size: 14px;
+    color: #b06f90;
+    line-height: 1.6;
+    word-break: break-all;
+    padding-left: 40px;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+}
+
+#collection-page .collection-origin-time {
+    font-size: 11px;
+    color: #caa0b4;
+    padding-left: 40px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#collection-page .delete-collection-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #d5749d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+    box-shadow: none;
+}
+
+#collection-page .delete-collection-btn:hover {
+    transform: scale(1.08);
+    background: rgba(246, 126, 169, 0.12);
+    color: #c95b87;
+}
+
+#collection-page .delete-collection-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+}
+
+#collection-page .collection-confirm-mask {
     position: fixed;
-    top: 56px;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    background: rgba(84, 24, 47, 0.22);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 500000;
+}
+
+#collection-page .collection-confirm-mask.hidden {
+    display: none !important;
+}
+
+#collection-page .collection-confirm-dialog {
+    width: min(92vw, 320px);
+    border-radius: 18px;
+    border: 1px solid #ffd9e9;
+    background: linear-gradient(180deg, #fffefe 0%, #fff5fa 100%);
+    box-shadow: 0 12px 30px rgba(237, 136, 177, 0.28);
+    padding: 16px 14px 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+#collection-page .collection-confirm-dialog::before {
+    content: "";
+    position: absolute;
+    top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    overflow-y: auto;
-    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff 100%) !important;
-    -webkit-overflow-scrolling: touch;
-    z-index: 10;
+    height: 4px;
+    background: linear-gradient(90deg, #ffb8d2 0%, #ff94ba 100%);
 }
 
-/* PWA全屏模式适配 - 调整层级防止被底部切换栏覆盖 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
-    #collection-page .sub-content {
-        z-index: 10;
-        position: fixed;
-        padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
+#collection-page .collection-confirm-text {
+    margin-top: 6px;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #b57b95;
+    white-space: pre-wrap;
+    word-break: break-word;
+    text-align: center;
+}
+
+#collection-page .collection-confirm-actions {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+#collection-page .collection-confirm-btn {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid #ffd7e7;
+    background: #fff;
+    color: #be7394;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+#collection-page .collection-confirm-btn:active {
+    transform: scale(0.97);
+}
+
+#collection-page .collection-confirm-btn.danger {
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+    box-shadow: 0 4px 12px rgba(245, 132, 174, 0.25);
+}
+
+@media (max-width: 480px) {
+    #collection-page .empty-state {
+        padding: 62px 22px;
     }
-}
 
-/* 通过class添加的额外适配 */
-.is-pwa #collection-page .sub-content,
-.is-standalone #collection-page .sub-content {
-    z-index: 10;
-    padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
-}
-
-/* 顶部导航栏 */
-#collection-page .sub-nav {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: 56px !important;
-    z-index: 100 !important;
-    flex-shrink: 0 !important;
-}
-
-/* PWA全屏模式适配 - 顶部导航栏 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
-    #collection-page .sub-nav {
-        height: calc(56px + env(safe-area-inset-top)) !important;
-        padding-top: env(safe-area-inset-top) !important;
-        top: 0 !important;
+    #collection-page .collection-list {
+        padding: 10px;
     }
-    
-    #collection-page .sub-content {
-        top: calc(56px + env(safe-area-inset-top)) !important;
+
+    #collection-page .collection-item {
+        padding: 12px;
+        border-radius: 14px;
+        margin-bottom: 10px;
     }
-}
 
-/* 通过class添加的额外适配 */
-.is-pwa #collection-page .sub-nav,
-.is-standalone #collection-page .sub-nav {
-    height: calc(56px + env(safe-area-inset-top)) !important;
-    padding-top: env(safe-area-inset-top) !important;
-}
-
-.is-pwa #collection-page .sub-content,
-.is-standalone #collection-page .sub-content {
-    top: calc(56px + env(safe-area-inset-top)) !important;
+    #collection-page .collection-confirm-dialog {
+        width: min(94vw, 320px);
+    }
 }

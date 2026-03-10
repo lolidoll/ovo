@@ -1685,6 +1685,13 @@
     padding-bottom: 12px !important;
 }
 
+/* 关键设置行底部显示修复（模型名称 / Top P / MiniMax 测试） */
+#api-settings-page .settings-card .setting-row:last-child,
+#api-settings-page .api-params-card .setting-row:last-child {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+}
+
 /* 去除所有卡片外层灰色背景 */
 #api-settings-page {
     background: linear-gradient(180deg, #fff5f9 0%, #f8f0f4 100%) !important;
