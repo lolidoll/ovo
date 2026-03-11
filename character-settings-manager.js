@@ -95,11 +95,8 @@
                 const group = isGroupChat ? (window.AppState.groups || []).find(g => g.id === chat.id) : null;
 
             page.innerHTML = `
-                <div class="sub-nav char-settings-nav">
-                    <div class="back-btn" id="char-settings-back-btn">
-                        <div class="back-arrow"></div>
-                        <span>返回</span>
-                    </div>
+                <div class="sub-nav friend-nav">
+                    <div class="back-btn" id="char-settings-back-btn"></div>
                     <div class="sub-title">${isGroupChat ? '群聊设置' : '角色设置'}</div>
                 </div>
                 
@@ -121,7 +118,6 @@
                     <!-- 群聊信息 -->
                     <div class="settings-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon"><circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/><path d="M3 19c0-3 3-5 6-5"/><path d="M15 14c3 0 6 2 6 5"/></svg>
                             <span>群聊信息</span>
                         </div>
                         <div class="card-body">
@@ -144,7 +140,6 @@
                     <!-- 群成员管理 -->
                     <div class="settings-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             <span>群成员管理 <span style="color:#999;font-weight:400;font-size:12px;">(${(group && group.members) ? group.members.length : 0}人)</span></span>
                         </div>
                         <div class="card-body">
@@ -188,20 +183,16 @@
                     <!-- 基本信息 - 公主风格卡片 -->
                     <div class="settings-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            <span>基本信息</span>
+                            <span>好友信息</span>
                         </div>
                         <div class="card-body">
                             <div class="form-group">
-                                <label class="form-label">角色名称</label>
+                                <label class="form-label">好友名称</label>
                                 <input type="text" id="char-name-input" value="${this.escapeHtml(chat.name || '')}" class="form-input">
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">角色网名（可选）</label>
+                                <label class="form-label">TA的网名（可选）</label>
                                 <input type="text" id="char-nickname-input" value="${this.escapeHtml(charNickname)}" placeholder="角色在社交软件里的网名" class="form-input">
                                 <div class="form-hint">网名是社交场景称呼，不等于角色真名</div>
                             </div>
@@ -226,24 +217,18 @@
                     <!-- 用户人设 - 公主风格卡片 -->
                     <div class="settings-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                            <span>用户人设</span>
+                            <span>我的信息</span>
                         </div>
                         <div class="card-body">
                             ${!isGroupChat ? `
                             <div class="form-group">
-                                <label class="form-label">用户名称</label>
+                                <label class="form-label">我的名字</label>
                                 <input type="text" id="user-name-for-char" value="${this.escapeHtml(userNameForChar)}" class="form-input">
-                                <div class="form-hint">在与该角色对话时使用此名称</div>
+                                <div class="form-hint">在与该角色对话时使用此名字</div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">用户网名（可选）</label>
+                                <label class="form-label">我的网名（可选）</label>
                                 <input type="text" id="user-nickname-for-char" value="${this.escapeHtml(userNicknameForChar)}" class="form-input" placeholder="你在社交软件里的网名">
                                 <div class="form-hint">网名是社交场景称呼，不等于你的真名</div>
                             </div>
@@ -273,15 +258,10 @@
                         </div>
                     </div>
 
-                    <!-- 绑定设置 - 公主风格卡片 -->
+                    <!-- 角色绑定与设置 - 公主风格卡片 -->
                     <div class="settings-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                            </svg>
-                            <span>绑定设置</span>
+                            <span>角色绑定与设置</span>
                         </div>
                         <div class="card-body">
                             <div class="form-group">
@@ -309,20 +289,27 @@
                                 </div>
                                 <div class="form-hint">支持多选，向右滑动查看更多</div>
                             </div>
+
+                            <label class="checkbox-label" style="margin-top: 4px;">
+                                <input type="checkbox" id="auto-message-enabled" ${(chat.autoMessageEnabled ?? false) ? 'checked' : ''} class="custom-checkbox">
+                                <span>启用AI主动发消息</span>
+                            </label>
+                            <div class="form-hint">开启后，AI会在设定的时间间隔内随机选择一个时间点主动给你发消息</div>
+                            
+                            <div class="form-group" style="margin-top:16px;">
+                                <label class="form-label">发消息间隔（分钟）</label>
+                                <input type="number" id="auto-message-interval" value="${chat.autoMessageInterval ?? 3}" min="1" max="1440" class="form-input" placeholder="3">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Token统计 - 公主风格卡片 -->
+                    <!-- 对话总结与Token数 - 公主风格卡片 -->
                     <div class="settings-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M9 11l3 3L22 4"></path>
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                            </svg>
-                            <span>Token统计</span>
+                            <span>对话总结与Token数</span>
                         </div>
                         <div class="card-body">
-                            <div class="token-stats-container">
+                            <div class="token-stats-container" style="margin-bottom:16px;">
                                 <div class="token-stat-item">
                                     <div class="token-stat-label">当前对话Token数</div>
                                     <div class="token-stat-value" id="current-token-count">计算中...</div>
@@ -341,22 +328,7 @@
                                     <span>刷新统计</span>
                                 </button>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- 对话总结功能 - 公主风格卡片 -->
-                    <div class="settings-card">
-                        <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                            <span>对话总结</span>
-                        </div>
-                        <div class="card-body">
                             <div class="summary-settings">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="auto-summary-enabled" ${window.AppState.apiSettings.summaryEnabled ? 'checked' : ''} class="custom-checkbox">
@@ -389,40 +361,14 @@
                         </div>
                     </div>
 
-                    <!-- 主动发消息设置 - 公主风格卡片 -->
-                    <div class="settings-card">
+                    <!-- 聊天页面设置 - 公主风格卡片 -->
+                    <div class="settings-card ui-color-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                            </svg>
-                            <span>主动发消息设置</span>
-                        </div>
-                        <div class="card-body">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="auto-message-enabled" ${(chat.autoMessageEnabled ?? false) ? 'checked' : ''} class="custom-checkbox">
-                                <span>启用AI主动发消息</span>
-                            </label>
-                            <div class="form-hint">开启后，AI会在设定的时间间隔内随机选择一个时间点主动给你发消息</div>
-                            
-                            <div class="form-group" style="margin-top:16px;">
-                                <label class="form-label">发消息间隔（分钟）</label>
-                                <input type="number" id="auto-message-interval" value="${chat.autoMessageInterval ?? 3}" min="1" max="1440" class="form-input" placeholder="3">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 聊天背景图片 - 公主风格卡片 -->
-                    <div class="settings-card">
-                        <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                            </svg>
-                            <span>聊天背景</span>
+                            <span>聊天页面设置</span>
                         </div>
                         <div class="card-body">
                             <div class="form-group">
+                                <label class="form-label">聊天背景</label>
                                 <div class="bg-preview" style="background-image:${chat.chatBgImage ? `url('${chat.chatBgImage}')` : 'none'};">
                                     ${!chat.chatBgImage ? '<span class="bg-placeholder">暂无背景图</span>' : ''}
                                 </div>
@@ -431,18 +377,99 @@
                                     ${chat.chatBgImage ? `<button id="chat-bg-clear-btn" class="btn-danger">清除背景</button>` : ''}
                                 </div>
                             </div>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-message-timestamp" ${(chat.showMessageTimestamp ?? false) ? 'checked' : ''} class="custom-checkbox">
+                                <span>显示消息时间戳</span>
+                            </label>
+                            <div class="form-hint">开启后，每条消息都会显示发送时间</div>
+                            
+                            <label class="checkbox-label" style="margin-top: 12px;">
+                                <input type="checkbox" id="show-message-read-status" ${(chat.showMessageReadStatus ?? false) ? 'checked' : ''} class="custom-checkbox">
+                                <span>显示已读/未读状态</span>
+                            </label>
+                            <div class="form-hint">开启后，每条消息会显示对方是否已读</div>
+
+                            <!-- 好感度填充颜色 -->
+                            <div class="bubble-section" style="margin-top: 20px;">
+                                <label class="bubble-label">好感度填充颜色</label>
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="affinity-r" min="0" max="255" value="${chat.uiColors?.affinity?.r ?? 255}" class="bubble-slider">
+                                            <input type="number" id="affinity-r-input" min="0" max="255" value="${chat.uiColors?.affinity?.r ?? 255}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="affinity-g" min="0" max="255" value="${chat.uiColors?.affinity?.g ?? 182}" class="bubble-slider">
+                                            <input type="number" id="affinity-g-input" min="0" max="255" value="${chat.uiColors?.affinity?.g ?? 182}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="affinity-b" min="0" max="255" value="${chat.uiColors?.affinity?.b ?? 193}" class="bubble-slider">
+                                            <input type="number" id="affinity-b-input" min="0" max="255" value="${chat.uiColors?.affinity?.b ?? 193}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-preview-box" style="background-color:rgb(${chat.uiColors?.affinity?.r ?? 255}, ${chat.uiColors?.affinity?.g ?? 182}, ${chat.uiColors?.affinity?.b ?? 193});" id="affinity-preview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 发送按钮颜色 -->
+                            <div class="bubble-section" style="margin-top: 20px;">
+                                <label class="bubble-label">发送按钮渐变色</label>
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="sendbtn-r" min="0" max="255" value="${chat.uiColors?.sendBtn?.r ?? 255}" class="bubble-slider">
+                                            <input type="number" id="sendbtn-r-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.r ?? 255}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="sendbtn-g" min="0" max="255" value="${chat.uiColors?.sendBtn?.g ?? 182}" class="bubble-slider">
+                                            <input type="number" id="sendbtn-g-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.g ?? 182}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="sendbtn-b" min="0" max="255" value="${chat.uiColors?.sendBtn?.b ?? 193}" class="bubble-slider">
+                                            <input type="number" id="sendbtn-b-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.b ?? 193}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-preview-box" style="background:linear-gradient(135deg, rgb(${chat.uiColors?.sendBtn?.r ?? 255}, ${chat.uiColors?.sendBtn?.g ?? 182}, ${chat.uiColors?.sendBtn?.b ?? 193}) 0%, rgb(${Math.min(255, (chat.uiColors?.sendBtn?.r ?? 255) + 10)}, ${Math.min(255, (chat.uiColors?.sendBtn?.g ?? 182) + 10)}, ${Math.min(255, (chat.uiColors?.sendBtn?.b ?? 193) + 10)}) 100%);" id="sendbtn-preview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 已读圆圈颜色 -->
+                            <div class="bubble-section" style="margin-top: 20px;">
+                                <label class="bubble-label">已读状态圆圈颜色</label>
+                                <div class="color-controls">
+                                    <div class="rgb-grid">
+                                        <div class="color-control">
+                                            <label class="color-label">红 (R)</label>
+                                            <input type="range" id="readcircle-r" min="0" max="255" value="${chat.uiColors?.readCircle?.r ?? 255}" class="bubble-slider">
+                                            <input type="number" id="readcircle-r-input" min="0" max="255" value="${chat.uiColors?.readCircle?.r ?? 255}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">绿 (G)</label>
+                                            <input type="range" id="readcircle-g" min="0" max="255" value="${chat.uiColors?.readCircle?.g ?? 182}" class="bubble-slider">
+                                            <input type="number" id="readcircle-g-input" min="0" max="255" value="${chat.uiColors?.readCircle?.g ?? 182}" class="bubble-input">
+                                        </div>
+                                        <div class="color-control">
+                                            <label class="color-label">蓝 (B)</label>
+                                            <input type="range" id="readcircle-b" min="0" max="255" value="${chat.uiColors?.readCircle?.b ?? 193}" class="bubble-slider">
+                                            <input type="number" id="readcircle-b-input" min="0" max="255" value="${chat.uiColors?.readCircle?.b ?? 193}" class="bubble-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-preview-box" style="background-color:rgb(${chat.uiColors?.readCircle?.r ?? 255}, ${chat.uiColors?.readCircle?.g ?? 182}, ${chat.uiColors?.readCircle?.b ?? 193});" id="readcircle-preview"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 消息气泡颜色设置 - 公主风格卡片 -->
                     <div class="settings-card bubble-color-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                            </svg>
                             <span>消息气泡颜色</span>
                         </div>
                         <div class="card-body">
@@ -524,38 +551,9 @@
                         </div>
                     </div>
 
-                    <!-- 消息显示设置 - 公主风格卡片 -->
-                    <div class="settings-card">
-                        <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            <span>消息显示设置</span>
-                        </div>
-                        <div class="card-body">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="show-message-timestamp" ${(chat.showMessageTimestamp ?? false) ? 'checked' : ''} class="custom-checkbox">
-                                <span>显示消息时间戳</span>
-                            </label>
-                            <div class="form-hint">开启后，每条消息都会显示发送时间</div>
-                            
-                            <label class="checkbox-label" style="margin-top: 12px;">
-                                <input type="checkbox" id="show-message-read-status" ${(chat.showMessageReadStatus ?? false) ? 'checked' : ''} class="custom-checkbox">
-                                <span>显示已读/未读状态</span>
-                            </label>
-                            <div class="form-hint">开启后，每条消息会显示对方是否已读</div>
-                        </div>
-                    </div>
-
                     <!-- 消息字体颜色设置 - 公主风格卡片 -->
                     <div class="settings-card text-color-card">
                         <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <path d="M4 7V4h16v3"></path>
-                                <path d="M9 20h6"></path>
-                                <path d="M12 4v16"></path>
-                            </svg>
                             <span>消息字体颜色</span>
                         </div>
                         <div class="card-body">
@@ -614,94 +612,6 @@
                                     <div class="text-preview" style="color:rgb(${chat.textColor?.user?.r ?? 51}, ${chat.textColor?.user?.g ?? 51}, ${chat.textColor?.user?.b ?? 51}); background-color:rgba(${chat.bubbleColor?.user?.r ?? 255}, ${chat.bubbleColor?.user?.g ?? 200}, ${chat.bubbleColor?.user?.b ?? 230}, ${chat.bubbleColor?.user?.alpha ?? 0.85});" id="user-text-preview">
                                         这是用户消息文字预览
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- UI颜色设置 - 公主风格卡片 -->
-                    <div class="settings-card ui-color-card">
-                        <div class="card-header">
-                            <svg viewBox="0 0 24 24" class="card-icon">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 8v8"></path>
-                                <path d="M8 12h8"></path>
-                            </svg>
-                            <span>聊天界面颜色</span>
-                        </div>
-                        <div class="card-body">
-                            <!-- 好感度填充颜色 -->
-                            <div class="bubble-section">
-                                <label class="bubble-label">好感度填充颜色</label>
-                                <div class="color-controls">
-                                    <div class="rgb-grid">
-                                        <div class="color-control">
-                                            <label class="color-label">红 (R)</label>
-                                            <input type="range" id="affinity-r" min="0" max="255" value="${chat.uiColors?.affinity?.r ?? 255}" class="bubble-slider">
-                                            <input type="number" id="affinity-r-input" min="0" max="255" value="${chat.uiColors?.affinity?.r ?? 255}" class="bubble-input">
-                                        </div>
-                                        <div class="color-control">
-                                            <label class="color-label">绿 (G)</label>
-                                            <input type="range" id="affinity-g" min="0" max="255" value="${chat.uiColors?.affinity?.g ?? 182}" class="bubble-slider">
-                                            <input type="number" id="affinity-g-input" min="0" max="255" value="${chat.uiColors?.affinity?.g ?? 182}" class="bubble-input">
-                                        </div>
-                                        <div class="color-control">
-                                            <label class="color-label">蓝 (B)</label>
-                                            <input type="range" id="affinity-b" min="0" max="255" value="${chat.uiColors?.affinity?.b ?? 193}" class="bubble-slider">
-                                            <input type="number" id="affinity-b-input" min="0" max="255" value="${chat.uiColors?.affinity?.b ?? 193}" class="bubble-input">
-                                        </div>
-                                    </div>
-                                    <div class="color-preview-box" style="background-color:rgb(${chat.uiColors?.affinity?.r ?? 255}, ${chat.uiColors?.affinity?.g ?? 182}, ${chat.uiColors?.affinity?.b ?? 193});" id="affinity-preview"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- 发送按钮颜色 -->
-                            <div class="bubble-section" style="margin-top: 20px;">
-                                <label class="bubble-label">发送按钮渐变色</label>
-                                <div class="color-controls">
-                                    <div class="rgb-grid">
-                                        <div class="color-control">
-                                            <label class="color-label">红 (R)</label>
-                                            <input type="range" id="sendbtn-r" min="0" max="255" value="${chat.uiColors?.sendBtn?.r ?? 255}" class="bubble-slider">
-                                            <input type="number" id="sendbtn-r-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.r ?? 255}" class="bubble-input">
-                                        </div>
-                                        <div class="color-control">
-                                            <label class="color-label">绿 (G)</label>
-                                            <input type="range" id="sendbtn-g" min="0" max="255" value="${chat.uiColors?.sendBtn?.g ?? 182}" class="bubble-slider">
-                                            <input type="number" id="sendbtn-g-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.g ?? 182}" class="bubble-input">
-                                        </div>
-                                        <div class="color-control">
-                                            <label class="color-label">蓝 (B)</label>
-                                            <input type="range" id="sendbtn-b" min="0" max="255" value="${chat.uiColors?.sendBtn?.b ?? 193}" class="bubble-slider">
-                                            <input type="number" id="sendbtn-b-input" min="0" max="255" value="${chat.uiColors?.sendBtn?.b ?? 193}" class="bubble-input">
-                                        </div>
-                                    </div>
-                                    <div class="color-preview-box" style="background:linear-gradient(135deg, rgb(${chat.uiColors?.sendBtn?.r ?? 255}, ${chat.uiColors?.sendBtn?.g ?? 182}, ${chat.uiColors?.sendBtn?.b ?? 193}) 0%, rgb(${Math.min(255, (chat.uiColors?.sendBtn?.r ?? 255) + 10)}, ${Math.min(255, (chat.uiColors?.sendBtn?.g ?? 182) + 10)}, ${Math.min(255, (chat.uiColors?.sendBtn?.b ?? 193) + 10)}) 100%);" id="sendbtn-preview"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- 已读圆圈颜色 -->
-                            <div class="bubble-section" style="margin-top: 20px;">
-                                <label class="bubble-label">已读状态圆圈颜色</label>
-                                <div class="color-controls">
-                                    <div class="rgb-grid">
-                                        <div class="color-control">
-                                            <label class="color-label">红 (R)</label>
-                                            <input type="range" id="readcircle-r" min="0" max="255" value="${chat.uiColors?.readCircle?.r ?? 255}" class="bubble-slider">
-                                            <input type="number" id="readcircle-r-input" min="0" max="255" value="${chat.uiColors?.readCircle?.r ?? 255}" class="bubble-input">
-                                        </div>
-                                        <div class="color-control">
-                                            <label class="color-label">绿 (G)</label>
-                                            <input type="range" id="readcircle-g" min="0" max="255" value="${chat.uiColors?.readCircle?.g ?? 182}" class="bubble-slider">
-                                            <input type="number" id="readcircle-g-input" min="0" max="255" value="${chat.uiColors?.readCircle?.g ?? 182}" class="bubble-input">
-                                        </div>
-                                        <div class="color-control">
-                                            <label class="color-label">蓝 (B)</label>
-                                            <input type="range" id="readcircle-b" min="0" max="255" value="${chat.uiColors?.readCircle?.b ?? 193}" class="bubble-slider">
-                                            <input type="number" id="readcircle-b-input" min="0" max="255" value="${chat.uiColors?.readCircle?.b ?? 193}" class="bubble-input">
-                                        </div>
-                                    </div>
-                                    <div class="color-preview-box" style="background-color:rgb(${chat.uiColors?.readCircle?.r ?? 255}, ${chat.uiColors?.readCircle?.g ?? 182}, ${chat.uiColors?.readCircle?.b ?? 193});" id="readcircle-preview"></div>
                                 </div>
                             </div>
                         </div>
@@ -805,6 +715,68 @@
         },
 
         /**
+         * 应用聊天背景到整个聊天页面（含顶部栏、输入栏、底部工具栏）
+         */
+        applyChatPageBackground: function(chatBgImage) {
+            const chatPage = document.getElementById('chat-page');
+            if (!chatPage) {
+                console.warn('⚠️ applyChatPageBackground - 未找到chat-page元素');
+                return;
+            }
+
+            const selectors = [
+                '.chat-nav',
+                '#chat-messages',
+                '.chat-input-area',
+                '#chat-toolbar',
+                '#quote-message-bar-container',
+                '#quote-message-bar'
+            ];
+
+            const targets = [];
+            selectors.forEach(selector => {
+                chatPage.querySelectorAll(selector).forEach(el => targets.push(el));
+            });
+
+            const setTransparent = (el) => {
+                el.style.setProperty('background', 'transparent', 'important');
+                el.style.setProperty('background-color', 'transparent', 'important');
+                el.style.setProperty('background-image', 'none', 'important');
+                el.style.setProperty('border-color', 'transparent', 'important');
+            };
+
+            const resetTransparent = (el) => {
+                el.style.removeProperty('background');
+                el.style.removeProperty('background-color');
+                el.style.removeProperty('background-image');
+                el.style.removeProperty('border-color');
+            };
+
+            if (chatBgImage) {
+                chatPage.style.backgroundImage = `url('${chatBgImage}')`;
+                chatPage.style.backgroundSize = 'cover';
+                chatPage.style.backgroundPosition = 'center';
+                chatPage.style.backgroundRepeat = 'no-repeat';
+                chatPage.style.backgroundAttachment = 'fixed';
+                chatPage.style.backgroundColor = 'transparent';
+
+                targets.forEach(setTransparent);
+                console.log('✅ applyChatPageBackground - 已应用整页聊天背景');
+                return;
+            }
+
+            chatPage.style.removeProperty('background-image');
+            chatPage.style.removeProperty('background-size');
+            chatPage.style.removeProperty('background-position');
+            chatPage.style.removeProperty('background-repeat');
+            chatPage.style.removeProperty('background-attachment');
+            chatPage.style.removeProperty('background-color');
+
+            targets.forEach(resetTransparent);
+            console.log('ℹ️ applyChatPageBackground - 已恢复默认聊天背景');
+        },
+
+        /**
          * 渲染总结历史列表
          */
         renderSummariesList: function(summaries, chatId) {
@@ -840,11 +812,85 @@
             return html;
         },
 
+        setCharacterSettingsCardCollapsed: function(card, collapsed) {
+            if (!card) return;
+
+            const header = card.querySelector('.card-header');
+            const body = card.querySelector('.card-body');
+
+            card.classList.toggle('cs-collapsed', !!collapsed);
+
+            if (header) {
+                header.setAttribute('aria-expanded', String(!collapsed));
+            }
+
+            if (!body) return;
+
+            if (collapsed) {
+                body.style.display = 'none';
+            } else {
+                body.style.removeProperty('display');
+            }
+        },
+
+        resetCharacterSettingsCardCollapseState: function() {
+            const page = document.getElementById('character-settings-page');
+            if (!page) return;
+
+            page.querySelectorAll('.char-settings-content .settings-card').forEach(card => {
+                this.setCharacterSettingsCardCollapsed(card, true);
+            });
+        },
+
+        initCharacterSettingsCardCollapse: function() {
+            const page = document.getElementById('character-settings-page');
+            if (!page) return;
+
+            const cards = page.querySelectorAll('.char-settings-content .settings-card');
+            cards.forEach((card, index) => {
+                const header = card.querySelector('.card-header');
+                const body = card.querySelector('.card-body');
+                if (!header || !body) return;
+
+                header.classList.add('cs-collapsible-header');
+                header.setAttribute('role', 'button');
+                header.setAttribute('tabindex', '0');
+
+                if (!body.id) {
+                    body.id = `cs-card-body-${index + 1}`;
+                }
+                header.setAttribute('aria-controls', body.id);
+
+                if (header.dataset.csCollapseBound === '1') return;
+                header.dataset.csCollapseBound = '1';
+
+                const toggleCard = () => {
+                    const isCollapsed = card.classList.contains('cs-collapsed');
+                    this.setCharacterSettingsCardCollapsed(card, !isCollapsed);
+                };
+
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleCard();
+                });
+
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleCard();
+                    }
+                });
+            });
+
+            this.resetCharacterSettingsCardCollapseState();
+        },
+
         /**
          * 绑定角色设置页面事件
          */
         bindCharacterSettingsEvents: function(chat) {
             console.log('bindCharacterSettingsEvents called');
+            this.initCharacterSettingsCardCollapse();
             // 返回按钮
             const backBtn = document.getElementById('char-settings-back-btn');
             if (backBtn) {
@@ -875,34 +921,8 @@
                             window.AppState.currentChat = conv;
                             console.log('✅ currentChat引用已更新');
                             
-                            // 更新聊天页面背景
-                            const chatPage = document.getElementById('chat-page');
-                            if (chatPage) {
-                                if (conv.chatBgImage) {
-                                    chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
-                                    chatPage.style.backgroundSize = 'cover';
-                                    chatPage.style.backgroundPosition = 'center';
-                                    chatPage.style.backgroundAttachment = 'fixed';
-                                    console.log('✅ 背景图已应用到聊天页面');
-                                    
-                                    // 将chat-messages容器背景设为透明，以显示背景图
-                                    const chatMessages = document.getElementById('chat-messages');
-                                    if (chatMessages) {
-                                        chatMessages.style.backgroundColor = 'transparent';
-                                        console.log('✅ 返回按钮 - chat-messages背景已设为透明');
-                                    }
-                                } else {
-                                    chatPage.style.backgroundImage = 'none';
-                                    // 恢复chat-messages的默认背景色
-                                    const chatMessages = document.getElementById('chat-messages');
-                                    if (chatMessages) {
-                                        chatMessages.style.backgroundColor = '';
-                                    }
-                                    console.log('ℹ️ 清除了背景图（conv中没有chatBgImage）');
-                                }
-                            } else {
-                                console.warn('⚠️ 未找到chat-page元素');
-                            }
+                            // 更新聊天页面背景（整页）
+                            this.applyChatPageBackground(conv.chatBgImage || null);
                             
                             // 应用消息气泡颜色
                             if (window.CharacterSettingsManager) {
@@ -966,10 +986,7 @@
                         if (window.AppState.currentChat && window.AppState.currentChat.id === chat.id) {
                             window.AppState.currentChat = conv;
                             
-                            const chatPage = document.getElementById('chat-page');
-                            if (chatPage) {
-                                chatPage.style.backgroundImage = 'none';
-                            }
+                            this.applyChatPageBackground(null);
                         }
                         
                         saveToStorage();
@@ -1568,16 +1585,7 @@
                             window.AppState.currentChat = conv;
                             console.log('✅ currentChat引用已更新');
                             
-                            const chatPage = document.getElementById('chat-page');
-                            if (chatPage) {
-                                chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
-                                chatPage.style.backgroundSize = 'cover';
-                                chatPage.style.backgroundPosition = 'center';
-                                chatPage.style.backgroundAttachment = 'fixed';
-                                console.log('✅ 聊天页面背景已应用');
-                            } else {
-                                console.warn('⚠️ 未找到chat-page元素');
-                            }
+                            this.applyChatPageBackground(conv.chatBgImage || null);
                         } else {
                             console.log('ℹ️ 当前未在该聊天中，跳过实时更新');
                         }
@@ -2078,46 +2086,11 @@
             
             if (window.AppState.currentChat && window.AppState.currentChat.id === charId) {
                 console.log('✅ saveCharacterSettings - 开始更新聊天页面');
-                const chatPage = document.getElementById('chat-page');
-                console.log('📄 chatPage元素:', chatPage ? '找到' : '未找到');
-                
-                if (chatPage) {
-                    console.log('🖼️ conv.chatBgImage:', {
-                        exists: !!conv.chatBgImage,
-                        preview: conv.chatBgImage ? conv.chatBgImage.substring(0, 100) : 'none'
-                    });
-                    
-                    if (conv.chatBgImage) {
-                        chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
-                        chatPage.style.backgroundSize = 'cover';
-                        chatPage.style.backgroundPosition = 'center';
-                        chatPage.style.backgroundAttachment = 'fixed';
-                        console.log('✅ saveCharacterSettings - 背景图已应用');
-                        
-                        // 将chat-messages容器背景设为透明，以显示背景图
-                        const chatMessages = window.opener ? window.opener.document.getElementById('chat-messages') : document.getElementById('chat-messages');
-                        if (chatMessages) {
-                            chatMessages.style.backgroundColor = 'transparent';
-                            console.log('✅ saveCharacterSettings - chat-messages背景已设为透明');
-                        }
-                        
-                        // 验证是否真的应用了
-                        setTimeout(() => {
-                            const appliedBg = chatPage.style.backgroundImage;
-                            console.log('🔍 saveCharacterSettings - 验证背景图:', appliedBg ? appliedBg.substring(0, 100) : 'none');
-                        }, 100);
-                    } else {
-                        chatPage.style.backgroundImage = 'none';
-                        // 恢复chat-messages的默认背景色
-                        const chatMessages = window.opener ? window.opener.document.getElementById('chat-messages') : document.getElementById('chat-messages');
-                        if (chatMessages) {
-                            chatMessages.style.backgroundColor = '';
-                        }
-                        console.log('ℹ️ saveCharacterSettings - 清除背景图');
-                    }
-                } else {
-                    console.warn('⚠️ saveCharacterSettings - 未找到chat-page元素');
-                }
+                console.log('🖼️ conv.chatBgImage:', {
+                    exists: !!conv.chatBgImage,
+                    preview: conv.chatBgImage ? conv.chatBgImage.substring(0, 100) : 'none'
+                });
+                this.applyChatPageBackground(conv.chatBgImage || null);
                 
                 // 应用消息气泡颜色
                 this.applyBubbleColors(conv);

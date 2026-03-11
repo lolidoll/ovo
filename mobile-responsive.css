@@ -225,13 +225,11 @@ body {
 
 /* 安卓浏览器输入框修复 */
 @media (max-width: 768px) {
-    body.android-browser {
-        .chat-input-area,
-        .input-area,
-        [data-input="true"] {
-            position: absolute;
-            z-index: 1000;
-        }
+    body.android-browser .chat-input-area,
+    body.android-browser .input-area,
+    body.android-browser [data-input="true"] {
+        position: absolute;
+        z-index: 1000;
     }
 }
 
@@ -267,24 +265,22 @@ body {
 
 /* 安卓浏览器内容区域修复 */
 @media (max-width: 768px) {
-    body.android-browser {
-        .chat-content,
-        .content-area,
-        [data-content="true"] {
-            height: calc(100dvh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
-            padding-bottom: 63px; /* 为工具栏留出空间 */
-            overscroll-behavior: contain;
-            touch-action: pan-y;
-            contain: layout style paint;
-        }
-        
-        /* 键盘弹出时的内容区域调整 */
-        body.keyboard-open .chat-content,
-        body.keyboard-open .content-area,
-        body.keyboard-open [data-content="true"] {
-            padding-bottom: 20px;
-            height: calc(100dvh - var(--nav-height) - var(--keyboard-height, 300px));
-        }
+    body.android-browser .chat-content,
+    body.android-browser .content-area,
+    body.android-browser [data-content="true"] {
+        height: calc(100dvh - var(--nav-height) - var(--input-area-height) - var(--toolbar-height));
+        padding-bottom: 63px; /* 为工具栏留出空间 */
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        contain: layout style paint;
+    }
+
+    /* 键盘弹出时的内容区域调整 */
+    body.android-browser.keyboard-open .chat-content,
+    body.android-browser.keyboard-open .content-area,
+    body.android-browser.keyboard-open [data-content="true"] {
+        padding-bottom: 20px;
+        height: calc(100dvh - var(--nav-height) - var(--keyboard-height, 300px));
     }
 }
 

@@ -41,7 +41,7 @@
     }
   ],
   "prefer_related_applications": false,
-  "display_override": ["standalone", "fullscreen"],
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "categories": ["social", "entertainment"],
   "lang": "zh-CN",
   "dir": "ltr",

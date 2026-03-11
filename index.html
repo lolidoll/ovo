@@ -2,18 +2,20 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <!-- PWA配置 -->
     <link rel="manifest" href="manifest.json" onerror="console.warn('manifest.json加载失败，这在本地开发环境中是正常的')">
     
     <!-- Apple iOS配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="喵机1号">
     <link rel="apple-touch-icon" href="https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg">
     
     <!-- Android/Chrome配置 -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#ffffff">
     
     <!-- Edge浏览器全屏配置 -->
@@ -212,13 +214,13 @@
                 fixStyle.textContent = `
                     /* 非PWA模式：使用100dvh确保所有元素正确显示 */
                     html:not(.is-pwa):not(.is-standalone) body {
-                        height: 100dvh;
                         height: 100vh;
+                        height: 100dvh;
                     }
 
                     html:not(.is-pwa):not(.is-standalone) #app-container {
-                        height: 100dvh;
                         height: 100vh;
+                        height: 100dvh;
                     }
                 `;
                 document.head.appendChild(fixStyle);
@@ -239,8 +241,8 @@
                     }
 
                     /* iOS PWA全屏模式：确保页面内容正确显示 */
-                    .is-standalone html,
-                    .is-pwa html {
+                    html.is-standalone,
+                    html.is-pwa {
                         height: 100dvh !important;
                         height: -webkit-fill-available !important;
                         min-height: 100% !important;
@@ -4343,7 +4345,6 @@
         <div id="video-floating-duration" class="video-floating-duration">00:00</div>
     </div>
 
-    <script src="video-call.js"></script>
     <script src="red-envelope.js"></script>
     <script src="transfer.js"></script>
     <script src="shopping.js"></script>

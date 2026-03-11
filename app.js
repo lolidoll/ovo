@@ -3992,34 +3992,22 @@
             });
             
             if (chatPage) {
-                if (conv && conv.chatBgImage) {
+                if (window.CharacterSettingsManager && typeof window.CharacterSettingsManager.applyChatPageBackground === 'function') {
+                    window.CharacterSettingsManager.applyChatPageBackground(conv && conv.chatBgImage ? conv.chatBgImage : null);
+                } else if (conv && conv.chatBgImage) {
+                    // 兜底逻辑（角色设置模块尚未加载时）
                     chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
                     chatPage.style.backgroundSize = 'cover';
                     chatPage.style.backgroundPosition = 'center';
                     chatPage.style.backgroundAttachment = 'fixed';
-                    console.log('✅ openChat - 背景图已应用到聊天页面');
-                    
-                    // 将chat-messages容器背景设为透明，以显示背景图
-                    const chatMessages = document.getElementById('chat-messages');
-                    if (chatMessages) {
-                        chatMessages.style.backgroundColor = 'transparent';
-                        console.log('✅ openChat - chat-messages背景已设为透明');
-                    }
-                    
-                    // 验证是否真的应用了
-                    setTimeout(() => {
-                        const appliedBg = chatPage.style.backgroundImage;
-                        console.log('🔍 openChat - 验证背景图应用结果:', appliedBg ? appliedBg.substring(0, 100) : 'none');
-                    }, 100);
                 } else {
                     chatPage.style.backgroundImage = 'none';
-                    // 恢复chat-messages的默认背景色
-                    const chatMessages = document.getElementById('chat-messages');
-                    if (chatMessages) {
-                        chatMessages.style.backgroundColor = '';
-                    }
-                    console.log('ℹ️ openChat - 清除背景图（conv中没有chatBgImage）');
                 }
+
+                setTimeout(() => {
+                    const appliedBg = chatPage.style.backgroundImage;
+                    console.log('🔍 openChat - 验证背景图应用结果:', appliedBg ? appliedBg.substring(0, 100) : 'none');
+                }, 100);
             } else {
                 console.warn('⚠️ openChat - 未找到chat-page元素');
             }
@@ -11494,7 +11482,9 @@
                 // 立即应用背景图片到聊天页面
                 const chatPage = document.getElementById('chat-page');
                 if (chatPage) {
-                    if (conv.chatBgImage) {
+                    if (window.CharacterSettingsManager && typeof window.CharacterSettingsManager.applyChatPageBackground === 'function') {
+                        window.CharacterSettingsManager.applyChatPageBackground(conv.chatBgImage || null);
+                    } else if (conv.chatBgImage) {
                         chatPage.style.backgroundImage = `url('${conv.chatBgImage}')`;
                         chatPage.style.backgroundSize = 'cover';
                         chatPage.style.backgroundPosition = 'center';

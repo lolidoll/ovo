@@ -1,0 +1,80 @@
+/**
+ * PWA fullscreen fallback styles.
+ * Keep this file additive and low-risk: only viewport + safe-area corrections.
+ */
+
+:root {
+    --dynamic-vh: 1vh;
+    --dynamic-app-height: 100vh;
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --dynamic-app-height: 100dvh;
+    }
+}
+
+/* Legacy iOS fallback (iOS 11.0-11.2). */
+@supports (padding-top: constant(safe-area-inset-top)) {
+    :root {
+        --safe-area-inset-top: constant(safe-area-inset-top);
+        --safe-area-inset-bottom: constant(safe-area-inset-bottom);
+        --safe-area-inset-left: constant(safe-area-inset-left);
+        --safe-area-inset-right: constant(safe-area-inset-right);
+    }
+}
+
+html.is-pwa,
+html.is-standalone {
+    height: 100%;
+    min-height: -webkit-fill-available;
+    background: #ffffff;
+}
+
+html.is-pwa body,
+html.is-standalone body {
+    min-height: 100%;
+    min-height: -webkit-fill-available;
+    overscroll-behavior-x: none;
+    padding-left: var(--safe-area-inset-left, 0px);
+    padding-left: max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left));
+    padding-right: var(--safe-area-inset-right, 0px);
+    padding-right: max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right));
+}
+
+html.is-pwa #app-container,
+html.is-standalone #app-container {
+    min-height: var(--app-height, var(--dynamic-app-height));
+    min-height: calc(var(--vh, var(--dynamic-vh)) * 100);
+    padding-bottom: var(--safe-area-inset-bottom, 0px);
+    padding-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom));
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen) {
+    html,
+    body,
+    #app-container {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    .top-nav,
+    .chat-nav,
+    .sub-nav {
+        padding-top: var(--safe-area-inset-top, 0px);
+        padding-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top));
+    }
+
+    .tab-bar,
+    .chat-toolbar,
+    .chat-input-area {
+        padding-bottom: var(--safe-area-inset-bottom, 0px);
+        padding-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom));
+    }
+}
+
+html.keyboard-open.is-pwa #app-container,
+html.keyboard-open.is-standalone #app-container {
+    height: var(--app-height, var(--dynamic-app-height));
+    min-height: var(--app-height, var(--dynamic-app-height));
+}
