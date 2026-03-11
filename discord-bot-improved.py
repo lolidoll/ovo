@@ -22,6 +22,54 @@ app = Flask('')
 def home():
     return "Bot running"
 
+@app.route('/api/record_key_usage', methods=['POST'])
+def record_key_usage():
+    """
+    网站在密钥验证成功时调用此接口上报user_agent信息
+
+    请求体JSON格式：
+    {
+        "uid": "Discord用户ID",
+        "key": "密钥",
+        "user_agent": "浏览器user_agent",
+        "ip": "用户IP地址（可选）"
+    }
+    """
+    try:
+        from flask import request, jsonify
+
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "无效的JSON数据"}), 400
+
+        uid = str(data.get("uid", ""))
+        key = str(data.get("key", ""))
+        user_agent = str(data.get("user_agent", ""))
+        ip = str(data.get("ip", ""))
+
+        if not uid or not key or not user_agent:
+            return jsonify({"error": "缺少必要字段: uid, key, user_agent"}), 400
+
+        # 调用记录函数处理
+        record_claim_history(uid, key, user_agent)
+
+        # 异步检测可疑账号
+        suspicious = detect_suspicious_account(uid)
+        if suspicious["is_suspicious"]:
+            print(f"🚨 可疑账号检测（网站密钥验证）: UID {uid}")
+            for reason in suspicious.get('reasons', []):
+                print(f"   → {reason}")
+
+        return jsonify({
+            "success": True,
+            "is_suspicious": suspicious["is_suspicious"],
+            "reasons": suspicious.get("reasons", [])
+        }), 200
+
+    except Exception as e:
+        print(f"❌ 记录密钥使用失败: {e}")
+        return jsonify({"error": f"服务器错误: {str(e)[:100]}"}), 500
+
 def run():
     app.run(host='0.0.0.0', port=8080)
 
@@ -58,13 +106,13 @@ redis = upstash_redis.Redis(
 # 工单管理器
 # ----------------------
 class TicketManager:
-    """处理工单的自动关闭和领取逻辑"""
-    
+    """处理工单的自动关闭逻辑"""
+
     @staticmethod
     def get_ticket_key(channel_id):
         """获取工单的Redis键"""
         return f"ticket:{channel_id}"
-    
+
     @staticmethod
     async def set_ticket_info(channel_id, member_id, ticket_type="support"):
         """设置工单信息"""
@@ -76,7 +124,7 @@ class TicketManager:
             "claimed_by": None,
             "status": "open"
         }), ex=86400)  # 24小时过期
-    
+
     @staticmethod
     def get_ticket_info(channel_id):
         """获取工单信息"""
@@ -87,53 +135,31 @@ class TicketManager:
                 info = info.decode('utf-8')
             return json.loads(info)
         return None
-    
-    @staticmethod
-    def claim_ticket(channel_id, admin_id):
-        """管理员领取工单"""
-        ticket_key = TicketManager.get_ticket_key(channel_id)
-        info = TicketManager.get_ticket_info(channel_id)
-        if info:
-            info["claimed_by"] = str(admin_id)
-            info["status"] = "claimed"
-            redis.set(ticket_key, json.dumps(info), ex=86400)
-            return True
-        return False
-    
-    @staticmethod
-    def release_ticket(channel_id):
-        """释放工单（管理员取消领取）"""
-        ticket_key = TicketManager.get_ticket_key(channel_id)
-        info = TicketManager.get_ticket_info(channel_id)
-        if info:
-            info["claimed_by"] = None
-            info["status"] = "open"
-            redis.set(ticket_key, json.dumps(info), ex=86400)
-            return True
-        return False
-    
+
+
+
     @staticmethod
     async def schedule_autoclose(channel, delay_minutes=10):
         """计划工单自动关闭"""
         await asyncio.sleep(delay_minutes * 60)
-        
+
         try:
             # 检查频道是否仍然存在
             if not channel:
                 return
-            
+
             # 获取频道消息，检查是否有成员发送的消息
             msg_count = 0
             async for message in channel.history(limit=100):
                 # 只计算不是bot發送的消息，排除初始embed
                 if not message.author.bot:
                     msg_count += 1
-            
+
             # 如果10分钟内没有用户消息，自动关闭
             if msg_count == 0:
                 embed = discord.Embed(
                     title="⏰ 工单自动关闭",
-                    description="由于10分钟内没有新消息，工单已自动关闭。\n\n如需重新提交，请使用 `/工单面板` 或 `/社区审核面板`。",
+                    description="由于10分钟内没有新消息，工单已自动关闭。\n\n后续可重新提交。",
                     color=0xff6b6b
                 )
                 try:
@@ -141,7 +167,7 @@ class TicketManager:
                     await asyncio.sleep(3)
                 except:
                     pass
-                
+
                 # 删除频道
                 try:
                     await channel.delete(reason="工单10分钟无消息，自动关闭")
@@ -150,6 +176,315 @@ class TicketManager:
                     pass
         except Exception as e:
             print(f"❌ 工单自动关闭出错: {e}")
+
+# ----------------------
+# 保护附件管理器
+# ----------------------
+class ProtectedAttachmentManager:
+    """处理论坛帖子保护附件的上传、下载和验证逻辑"""
+
+    @staticmethod
+    def get_attachment_key(thread_id):
+        """获取帖子附件的Redis键"""
+        return f"protected_attachment:{thread_id}"
+
+    @staticmethod
+    def get_user_access_key(thread_id, user_id):
+        """获取用户访问记录的Redis键"""
+        return f"attachment_access:{thread_id}:{user_id}"
+
+    @staticmethod
+    async def save_attachments(thread_id, owner_id, attachments_data):
+        """
+        保存保护附件信息
+        attachments_data: [{"name": "显示名称", "filename": "文件名", "url": "附件URL", "size": 大小}]
+        """
+        data = {
+            "thread_id": str(thread_id),
+            "owner_id": str(owner_id),
+            "attachments": attachments_data,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+            "download_count": 0
+        }
+        key = ProtectedAttachmentManager.get_attachment_key(thread_id)
+        redis.set(key, json.dumps(data))  # 长期存储，不过期
+        return True
+
+    @staticmethod
+    def get_attachments(thread_id):
+        """获取帖子的保护附件信息"""
+        key = ProtectedAttachmentManager.get_attachment_key(thread_id)
+        data = redis.get(key)
+        if data:
+            if isinstance(data, bytes):
+                data = data.decode('utf-8')
+            return json.loads(data)
+        return None
+
+    @staticmethod
+    async def update_attachments(thread_id, new_attachments_data):
+        """更新附件内容"""
+        existing = ProtectedAttachmentManager.get_attachments(thread_id)
+        if not existing:
+            return False
+
+        existing["attachments"] = new_attachments_data
+        existing["updated_at"] = datetime.now().isoformat()
+
+        key = ProtectedAttachmentManager.get_attachment_key(thread_id)
+        redis.set(key, json.dumps(existing))  # 长期存储
+        return True
+
+    @staticmethod
+    def increment_download_count(thread_id):
+        """增加下载计数"""
+        existing = ProtectedAttachmentManager.get_attachments(thread_id)
+        if existing:
+            existing["download_count"] = existing.get("download_count", 0) + 1
+            key = ProtectedAttachmentManager.get_attachment_key(thread_id)
+            redis.set(key, json.dumps(existing))  # 长期存储
+
+    @staticmethod
+    def record_user_access(thread_id, user_id):
+        """记录用户已获取访问权限"""
+        key = ProtectedAttachmentManager.get_user_access_key(thread_id, user_id)
+        redis.set(key, json.dumps({
+            "accessed_at": datetime.now().isoformat(),
+            "downloads": 1
+        }))  # 长期存储
+
+    @staticmethod
+    def has_user_access(thread_id, user_id):
+        """检查用户是否已有访问权限"""
+        key = ProtectedAttachmentManager.get_user_access_key(thread_id, user_id)
+        return redis.get(key) is not None
+
+    @staticmethod
+    async def check_user_engagement(thread: discord.Thread, user: discord.Member):
+        """
+        检查用户是否满足下载条件：点赞帖子 + 评论帖子
+        返回: {"liked": bool, "commented": bool, "passed": bool}
+        """
+        result = {"liked": False, "commented": False, "passed": False}
+
+        try:
+            # 检查是否在帖子中发送过消息（评论）
+            async for message in thread.history(limit=200):
+                if message.author.id == user.id and not message.author.bot:
+                    result["commented"] = True
+                    break
+
+            # 检查是否点赞了帖子的首条消息
+            # 注：Discord论坛帖子的"点赞"通常是通过reaction实现
+            starter_message = thread.starter_message
+            if not starter_message:
+                # 尝试获取帖子首条消息
+                async for msg in thread.history(limit=1, oldest_first=True):
+                    starter_message = msg
+                    break
+
+            if starter_message:
+                for reaction in starter_message.reactions:
+                    async for reactor in reaction.users():
+                        if reactor.id == user.id:
+                            result["liked"] = True
+                            break
+                    if result["liked"]:
+                        break
+
+            result["passed"] = result["liked"] and result["commented"]
+
+        except Exception as e:
+            print(f"❌ 检查用户互动状态失败: {e}")
+
+        return result
+
+# ----------------------
+# 帖子置底消息管理器
+# ----------------------
+class ThreadBottomManager:
+    """处理论坛帖子置底消息（保护附件下载入口、公告）"""
+
+    @staticmethod
+    def get_notice_key(thread_id, notice_type):
+        return f"thread:bottom_notice:{thread_id}:{notice_type}"
+
+    @staticmethod
+    def get_notice(thread_id, notice_type):
+        key = ThreadBottomManager.get_notice_key(thread_id, notice_type)
+        raw = redis.get(key)
+        if not raw:
+            return None
+        try:
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8")
+            if isinstance(raw, str):
+                raw = json.loads(raw)
+            return raw if isinstance(raw, dict) else None
+        except Exception:
+            return None
+
+    @staticmethod
+    def set_notice(thread_id, notice_type, data):
+        key = ThreadBottomManager.get_notice_key(thread_id, notice_type)
+        redis.set(key, json.dumps(data, ensure_ascii=False))
+
+    @staticmethod
+    def delete_notice(thread_id, notice_type):
+        key = ThreadBottomManager.get_notice_key(thread_id, notice_type)
+        redis.delete(key)
+
+
+def _now_text():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _can_manage_thread_bottom(interaction: discord.Interaction, thread: discord.Thread):
+    return thread.owner_id == interaction.user.id or interaction.user.guild_permissions.administrator
+
+
+def _is_announcement_bottom_channel(channel):
+    if isinstance(channel, discord.Thread):
+        return True
+    if isinstance(channel, discord.TextChannel):
+        return channel.type in (discord.ChannelType.text, discord.ChannelType.news)
+    return False
+
+
+def _can_manage_announcement_bottom(interaction: discord.Interaction, channel):
+    if isinstance(channel, discord.Thread):
+        return _can_manage_thread_bottom(interaction, channel)
+    if isinstance(channel, discord.TextChannel):
+        perms = channel.permissions_for(interaction.user)
+        return (
+            interaction.user.guild_permissions.administrator
+            or perms.manage_channels
+            or perms.manage_messages
+        )
+    return False
+
+
+async def _delete_thread_message_if_exists(channel, message_id):
+    if not message_id:
+        return
+    try:
+        msg = await channel.fetch_message(int(message_id))
+        await msg.delete()
+    except (discord.NotFound, discord.Forbidden):
+        pass
+    except Exception as e:
+        print(f"⚠️ 删除旧置底消息失败: {e}")
+
+
+def _build_attachment_bottom_embed(thread: discord.Thread):
+    attachment_data = ProtectedAttachmentManager.get_attachments(thread.id)
+    if not attachment_data:
+        return None
+
+    count = len(attachment_data.get("attachments", []))
+    embed = discord.Embed(
+        title="📥 保护附件下载入口（置底）",
+        description=(
+            "本帖包含保护附件，下载前需完成互动验证。\n"
+            "请先完成条件，再使用 `/领取保护附件`。"
+        ),
+        color=0x3498db
+    )
+    embed.add_field(
+        name="✅ 下载条件",
+        value=(
+            "1. 对帖子首条消息添加任意表情反应（点赞）\n"
+            "2. 在帖子中发送任意评论\n"
+            "3. 使用 `/领取保护附件` 下载"
+        ),
+        inline=False
+    )
+    embed.add_field(
+        name="📎 当前附件",
+        value=f"共 **{count}** 个保护附件",
+        inline=False
+    )
+    embed.set_footer(text=f"帖子ID: {thread.id} | 自动置底更新时间: {_now_text()}")
+    return embed
+
+
+def _build_announcement_bottom_embed(channel, content: str):
+    embed = discord.Embed(
+        title="📢 公告栏",
+        description=content,
+        color=0xf1c40f
+    )
+    embed.set_footer(text=f"频道ID: {channel.id} | 自动置底更新时间: {_now_text()}")
+    return embed
+
+
+async def _repost_attachment_bottom_notice(thread: discord.Thread, config: dict):
+    attachment_data = ProtectedAttachmentManager.get_attachments(thread.id)
+    if not attachment_data:
+        await _delete_thread_message_if_exists(thread, config.get("message_id"))
+        ThreadBottomManager.delete_notice(thread.id, "attachment")
+        return
+
+    await _delete_thread_message_if_exists(thread, config.get("message_id"))
+
+    embed = _build_attachment_bottom_embed(thread)
+    if not embed:
+        ThreadBottomManager.delete_notice(thread.id, "attachment")
+        return
+
+    sent = await thread.send(embed=embed)
+    config["message_id"] = str(sent.id)
+    config["updated_at"] = _now_text()
+    ThreadBottomManager.set_notice(thread.id, "attachment", config)
+
+
+async def _repost_announcement_bottom_notice(channel, config: dict):
+    content = str(config.get("content", "")).strip()
+    if not content:
+        await _delete_thread_message_if_exists(channel, config.get("message_id"))
+        ThreadBottomManager.delete_notice(channel.id, "announcement")
+        return
+
+    await _delete_thread_message_if_exists(channel, config.get("message_id"))
+
+    embed = _build_announcement_bottom_embed(channel, content)
+    sent = await channel.send(embed=embed)
+    config["message_id"] = str(sent.id)
+    config["updated_at"] = _now_text()
+    ThreadBottomManager.set_notice(channel.id, "announcement", config)
+
+
+async def refresh_thread_bottom_notices(channel):
+    """重发置底消息，使其始终位于频道底部。"""
+    if not _is_announcement_bottom_channel(channel):
+        return
+
+    lock_key = f"thread:bottom_notice:lock:{channel.id}"
+    try:
+        locked = redis.set(lock_key, "1", nx=True, ex=5)
+    except Exception:
+        locked = True
+
+    if not locked:
+        return
+
+    try:
+        if isinstance(channel, discord.Thread):
+            attachment_cfg = ThreadBottomManager.get_notice(channel.id, "attachment")
+            if attachment_cfg and attachment_cfg.get("enabled"):
+                await _repost_attachment_bottom_notice(channel, attachment_cfg)
+
+        announcement_cfg = ThreadBottomManager.get_notice(channel.id, "announcement")
+        if announcement_cfg and announcement_cfg.get("enabled"):
+            await _repost_announcement_bottom_notice(channel, announcement_cfg)
+    except Exception as e:
+        print(f"⚠️ 刷新帖子置底消息失败: {e}")
+    finally:
+        try:
+            redis.delete(lock_key)
+        except Exception:
+            pass
 
 # ----------------------
 # 工具函数
@@ -170,15 +505,15 @@ def clean_key(val):
 def parse_user_agent(ua):
     """从User-Agent提取详细的设备信息（包括具体型号）"""
     import re
-    
+
     if not ua:
         return {"device": "未知设备", "os": "未知系统", "browser": "未知浏览器", "detail": ""}
-    
+
     device = "未知设备"
     os_name = "未知系统"
     browser = "未知浏览器"
     detail = ""  # 详细信息（型号等）
-    
+
     # =====================
     # 识别设备（包含具体型号）
     # =====================
@@ -253,7 +588,7 @@ def parse_user_agent(ua):
         device = "Mac电脑"
     elif "Linux" in ua and "Android" not in ua:
         device = "Linux电脑"
-    
+
     # =====================
     # 识别操作系统（包含版本号）
     # =====================
@@ -298,7 +633,7 @@ def parse_user_agent(ua):
             os_name = "iOS"
     elif "Linux" in ua and "Android" not in ua:
         os_name = "Linux"
-    
+
     # =====================
     # 识别浏览器（包含版本号）
     # =====================
@@ -328,7 +663,7 @@ def parse_user_agent(ua):
         browser = "Safari (Mobile)" if match else "移动浏览器"
     else:
         browser = "其他浏览器"
-    
+
     return {
         "device": device,
         "os": os_name,
@@ -340,7 +675,7 @@ def generate_csv_report(keys_data):
     """生成CSV格式的报表"""
     output = StringIO()
     writer = csv.writer(output)
-    
+
     # 表头
     writer.writerow([
         "密钥",
@@ -356,7 +691,7 @@ def generate_csv_report(keys_data):
         "浏览器",
         "完整User-Agent"
     ])
-    
+
     # 数据行
     for key_info in keys_data:
         writer.writerow([
@@ -373,21 +708,326 @@ def generate_csv_report(keys_data):
             key_info.get("browser", ""),
             key_info.get("user_agent", "")
         ])
-    
+
     return output.getvalue()
+
+# ======================
+# 异常账号检测
+# ======================
+def detect_suspicious_account(uid: str) -> dict:
+    """
+    检测异常账号：基于密钥网站使用时的user_agent信息
+
+    检测规则：
+    1. 24小时内密钥使用3次或更多
+    2. 连续3次使用不同设备（30天内）
+    3. 连续3次使用不同浏览器（30天内）
+    4. 连续3次使用不同操作系统（30天内）
+
+    返回 {"is_suspicious": bool, "reasons": list, "details": dict}
+    """
+    suspicious_info = {
+        "is_suspicious": False,
+        "reasons": [],
+        "details": {}
+    }
+
+    try:
+        # 获取用户的密钥使用历史（网站验证时上报的数据）
+        history_key = f"user:key_usage_history:{uid}"
+        history_data = redis.lrange(history_key, 0, -1) or []
+
+        if not history_data:
+            return suspicious_info
+
+        # 解析历史记录
+        history = []
+        for record in history_data:
+            try:
+                if isinstance(record, bytes):
+                    record = record.decode('utf-8')
+                if isinstance(record, str):
+                    record = json.loads(record)
+                if isinstance(record, dict):
+                    history.append(record)
+            except:
+                continue
+
+        if len(history) < 3:
+            return suspicious_info
+
+        # 按时间降序排列（最近在前）
+        def _safe_ts(item):
+            try:
+                return float(item.get('timestamp', 0) or 0)
+            except:
+                return 0.0
+
+        history_sorted = sorted(history, key=_safe_ts, reverse=True)
+        recent_records = history_sorted[:20]
+
+        # ===== 检测1: 24小时内密钥使用3次或更多 =====
+        current_time = time.time()
+        uses_in_24h = []
+        for r in history_sorted:
+            try:
+                ts = float(r.get('timestamp', 0) or 0)
+                if current_time - ts < 86400:
+                    uses_in_24h.append(r)
+            except:
+                continue
+
+        if len(uses_in_24h) >= 3:
+            suspicious_info["is_suspicious"] = True
+            suspicious_info["reasons"].append(f"⏱️ 24小时内验证使用了 {len(uses_in_24h)} 次密钥")
+            suspicious_info["details"]["usage_count_24h"] = len(uses_in_24h)
+
+        # 辅助函数：检测连续 N 次都是不同的值
+        def find_consecutive_n_different(values, n=3):
+            """
+            在按时间降序的list中找连续n个的不同值
+            返回 (found: bool, sequence: list)
+            """
+            if not values or len(values) < n:
+                return False, None
+
+            for i in range(len(values) - n + 1):
+                window = values[i:i + n]
+                # 跳过包含未知/空值的项
+                if any(v is None or v == '' or v == '未知' for v in window):
+                    continue
+                # 检查这n个值是否都不相同
+                if len(set(window)) == n:
+                    # 尝试扩展序列（找更长的连续不同值）
+                    seq = window[:]
+                    j = i + n
+                    while j < len(values):
+                        val = values[j]
+                        if val and val != '未知' and val not in seq:
+                            seq.append(val)
+                            j += 1
+                        else:
+                            break
+                    return True, seq
+            return False, None
+
+        # ===== 检测2: 连续3次及以上使用不同设备 =====
+        devices = [r.get('device', '未知') for r in recent_records]
+        found_d, seq_d = find_consecutive_n_different(devices, 3)
+        if found_d:
+            suspicious_info["is_suspicious"] = True
+            # 反向显示（时间顺序更清晰）
+            device_sequence_display = ' → '.join(reversed(seq_d))
+            suspicious_info["reasons"].append(f"📱 连续{len(seq_d)}次使用不同设备: {device_sequence_display}")
+            suspicious_info["details"]["device_sequence"] = seq_d
+
+        # ===== 检测3: 连续3次及以上使用不同浏览器 =====
+        browsers = [r.get('browser', '未知') for r in recent_records]
+        found_b, seq_b = find_consecutive_n_different(browsers, 3)
+        if found_b:
+            suspicious_info["is_suspicious"] = True
+            browser_sequence_display = ' → '.join(reversed(seq_b))
+            suspicious_info["reasons"].append(f"🌐 连续{len(seq_b)}次使用不同浏览器: {browser_sequence_display}")
+            suspicious_info["details"]["browser_sequence"] = seq_b
+
+        # ===== 检测4: 连续3次及以上使用不同操作系统 =====
+        os_types = [r.get('os', '未知') for r in recent_records]
+        found_o, seq_o = find_consecutive_n_different(os_types, 3)
+        if found_o:
+            suspicious_info["is_suspicious"] = True
+            os_sequence_display = ' → '.join(reversed(seq_o))
+            suspicious_info["reasons"].append(f"💻 连续{len(seq_o)}次使用不同操作系统: {os_sequence_display}")
+            suspicious_info["details"]["os_sequence"] = seq_o
+
+        # 标记可疑账号到 Redis（30天内有效）
+        if suspicious_info["is_suspicious"]:
+            redis.setex(
+                f"suspicious_account:{uid}",
+                2592000,  # 30天
+                json.dumps({
+                    "reasons": suspicious_info["reasons"],
+                    "detected_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "details": suspicious_info["details"]
+                })
+            )
+            # 添加到可疑账号集合
+            redis.sadd("suspicious_accounts_set", uid)
+
+    except Exception as e:
+        print(f"⚠️ 异常检测失败: {str(e)}")
+
+    return suspicious_info
+
+
+async def notify_admins_of_suspicious(interaction, uid: str, suspicious_info: dict):
+    """
+    向管理员发送私信通知，告知用户被标记为可疑。
+    优先通知：环境变量 `ADMIN_ALERT_USER_IDS` 中列出的用户；若无则通知 Guild Owner 与具有管理员权限的成员。
+    """
+    try:
+        guild = interaction.guild
+        bot_instance = bot
+
+        # 构建消息内容
+        reasons = '\n'.join(suspicious_info.get('reasons', [])) or '无具体原因'
+        details = suspicious_info.get('details', {})
+        content = (
+            f"🚨 可疑账号警告\n用户 ID: {uid}\n触发原因:\n{reasons}\n详情: {json.dumps(details, ensure_ascii=False)}\n检测时间: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+
+        # 收集目标用户
+        targets = set()
+
+        # 优先：从环境变量读取额外管理员 ID 列表（逗号分隔）
+        admin_env = os.getenv('ADMIN_ALERT_USER_IDS')
+        if admin_env:
+            for part in admin_env.split(','):
+                part = part.strip()
+                if not part:
+                    continue
+                try:
+                    uid_int = int(part)
+                    user_obj = bot_instance.get_user(uid_int) or await bot_instance.fetch_user(uid_int)
+                    if user_obj:
+                        targets.add(user_obj)
+                except Exception:
+                    continue
+
+        # 其次：Guild Owner
+        if guild and getattr(guild, 'owner', None):
+            targets.add(guild.owner)
+
+        # 再：具有管理员权限的成员（需要 members Intent 和缓存）
+        if guild:
+            try:
+                for member in guild.members:
+                    try:
+                        if member.guild_permissions.administrator:
+                            targets.add(member)
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        # 发送私信
+        for target in targets:
+            if not target:
+                continue
+            try:
+                await target.send(content)
+            except Exception as e:
+                # 无法私信（可能对方关闭私信或机器人被封锁），记录并继续
+                print(f"无法向管理员 {getattr(target, 'id', str(target))} 发送可疑账号通知: {e}")
+
+        # 也在控制台打印一次更详细信息
+        print(f"已向 {len(targets)} 名管理员发送可疑账号通知 (用户 {uid})")
+
+        # 频道预警：查找或创建名为 "领取密钥可疑账号预警" 的频道并发送嵌入消息
+        try:
+            if guild:
+                channel_name = "领取密钥可疑账号预警"
+                alert_channel = discord.utils.get(guild.text_channels, name=channel_name)
+                if not alert_channel:
+                    # 尝试创建频道（若机器人有权限）
+                    try:
+                        overwrites = {
+                            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+                            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
+                        }
+                        # 允许所有管理员角色查看
+                        for role in guild.roles:
+                            try:
+                                if role.permissions.administrator:
+                                    overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
+                            except Exception:
+                                continue
+
+                        alert_channel = await guild.create_text_channel(channel_name, overwrites=overwrites)
+                    except Exception as e:
+                        print(f"无法创建告警频道 '{channel_name}': {e}")
+                        alert_channel = None
+
+                if alert_channel:
+                    embed = discord.Embed(title="🚨 领取密钥可疑账号预警", color=0xe74c3c)
+                    member_display = f"<@{uid}>" if uid else "未知用户"
+                    embed.add_field(name="用户", value=member_display, inline=False)
+                    embed.add_field(name="触发原因", value=reasons or "无", inline=False)
+                    embed.add_field(name="详情", value=json.dumps(details, ensure_ascii=False) or "无", inline=False)
+                    embed.set_footer(text=f"检测时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+                    try:
+                        await alert_channel.send(embed=embed)
+                    except Exception as e:
+                        print(f"无法在频道发送可疑账号告警: {e}")
+
+        except Exception as e:
+            print(f"频道告警处理失败: {e}")
+
+    except Exception as e:
+        print(f"通知管理员失败: {e}")
+
+def record_claim_history(uid: str, key: str, user_agent: str = "", device_info: dict = None):
+    """
+    记录用户的密钥使用历史（包含设备/浏览器/系统信息）
+    用于异常检测
+
+    参数：
+    - uid: Discord用户ID
+    - key: 被使用的密钥
+    - user_agent: 网站验证时上报的浏览器user_agent字符串
+    - device_info: 自定义的设备信息字典（若无则从user_agent解析）
+    """
+    try:
+        # 获取现有的使用历史
+        history_key = f"user:key_usage_history:{uid}"
+        history = redis.lrange(history_key, 0, -1) or []
+
+        # 将bytes转为list
+        if history and isinstance(history[0], bytes):
+            history = [json.loads(h.decode('utf-8')) for h in history]
+        elif not isinstance(history, list):
+            history = []
+
+        # 解析设备信息
+        if device_info is None:
+            device_info = parse_user_agent(user_agent)
+
+        # 创建新的使用记录
+        usage_record = {
+            "timestamp": time.time(),
+            "key": key,
+            "device": device_info.get("device", "未知"),
+            "browser": device_info.get("browser", "未知"),
+            "os": device_info.get("os", "未知"),
+            "user_agent": user_agent,  # 保存完整的user_agent便于后续分析
+        }
+
+        # 添加到历史（保留最近20条以进行完整检测）
+        history.append(usage_record)
+        history = history[-20:]
+
+        # 保存到Redis（保留30天）
+        # 使用字符串列表存储
+        redis.delete(history_key)
+        for record in history:
+            redis.rpush(history_key, json.dumps(record))
+        redis.expire(history_key, 2592000)  # 30天过期
+
+        print(f"✅ 记录密钥使用: UID {uid} | 设备: {device_info.get('device', '未知')} | 浏览器: {device_info.get('browser', '未知')} | 系统: {device_info.get('os', '未知')}")
+
+    except Exception as e:
+        print(f"⚠️ 密钥使用历史记录失败: {str(e)}")
 
 # ======================
 # /领取密钥（限频道评论）
 # ======================
-@bot.tree.command(name="领取密钥", description="🔑 领取一个专属密钥（需先在频道评论'喵机1号'）")
-@app_commands.default_permissions()
+@bot.tree.command(name="领取密钥", description="🔑领取密钥（需先评论'喵机1号'）")
 async def 领取密钥(interaction: discord.Interaction):
     if not acquire_cmd_lock(interaction.id):
         return
     await interaction.response.defer(ephemeral=True)
 
     uid = str(interaction.user.id)
-    
+
     # 检查用户是否在频道中评论过"喵机1号"
     if interaction.channel and isinstance(interaction.channel, discord.TextChannel):
         try:
@@ -397,7 +1037,7 @@ async def 领取密钥(interaction: discord.Interaction):
                 if message.author.id == interaction.user.id and "喵机1号" in message.content:
                     found_comment = True
                     break
-            
+
             if not found_comment:
                 await interaction.followup.send(
                     "❌ **无法领取密钥**\n\n"
@@ -414,35 +1054,50 @@ async def 领取密钥(interaction: discord.Interaction):
             # 如果无法读取历史，允许继续（私信或无权限情况）
             pass
 
-    already = redis.set(f"user:got_key:{uid}", "1", nx=True)
-    if not already:
-        await interaction.followup.send(
-            "❌ **你已经领取过密钥了**\n"
-            "每个账号只能领取一次，请查看之前的私信获取你的密钥。\n"
-            "如果密钥失效或需重复领取，请创建工单等待管理员手动发放。",
-            ephemeral=True
-        )
-        return
+    # 检查用户是否在10分钟内已领取过密钥
+    last_claim_time = redis.get(f"user:last_claim:{uid}")
+    if last_claim_time:
+        try:
+            last_time = float(last_claim_time)
+            current_time = time.time()
+            time_diff = current_time - last_time
+
+            if time_diff < 600:  # 10分钟 = 600秒
+                remaining_time = int(600 - time_diff)
+                minutes = remaining_time // 60
+                seconds = remaining_time % 60
+                await interaction.followup.send(
+                    f"❌ **领取过于频繁**\n"
+                    f"请在 {minutes} 分钟 {seconds} 秒后再试\n"
+                    f"💡 每个账号10分钟内只能领取一次密钥",
+                    ephemeral=True
+                )
+                return
+        except:
+            pass
+
+    # 更新最后领取时间
+    redis.set(f"user:last_claim:{uid}", str(time.time()), ex=600)
 
     # 获取密钥，确保不是已使用过的
     key = None
     attempt_count = 0
     max_attempts = 50  # 防止无限循环
-    
+
     while attempt_count < max_attempts:
         attempt_count += 1
         candidate = clean_key(redis.spop("keys:valid"))
-        
+
         if not candidate:
             break  # 没有更多密钥了
-        
+
         # 检查是否已被使用过
         is_used = redis.get(f"key:used:{candidate}")
         if is_used == "true" or is_used is True or is_used == 1:
             # 这个已使用过的密钥不应该在有效库中，记录日志并继续
             print(f"⚠️ 警告：已使用的密钥 {candidate} 仍在 keys:valid 中，已移除")
             continue
-        
+
         key = candidate
         break
 
@@ -462,27 +1117,44 @@ async def 领取密钥(interaction: discord.Interaction):
             "uid": uid,
             "name": str(interaction.user),
             "issuedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "method": "自助领取（频道评论验证）"
+            "method": "自助领取（频道评论验证）",
+            "discordId": uid
         }))
 
         embed = discord.Embed(title="🎉 密钥领取成功", color=0x2ecc71)
-        embed.add_field(name="🔑 你的专属密钥", value=f"```{key}```", inline=False)
-        embed.add_field(name="📋 使用方法", value=(
-            "1️⃣ 复制上方密钥\n"
-            "2️⃣ 打开网站，在弹出的验证框中粘贴密钥\n"
-            "3️⃣ 点击「验证」按钮即可进入"
+        embed.add_field(name="� 使用步骤", value=(
+            "1️⃣ 长按下方密钥消息复制\n"
+            "2️⃣ 打开网站，粘贴密钥验证\n"
+            "3️⃣ 点击「验证」按钮进入"
         ), inline=False)
-        embed.add_field(name="⚠️ 注意事项", value=(
-            "• 每个密钥只能使用一次，使用后立即失效\n"
-            "• 请尽快使用，不要分享给他人\n"
-            "• 如遇问题请创建工单联系管理员"
+        embed.add_field(name="⚠️ 重要提示", value=(
+            "✅ 密钥仅限一次使用，请立即使用，会过期失效！\n"
+            "✅ 使用后密钥立即失效\n"
+            "✅ 不要分享给他人\n"
+            "💡 需要帮助？使用 `/我的密钥` 随时查看自己的密钥记录"
         ), inline=False)
-        embed.set_footer(text="密钥由系统自动分配，请妥善保管")
+        embed.set_footer(text="密钥已通过私信发送，此消息仅对你可见")
+
+        # 注：密钥使用的user_agent检测数据应由网站通过 /api/record_key_usage API上报
+        # 检测异常账号（此时可能还无数据，等网站验证时才会有）
+        suspicious = detect_suspicious_account(uid)
+        if suspicious["is_suspicious"]:
+            print(f"🚨 可疑账号检测: {interaction.user} (ID: {uid})")
+            for reason in suspicious.get('reasons', []):
+                print(f"   → {reason}")
+            print(f"   详情: {suspicious['details']}")
+            # 异步通知管理员（私信）
+            try:
+                await notify_admins_of_suspicious(interaction, uid, suspicious)
+            except Exception as e:
+                print(f"发送管理员私信失败: {e}")
 
         await interaction.user.send(embed=embed)
+        # 单独发送纯密钥消息，方便手机长按复制
+        await interaction.user.send(key)
         await interaction.followup.send(
             "✅ **密钥已通过私信发送！**\n"
-            "📬 请查看私信获取密钥，并尽快使用。",
+            "📬 请查看私信中的密钥，复制后立即验证使用。",
             ephemeral=True
         )
 
@@ -502,7 +1174,6 @@ async def 领取密钥(interaction: discord.Interaction):
 # /剩余密钥（所有人可见）
 # ======================
 @bot.tree.command(name="剩余密钥", description="📦 查看当前可领取的密钥数量")
-@app_commands.default_permissions()
 async def 剩余密钥(interaction: discord.Interaction):
     if not acquire_cmd_lock(interaction.id):
         return
@@ -510,244 +1181,6 @@ async def 剩余密钥(interaction: discord.Interaction):
 
     cnt = redis.scard("keys:valid")
     await interaction.followup.send(f"📦 当前可领取密钥：**{cnt}** 个", ephemeral=True)
-
-# ======================
-# /添加密钥（管理员）
-# ======================
-@bot.tree.command(name="添加密钥", description="[管理员] 添加一个新密钥到有效库")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(key="要添加的密钥内容")
-async def 添加密钥(interaction: discord.Interaction, key: str):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    key = clean_key(key)
-    
-    # 检查密钥是否已被使用过
-    is_used = redis.get(f"key:used:{key}")
-    if is_used == "true" or is_used is True or is_used == 1:
-        await interaction.followup.send(
-            f"❌ 无法添加密钥\n"
-            f"原因：密钥 `{key}` 已被使用过，不能再加入有效库\n\n"
-            f"💡 如需重复使用此密钥，请先使用 `/重置密钥` 命令重置它",
-            ephemeral=True
-        )
-        return
-    
-    redis.sadd("keys:valid", key)
-    redis.delete(f"key:used:{key}")
-    redis.srem("keys:issued", key)
-    cnt = redis.scard("keys:valid")
-    await interaction.followup.send(
-        f"✅ 密钥 `{key}` 已添加到有效库\n"
-        f"📦 当前可用密钥总数：**{cnt}** 个",
-        ephemeral=True
-    )
-
-# ======================
-# /检查密钥（管理员）
-# ======================
-@bot.tree.command(name="检查密钥", description="[管理员] 查看密钥当前状态")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(key="要检查的密钥")
-async def 检查密钥(interaction: discord.Interaction, key: str):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    key = clean_key(key)
-    in_valid = redis.sismember("keys:valid", key)
-    in_issued = redis.sismember("keys:issued", key)
-    is_used = redis.get(f"key:used:{key}")
-
-    if is_used == "true":
-        status = "🔴 已使用（已失效）"
-    elif in_issued:
-        status = "🟡 已发出（待验证）"
-    elif in_valid:
-        status = "🟢 可用（未领取）"
-    else:
-        status = "⚫ 不存在"
-
-    msg = [
-        f"🔑 密钥：`{key}`",
-        f"📌 状态：{status}",
-        f"在有效库：{'是' if in_valid else '否'}",
-        f"已发出：{'是' if in_issued else '否'}",
-        f"已使用：{'是' if is_used == 'true' else '否'}"
-    ]
-
-    color = 0x00ff00 if (in_valid or in_issued) and is_used != "true" else 0xff0000
-    embed = discord.Embed(title="🔍 密钥状态检查", color=color)
-    embed.add_field(name="详情", value="\n".join(msg), inline=False)
-    await interaction.followup.send(embed=embed, ephemeral=True)
-
-# ======================
-# /密钥日志（管理员 - 增强版）
-# ======================
-@bot.tree.command(name="密钥日志", description="[管理员] 查看密钥完整使用日志（设备信息详细）")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(key="要查询的密钥")
-async def 密钥日志(interaction: discord.Interaction, key: str):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    key = clean_key(key)
-    info = redis.get(f"key:info:{key}")
-    owner = redis.get(f"key:owner:{key}")
-
-    embed = discord.Embed(title="📋 密钥完整日志（详细设备信息）", color=0x3498db)
-    embed.add_field(name="🔑 密钥", value=f"`{key}`", inline=False)
-
-    if owner:
-        try:
-            o = json.loads(owner) if isinstance(owner, str) else owner
-            embed.add_field(name="👤 领取者", value=o.get("name", "未知"), inline=True)
-            embed.add_field(name="🆔 用户ID", value=o.get("uid", "未知"), inline=True)
-            embed.add_field(name="📤 发放时间", value=o.get("issuedAt", "未知"), inline=True)
-            embed.add_field(name="📝 发放方式", value=o.get("method", "未知"), inline=False)
-            
-            # 添加Discord绑定字段
-            if "discordId" in o:
-                embed.add_field(name="🔗 绑定Discord ID", value=o.get("discordId", "未绑定"), inline=True)
-        except:
-            embed.add_field(name="发放信息", value="解析失败", inline=False)
-    else:
-        embed.add_field(name="发放信息", value="无记录", inline=False)
-
-    if info:
-        try:
-            entry = json.loads(info) if isinstance(info, str) else info
-            embed.add_field(name="🕐 使用时间", value=entry.get("usedAt", "未知"), inline=True)
-            embed.add_field(name="🌐 IP地址", value=entry.get("ip", "未知"), inline=True)
-            
-            # 增强的设备信息
-            ua = entry.get("userAgent", "未知")
-            device_info = parse_user_agent(ua)
-            
-            embed.add_field(name="📱 设备类型", value=device_info.get("device", "未知"), inline=True)
-            embed.add_field(name="💻 操作系统", value=device_info.get("os", "未知"), inline=True)
-            embed.add_field(name="🌐 浏览器", value=device_info.get("browser", "未知"), inline=True)
-            embed.add_field(name="📋 完整User-Agent", value=f"```{ua[:300]}```", inline=False)
-            
-            # 添加Discord账号验证信息
-            if "discordId" in entry:
-                embed.add_field(name="🔗 使用时Discord ID", value=entry.get("discordId", "未记录"), inline=True)
-                discord_uid = entry.get("discordId", "")
-                owner_uid = json.loads(owner).get("uid", "") if owner else ""
-                if discord_uid == owner_uid:
-                    embed.add_field(name="✅ Discord账号验证", value="✅ 一致（验证成功）", inline=True)
-                else:
-                    embed.add_field(name="❌ Discord账号验证", value=f"❌ 不一致", inline=True)
-        except Exception as e:
-            embed.add_field(name="使用信息", value=f"解析失败: {str(e)[:100]}", inline=False)
-    else:
-        embed.add_field(name="使用信息", value="尚未使用", inline=False)
-
-    in_valid = redis.sismember("keys:valid", key)
-    in_issued = redis.sismember("keys:issued", key)
-    is_used = redis.get(f"key:used:{key}")
-    if is_used == "true":
-        embed.set_footer(text="状态：🔴 已使用")
-        embed.color = 0xff0000
-    elif in_issued:
-        embed.set_footer(text="状态：🟡 已发出待验证")
-        embed.color = 0xf1c40f
-    elif in_valid:
-        embed.set_footer(text="状态：🟢 可用")
-        embed.color = 0x2ecc71
-    else:
-        embed.set_footer(text="状态：⚫ 不存在")
-        embed.color = 0x95a5a6
-
-    await interaction.followup.send(embed=embed, ephemeral=True)
-
-# ======================
-# /发送密钥（管理员）
-# ======================
-@bot.tree.command(name="发送密钥", description="[管理员] 向指定用户发送一个新密钥")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(member="要发送密钥的用户")
-async def 发送密钥(interaction: discord.Interaction, member: discord.Member):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    # 获取密钥，确保不是已使用过的
-    key = None
-    attempt_count = 0
-    max_attempts = 50  # 防止无限循环
-    
-    while attempt_count < max_attempts:
-        attempt_count += 1
-        candidate = clean_key(redis.spop("keys:valid"))
-        
-        if not candidate:
-            break  # 没有更多密钥了
-        
-        # 检查是否已被使用过
-        is_used = redis.get(f"key:used:{candidate}")
-        if is_used == "true" or is_used is True or is_used == 1:
-            # 这个已使用过的密钥不应该在有效库中，记录日志并继续
-            print(f"⚠️ 警告：已使用的密钥 {candidate} 仍在 keys:valid 中，已移除")
-            continue
-        
-        key = candidate
-        break
-
-    if not key:
-        await interaction.followup.send("❌ 暂无可用密钥，请先添加密钥", ephemeral=True)
-        return
-
-    try:
-        redis.sadd("keys:issued", key)
-        redis.lpush(f"user:keys:{member.id}", key)
-        redis.set(f"key:owner:{key}", json.dumps({
-            "uid": str(member.id),
-            "name": str(member),
-            "issuedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "method": f"管理员({interaction.user})手动发送",
-            "discordId": str(member.id)
-        }))
-
-        embed = discord.Embed(title="🎁 管理员为你分配了密钥", color=0x5865F2)
-        embed.add_field(name="🔑 你的密钥", value=f"```{key}```", inline=False)
-        embed.add_field(name="📋 使用方法", value=(
-            "1️⃣ 复制上方密钥\n"
-            "2️⃣ 打开网站，在弹出的验证框中粘贴密钥\n"
-            "3️⃣ 点击「验证」按钮即可进入"
-        ), inline=False)
-        embed.add_field(name="⚠️ 注意", value="密钥仅限一次使用，请尽快验证，不要分享给他人", inline=False)
-
-        await member.send(embed=embed)
-        await interaction.followup.send(
-            f"✅ 已向 {member.mention} 发送密钥 `{key[:4]}***`\n"
-            f"📦 剩余可用密钥：**{redis.scard('keys:valid')}** 个",
-            ephemeral=True
-        )
-
-    except:
-        redis.srem("keys:issued", key)
-        redis.sadd("keys:valid", key)
-        await interaction.followup.send(
-            f"❌ 无法向 {member.mention} 发送私信\n"
-            "对方可能未开启私信权限，密钥已自动归还。",
-            ephemeral=True
-        )
 
 # ======================
 # /用户日志（管理员 - 增强版）
@@ -771,13 +1204,41 @@ async def 用户日志(interaction: discord.Interaction, member: discord.Member)
 
     embed = discord.Embed(title=f"📋 {member.display_name} 的密钥记录（详细版）", color=0x3498db)
 
+    # 检查是否为可疑账号
+    uid = str(member.id)
+    suspicious_data = redis.get(f"suspicious_account:{uid}")
+    if suspicious_data:
+        try:
+            if isinstance(suspicious_data, bytes):
+                suspicious_data = suspicious_data.decode('utf-8')
+            suspicious_info = json.loads(suspicious_data)
+            # 支持多个原因（新格式）或单个原因（旧格式）
+            reasons = suspicious_info.get('reasons', [])
+            if not reasons and suspicious_info.get('reason'):
+                reasons = [suspicious_info.get('reason')]
+            reasons_text = "\n".join(reasons) if reasons else "未知"
+            embed.add_field(
+                name="🚨 异常账号警告",
+                value=f"**检测到的异常：**\n{reasons_text}\n"
+                      f"**检测时间**: {suspicious_info.get('detected_at', '未知')}",
+                inline=False
+            )
+            embed.color = 0xff6b6b  # 改为红色表示异常
+        except:
+            pass
+
+    # 收集所有密钥用于最后单独发送
+    all_keys_text = []
+
     for i, k in enumerate(keys, 1):
         k = clean_key(k)
+        all_keys_text.append(k)
         is_used = redis.get(f"key:used:{k}")
         info = redis.get(f"key:info:{k}")
         owner = redis.get(f"key:owner:{k}")
 
-        lines = [f"🔑 `{k}`"]
+        # 密钥信息（不含密钥本身，密钥单独发送）
+        lines = []
 
         if owner:
             try:
@@ -792,18 +1253,18 @@ async def 用户日志(interaction: discord.Interaction, member: discord.Member)
                 used_at = entry.get("usedAt", "未知")[:19]
                 ip = entry.get("ip", "未知")
                 ua = entry.get("userAgent", "未知")
-                
+
                 # 解析设备信息
                 device_info = parse_user_agent(ua)
                 device = device_info.get("device", "未知设备")
                 os_name = device_info.get("os", "未知系统")
                 browser = device_info.get("browser", "未知浏览器")
-                
+
                 lines.append(f"🔴 已使用：{used_at}")
                 lines.append(f"🌐 IP：{ip}")
                 lines.append(f"📱 {device} | 💻 {os_name}")
                 lines.append(f"🌐 {browser}")
-                
+
                 # 添加Discord账号验证
                 discord_id = entry.get("discordId", "")
                 if discord_id:
@@ -812,7 +1273,7 @@ async def 用户日志(interaction: discord.Interaction, member: discord.Member)
                         lines.append(f"✅ Discord验证：通过 (ID: {discord_id[:8]}...)")
                     else:
                         lines.append(f"❌ Discord验证：失败 (登录ID: {discord_id[:8]}...)")
-                
+
             except Exception as e:
                 lines.append("🔴 已使用（详情解析失败）")
         else:
@@ -822,559 +1283,116 @@ async def 用户日志(interaction: discord.Interaction, member: discord.Member)
             else:
                 lines.append("⚫ 状态未知")
 
-        embed.add_field(name=f"密钥 #{i}", value="\n".join(lines), inline=False)
+        embed.add_field(name=f"密钥 #{i}", value="\n".join(lines) if lines else "无详细信息", inline=False)
 
     embed.set_footer(text=f"共 {len(keys)} 个密钥 | 查询时间：{time.strftime('%Y-%m-%d %H:%M:%S')}")
     await interaction.followup.send(embed=embed, ephemeral=True)
 
+    # 单独发送纯密钥列表，方便手机长按复制
+    if all_keys_text:
+        await interaction.followup.send("\n".join(all_keys_text), ephemeral=True)
+
 # ======================
-# /补录密钥（管理员）
+# /我的密钥（普通成员 - 查看自己的密钥日志）
 # ======================
-@bot.tree.command(name="补录密钥", description="[管理员] 手动补录密钥到用户记录（用于旧数据）")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(member="用户", key="密钥")
-async def 补录密钥(interaction: discord.Interaction, member: discord.Member, key: str):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
+@bot.tree.command(name="我的密钥", description="📋 查看自己所有的密钥记录及使用信息")
+async def 我的密钥(interaction: discord.Interaction):
     if not acquire_cmd_lock(interaction.id):
         return
     await interaction.response.defer(ephemeral=True)
 
-    key = clean_key(key)
-    redis.lpush(f"user:keys:{member.id}", key)
-    redis.set(f"key:owner:{key}", json.dumps({
-        "uid": str(member.id),
-        "name": str(member),
-        "issuedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "method": f"管理员({interaction.user})手动补录",
-        "discordId": str(member.id)
-    }))
-    await interaction.followup.send(
-        f"✅ 已将密钥 `{key}` 补录到 {member.mention} 的记录中",
-        ephemeral=True
-    )
-
-# ======================
-# /重置密钥（管理员）
-# ======================
-@bot.tree.command(name="重置密钥", description="[管理员] 重置密钥为可用状态，允许再次使用")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(key="要重置的密钥")
-async def 重置密钥(interaction: discord.Interaction, key: str):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    key = clean_key(key)
-    redis.delete(f"key:used:{key}")
-    redis.srem("keys:issued", key)
-    redis.sadd("keys:valid", key)
-    redis.delete(f"key:info:{key}")
-
-    await interaction.followup.send(
-        f"✅ 密钥 `{key}` 已重置为可用状态\n"
-        f"📦 当前可用密钥总数：**{redis.scard('keys:valid')}** 个",
-        ephemeral=True
-    )
-
-# ======================
-# /重置用户（管理员）
-# ======================
-@bot.tree.command(name="重置用户", description="[管理员] 重置用户的自助领取资格")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(member="要重置的用户")
-async def 重置用户(interaction: discord.Interaction, member: discord.Member):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    uid = str(member.id)
-    redis.delete(f"user:got_key:{uid}")
-    await interaction.followup.send(
-        f"✅ 已重置 {member.mention} 的领取资格\n"
-        "该用户现在可以重新使用 `/领取密钥` 命令。",
-        ephemeral=True
-    )
-
-# ======================
-# /导出全局日志 CSV（管理员 - 导出所有用户的日志）
-# ======================
-@bot.tree.command(name="导出全局日志", description="[管理员] 导出所有用户的密钥记录为CSV文件（可用Excel打开）")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(days="只导出N天内的记录（0=导出全部，默认0）")
-async def 导出全局日志(interaction: discord.Interaction, days: int = 0):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    try:
-        # 收集所有用户的所有密钥记录
-        keys_data = []
-        processed_count = 0
-        issued_keys = redis.smembers("keys:issued")
-        
-        if not issued_keys:
-            await interaction.followup.send("📭 暂无任何密钥记录", ephemeral=True)
-            return
-        
-        # 计算时间阈值
-        cutoff_time = None
-        if days > 0:
-            cutoff_time = datetime.now().timestamp() - (days * 86400)
-        
-        for k in issued_keys:
-            k = clean_key(k)
-            processed_count += 1
-            
-            is_used = redis.get(f"key:used:{k}")
-            info = redis.get(f"key:info:{k}")
-            owner = redis.get(f"key:owner:{k}")
-
-            key_info = {
-                "key": k,
-                "owner_name": "",
-                "uid": "",
-                "issued_at": "",
-                "method": "",
-                "status": "",
-                "used_at": "",
-                "ip": "",
-                "device": "",
-                "os": "",
-                "browser": "",
-                "user_agent": ""
-            }
-
-            if owner:
-                try:
-                    o = json.loads(owner) if isinstance(owner, str) else owner
-                    key_info["owner_name"] = o.get("name", "")
-                    key_info["uid"] = o.get("uid", "")
-                    key_info["issued_at"] = o.get("issuedAt", "")
-                    key_info["method"] = o.get("method", "")
-                except:
-                    pass
-
-            if is_used == "true" or is_used is True:
-                key_info["status"] = "已使用"
-                try:
-                    entry = json.loads(info) if isinstance(info, str) else (info or {})
-                    used_at_str = entry.get("usedAt", "")
-                    key_info["used_at"] = used_at_str
-                    key_info["ip"] = entry.get("ip", "")
-                    ua = entry.get("userAgent", "")
-                    key_info["user_agent"] = ua
-                    
-                    # 如果指定了时间范围，检查是否在范围内
-                    if cutoff_time and used_at_str:
-                        try:
-                            # 尝试解析时间戳
-                            import datetime as dt
-                            used_timestamp = dt.datetime.strptime(used_at_str[:19], "%Y-%m-%d %H:%M:%S").timestamp()
-                            if used_timestamp < cutoff_time:
-                                continue  # 跳过超出时间范围的记录
-                        except:
-                            pass
-                    
-                    device_info = parse_user_agent(ua)
-                    key_info["device"] = device_info.get("device", "")
-                    key_info["os"] = device_info.get("os", "")
-                    key_info["browser"] = device_info.get("browser", "")
-                except:
-                    pass
-            else:
-                in_issued = redis.sismember("keys:issued", k)
-                key_info["status"] = "已发出（未使用）" if in_issued else "其他"
-
-            keys_data.append(key_info)
-
-        # 生成CSV
-        csv_content = generate_csv_report(keys_data)
-        
-        # 创建文件
-        csv_bytes = csv_content.encode('utf-8-sig')  # 使用UTF-8-BOM以支持Excel中文显示
-        
-        # 发送文件
-        time_suffix = f"({days}天内)" if days > 0 else "(全部)"
-        filename = f"全局密钥记录_{time_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        
-        from discord import File
-        from io import BytesIO
-        
-        file_obj = BytesIO(csv_bytes)
-        file = discord.File(file_obj, filename=filename)
-        
-        await interaction.followup.send(
-            f"✅ 已生成全局密钥记录CSV文件\n"
-            f"📊 统计信息：\n"
-            f"• 扫描密钥数：{processed_count}个\n"
-            f"• 导出记录数：{len(keys_data)}个\n"
-            f"• 时间范围：{time_suffix}\n"
-            f"💾 文件可直接用Excel打开",
-            file=file,
-            ephemeral=True
-        )
-    except Exception as e:
-        await interaction.followup.send(
-            f"❌ 生成CSV文件失败: {str(e)}",
-            ephemeral=True
-        )
-
-# /保留的用户日志导出（管理员）
-# ======================
-@bot.tree.command(name="导出用户日志", description="[管理员] 导出指定用户的所有密钥记录为CSV（可用Excel打开）")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(member="要导出的用户")
-async def 导出用户日志(interaction: discord.Interaction, member: discord.Member):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
-
-    keys = redis.lrange(f"user:keys:{member.id}", 0, -1)
+    uid = str(interaction.user.id)
+    keys = redis.lrange(f"user:keys:{uid}", 0, -1)
 
     if not keys:
-        await interaction.followup.send(f"📭 {member.mention} 没有任何密钥记录", ephemeral=True)
+        await interaction.followup.send(f"📭 你还没有任何密钥记录", ephemeral=True)
         return
 
-    # 收集数据
-    keys_data = []
-    for k in keys:
+    embed = discord.Embed(title=f"📋 {interaction.user.display_name} 的密钥记录", color=0x3498db)
+    embed.description = "密钥将在下方单独显示，方便复制"
+
+    # 收集所有密钥用于最后单独发送
+    my_keys_text = []
+
+    for i, k in enumerate(keys, 1):
         k = clean_key(k)
+        my_keys_text.append(k)
         is_used = redis.get(f"key:used:{k}")
         info = redis.get(f"key:info:{k}")
         owner = redis.get(f"key:owner:{k}")
 
-        key_info = {
-            "key": k,
-            "owner_name": "",
-            "uid": "",
-            "issued_at": "",
-            "method": "",
-            "status": "",
-            "used_at": "",
-            "ip": "",
-            "device": "",
-            "os": "",
-            "browser": "",
-            "user_agent": ""
-        }
+        # 密钥信息（不含密钥本身）
+        lines = []
 
         if owner:
             try:
                 o = json.loads(owner) if isinstance(owner, str) else owner
-                key_info["owner_name"] = o.get("name", "")
-                key_info["uid"] = o.get("uid", "")
-                key_info["issued_at"] = o.get("issuedAt", "")
-                key_info["method"] = o.get("method", "")
+                issued_at = o.get('issuedAt', '未知')
+                method = o.get('method', '未知')
+                lines.append(f"📤 **发放信息**")
+                lines.append(f"时间：{issued_at}")
+                lines.append(f"方式：{method}")
+                lines.append("")
             except:
                 pass
 
-        if is_used == "true" or is_used is True:
-            key_info["status"] = "已使用"
+        if is_used == "true" or is_used is True or is_used == 1:
             try:
                 entry = json.loads(info) if isinstance(info, str) else (info or {})
-                key_info["used_at"] = entry.get("usedAt", "")
-                key_info["ip"] = entry.get("ip", "")
-                ua = entry.get("userAgent", "")
-                key_info["user_agent"] = ua
-                
+                used_at = entry.get("usedAt", "未知")[:19]
+                ip = entry.get("ip", "未知")
+                ua = entry.get("userAgent", "未知")
+
+                # 解析设备信息
                 device_info = parse_user_agent(ua)
-                key_info["device"] = device_info.get("device", "")
-                key_info["os"] = device_info.get("os", "")
-                key_info["browser"] = device_info.get("browser", "")
-            except:
-                pass
+                device = device_info.get("device", "未知设备")
+                os_name = device_info.get("os", "未知系统")
+                browser = device_info.get("browser", "未知浏览器")
+
+                lines.append(f"🔴 **使用信息**")
+                lines.append(f"时间：{used_at}")
+                lines.append(f"IP地址：{ip}")
+                lines.append(f"设备：{device}")
+                lines.append(f"系统：{os_name}")
+                lines.append(f"浏览器：{browser}")
+
+                # 添加Discord账号验证
+                discord_id = entry.get("discordId", "")
+                if discord_id:
+                    owner_id = json.loads(owner).get("uid", "") if owner else ""
+                    if discord_id == owner_id:
+                        lines.append(f"验证：✅ 通过")
+                    else:
+                        lines.append(f"验证：❌ 失败（异常登录）")
+
+            except Exception as e:
+                lines.append("🔴 **使用信息**")
+                lines.append("详情解析失败")
         else:
             in_issued = redis.sismember("keys:issued", k)
-            key_info["status"] = "已发出（未使用）" if in_issued else "其他"
+            if in_issued:
+                lines.append("🟡 **状态：已发出，等待使用**")
+            else:
+                lines.append("⚫ **状态：未知**")
 
-        keys_data.append(key_info)
+        embed.add_field(name=f"密钥 #{i}", value="\n".join(lines) if lines else "无详细信息", inline=False)
 
-    # 生成CSV
-    csv_content = generate_csv_report(keys_data)
-    
-    # 创建文件
-    csv_bytes = csv_content.encode('utf-8-sig')  # 使用UTF-8-BOM以支持Excel中文显示
-    
-    # 发送文件
-    filename = f"{member.display_name}_密钥记录_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-    
-    try:
-        from discord import File
-        from io import BytesIO
-        
-        file_obj = BytesIO(csv_bytes)
-        file = discord.File(file_obj, filename=filename)
-        
-        await interaction.followup.send(
-            f"✅ 已生成 {member.mention} 的密钥记录CSV文件（{len(keys)}个密钥）\n"
-            f"📊 文件包含完整的使用记录，可直接用Excel打开。",
-            file=file,
-            ephemeral=True
-        )
-    except Exception as e:
-        await interaction.followup.send(
-            f"❌ 生成CSV文件失败: {str(e)}\n"
-            f"原始数据：\n```\n{csv_content[:500]}\n```",
-            ephemeral=True
-        )
+    embed.set_footer(text=f"共 {len(keys)} 个密钥 | 查询时间：{time.strftime('%Y-%m-%d %H:%M:%S')}")
+    await interaction.followup.send(embed=embed, ephemeral=True)
+
+    # 单独发送纯密钥列表，方便手机长按复制
+    if my_keys_text:
+        await interaction.followup.send("\n".join(my_keys_text), ephemeral=True)
 
 # ======================
-# /清理过期日志（管理员 - 全局清理）
+# /保留的用户日志导出（管理员）
 # ======================
-@bot.tree.command(name="清理日志", description="[管理员] 清理所有用户N天前的日志数据，释放存储空间")
-@app_commands.default_permissions(administrator=True)
-@app_commands.describe(days="清理N天前的日志（默认30天）")
-async def 清理日志(interaction: discord.Interaction, days: int = 30):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-    await interaction.response.defer(ephemeral=True)
 
-    try:
-        cutoff_time = datetime.now().timestamp() - (days * 86400)
-        cleaned_count = 0
-        
-        # 获取所有已发放的密钥
-        issued_keys = redis.smembers("keys:issued")
-        
-        if not issued_keys:
-            await interaction.followup.send("📭 暂无任何密钥记录", ephemeral=True)
-            return
-        
-        # 遍历所有密钥，检查是否超过指定时间
-        for k in issued_keys:
-            k = clean_key(k)
-            is_used = redis.get(f"key:used:{k}")
-            
-            if is_used == "true" or is_used is True:
-                info = redis.get(f"key:info:{k}")
-                if info:
-                    try:
-                        entry = json.loads(info) if isinstance(info, str) else (info or {})
-                        used_at_str = entry.get("usedAt", "")
-                        
-                        if used_at_str:
-                            # 尝试解析时间戳
-                            import datetime as dt
-                            try:
-                                used_timestamp = dt.datetime.strptime(used_at_str[:19], "%Y-%m-%d %H:%M:%S").timestamp()
-                                if used_timestamp < cutoff_time:
-                                    # 清理这个密钥的详细信息
-                                    redis.delete(f"key:info:{k}")
-                                    cleaned_count += 1
-                            except:
-                                pass
-                    except:
-                        pass
-        
-        # 生成报告
-        embed = discord.Embed(title="🧹 日志清理完成", color=0x2ecc71)
-        embed.add_field(name="📅 清理时间", value=f"{days}天前的日志", inline=False)
-        embed.add_field(name="📊 清理统计", value=(
-            f"• 扫描密钥总数：{len(issued_keys)}个\n"
-            f"• 实际清理记录：{cleaned_count}条\n"
-            f"• 保留用户账户信息用于追溯"
-        ), inline=False)
-        embed.add_field(name="💾 存储优化", value=(
-            "• ✅ 已删除超期的日志详情\n"
-            "• ✅ 已保留关键信息用于审计\n"
-            "• 💡 建议：定期导出日志备份"
-        ), inline=False)
-        embed.add_field(name="⏰ 清理时间戳", value=f"早于 {datetime.fromtimestamp(cutoff_time).strftime('%Y-%m-%d %H:%M:%S')}", inline=False)
-        embed.set_footer(text=f"执行时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
-        await interaction.followup.send(embed=embed, ephemeral=True)
-        print(f"✅ 日志清理完成：清理了{cleaned_count}条记录")
-        
-    except Exception as e:
-        import traceback
-        await interaction.followup.send(
-            f"❌ 日志清理失败: {str(e)}",
-            ephemeral=True
-        )
-        traceback.print_exc()
-
-# ======================
-# /社区审核面板（管理员）
-# ======================
-@bot.tree.command(name="社区审核面板", description="[管理员] 发送社区审核工单面板，成员可点击申请加入审核")
-@app_commands.default_permissions(administrator=True)
-async def 社区审核面板(interaction: discord.Interaction):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("❌ 无权限", ephemeral=True)
-        return
-    if not acquire_cmd_lock(interaction.id):
-        return
-
-    embed = discord.Embed(
-        title="🔍 加入社区审核",
-        description=(
-            "欢迎申请加入我们的社区审核团队！\n\n"
-            "点击下方按钮创建审核工单，按照要求提交所需材料。\n"
-            "审核团队会尽快评估你的申请。\n\n"
-            "⏱️ 预计审核时间：未知"
-        ),
-        color=0x9C27B0
-    )
-    embed.set_footer(text="每人同时只能开一个审核工单")
-    await interaction.response.send_message(embed=embed, view=CommunityReviewView())
-
-# ======================
-# 社区审核按钮
-# ======================
-class CommunityReviewView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="📋 申请加入审核", style=discord.ButtonStyle.blurple, custom_id="create_review_ticket")
-    async def create_review_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
-
-        try:
-            guild = interaction.guild
-            member = interaction.user
-
-            # 检查是否已有审核工单
-            existing = discord.utils.get(guild.text_channels, name=f"审核-{member.name}")
-            if existing:
-                await interaction.followup.send(
-                    f"❌ 你已有一个审核工单：{existing.mention}\n"
-                    "请在已有工单中完成审核，每人同时只能开一个审核工单。",
-                    ephemeral=True
-                )
-                return
-
-            # 创建权限覆写
-            overwrites = {
-                guild.default_role: discord.PermissionOverwrite(view_channel=False),
-                member: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True, attach_files=True),
-                guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True, manage_channels=True),
-            }
-            for role in guild.roles:
-                if role.permissions.administrator:
-                    overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
-
-            # 获取或创建"审核"分类
-            category = discord.utils.get(guild.categories, name="社区审核")
-            if not category:
-                category = await guild.create_category("社区审核")
-
-            # 创建审核频道
-            channel = await guild.create_text_channel(
-                name=f"审核-{member.name}",
-                category=category,
-                overwrites=overwrites
-            )
-
-            # 存储工单信息
-            await TicketManager.set_ticket_info(channel.id, member.id, ticket_type="review")
-
-            # 发送审核要求
-            embed = discord.Embed(
-                title="📋 社区审核工单已创建",
-                description=(
-                    f"欢迎 {member.mention}！\n\n"
-                    "请按照以下要求提交审核材料。完成所有步骤后，管理员会为你进行审核。"
-                ),
-                color=0x9C27B0
-            )
-            
-            embed.add_field(
-                name="📌 第一步：提供年龄证明",
-                value=(
-                    "请从以下方式选择一种提交年龄证明：\n\n"
-                    "**选项 1：支付宝信息（推荐）**\n"
-                    "路径：我的 → 点击头像 → 我的主页 → 编辑个人资料\n"
-                    "⚠️ 请务必打码个人信息（身份证号、住址等）\n\n"
-                    "📝 完成后：修改支付宝个签为\n"
-                    "**「喵机1号审核专用」**\n\n"                    
-                    "**选项 2：身份证证明**\n"
-                    "仅需露出性别和出生年月\n"
-                    "其他信息请打码\n"
-                    "旁边注明你的 QQ 号\n\n"
-                ),
-                inline=False
-            )
-            
-            embed.add_field(
-                name="🎙️ 第二步：发送语音条",
-                value=(
-                    "请发送一条语音条（需包含以下内容）：\n\n"
-                    "`现在是北京时间 xxx年x月x日 xx点xx分`\n"
-                    "`本人性别[女/男] QQ号是[你的QQ号]`\n"
-                    "`我绝对不会二传二贩任何内容`\n"
-                    "`如果有此行为接受被挂`\n"
-                    "\n📢 请清晰、准确地朗读"
-                ),
-                inline=False
-            )
-
-            embed.add_field(
-                name="📸 第三步：发送图片",
-                value=(
-                    
-                    "所有图片请一并发送到此频道。"
-                ),
-                inline=False
-            )
-
-            embed.add_field(
-                name="✅ 提交完成",
-                value=(
-                    "管理员会尽快完成审核。\n\n"
-                
-                ),
-                inline=False
-            )
-
-            embed.add_field(
-                name="⏰ 自动关闭",
-                value="如果10分钟内没有任何新消息，工单将自动关闭。",
-                inline=False
-            )
-
-            embed.set_footer(text="管理员可使用下方按钮领取此工单")
-
-            msg = await channel.send(embed=embed, view=TicketControlView(channel.id, member.id))
-            
-            # 计划10分钟后自动关闭
-            asyncio.create_task(TicketManager.schedule_autoclose(channel, delay_minutes=10))
-            
-            # 提示成员
-            await interaction.followup.send(
-                f"✅ 审核工单已创建：{channel.mention}\n"
-                "请前往该频道按照要求提交审核材料。",
-                ephemeral=True
-            )
-
-        except Exception as e:
-            print(f"❌ 审核工单创建失败: {e}")
-            await interaction.followup.send(
-                f"❌ 审核工单创建失败：{str(e)[:200]}\n"
-                "请联系管理员检查 Bot 权限。",
-                ephemeral=True
-            )
 
 # ======================
 # /工单面板（管理员）
 # ======================
-@bot.tree.command(name="工单面板", description="[管理员] 发送工单按钮面板，成员可点击创建私密工单")
+@bot.tree.command(name="工单面板", description="[管理员] 发送社区问题反馈工单面板")
 @app_commands.default_permissions(administrator=True)
 async def 工单面板(interaction: discord.Interaction):
     if not interaction.user.guild_permissions.administrator:
@@ -1384,13 +1402,17 @@ async def 工单面板(interaction: discord.Interaction):
         return
 
     embed = discord.Embed(
-        title="🎫 客服工单",
+        title="🎫 社区问题反馈工单",
         description=(
-            "如果你遇到以下问题，可以点击下方按钮创建工单：\n\n"
-            "🔑 密钥无法使用\n"
-            "❓ 密钥使用过程中遇到问题\n"
-            "💬 需要继续领取新的密钥\n\n"
-            "工单频道仅你和管理员可见，请放心描述问题。"
+            "如你在社区或小手机使用过程中需要帮助，可点击下方按钮创建工单。\n\n"
+            "适用场景：\n"
+            "• 社区问题反馈\n"
+            "• 小手机使用求助\n"
+            "• 举报二传/贩子等违规线索\n\n"
+            "管理员会在工单内协助分析与处理。\n\n"
+            "⚠️ 社区声明：\n"
+            "本社区管理员不对任何社区纠纷承担责任。\n"
+            "本服务器为私人服务器；如遇恶劣影响事件，管理员有权一键踢出社区。"
         ),
         color=0x5865F2
     )
@@ -1400,7 +1422,7 @@ async def 工单面板(interaction: discord.Interaction):
 # ======================
 # /关闭工单（管理员）
 # ======================
-@bot.tree.command(name="关闭工单", description="[管理员] 关闭当前工单或审核工单频道")
+@bot.tree.command(name="关闭工单", description="[管理员] 关闭当前反馈工单频道")
 @app_commands.default_permissions(administrator=True)
 async def 关闭工单(interaction: discord.Interaction):
     if not interaction.user.guild_permissions.administrator:
@@ -1410,20 +1432,63 @@ async def 关闭工单(interaction: discord.Interaction):
         return
 
     channel_name = interaction.channel.name
-    if not (channel_name.startswith("工单-") or channel_name.startswith("审核-")):
-        await interaction.response.send_message("❌ 此频道不是工单或审核频道，请在工单/审核频道内使用此命令", ephemeral=True)
+    if not channel_name.startswith("工单-"):
+        await interaction.response.send_message("❌ 此频道不是反馈工单频道，请在 `工单-xxx` 频道内使用此命令", ephemeral=True)
         return
 
-    await interaction.response.send_message("⏳ 频道将在 5 秒后关闭...")
+    await interaction.response.send_message("⏳ 反馈工单将在 5 秒后关闭...")
     await asyncio.sleep(5)
-    reason = f"管理员 {interaction.user} 关闭频道"
-    if channel_name.startswith("审核-"):
-        reason = f"管理员 {interaction.user} 关闭审核工单"
+    reason = f"管理员 {interaction.user} 关闭反馈工单"
     await interaction.channel.delete(reason=reason)
+
+# ======================
+# /回顶（成员）
+# ======================
+@bot.tree.command(name="回顶", description="🔝 快速回到当前频道首楼")
+async def 回顶(interaction: discord.Interaction):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    channel = interaction.channel
+    if not isinstance(channel, (discord.TextChannel, discord.Thread)):
+        await interaction.followup.send("❌ 此命令仅支持文字频道或帖子频道。", ephemeral=True)
+        return
+
+    try:
+        first_message = None
+
+        # 帖子优先读取首帖消息
+        if isinstance(channel, discord.Thread):
+            first_message = channel.starter_message
+
+        # 兼容普通文字频道 / 无缓存帖子首帖
+        if not first_message:
+            async for msg in channel.history(limit=1, oldest_first=True):
+                first_message = msg
+                break
+
+        if not first_message:
+            await interaction.followup.send("❌ 未找到首楼消息。", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="🔝 回到首楼",
+            description=f"[点击这里跳转到首楼消息]({first_message.jump_url})",
+            color=0x2ecc71
+        )
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+    except Exception as e:
+        print(f"❌ /回顶 执行失败: {e}")
+        await interaction.followup.send(
+            f"❌ 回顶失败：{str(e)[:200]}",
+            ephemeral=True
+        )
 
 
 # ======================
-# 工单内部按钮（领取、关闭等）
+# 工单内部按钮（仅关闭功能）
 # ======================
 class TicketControlView(discord.ui.View):
     """工单频道内的管理按钮"""
@@ -1432,131 +1497,7 @@ class TicketControlView(discord.ui.View):
         self.channel_id = channel_id
         self.member_id = member_id
 
-    @discord.ui.button(label="🔖 领取工单", style=discord.ButtonStyle.blurple, custom_id="claim_ticket")
-    async def claim_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """管理员领取工单"""
-        await interaction.response.defer(ephemeral=True)
-        
-        # 检查是否是管理员
-        if not interaction.user.guild_permissions.administrator:
-            await interaction.followup.send("❌ 只有管理员可以领取工单", ephemeral=True)
-            return
-        
-        channel = interaction.channel
-        guild = interaction.guild
-        
-        # 从消息获取member_id
-        channel_id = channel.id
-        ticket_info = TicketManager.get_ticket_info(channel_id)
-        if not ticket_info:
-            await interaction.followup.send("❌ 无法获取工单信息", ephemeral=True)
-            return
-        
-        member_id = ticket_info.get("member_id")
-        
-        # 检查是否已被其他管理员领取
-        if ticket_info.get("claimed_by") and ticket_info["claimed_by"] != str(interaction.user.id):
-            claimant = guild.get_member(int(ticket_info["claimed_by"]))
-            await interaction.followup.send(
-                f"❌ 此工单已被 {claimant.mention if claimant else '另一位管理员'} 领取",
-                ephemeral=True
-            )
-            return
-        
-        # 领取工单
-        TicketManager.claim_ticket(channel_id, interaction.user.id)
-        member = guild.get_member(int(member_id)) if member_id else None
-        
-        # 更新频道权限：只有领取者和提交者可见，其他人都看不到
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
-            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True, manage_channels=True),
-        }
-        
-        if member:
-            overwrites[member] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True, attach_files=True)
-        
-        # 对所有管理员角色拒绝访问（领取者通过直接权限访问，不需要角色权限）
-        for role in guild.roles:
-            if role.permissions.administrator and role != guild.default_role:
-                overwrites[role] = discord.PermissionOverwrite(view_channel=False)
-        
-        try:
-            await channel.edit(overwrites=overwrites)
-        except:
-            pass
-        
-        # 发送领取确认
-        embed = discord.Embed(
-            title="✅ 工单已被领取",
-            description=f"{interaction.user.mention} 已领取此工单，将由其单独处理。\n\n其他管理员现已无法查看此工单。",
-            color=0x2ecc71
-        )
-        
-        # 隐藏领取按钮，显示释放按钮
-        button.disabled = True
-        release_button = discord.utils.get(self.children, custom_id="release_ticket")
-        if release_button:
-            release_button.disabled = False
-        await interaction.message.edit(view=self)
-        
-        await interaction.followup.send(embed=embed, ephemeral=False)
-
-    @discord.ui.button(label="🔓 释放工单", style=discord.ButtonStyle.grey, custom_id="release_ticket", disabled=True)
-    async def release_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """管理员释放工单（取消领取）"""
-        await interaction.response.defer(ephemeral=True)
-        
-        channel = interaction.channel
-        guild = interaction.guild
-        
-        # 检查是否是领取该工单的管理员
-        ticket_info = TicketManager.get_ticket_info(channel.id)
-        if not ticket_info or ticket_info.get("claimed_by") != str(interaction.user.id):
-            await interaction.followup.send("❌ 只有领取此工单的管理员可以释放", ephemeral=True)
-            return
-        
-        member_id = ticket_info.get("member_id")
-        member = guild.get_member(int(member_id)) if member_id else None
-        
-        # 释放工单
-        TicketManager.release_ticket(channel.id)
-        
-        # 恢复频道权限：允许所有管理员查看
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True, manage_channels=True),
-        }
-        
-        if member:
-            overwrites[member] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True, attach_files=True)
-        
-        # 允许所有管理员角色访问
-        for role in guild.roles:
-            if role.permissions.administrator and role != guild.default_role:
-                overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
-        
-        try:
-            await channel.edit(overwrites=overwrites)
-        except:
-            pass
-        
-        # 发送释放确认
-        embed = discord.Embed(
-            title="🔓 工单已被释放",
-            description=f"{interaction.user.mention} 已释放此工单，其他管理员现已可以查看。",
-            color=0xf39c12
-        )
-        
-        # 启用领取按钮，禁用释放按钮
-        button.disabled = True
-        claim_button = discord.utils.get(self.children, custom_id="claim_ticket")
-        if claim_button:
-            claim_button.disabled = False
-        await interaction.message.edit(view=self)
-        
-        await interaction.followup.send(embed=embed, ephemeral=False)
+    # 领取和释放按钮已删除，工单由任何管理员直接处理
 
 # ======================
 # 工单按钮
@@ -1608,26 +1549,34 @@ class TicketView(discord.ui.View):
                 title="📩 工单已创建",
                 description=(
                     f"欢迎 {member.mention}！\n\n"
-                    "请在此描述你遇到的问题，管理员会尽快回复。\n"
-                    "你可以发送文字、截图等信息帮助我们更快定位问题。"
+                    "请在此描述你遇到的社区问题、小手机使用问题，或二传/贩子相关线索。\n"
+                    "管理员会尽快协助分析处理。\n\n"
+                    "你可以发送文字、截图、录屏等信息，帮助更快判断情况。"
                 ),
                 color=0x5865F2
+            )
+            embed.add_field(
+                name="⚠️ 社区声明",
+                value=(
+                    "管理员不对任何社区纠纷承担责任。\n"
+                    "本服务器为私人服务器；如遇恶劣影响事件，管理员有权一键踢出社区。"
+                ),
+                inline=False
             )
             embed.add_field(
                 name="⏰ 自动关闭",
                 value="如果10分钟内没有任何新消息，工单将自动关闭。",
                 inline=False
             )
-            embed.set_footer(text="管理员可使用下方按钮领取此工单")
 
-            msg = await channel.send(embed=embed, view=TicketControlView(channel.id, member.id))
-            
+            msg = await channel.send(embed=embed)
+
             # 计划10分钟后自动关闭
             asyncio.create_task(TicketManager.schedule_autoclose(channel, delay_minutes=10))
-            
+
             await interaction.followup.send(
                 f"✅ 工单已创建：{channel.mention}\n"
-                "请前往该频道描述你的问题。",
+                "请前往该频道提交问题或举报线索。",
                 ephemeral=True
             )
 
@@ -1640,13 +1589,11 @@ class TicketView(discord.ui.View):
             )
 
 # ======================
-# /改身份（管理员）
+# /可疑账号（管理员 - 查看异常账户列表）
 # ======================
-@bot.tree.command(name="改身份", description="[管理员] 为指定成员修改身份组")
+@bot.tree.command(name="可疑账号", description="[管理员] 查看检测到的异常账号列表")
 @app_commands.default_permissions(administrator=True)
-@app_commands.describe(member="要修改的成员", role="要设置的身份组")
-async def 改身份(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
-    """管理员修改成员身份组"""
+async def 可疑账号(interaction: discord.Interaction):
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("❌ 无权限", ephemeral=True)
         return
@@ -1655,73 +1602,880 @@ async def 改身份(interaction: discord.Interaction, member: discord.Member, ro
     await interaction.response.defer(ephemeral=True)
 
     try:
-        # 检查权限
-        if role.position >= interaction.user.top_role.position:
-            await interaction.followup.send(
-                "❌ 无法设置该身份组\n"
-                "原因：该身份组的权限等级不低于你的权限等级",
-                ephemeral=True
-            )
-            return
+        embed = discord.Embed(title="🚨 异常账号检测报告", color=0xff6b6b)
 
-        # 检查bot权限
-        if role.position >= interaction.guild.me.top_role.position:
-            await interaction.followup.send(
-                "❌ Bot权限不足\n"
-                "原因：该身份组的权限等级不低于Bot的权限等级",
-                ephemeral=True
-            )
-            return
+        def _to_text(v):
+            if isinstance(v, bytes):
+                return v.decode("utf-8", errors="ignore")
+            return str(v).strip()
 
-        # 移除成员所有身份组，然后添加新身份组
-        old_roles = [r for r in member.roles if r != interaction.guild.default_role]
-        await member.remove_roles(*old_roles, reason=f"由 {interaction.user} 执行身份组修改")
-        await member.add_roles(role, reason=f"由 {interaction.user} 执行身份组修改")
+        def _safe_limit(text, limit):
+            text = str(text or "")
+            if len(text) <= limit:
+                return text
+            return text[: limit - 3] + "..."
 
-        embed = discord.Embed(
-            title="✅ 身份组修改成功",
-            description=f"{member.mention} 的身份组已修改",
-            color=0x2ecc71
+        # 1) 先取已有可疑集合
+        suspicious_uids = redis.smembers("suspicious_accounts_set") or []
+        uid_set = set()
+        for raw_uid in suspicious_uids:
+            uid = _to_text(raw_uid)
+            if uid:
+                uid_set.add(uid)
+
+        # 2) 兼容集合丢失的场景：从历史键重建一次检测
+        try:
+            history_keys = redis.keys("user:key_usage_history:*") or []
+            for hk in history_keys:
+                hk_text = _to_text(hk)
+                if hk_text.startswith("user:key_usage_history:"):
+                    uid_set.add(hk_text.rsplit(":", 1)[-1])
+        except Exception as e:
+            print(f"⚠️ 可疑账号历史扫描失败: {e}")
+
+        valid_accounts = []
+        removed_count = 0
+
+        # 3) 对每个 UID 做实时重算，确保结果真实有效
+        for uid in uid_set:
+            if not uid:
+                continue
+
+            fresh = detect_suspicious_account(uid)
+            if not fresh.get("is_suspicious"):
+                redis.delete(f"suspicious_account:{uid}")
+                redis.srem("suspicious_accounts_set", uid)
+                removed_count += 1
+                continue
+
+            detected_at = time.strftime("%Y-%m-%d %H:%M:%S")
+            details = fresh.get("details", {})
+            reasons = fresh.get("reasons", [])
+
+            stored = redis.get(f"suspicious_account:{uid}")
+            if stored:
+                try:
+                    if isinstance(stored, bytes):
+                        stored = stored.decode("utf-8")
+                    if isinstance(stored, str):
+                        stored = json.loads(stored)
+                    if isinstance(stored, dict):
+                        detected_at = stored.get("detected_at", detected_at)
+                        details = stored.get("details", details)
+                        reasons = stored.get("reasons", reasons)
+                except Exception:
+                    pass
+
+            valid_accounts.append({
+                "uid": uid,
+                "reasons": reasons if isinstance(reasons, list) else [str(reasons)],
+                "detected_at": str(detected_at),
+                "details": details if isinstance(details, dict) else {}
+            })
+
+        # 4) 按检测时间倒序
+        def _parse_dt(dt_str):
+            try:
+                return datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                return datetime.min
+
+        valid_accounts.sort(key=lambda x: _parse_dt(x.get("detected_at", "")), reverse=True)
+
+        if valid_accounts:
+            embed.description = f"当前有 **{len(valid_accounts)}** 个可疑账号（30天内）"
+
+            for i, acc in enumerate(valid_accounts[:10], 1):
+                uid = acc["uid"]
+                reasons_text = "\n".join(acc["reasons"]) if acc["reasons"] else "无具体原因"
+                reasons_text = _safe_limit(reasons_text, 500)
+                detected_at = acc["detected_at"]
+                details_text = _safe_limit(json.dumps(acc["details"], ensure_ascii=False), 300)
+
+                user_name = "未知用户"
+                try:
+                    member = interaction.guild.get_member(int(uid))
+                    if not member:
+                        try:
+                            member = await interaction.guild.fetch_member(int(uid))
+                        except Exception:
+                            member = None
+                    if member:
+                        user_name = member.display_name
+                    else:
+                        user_obj = bot.get_user(int(uid))
+                        if user_obj:
+                            user_name = user_obj.name
+                except Exception:
+                    pass
+
+                field_value = (
+                    f"**DC账号名**: {user_name}\n"
+                    f"**DC账号ID**: {uid}\n"
+                    f"**用户**: <@{uid}>\n"
+                    f"**检测时间**: {detected_at}\n"
+                    f"**触发原因**:\n{reasons_text}\n"
+                    f"**检测细节**:\n`{details_text}`"
+                )
+                embed.add_field(
+                    name=f"🚨 可疑账号 #{i}",
+                    value=_safe_limit(field_value, 1024),
+                    inline=False
+                )
+
+            if len(valid_accounts) > 10:
+                embed.add_field(
+                    name="📋 更多账号",
+                    value=f"还有 {len(valid_accounts) - 10} 个可疑账号未显示\n使用 `/用户日志 @用户名` 查看具体用户详情",
+                    inline=False
+                )
+        else:
+            embed.description = "✅ 当前没有检测到可疑账号"
+
+        embed.add_field(
+            name="📊 检测规则",
+            value=(
+                "• ⏱️ 24小时内验证使用3次或更多密钥\n"
+                "• 📱 连续3次验证使用不同设备\n"
+                "• 🌐 连续3次验证使用不同浏览器\n"
+                "• 💻 连续3次验证使用不同操作系统"
+            ),
+            inline=False
         )
-        embed.add_field(name="成员", value=member.mention, inline=True)
-        embed.add_field(name="新身份组", value=role.mention, inline=True)
-        embed.add_field(name="执行者", value=interaction.user.mention, inline=True)
 
-        if old_roles:
-            old_roles_str = ", ".join([r.mention for r in old_roles[:10]])  # 最多显示10个旧身份组
-            if len(old_roles) > 10:
-                old_roles_str += f" 等共 {len(old_roles)} 个身份组"
-            embed.add_field(name="移除的身份组", value=old_roles_str, inline=False)
-
-        embed.set_footer(text=f"执行时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        footer_text = f"查询时间：{time.strftime('%Y-%m-%d %H:%M:%S')} | 标记有效期30天"
+        if removed_count > 0:
+            footer_text += f" | 已清理 {removed_count} 条失效标记"
+        embed.set_footer(text=footer_text)
 
         await interaction.followup.send(embed=embed, ephemeral=True)
-        print(f"✅ {interaction.user} 将 {member} 的身份组改为 {role.name}")
 
-    except discord.Forbidden:
-        await interaction.followup.send(
-            "❌ 身份组修改失败\n"
-            "原因：Bot权限不足，请检查Bot角色是否拥有足够权限",
-            ephemeral=True
-        )
     except Exception as e:
         await interaction.followup.send(
-            f"❌ 身份组修改失败：{str(e)}",
+            f"❌ 查询失败: {str(e)}",
             ephemeral=True
         )
-        print(f"❌ 身份组修改出错: {e}")
+        print(f"❌ 可疑账号查询出错: {e}")
+
+# ======================
+# /上传保护附件（帖主专用）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="上传保护附件", description="📎 [帖主] 上传保护附件（需点赞+评论后才能下载）")
+@app_commands.describe(
+    附件1="第一个附件（必填）",
+    名称1="附件1的显示名称（可选，默认使用原文件名）",
+    附件2="第二个附件（可选）",
+    名称2="附件2的显示名称（可选）",
+    附件3="第三个附件（可选）",
+    名称3="附件3的显示名称（可选）",
+    附件4="第四个附件（可选）",
+    名称4="附件4的显示名称（可选）",
+    附件5="第五个附件（可选）",
+    名称5="附件5的显示名称（可选）",
+    附件6="第六个附件（可选）",
+    名称6="附件6的显示名称（可选）",
+    附件7="第七个附件（可选）",
+    名称7="附件7的显示名称（可选）",
+    附件8="第八个附件（可选）",
+    名称8="附件8的显示名称（可选）"
+)
+async def 上传保护附件(
+    interaction: discord.Interaction,
+    附件1: discord.Attachment,
+    名称1: str = None,
+    附件2: discord.Attachment = None,
+    名称2: str = None,
+    附件3: discord.Attachment = None,
+    名称3: str = None,
+    附件4: discord.Attachment = None,
+    名称4: str = None,
+    附件5: discord.Attachment = None,
+    名称5: str = None,
+    附件6: discord.Attachment = None,
+    名称6: str = None,
+    附件7: discord.Attachment = None,
+    名称7: str = None,
+    附件8: discord.Attachment = None,
+    名称8: str = None
+):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    # 检查是否在论坛帖子中
+    if not isinstance(interaction.channel, discord.Thread):
+        await interaction.followup.send(
+            "❌ **此命令只能在论坛帖子中使用**\n"
+            "请在论坛帖子内使用此命令上传保护附件。",
+            ephemeral=True
+        )
+        return
+
+    thread = interaction.channel
+
+    # 检查是否是帖主
+    if thread.owner_id != interaction.user.id:
+        await interaction.followup.send(
+            "❌ **只有帖主才能上传保护附件**\n"
+            "你不是此帖子的创建者，无法上传保护附件。",
+            ephemeral=True
+        )
+        return
+
+    # 检查是否已有附件
+    existing = ProtectedAttachmentManager.get_attachments(thread.id)
+    if existing:
+        await interaction.followup.send(
+            "❌ **此帖子已有保护附件**\n"
+            "如需修改附件内容，请使用 `/修改保护附件` 命令。",
+            ephemeral=True
+        )
+        return
+
+    try:
+        # 收集附件信息
+        attachments_data = []
+
+        # 处理所有附件（附件1必填，其他可选）
+        all_attachments = [
+            (附件1, 名称1), (附件2, 名称2), (附件3, 名称3), (附件4, 名称4),
+            (附件5, 名称5), (附件6, 名称6), (附件7, 名称7), (附件8, 名称8)
+        ]
+
+        for att, name in all_attachments:
+            if att:
+                attachments_data.append({
+                    "name": name or att.filename,
+                    "filename": att.filename,
+                    "url": att.url,
+                    "size": att.size,
+                    "content_type": att.content_type or "application/octet-stream"
+                })
+
+        # 保存到Redis
+        await ProtectedAttachmentManager.save_attachments(
+            thread.id,
+            interaction.user.id,
+            attachments_data
+        )
+
+        # 构建成功消息
+        embed = discord.Embed(
+            title="✅ 保护附件上传成功",
+            description="附件已设置为保护模式，其他成员需要**点赞帖子 + 评论帖子**后才能下载。",
+            color=0x2ecc71
+        )
+
+        # 显示附件列表
+        attachment_list = []
+        for i, att in enumerate(attachments_data, 1):
+            size_kb = att["size"] / 1024
+            if size_kb > 1024:
+                size_str = f"{size_kb/1024:.1f} MB"
+            else:
+                size_str = f"{size_kb:.1f} KB"
+            attachment_list.append(f"**{i}.** {att['name']} ({size_str})")
+
+        embed.add_field(
+            name=f"📎 已上传 {len(attachments_data)} 个附件",
+            value="\n".join(attachment_list),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📋 下载条件",
+            value="成员需要：\n✅ 点赞此帖子（任意表情）\n✅ 在帖子中发送评论\n然后使用 `/领取保护附件` 下载",
+            inline=False
+        )
+
+        embed.add_field(
+            name="🔧 管理命令",
+            value=(
+                "• `/修改保护附件` - 更新附件内容\n"
+                "• `/查看保护附件` - 查看附件状态\n"
+                "• `/保护附件置底` - 让下载入口保持在底部\n"
+                "• `/删除保护附件置底` - 关闭下载入口置底"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(text=f"帖子ID: {thread.id} | 上传时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+        # 在帖子中发送公告
+        announce_embed = discord.Embed(
+            title="📎 保护附件已上传",
+            description=(
+                f"帖主 {interaction.user.mention} 上传了 **{len(attachments_data)}** 个保护附件。\n\n"
+                "**📥 如何下载：**\n"
+                "1️⃣ 点赞此帖子（任意表情反应）\n"
+                "2️⃣ 在帖子中发送任意评论\n"
+                "3️⃣ 使用 `/领取保护附件` 命令下载\n\n"
+                "⚠️ 必须同时满足点赞和评论条件才能下载！"
+            ),
+            color=0x5865F2
+        )
+        await thread.send(embed=announce_embed)
+        await refresh_thread_bottom_notices(thread)
+
+        print(f"✅ {interaction.user} 在帖子 {thread.name} 上传了 {len(attachments_data)} 个保护附件")
+
+    except Exception as e:
+        await interaction.followup.send(
+            f"❌ 上传失败：{str(e)[:200]}",
+            ephemeral=True
+        )
+        print(f"❌ 保护附件上传出错: {e}")
+
+# ======================
+# /修改保护附件（帖主专用）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="修改保护附件", description="📝 [帖主] 修改当前帖子的保护附件内容")
+@app_commands.describe(
+    附件1="新的第一个附件（必填）",
+    名称1="附件1的显示名称（可选）",
+    附件2="新的第二个附件（可选）",
+    名称2="附件2的显示名称（可选）",
+    附件3="新的第三个附件（可选）",
+    名称3="附件3的显示名称（可选）",
+    附件4="新的第四个附件（可选）",
+    名称4="附件4的显示名称（可选）",
+    附件5="新的第五个附件（可选）",
+    名称5="附件5的显示名称（可选）",
+    附件6="新的第六个附件（可选）",
+    名称6="附件6的显示名称（可选）",
+    附件7="新的第七个附件（可选）",
+    名称7="附件7的显示名称（可选）",
+    附件8="新的第八个附件（可选）",
+    名称8="附件8的显示名称（可选）"
+)
+async def 修改保护附件(
+    interaction: discord.Interaction,
+    附件1: discord.Attachment,
+    名称1: str = None,
+    附件2: discord.Attachment = None,
+    名称2: str = None,
+    附件3: discord.Attachment = None,
+    名称3: str = None,
+    附件4: discord.Attachment = None,
+    名称4: str = None,
+    附件5: discord.Attachment = None,
+    名称5: str = None,
+    附件6: discord.Attachment = None,
+    名称6: str = None,
+    附件7: discord.Attachment = None,
+    名称7: str = None,
+    附件8: discord.Attachment = None,
+    名称8: str = None
+):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    # 检查是否在论坛帖子中
+    if not isinstance(interaction.channel, discord.Thread):
+        await interaction.followup.send(
+            "❌ **此命令只能在论坛帖子中使用**",
+            ephemeral=True
+        )
+        return
+
+    thread = interaction.channel
+
+    # 检查是否是帖主
+    if thread.owner_id != interaction.user.id:
+        await interaction.followup.send(
+            "❌ **只有帖主才能修改保护附件**",
+            ephemeral=True
+        )
+        return
+
+    # 检查是否有现有附件
+    existing = ProtectedAttachmentManager.get_attachments(thread.id)
+    if not existing:
+        await interaction.followup.send(
+            "❌ **此帖子还没有保护附件**\n"
+            "请先使用 `/上传保护附件` 命令上传附件。",
+            ephemeral=True
+        )
+        return
+
+    try:
+        # 收集新附件信息
+        new_attachments_data = []
+
+        # 处理所有附件（附件1必填，其他可选）
+        all_attachments = [
+            (附件1, 名称1), (附件2, 名称2), (附件3, 名称3), (附件4, 名称4),
+            (附件5, 名称5), (附件6, 名称6), (附件7, 名称7), (附件8, 名称8)
+        ]
+
+        for att, name in all_attachments:
+            if att:
+                new_attachments_data.append({
+                    "name": name or att.filename,
+                    "filename": att.filename,
+                    "url": att.url,
+                    "size": att.size,
+                    "content_type": att.content_type or "application/octet-stream"
+                })
+
+        # 更新Redis
+        await ProtectedAttachmentManager.update_attachments(thread.id, new_attachments_data)
+
+        # 构建成功消息
+        embed = discord.Embed(
+            title="✅ 保护附件已更新",
+            description="附件内容已成功修改。",
+            color=0x2ecc71
+        )
+
+        # 显示新附件列表
+        attachment_list = []
+        for i, att in enumerate(new_attachments_data, 1):
+            size_kb = att["size"] / 1024
+            if size_kb > 1024:
+                size_str = f"{size_kb/1024:.1f} MB"
+            else:
+                size_str = f"{size_kb:.1f} KB"
+            attachment_list.append(f"**{i}.** {att['name']} ({size_str})")
+
+        embed.add_field(
+            name=f"📎 更新后的附件 ({len(new_attachments_data)} 个)",
+            value="\n".join(attachment_list),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📊 统计信息",
+            value=f"历史下载次数：{existing.get('download_count', 0)} 次",
+            inline=False
+        )
+
+        embed.set_footer(text=f"更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+        # 在帖子中发送更新通知
+        update_embed = discord.Embed(
+            title="📝 保护附件已更新",
+            description=(
+                f"帖主 {interaction.user.mention} 更新了保护附件内容。\n\n"
+                f"现有 **{len(new_attachments_data)}** 个附件可供下载。\n"
+                "使用 `/领取保护附件` 获取最新版本。"
+            ),
+            color=0xf39c12
+        )
+        await thread.send(embed=update_embed)
+        await refresh_thread_bottom_notices(thread)
+
+        print(f"✅ {interaction.user} 更新了帖子 {thread.name} 的保护附件")
+
+    except Exception as e:
+        await interaction.followup.send(
+            f"❌ 修改失败：{str(e)[:200]}",
+            ephemeral=True
+        )
+        print(f"❌ 保护附件修改出错: {e}")
+
+# ======================
+# /领取保护附件（普通成员）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="领取保护附件", description="📥 下载保护附件（需先点赞+评论）")
+async def 领取保护附件(interaction: discord.Interaction):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    # 检查是否在论坛帖子中
+    if not isinstance(interaction.channel, discord.Thread):
+        await interaction.followup.send(
+            "❌ **此命令只能在论坛帖子中使用**\n"
+            "请在有保护附件的论坛帖子内使用此命令。",
+            ephemeral=True
+        )
+        return
+
+    thread = interaction.channel
+    uid = str(interaction.user.id)
+
+    # 检查帖子是否有保护附件
+    attachment_data = ProtectedAttachmentManager.get_attachments(thread.id)
+    if not attachment_data:
+        await interaction.followup.send(
+            "❌ **此帖子没有保护附件**\n"
+            "帖主还未上传任何保护附件。",
+            ephemeral=True
+        )
+        return
+
+    # 帖主自己可以直接下载
+    if thread.owner_id == interaction.user.id:
+        # 直接发送附件链接
+        embed = discord.Embed(
+            title="📎 你的保护附件",
+            description="作为帖主，你可以直接下载自己上传的附件。",
+            color=0x2ecc71
+        )
+
+        for i, att in enumerate(attachment_data["attachments"], 1):
+            size_kb = att["size"] / 1024
+            if size_kb > 1024:
+                size_str = f"{size_kb/1024:.1f} MB"
+            else:
+                size_str = f"{size_kb:.1f} KB"
+            embed.add_field(
+                name=f"📄 {att['name']}",
+                value=f"大小：{size_str}\n[点击下载]({att['url']})",
+                inline=False
+            )
+
+        embed.add_field(
+            name="📊 下载统计",
+            value=f"总下载次数：{attachment_data.get('download_count', 0)} 次",
+            inline=False
+        )
+
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        return
+
+    # 检查用户是否已有访问权限（之前验证通过）
+    has_access = ProtectedAttachmentManager.has_user_access(thread.id, uid)
+
+    if not has_access:
+        # 检查用户是否满足条件（点赞 + 评论）
+        engagement = await ProtectedAttachmentManager.check_user_engagement(thread, interaction.user)
+
+        if not engagement["passed"]:
+            # 构建提示信息
+            status_liked = "✅" if engagement["liked"] else "❌"
+            status_commented = "✅" if engagement["commented"] else "❌"
+
+            await interaction.followup.send(
+                f"❌ **未满足下载条件**\n\n"
+                f"请完成以下步骤后再试：\n"
+                f"{status_liked} 点赞帖子（对首条消息添加表情反应）\n"
+                f"{status_commented} 在帖子中发送评论（任意内容）\n\n"
+                f"💡 **提示：**\n"
+                f"• 点赞：对帖子首条消息添加任意表情\n"
+                f"• 评论：在帖子中发送任意消息\n"
+                f"• 完成后重新使用 `/领取保护附件` 命令",
+                ephemeral=True
+            )
+            return
+
+        # 记录用户访问权限
+        ProtectedAttachmentManager.record_user_access(thread.id, uid)
+
+    # 增加下载计数
+    ProtectedAttachmentManager.increment_download_count(thread.id)
+
+    # 发送附件下载链接（私信方式更安全）
+    try:
+        embed = discord.Embed(
+            title="📥 保护附件下载",
+            description=f"来自帖子：**{thread.name}**\n\n以下是你请求的附件下载链接：",
+            color=0x2ecc71
+        )
+
+        for i, att in enumerate(attachment_data["attachments"], 1):
+            size_kb = att["size"] / 1024
+            if size_kb > 1024:
+                size_str = f"{size_kb/1024:.1f} MB"
+            else:
+                size_str = f"{size_kb:.1f} KB"
+            embed.add_field(
+                name=f"📄 {att['name']}",
+                value=f"文件名：`{att['filename']}`\n大小：{size_str}\n[📥 点击下载]({att['url']})",
+                inline=False
+            )
+
+        embed.add_field(
+            name="⚠️ 注意事项",
+            value="• 链接有效期有限，请尽快下载\n• 请勿分享下载链接给他人\n• 尊重创作者版权",
+            inline=False
+        )
+
+        embed.set_footer(text=f"下载时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+        # 尝试私信发送
+        await interaction.user.send(embed=embed)
+
+        await interaction.followup.send(
+            "✅ **附件下载链接已发送到你的私信！**\n"
+            "📬 请查看私信获取下载链接。",
+            ephemeral=True
+        )
+
+        print(f"✅ {interaction.user} 下载了帖子 {thread.name} 的保护附件")
+
+    except discord.Forbidden:
+        # 无法私信，直接在频道回复（ephemeral）
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        print(f"✅ {interaction.user} 下载了帖子 {thread.name} 的保护附件（频道内）")
+
+# ======================
+# /查看保护附件（帖主专用）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="查看保护附件", description="📊 [帖主] 查看当前帖子保护附件的状态和统计")
+async def 查看保护附件(interaction: discord.Interaction):
+
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    # 检查是否在论坛帖子中
+    if not isinstance(interaction.channel, discord.Thread):
+        await interaction.followup.send(
+            "❌ **此命令只能在论坛帖子中使用**",
+            ephemeral=True
+        )
+        return
+
+    thread = interaction.channel
+
+    # 检查是否是帖主或管理员
+    is_owner = thread.owner_id == interaction.user.id
+    is_admin = interaction.user.guild_permissions.administrator
+
+    if not is_owner and not is_admin:
+        await interaction.followup.send(
+            "❌ **只有帖主或管理员才能查看附件状态**",
+            ephemeral=True
+        )
+        return
+
+    # 获取附件信息
+    attachment_data = ProtectedAttachmentManager.get_attachments(thread.id)
+    if not attachment_data:
+        await interaction.followup.send(
+            "❌ **此帖子没有保护附件**\n"
+            "使用 `/上传保护附件` 命令上传附件。",
+            ephemeral=True
+        )
+        return
+
+    embed = discord.Embed(
+        title="📊 保护附件状态",
+        description=f"帖子：**{thread.name}**",
+        color=0x3498db
+    )
+
+    # 显示附件列表
+    attachment_list = []
+    total_size = 0
+    for i, att in enumerate(attachment_data["attachments"], 1):
+        size_kb = att["size"] / 1024
+        total_size += att["size"]
+        if size_kb > 1024:
+            size_str = f"{size_kb/1024:.1f} MB"
+        else:
+            size_str = f"{size_kb:.1f} KB"
+        attachment_list.append(f"**{i}.** {att['name']} ({size_str})")
+
+    embed.add_field(
+        name=f"📎 附件列表 ({len(attachment_data['attachments'])} 个)",
+        value="\n".join(attachment_list) if attachment_list else "无",
+        inline=False
+    )
+
+    # 统计信息
+    total_size_str = f"{total_size/1024/1024:.2f} MB" if total_size > 1024*1024 else f"{total_size/1024:.1f} KB"
+    embed.add_field(
+        name="📈 统计信息",
+        value=(
+            f"总大小：{total_size_str}\n"
+            f"下载次数：{attachment_data.get('download_count', 0)} 次\n"
+            f"创建时间：{attachment_data.get('created_at', '未知')[:19]}\n"
+            f"最后更新：{attachment_data.get('updated_at', '未知')[:19]}"
+        ),
+        inline=False
+    )
+
+    embed.set_footer(text=f"帖子ID: {thread.id}")
+
+    await interaction.followup.send(embed=embed, ephemeral=True)
+
+# ======================
+# /保护附件置底（帖主/管理员）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="保护附件置底", description="📌 [帖主/管理员] 让保护附件下载入口保持在帖子底部")
+async def 保护附件置底(interaction: discord.Interaction):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    if not isinstance(interaction.channel, discord.Thread):
+        await interaction.followup.send("❌ 此命令只能在论坛帖子中使用。", ephemeral=True)
+        return
+
+    thread = interaction.channel
+    if not _can_manage_thread_bottom(interaction, thread):
+        await interaction.followup.send("❌ 只有帖主或管理员可以设置该帖置底消息。", ephemeral=True)
+        return
+
+    attachment_data = ProtectedAttachmentManager.get_attachments(thread.id)
+    if not attachment_data:
+        await interaction.followup.send(
+            "❌ 此帖子还没有保护附件。\n请先使用 `/上传保护附件` 上传附件。",
+            ephemeral=True
+        )
+        return
+
+    old_cfg = ThreadBottomManager.get_notice(thread.id, "attachment") or {}
+    new_cfg = {
+        "enabled": True,
+        "message_id": old_cfg.get("message_id"),
+        "updated_by": str(interaction.user.id),
+        "updated_at": _now_text()
+    }
+    ThreadBottomManager.set_notice(thread.id, "attachment", new_cfg)
+    await refresh_thread_bottom_notices(thread)
+
+    await interaction.followup.send(
+        "✅ 已开启「保护附件下载入口」置底。\n后续有新消息时，下载入口会自动保持在帖子底部。",
+        ephemeral=True
+    )
+
+
+# ======================
+# /删除保护附件置底（帖主/管理员）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="删除保护附件置底", description="🗑️ [帖主/管理员] 删除保护附件下载置底消息")
+async def 删除保护附件置底(interaction: discord.Interaction):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    if not isinstance(interaction.channel, discord.Thread):
+        await interaction.followup.send("❌ 此命令只能在论坛帖子中使用。", ephemeral=True)
+        return
+
+    thread = interaction.channel
+    if not _can_manage_thread_bottom(interaction, thread):
+        await interaction.followup.send("❌ 只有帖主或管理员可以删除该帖置底消息。", ephemeral=True)
+        return
+
+    cfg = ThreadBottomManager.get_notice(thread.id, "attachment")
+    if not cfg:
+        await interaction.followup.send("ℹ️ 当前帖子未启用保护附件置底。", ephemeral=True)
+        return
+
+    await _delete_thread_message_if_exists(thread, cfg.get("message_id"))
+    ThreadBottomManager.delete_notice(thread.id, "attachment")
+
+    await interaction.followup.send("✅ 已删除保护附件下载置底消息。", ephemeral=True)
+
+
+# ======================
+# /公告置底（帖子/文字/announcement）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="公告置底", description="📢 [管理员/帖主] 设置并保持公告在帖子或文字频道底部")
+@app_commands.describe(内容="公告内容（重复执行本命令可编辑）")
+async def 公告置底(interaction: discord.Interaction, 内容: str):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    if not _is_announcement_bottom_channel(interaction.channel):
+        await interaction.followup.send("❌ 此命令仅支持论坛帖子、文字频道和announcement频道。", ephemeral=True)
+        return
+
+    channel = interaction.channel
+    if not _can_manage_announcement_bottom(interaction, channel):
+        await interaction.followup.send("❌ 只有管理员，或帖子内的帖主，才能设置公告置底。", ephemeral=True)
+        return
+
+    content = str(内容 or "").strip()
+    if not content:
+        await interaction.followup.send("❌ 公告内容不能为空。", ephemeral=True)
+        return
+    if len(content) > 1800:
+        await interaction.followup.send("❌ 公告内容过长，请控制在 1800 字以内。", ephemeral=True)
+        return
+
+    old_cfg = ThreadBottomManager.get_notice(channel.id, "announcement") or {}
+    new_cfg = {
+        "enabled": True,
+        "content": content,
+        "message_id": old_cfg.get("message_id"),
+        "updated_by": str(interaction.user.id),
+        "updated_at": _now_text()
+    }
+    ThreadBottomManager.set_notice(channel.id, "announcement", new_cfg)
+    await refresh_thread_bottom_notices(channel)
+
+    await interaction.followup.send(
+        "✅ 公告置底已生效。\n后续可再次使用 `/公告置底` 直接编辑公告内容。",
+        ephemeral=True
+    )
+
+
+# ======================
+# /删除公告置底（帖子/文字/announcement）
+# ======================
+@app_commands.guilds(discord.Object(id=1472467068333850637))
+@bot.tree.command(name="删除公告置底", description="🗑️ [管理员/帖主] 删除帖子或文字频道公告置底消息")
+async def 删除公告置底(interaction: discord.Interaction):
+    if not acquire_cmd_lock(interaction.id):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    if not _is_announcement_bottom_channel(interaction.channel):
+        await interaction.followup.send("❌ 此命令仅支持论坛帖子、文字频道和announcement频道。", ephemeral=True)
+        return
+
+    channel = interaction.channel
+    if not _can_manage_announcement_bottom(interaction, channel):
+        await interaction.followup.send("❌ 只有管理员，或帖子内的帖主，才能删除公告置底。", ephemeral=True)
+        return
+
+    cfg = ThreadBottomManager.get_notice(channel.id, "announcement")
+    if not cfg:
+        await interaction.followup.send("ℹ️ 当前频道未启用公告置底。", ephemeral=True)
+        return
+
+    await _delete_thread_message_if_exists(channel, cfg.get("message_id"))
+    ThreadBottomManager.delete_notice(channel.id, "announcement")
+
+    await interaction.followup.send("✅ 已删除公告置底消息。", ephemeral=True)
 
 # ======================
 # 启动 & 同步斜杠命令
 # ======================
 @bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
+        return
+
+    channel = message.channel
+    if _is_announcement_bottom_channel(channel):
+        await refresh_thread_bottom_notices(channel)
+
+    await bot.process_commands(message)
+
+
+@bot.event
 async def on_ready():
     bot.add_view(TicketView())
-    bot.add_view(CommunityReviewView())
     bot.add_view(TicketControlView())  # 持久化注册工单按钮视图
     try:
-        synced = await bot.tree.sync()
-        print(f"✅ 已同步 {len(synced)} 个斜杠命令")
+        # 先同步全局命令
+        global_synced = await bot.tree.sync()
+        print(f"✅ 已同步 {len(global_synced)} 个全局斜杠命令")
+
+        # 再同步guild特定的命令
+        guild_obj = discord.Object(id=1472467068333850637)
+        guild_synced = await bot.tree.sync(guild=guild_obj)
+        print(f"✅ 已同步 {len(guild_synced)} 个服务器特定命令到 {guild_obj.id}")
     except Exception as e:
         print(f"❌ 命令同步失败: {e}")
     print(f"✅ 已登录：{bot.user} | PID: {os.getpid()} | 时间: {time.strftime('%H:%M:%S')}")

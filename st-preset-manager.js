@@ -338,6 +338,7 @@
     const State = {
         presets: {},
         currentPresetId: null,
+        activeTab: 'prompts',
         dragItem: null,
         // 对齐ST: power_user.reasoning 设置
         reasoning: {
@@ -487,6 +488,7 @@
                 const parsed = JSON.parse(d);
                 State.presets = parsed.presets || {};
                 State.currentPresetId = parsed.currentPresetId;
+                State.activeTab = (parsed.activeTab === 'regex') ? 'regex' : 'prompts';
                 // 对齐ST: 加载reasoning设置
                 if (parsed.reasoning) {
                     Object.assign(State.reasoning, parsed.reasoning);
@@ -524,6 +526,7 @@
             localStorage.setItem('stPresets', JSON.stringify({
                 presets: State.presets,
                 currentPresetId: State.currentPresetId,
+                activeTab: State.activeTab,
                 reasoning: State.reasoning,
                 squash_system_messages: State.squash_system_messages,
             }));
@@ -554,30 +557,53 @@
         page.id = 'st-preset-page';
         page.className = 'st-preset-page';
         page.innerHTML = `
-            <div class="st-preset-nav">
-                <div class="st-preset-back" id="st-preset-back">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" fill="none"/></svg>
-                </div>
-                <div class="st-preset-title">线下预设</div>
+            <div class="sub-nav friend-nav settings-config-nav st-preset-nav">
+                <div class="back-btn st-preset-back" id="st-preset-back" aria-label="返回"></div>
+                <div class="sub-title st-preset-title">线下预设</div>
             </div>
             <div class="st-preset-selector">
-                <select class="st-preset-select" id="st-preset-select"></select>
-                <input class="st-preset-name-input" id="st-preset-name-input" placeholder="预设名称">
-                <button class="st-preset-btn" id="st-preset-new">新建</button>
-                <button class="st-preset-btn danger" id="st-preset-del">删除</button>
-                <button class="st-preset-btn primary" id="st-add-prompt-btn">+添加</button>
+                <div class="st-preset-main-controls">
+                    <div class="st-preset-field">
+                        <label class="st-preset-field-label" for="st-preset-select">当前预设</label>
+                        <select class="st-preset-select" id="st-preset-select"></select>
+                    </div>
+                    <div class="st-preset-field">
+                        <label class="st-preset-field-label" for="st-preset-name-input">预设名称</label>
+                        <input class="st-preset-name-input" id="st-preset-name-input" placeholder="请输入预设名称">
+                    </div>
+                </div>
+                <div class="st-preset-action-controls">
+                    <button class="st-preset-btn" id="st-preset-new">新建</button>
+                    <button class="st-preset-btn danger" id="st-preset-del">删除</button>
+                </div>
             </div>
             <div class="st-content-scroll">
-            <div class="st-prompt-list" id="st-prompt-list"></div>
-            
-            <!-- 正则替换区域 -->
-            <div class="st-regex-section">
-                <div class="st-section-header">
-                    <span class="st-section-title">正则替换</span>
-                    <button class="st-add-regex-btn" id="st-add-regex-btn">+ 添加</button>
+                <div class="st-preset-tabbar" role="tablist" aria-label="预设编辑分区">
+                    <button class="st-preset-tab active" data-tab="prompts" role="tab" aria-selected="true">预设提示词</button>
+                    <button class="st-preset-tab" data-tab="regex" role="tab" aria-selected="false">正则替换</button>
                 </div>
-                <div class="st-regex-list" id="st-regex-list"></div>
-            </div>
+
+                <div class="st-tab-panels">
+                    <section class="st-tab-panel active" data-tab-panel="prompts" role="tabpanel">
+                        <div class="st-panel-card">
+                            <div class="st-panel-head">
+                                <span class="st-panel-title">提示词列表</span>
+                                <button class="st-preset-btn primary st-inline-add-btn" id="st-add-prompt-btn">+ 添加提示词</button>
+                            </div>
+                            <div class="st-prompt-list" id="st-prompt-list"></div>
+                        </div>
+                    </section>
+
+                    <section class="st-tab-panel" data-tab-panel="regex" role="tabpanel" hidden>
+                        <div class="st-regex-section">
+                            <div class="st-section-header">
+                                <span class="st-section-title">正则替换规则</span>
+                                <button class="st-add-regex-btn" id="st-add-regex-btn">+ 添加规则</button>
+                            </div>
+                            <div class="st-regex-list" id="st-regex-list"></div>
+                        </div>
+                    </section>
+                </div>
             </div>
             
             <div class="st-preset-footer">
@@ -597,35 +623,80 @@
             </div>
             <div class="st-edit-modal" id="st-edit-modal">
                 <div class="st-edit-box">
-                    <div class="st-edit-header">
-                        <input class="st-edit-name" id="st-edit-name" placeholder="提示词名称">
+                    <div class="st-edit-headline">
+                        <div class="st-edit-title-wrap">
+                            <div class="st-edit-modal-title" id="st-edit-modal-title">编辑提示词</div>
+                            <div class="st-edit-modal-subtitle" id="st-edit-modal-subtitle">修改提示词参数与内容</div>
+                        </div>
                         <button class="st-edit-close" id="st-edit-close">×</button>
                     </div>
-                    <div class="st-edit-row">
-                        <select class="st-edit-select" id="st-edit-role">
-                            <option value="system">system</option>
-                            <option value="user">user</option>
-                            <option value="assistant">assistant</option>
-                        </select>
-                        <select class="st-edit-select" id="st-edit-position">
-                            <option value="top">顶部(绝对)</option>
-                            <option value="depth">深度(相对)</option>
-                            <option value="bottom">底部(绝对)</option>
-                        </select>
-                        <div class="st-edit-depth">
-                            <span>D</span>
-                            <input type="number" id="st-edit-depth" value="0" min="0" title="深度: 0=最新消息后, N=从末尾往前N条">
-                        </div>
-                        <div class="st-edit-depth">
-                            <span>O</span>
-                            <input type="number" id="st-edit-order" value="100" min="0" title="优先级: 数字越小越先处理">
-                        </div>
+
+                    <div class="st-edit-body">
+                        <section class="st-edit-card">
+                            <div class="st-edit-card-title">基础信息</div>
+                            <div class="st-edit-field">
+                                <label class="st-edit-label" for="st-edit-name">提示词名称</label>
+                                <input class="st-edit-name" id="st-edit-name" placeholder="请输入提示词名称">
+                            </div>
+                        </section>
+
+                        <section class="st-edit-card">
+                            <div class="st-edit-card-title">注入参数</div>
+                            <div class="st-edit-grid">
+                                <div class="st-edit-field">
+                                    <label class="st-edit-label" for="st-edit-role">角色类型</label>
+                                    <select class="st-edit-select" id="st-edit-role">
+                                        <option value="system">system</option>
+                                        <option value="user">user</option>
+                                        <option value="assistant">assistant</option>
+                                    </select>
+                                </div>
+                                <div class="st-edit-field">
+                                    <label class="st-edit-label" for="st-edit-position">插入位置</label>
+                                    <select class="st-edit-select" id="st-edit-position">
+                                        <option value="top">顶部(绝对)</option>
+                                        <option value="depth">深度(相对)</option>
+                                        <option value="bottom">底部(绝对)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="st-edit-metrics">
+                                <div class="st-edit-depth">
+                                    <span>D</span>
+                                    <input type="number" id="st-edit-depth" value="0" min="0" title="深度: 0=最新消息后, N=从末尾往前N条">
+                                </div>
+                                <div class="st-edit-depth">
+                                    <span>O</span>
+                                    <input type="number" id="st-edit-order" value="100" min="0" title="优先级: 数字越小越先处理">
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="st-edit-card">
+                            <div class="st-edit-card-title">触发条件</div>
+                            <div class="st-edit-field">
+                                <label class="st-edit-label" for="st-edit-trigger">触发词</label>
+                                <input class="st-edit-trigger" id="st-edit-trigger" placeholder="触发词（逗号分隔，留空=始终触发）">
+                            </div>
+                            <div class="st-edit-help">留空表示该提示词始终生效。</div>
+                        </section>
+
+                        <section class="st-edit-card st-edit-card-content">
+                            <div class="st-edit-card-title">提示词内容</div>
+                            <div class="st-edit-field">
+                                <label class="st-edit-label" for="st-edit-content">正文内容</label>
+                                <textarea class="st-edit-content" id="st-edit-content" placeholder="请输入提示词内容..."></textarea>
+                            </div>
+                        </section>
                     </div>
-                    <input class="st-edit-trigger" id="st-edit-trigger" placeholder="触发词（逗号分隔，留空=始终触发）">
-                    <textarea class="st-edit-content" id="st-edit-content" placeholder="提示词内容..."></textarea>
+
                     <div class="st-edit-footer">
-                        <span class="st-edit-tokens" id="st-edit-tokens">0t</span>
-                        <button class="st-preset-btn primary" id="st-edit-save">保存</button>
+                        <span class="st-edit-tokens" id="st-edit-tokens">0 tokens</span>
+                        <div class="st-edit-actions">
+                            <button class="st-preset-btn" id="st-edit-cancel">取消</button>
+                            <button class="st-preset-btn primary" id="st-edit-save">保存修改</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -684,8 +755,30 @@
     // 渲染
     function render() {
         renderSelector();
+        setActiveTab(State.activeTab);
         renderPrompts();
         renderRegexList();
+    }
+
+    function setActiveTab(tab) {
+        const nextTab = tab === 'regex' ? 'regex' : 'prompts';
+        State.activeTab = nextTab;
+
+        document.querySelectorAll('#st-preset-page .st-preset-tab').forEach(btn => {
+            const isActive = btn.dataset.tab === nextTab;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        document.querySelectorAll('#st-preset-page .st-tab-panel').forEach(panel => {
+            const isActive = panel.dataset.tabPanel === nextTab;
+            panel.classList.toggle('active', isActive);
+            if (isActive) {
+                panel.removeAttribute('hidden');
+            } else {
+                panel.setAttribute('hidden', '');
+            }
+        });
     }
 
     // 渲染正则替换列表
@@ -704,10 +797,14 @@
         list.innerHTML = regexList.map((item, idx) => `
             <div class="st-regex-item" data-idx="${idx}">
                 <div class="st-regex-header">
-                    <div class="st-regex-toggle ${item.enabled ? 'on' : ''}" data-field="enabled"></div>
-                    <span class="st-regex-name">${esc(item.name || '未命名')}</span>
-                    <button class="st-regex-edit" data-action="edit">编辑</button>
-                    <button class="st-regex-delete" data-action="delete">×</button>
+                    <div class="st-regex-main">
+                        <div class="st-regex-toggle ${item.enabled ? 'on' : ''}" data-field="enabled"></div>
+                        <span class="st-regex-name">${esc(item.name || '未命名')}</span>
+                    </div>
+                    <div class="st-regex-tools">
+                        <button class="st-regex-edit" data-action="edit">编辑</button>
+                        <button class="st-regex-delete" data-action="delete">删除</button>
+                    </div>
                 </div>
                 <div class="st-regex-preview">
                     <div class="st-regex-pattern">${esc(item.searchPattern || '')}</div>
@@ -742,18 +839,29 @@
         const list = document.getElementById('st-prompt-list');
         const preset = getCurrentPreset();
         if (!list || !preset) return;
+
+        if (!Array.isArray(preset.prompts) || preset.prompts.length === 0) {
+            list.innerHTML = '<div class="st-regex-empty">暂无提示词，点击右上角“添加提示词”创建</div>';
+            return;
+        }
         
         list.innerHTML = preset.prompts.map((p, i) => {
             const sysTag = p.system_prompt ? '<span class="st-prompt-sys-tag">SYS</span>' : '';
+            const tokenCount = estimateTokens(p.content || '');
             return `
             <div class="st-prompt-item" data-idx="${i}" draggable="true">
                 <div class="st-prompt-header">
-                    <span class="st-prompt-drag">⋮⋮</span>
-                    <div class="st-prompt-toggle ${p.enabled ? 'on' : ''}" data-field="enabled"></div>
-                    ${sysTag}
-                    <span class="st-prompt-name-display">${esc(p.name) || '未命名'}</span>
-                    <button class="st-prompt-edit-btn" data-action="edit">编辑</button>
-                    <button class="st-prompt-delete" data-action="delete">×</button>
+                    <div class="st-prompt-main">
+                        <span class="st-prompt-drag">⋮⋮</span>
+                        <div class="st-prompt-toggle ${p.enabled ? 'on' : ''}" data-field="enabled"></div>
+                        ${sysTag}
+                        <span class="st-prompt-name-display">${esc(p.name) || '未命名'}</span>
+                    </div>
+                    <div class="st-prompt-tools">
+                        <div class="st-prompt-token">${tokenCount} tokens</div>
+                        <button class="st-prompt-edit-btn" data-action="edit">编辑</button>
+                        <button class="st-prompt-delete" data-action="delete">删除</button>
+                    </div>
                 </div>
             </div>
         `}).join('');
@@ -772,6 +880,14 @@
             save();
             render();
         };
+
+        // Tab 切换
+        page.querySelectorAll('.st-preset-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                setActiveTab(tab.dataset.tab);
+                save();
+            });
+        });
         
         // 预设名称修改
         document.getElementById('st-preset-name-input').oninput = e => {
@@ -828,9 +944,10 @@
                 content: ''
             });
             save();
+            setActiveTab('prompts');
             renderPrompts();
             // 打开编辑弹窗
-            openEditModal(preset.prompts.length - 1);
+            openEditModal(preset.prompts.length - 1, true);
         };
         
         // 添加正则替换
@@ -846,6 +963,7 @@
                 enabled: true
             });
             save();
+            setActiveTab('regex');
             renderRegexList();
             openRegexModal(preset.regexReplacements.length - 1);
         };
@@ -1064,9 +1182,10 @@
         
         // 编辑弹窗事件
         document.getElementById('st-edit-close').onclick = closeEditModal;
+        document.getElementById('st-edit-cancel').onclick = closeEditModal;
         document.getElementById('st-edit-save').onclick = saveEditModal;
         document.getElementById('st-edit-content').oninput = e => {
-            document.getElementById('st-edit-tokens').textContent = estimateTokens(e.target.value) + 't';
+            document.getElementById('st-edit-tokens').textContent = estimateTokens(e.target.value) + ' tokens';
         };
         document.getElementById('st-edit-modal').onclick = e => {
             if (e.target.id === 'st-edit-modal') closeEditModal();
@@ -1107,11 +1226,19 @@
     
     // 编辑弹窗
     let editingIdx = null;
-    function openEditModal(idx) {
+    let editingIsNew = false;
+    function openEditModal(idx, isNew = false) {
         const preset = getCurrentPreset();
         const p = preset?.prompts[idx];
         if (!p) return;
         editingIdx = idx;
+        editingIsNew = !!isNew;
+        const titleEl = document.getElementById('st-edit-modal-title');
+        const subtitleEl = document.getElementById('st-edit-modal-subtitle');
+        const saveBtn = document.getElementById('st-edit-save');
+        if (titleEl) titleEl.textContent = editingIsNew ? '添加提示词' : '编辑提示词';
+        if (subtitleEl) subtitleEl.textContent = editingIsNew ? '创建新的提示词配置' : '修改已有提示词配置';
+        if (saveBtn) saveBtn.textContent = editingIsNew ? '添加提示词' : '保存修改';
         document.getElementById('st-edit-name').value = p.name || '';
         document.getElementById('st-edit-role').value = p.role || 'system';
         document.getElementById('st-edit-position').value = p.position || 'depth';
@@ -1119,12 +1246,13 @@
         document.getElementById('st-edit-order').value = p.injection_order ?? DEFAULT_ORDER;
         document.getElementById('st-edit-trigger').value = p.trigger || '';
         document.getElementById('st-edit-content').value = p.content || '';
-        document.getElementById('st-edit-tokens').textContent = estimateTokens(p.content) + 't';
+        document.getElementById('st-edit-tokens').textContent = estimateTokens(p.content) + ' tokens';
         document.getElementById('st-edit-modal').classList.add('show');
     }
     function closeEditModal() {
         document.getElementById('st-edit-modal').classList.remove('show');
         editingIdx = null;
+        editingIsNew = false;
     }
     function saveEditModal() {
         const preset = getCurrentPreset();

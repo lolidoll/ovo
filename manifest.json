@@ -10,33 +10,33 @@
   "background_color": "#ffffff",
   "icons": [
     {
-      "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+      "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+      "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+      "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
       "sizes": "32x32",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+      "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
       "sizes": "64x64",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+      "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
       "sizes": "128x128",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     }
   ],
@@ -47,9 +47,9 @@
   "dir": "ltr",
   "screenshots": [
     {
-      "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+      "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
       "sizes": "750x1334",
-      "type": "image/png",
+      "type": "image/jpeg",
       "form_factor": "narrow"
     }
   ],
@@ -61,9 +61,9 @@
       "url": "./?new-chat=true",
       "icons": [
         {
-          "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+          "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/jpeg"
         }
       ]
     },
@@ -74,11 +74,12 @@
       "url": "./?tab=msg-page",
       "icons": [
         {
-          "src": "https://img.heliar.top/file/1771160270412_IMG_20260215_194554.jpg",
+          "src": "https://img.heliar.top/file/1773196215566_IMG_20260311_023507.jpg",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/jpeg"
         }
       ]
     }
   ]
 }
+

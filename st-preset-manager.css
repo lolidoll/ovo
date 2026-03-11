@@ -913,3 +913,2107 @@
     .st-edit-content { min-height: 180px; }
     .st-prompt-header { padding: 12px 14px; flex-wrap: nowrap; }
 }
+
+/* ========================================
+   线下预设页面重设计（参考世界书 + 我的人设）
+   浅粉白主题，统一弹窗风格
+   ======================================== */
+
+#st-preset-page {
+    background: linear-gradient(180deg, #fff8fc 0%, #fff2f8 58%, #fffdfd 100%);
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+}
+
+#st-preset-page .st-preset-nav {
+    height: 56px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: linear-gradient(180deg, #fff5f9 0%, #ffe4ed 100%);
+    border-bottom: 1px solid #ffd4e0;
+    box-shadow: 0 2px 12px rgba(255, 107, 157, 0.15);
+    position: relative;
+    z-index: 8;
+}
+
+#st-preset-page .st-preset-nav .st-preset-title {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffb6c8;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    z-index: 1;
+}
+
+#st-preset-page .st-preset-nav .st-preset-back {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.2);
+}
+
+#st-preset-page .st-preset-nav .st-preset-back::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-left: 2.5px solid #666;
+    border-bottom: 2.5px solid #666;
+    transform: rotate(45deg);
+}
+
+#st-preset-page .st-preset-nav .st-preset-back:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+#st-preset-page .st-preset-nav .st-preset-back:hover::before {
+    border-color: #000;
+}
+
+#st-preset-page .st-content-scroll {
+    background: linear-gradient(180deg, #fff8fc 0%, #fff2f8 58%, #fffdfd 100%);
+}
+
+#st-preset-page .st-content-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+#st-preset-page .st-content-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffb6d1 0%, #ff95bd 100%);
+    border-radius: 999px;
+}
+
+#st-preset-page .st-preset-selector {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) repeat(3, auto);
+    align-items: center;
+    gap: 8px;
+    margin: 10px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid #ffdced;
+    background: linear-gradient(180deg, #fffefe 0%, #fff8fc 100%);
+    box-shadow: 0 5px 16px rgba(248, 157, 189, 0.14);
+    overflow-x: auto;
+}
+
+#st-preset-page .st-preset-select,
+#st-preset-page .st-preset-name-input {
+    width: 100%;
+    min-width: 120px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #ffdce9;
+    border-radius: 10px;
+    background: #fff;
+    color: #9c5878;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    box-sizing: border-box;
+}
+
+#st-preset-page .st-preset-select:focus,
+#st-preset-page .st-preset-name-input:focus {
+    border-color: #ffb0cc;
+    box-shadow: 0 0 0 2px rgba(255, 176, 204, 0.2);
+}
+
+#st-preset-page .st-preset-btn {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid #ffd7e7;
+    background: #fff;
+    color: #be7394;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+#st-preset-page .st-preset-btn:active {
+    transform: scale(0.97);
+}
+
+#st-preset-page .st-preset-btn.primary {
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+    box-shadow: 0 4px 12px rgba(245, 132, 174, 0.25);
+}
+
+#st-preset-page .st-preset-btn.danger {
+    background: #fff4f8;
+    color: #d96a94;
+    border-color: #ffc9dd;
+}
+
+#st-preset-page .st-prompt-list {
+    padding: 0 10px;
+}
+
+#st-preset-page .st-prompt-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    border: 1px solid #ffe0ec;
+    background: linear-gradient(180deg, #ffffff 0%, #fff8fc 100%);
+    margin-bottom: 10px;
+    box-shadow: 0 3px 10px rgba(255, 182, 200, 0.15);
+}
+
+#st-preset-page .st-prompt-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #ffb7d1 0%, #ff9fbe 100%);
+}
+
+#st-preset-page .st-prompt-item:hover {
+    border-color: #ffbfd6;
+    box-shadow: 0 7px 18px rgba(255, 166, 194, 0.24);
+}
+
+#st-preset-page .st-prompt-header {
+    padding: 12px 12px 12px 16px;
+    gap: 10px;
+}
+
+#st-preset-page .st-prompt-drag {
+    color: #d69cb5;
+    opacity: 0.7;
+}
+
+#st-preset-page .st-prompt-toggle {
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: #f2dce6;
+    border: 1px solid #ffd0e1;
+}
+
+#st-preset-page .st-prompt-toggle.on {
+    background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+    border-color: transparent;
+}
+
+#st-preset-page .st-prompt-toggle::after {
+    width: 20px;
+    height: 20px;
+    top: 2px;
+    left: 2px;
+    box-shadow: 0 2px 6px rgba(206, 106, 147, 0.22);
+}
+
+#st-preset-page .st-prompt-toggle.on::after {
+    transform: translateX(18px);
+}
+
+#st-preset-page .st-prompt-sys-tag {
+    color: #cb7699;
+    background: #fff0f6;
+}
+
+#st-preset-page .st-prompt-name-display {
+    color: #b65c83;
+    font-size: 14px;
+}
+
+#st-preset-page .st-prompt-edit-btn {
+    border: 1px solid #ffd8e7;
+    background: #fff4fa;
+    color: #bd7596;
+}
+
+#st-preset-page .st-prompt-delete {
+    color: #e07aa3;
+}
+
+#st-preset-page .st-regex-section {
+    margin: 0 10px 12px;
+    border-radius: 16px;
+    border: 1px solid #ffdced;
+    background: linear-gradient(180deg, #fffefe 0%, #fff8fc 100%);
+    box-shadow: 0 5px 16px rgba(248, 157, 189, 0.14);
+}
+
+#st-preset-page .st-section-header {
+    border-bottom: 1px solid #ffe4ef;
+}
+
+#st-preset-page .st-section-title {
+    color: #c6678f;
+    font-weight: 700;
+}
+
+#st-preset-page .st-add-regex-btn {
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 9px;
+    border: none;
+    background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+    box-shadow: 0 4px 12px rgba(245, 132, 174, 0.25);
+}
+
+#st-preset-page .st-regex-empty {
+    color: #bf89a1;
+}
+
+#st-preset-page .st-regex-item {
+    border-radius: 12px;
+    border: 1px solid #ffe3ef;
+    background: #fff;
+    box-shadow: none;
+}
+
+#st-preset-page .st-regex-name {
+    color: #b65c83;
+    font-weight: 600;
+}
+
+#st-preset-page .st-regex-toggle {
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: #f2dce6;
+    border: 1px solid #ffd0e1;
+}
+
+#st-preset-page .st-regex-toggle.on {
+    background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+    border-color: transparent;
+}
+
+#st-preset-page .st-regex-toggle::after {
+    width: 20px;
+    height: 20px;
+    top: 2px;
+    left: 2px;
+    box-shadow: 0 2px 6px rgba(206, 106, 147, 0.22);
+}
+
+#st-preset-page .st-regex-toggle.on::after {
+    transform: translateX(18px);
+}
+
+#st-preset-page .st-regex-edit {
+    border: 1px solid #ffd8e7;
+    background: #fff4fa;
+    color: #bd7596;
+}
+
+#st-preset-page .st-regex-delete {
+    background: #fff0f6;
+    color: #e07aa3;
+}
+
+#st-preset-page .st-regex-pattern,
+#st-preset-page .st-regex-replace {
+    background: #fff8fc;
+    color: #b97b98;
+}
+
+#st-preset-page .st-regex-arrow {
+    color: #d79ab5;
+}
+
+#st-preset-page .st-preset-footer {
+    gap: 8px;
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 243, 249, 0.97) 100%);
+    border-top: 1px solid #ffd4e0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#st-preset-page .st-preset-footer .st-preset-btn {
+    min-height: 38px;
+}
+
+#st-preset-page .st-import-modal,
+#st-preset-page .st-edit-modal,
+#st-preset-page .st-confirm-modal,
+#st-preset-page .st-input-modal,
+#st-preset-page .st-regex-modal {
+    background: rgba(84, 24, 47, 0.2);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+#st-preset-page .st-import-modal {
+    align-items: center;
+}
+
+#st-preset-page .st-import-box,
+#st-preset-page .st-edit-box,
+#st-preset-page .st-confirm-box,
+#st-preset-page .st-input-box,
+#st-preset-page .st-regex-edit-box {
+    border: 1px solid #ffd7e8;
+    background: linear-gradient(180deg, #ffffff 0%, #fff8fc 100%);
+    box-shadow: 0 12px 36px rgba(237, 136, 177, 0.28);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#st-preset-page .st-import-box {
+    width: min(92vw, 520px);
+    border-radius: 18px;
+    padding: 14px;
+}
+
+#st-preset-page .st-edit-box {
+    border-radius: 18px;
+}
+
+#st-preset-page .st-confirm-box,
+#st-preset-page .st-input-box {
+    width: min(92vw, 320px);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+#st-preset-page .st-regex-edit-box {
+    width: min(92vw, 420px);
+    border-radius: 18px;
+}
+
+#st-preset-page .st-import-title,
+#st-preset-page .st-confirm-title,
+#st-preset-page .st-input-title {
+    color: #c95f89;
+    font-weight: 700;
+}
+
+#st-preset-page .st-edit-close {
+    border: 1px solid #ffd9e8;
+    background: #fff3f9;
+    color: #bd7495;
+}
+
+#st-preset-page .st-edit-name,
+#st-preset-page .st-edit-select,
+#st-preset-page .st-edit-trigger,
+#st-preset-page .st-edit-content,
+#st-preset-page .st-edit-depth,
+#st-preset-page .st-import-textarea,
+#st-preset-page .st-input-modal .st-input-field,
+#st-preset-page .st-form-input {
+    border: 1px solid #ffdce9;
+    background: #fff;
+    color: #9c5878;
+}
+
+#st-preset-page .st-edit-depth input {
+    color: #9c5878;
+}
+
+#st-preset-page .st-edit-name:focus,
+#st-preset-page .st-edit-select:focus,
+#st-preset-page .st-edit-trigger:focus,
+#st-preset-page .st-edit-content:focus,
+#st-preset-page .st-import-textarea:focus,
+#st-preset-page .st-input-modal .st-input-field:focus,
+#st-preset-page .st-form-input:focus {
+    border-color: #ffb0cc;
+    box-shadow: 0 0 0 2px rgba(255, 176, 204, 0.2);
+}
+
+#st-preset-page .st-edit-trigger::placeholder,
+#st-preset-page .st-input-modal .st-input-field::placeholder,
+#st-preset-page .st-import-textarea::placeholder,
+#st-preset-page .st-form-input::placeholder {
+    color: #c896ad;
+}
+
+#st-preset-page .st-edit-tokens,
+#st-preset-page .st-form-group label,
+#st-preset-page .st-checkbox-label {
+    color: #ba7f98;
+}
+
+#st-preset-page .st-checkbox-label input[type="checkbox"] {
+    accent-color: #ff9fbe;
+}
+
+@media (max-width: 480px) {
+    #st-preset-page .st-preset-selector {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto auto;
+        gap: 6px;
+        margin: 8px;
+        padding: 10px;
+    }
+
+    #st-preset-page .st-preset-select,
+    #st-preset-page .st-preset-name-input {
+        min-width: 96px;
+        font-size: 12px;
+    }
+
+    #st-preset-page .st-preset-btn {
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
+
+    #st-preset-page .st-prompt-list {
+        padding: 0 8px;
+    }
+
+    #st-preset-page .st-regex-section {
+        margin: 0 8px 10px;
+    }
+
+    #st-preset-page .st-preset-footer {
+        padding: 8px;
+    }
+}
+
+/* ========================================
+   线下预设布局精修（移动端优先）
+   ======================================== */
+
+#st-preset-page {
+    --st-page-max-width: 960px;
+    --st-page-gap: 10px;
+}
+
+#st-preset-page .st-content-scroll {
+    padding-bottom: 8px;
+}
+
+#st-preset-page .st-preset-selector {
+    width: min(calc(100% - 20px), var(--st-page-max-width));
+    margin: 10px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: visible;
+}
+
+#st-preset-page .st-preset-main-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--st-page-gap);
+    min-width: 0;
+}
+
+#st-preset-page .st-preset-field {
+    min-width: 0;
+}
+
+#st-preset-page .st-preset-field-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ba7f98;
+    letter-spacing: 0.1px;
+    line-height: 1;
+}
+
+#st-preset-page .st-preset-select,
+#st-preset-page .st-preset-name-input {
+    min-width: 0;
+    width: 100%;
+    height: 38px;
+}
+
+#st-preset-page .st-preset-action-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page .st-preset-action-controls .st-preset-btn {
+    width: 100%;
+    min-width: 0;
+}
+
+#st-preset-page .st-prompt-list {
+    width: min(calc(100% - 20px), var(--st-page-max-width));
+    margin: 0 auto;
+    padding: 0;
+}
+
+#st-preset-page .st-prompt-item {
+    margin-bottom: 10px;
+}
+
+#st-preset-page .st-prompt-header {
+    align-items: center;
+    gap: 8px;
+}
+
+#st-preset-page .st-prompt-drag {
+    width: 18px;
+    flex: 0 0 18px;
+    text-align: center;
+}
+
+#st-preset-page .st-prompt-name-display {
+    min-width: 0;
+}
+
+#st-preset-page .st-prompt-edit-btn {
+    min-width: 52px;
+    min-height: 28px;
+    padding: 0 10px;
+}
+
+#st-preset-page .st-prompt-delete {
+    width: 26px;
+    height: 26px;
+    border: 1px solid #ffd8e7;
+    border-radius: 8px;
+    background: #fff0f6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#st-preset-page .st-regex-section {
+    width: min(calc(100% - 20px), var(--st-page-max-width));
+    margin: 0 auto 12px;
+}
+
+#st-preset-page .st-regex-header {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+}
+
+#st-preset-page .st-regex-name {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#st-preset-page .st-regex-preview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+    align-items: center;
+}
+
+#st-preset-page .st-regex-pattern,
+#st-preset-page .st-regex-replace {
+    min-width: 0;
+}
+
+#st-preset-page .st-preset-footer {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page .st-preset-footer .st-preset-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+}
+
+#st-preset-page .st-import-box,
+#st-preset-page .st-regex-edit-box {
+    max-height: min(86vh, 720px);
+}
+
+#st-preset-page .st-edit-box {
+    width: min(94vw, 760px);
+    max-height: min(88vh, 760px);
+}
+
+#st-preset-page .st-edit-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 92px 104px;
+    gap: 8px;
+}
+
+#st-preset-page .st-edit-depth {
+    min-height: 40px;
+    padding: 0 8px;
+    justify-content: space-between;
+}
+
+#st-preset-page .st-edit-depth input {
+    width: 44px;
+}
+
+@media (max-width: 720px) {
+    #st-preset-page .st-preset-main-controls {
+        grid-template-columns: 1fr;
+    }
+
+    #st-preset-page .st-preset-action-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #st-preset-page #st-add-prompt-btn {
+        grid-column: 1 / -1;
+    }
+
+    #st-preset-page .st-preset-footer {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #st-preset-page #st-preset-save {
+        grid-column: 1 / -1;
+    }
+
+    #st-preset-page .st-edit-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #st-preset-page .st-edit-content {
+        min-height: 220px;
+    }
+
+    #st-preset-page .st-prompt-header {
+        display: grid;
+        grid-template-columns: 16px 42px minmax(0, 1fr) auto auto;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    #st-preset-page .st-prompt-sys-tag {
+        display: none;
+    }
+
+    #st-preset-page .st-prompt-edit-btn {
+        min-width: 46px;
+        min-height: 26px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+
+    #st-preset-page .st-prompt-delete {
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+    }
+
+    #st-preset-page .st-regex-header {
+        grid-template-columns: 42px minmax(0, 1fr) auto auto;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 430px) {
+    #st-preset-page .st-preset-nav .st-preset-title {
+        font-size: 18px;
+    }
+
+    #st-preset-page .st-preset-selector,
+    #st-preset-page .st-prompt-list,
+    #st-preset-page .st-regex-section {
+        width: calc(100% - 16px);
+    }
+
+    #st-preset-page .st-preset-selector {
+        margin: 8px auto;
+        padding: 10px;
+        gap: 8px;
+    }
+
+    #st-preset-page .st-preset-field-label {
+        font-size: 11px;
+    }
+
+    #st-preset-page .st-preset-select,
+    #st-preset-page .st-preset-name-input {
+        height: 36px;
+        font-size: 12px;
+    }
+
+    #st-preset-page .st-regex-preview {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    #st-preset-page .st-regex-arrow {
+        display: none;
+    }
+
+    #st-preset-page .st-edit-box,
+    #st-preset-page .st-regex-edit-box,
+    #st-preset-page .st-import-box {
+        width: 94vw;
+    }
+}
+
+/* ========================================
+   线下预设终版优化（移动端优先）
+   ======================================== */
+
+#st-preset-page .st-preset-select,
+#st-preset-page .st-preset-name-input {
+    max-width: none;
+}
+
+#st-preset-page .st-preset-btn {
+    min-height: 38px;
+    font-size: 13px;
+}
+
+#st-preset-page .st-prompt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#st-preset-page .st-prompt-main {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 16px 44px auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+#st-preset-page .st-prompt-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+#st-preset-page .st-prompt-name-display {
+    min-width: 0;
+    line-height: 1.35;
+}
+
+#st-preset-page .st-prompt-edit-btn {
+    min-height: 30px;
+    padding: 0 11px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+#st-preset-page .st-prompt-delete {
+    min-height: 30px;
+    min-width: 30px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+#st-preset-page .st-regex-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#st-preset-page .st-regex-main {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+#st-preset-page .st-regex-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+#st-preset-page .st-regex-edit {
+    min-height: 30px;
+    padding: 0 10px;
+}
+
+#st-preset-page .st-regex-delete {
+    min-width: 30px;
+    min-height: 30px;
+}
+
+#st-preset-page .st-edit-row {
+    align-items: stretch;
+}
+
+@media (max-width: 760px) {
+    #st-preset-page .st-preset-selector,
+    #st-preset-page .st-prompt-list,
+    #st-preset-page .st-regex-section {
+        width: calc(100% - 14px);
+    }
+
+    #st-preset-page .st-preset-selector {
+        margin: 7px auto;
+        padding: 10px;
+    }
+
+    #st-preset-page .st-preset-main-controls {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    #st-preset-page .st-preset-action-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    #st-preset-page #st-add-prompt-btn {
+        grid-column: 1 / -1;
+    }
+
+    #st-preset-page .st-prompt-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    #st-preset-page .st-prompt-main {
+        grid-template-columns: 16px 42px minmax(0, 1fr);
+        gap: 7px;
+    }
+
+    #st-preset-page .st-prompt-sys-tag {
+        display: none;
+    }
+
+    #st-preset-page .st-prompt-tools {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 40px;
+        gap: 6px;
+    }
+
+    #st-preset-page .st-prompt-edit-btn {
+        width: 100%;
+        min-height: 32px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
+
+    #st-preset-page .st-prompt-delete {
+        width: 40px;
+        min-width: 40px;
+        min-height: 32px;
+        justify-self: end;
+    }
+
+    #st-preset-page .st-regex-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    #st-preset-page .st-regex-main {
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 7px;
+    }
+
+    #st-preset-page .st-regex-tools {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 40px;
+        gap: 6px;
+    }
+
+    #st-preset-page .st-regex-edit {
+        width: 100%;
+        min-height: 32px;
+        padding: 0 10px;
+    }
+
+    #st-preset-page .st-regex-delete {
+        width: 40px;
+        min-width: 40px;
+        min-height: 32px;
+        justify-self: end;
+        border-radius: 8px;
+    }
+
+    #st-preset-page .st-preset-footer {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    #st-preset-page #st-preset-save {
+        grid-column: 1 / -1;
+    }
+
+    #st-preset-page .st-edit-modal,
+    #st-preset-page .st-import-modal,
+    #st-preset-page .st-regex-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #st-preset-page .st-edit-box,
+    #st-preset-page .st-import-box,
+    #st-preset-page .st-regex-edit-box {
+        width: 100%;
+        max-width: none;
+        border-radius: 18px 18px 0 0;
+        max-height: 84dvh;
+    }
+
+    #st-preset-page .st-edit-box {
+        padding: 14px;
+    }
+
+    #st-preset-page .st-edit-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    #st-preset-page .st-edit-depth {
+        min-height: 38px;
+    }
+
+    #st-preset-page .st-edit-content {
+        min-height: 40vh;
+    }
+
+    #st-preset-page .st-edit-footer {
+        gap: 8px;
+    }
+
+    #st-preset-page .st-edit-footer .st-preset-btn,
+    #st-preset-page .st-import-actions .st-preset-btn,
+    #st-preset-page .st-input-actions .st-preset-btn,
+    #st-preset-page .st-confirm-actions .st-preset-btn {
+        min-height: 38px;
+        padding: 0 12px;
+    }
+}
+
+@media (max-width: 420px) {
+    #st-preset-page .st-preset-nav .st-preset-title {
+        font-size: 17px;
+    }
+
+    #st-preset-page .st-preset-btn {
+        min-height: 36px;
+        font-size: 12px;
+    }
+
+    #st-preset-page .st-regex-preview {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    #st-preset-page .st-regex-arrow {
+        display: none;
+    }
+
+    #st-preset-page .st-confirm-box,
+    #st-preset-page .st-input-box {
+        width: calc(100% - 24px);
+    }
+}
+
+/* ========================================
+   Tab 化布局（预设提示词 / 正则替换）
+   ======================================== */
+
+#st-preset-page .st-preset-action-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#st-preset-page .st-content-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#st-preset-page .st-preset-tabbar {
+    width: min(calc(100% - 20px), var(--st-page-max-width, 960px));
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 4px;
+    border-radius: 14px;
+    border: 1px solid #ffdbe9;
+    background: linear-gradient(180deg, #fffefe 0%, #fff7fc 100%);
+    box-shadow: 0 4px 14px rgba(248, 157, 189, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+#st-preset-page .st-preset-tab {
+    min-height: 34px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: #be7e9a;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#st-preset-page .st-preset-tab.active {
+    border-color: #ffb9d4;
+    background: linear-gradient(135deg, #fff2f8 0%, #ffe7f2 100%);
+    color: #c15b87;
+    box-shadow: 0 3px 8px rgba(245, 132, 174, 0.2);
+}
+
+#st-preset-page .st-tab-panels {
+    width: min(calc(100% - 20px), var(--st-page-max-width, 960px));
+    margin: 0 auto;
+}
+
+#st-preset-page .st-tab-panel {
+    display: none;
+}
+
+#st-preset-page .st-tab-panel.active {
+    display: block;
+}
+
+#st-preset-page .st-panel-card {
+    border-radius: 16px;
+    border: 1px solid #ffdced;
+    background: linear-gradient(180deg, #fffefe 0%, #fff8fc 100%);
+    box-shadow: 0 5px 16px rgba(248, 157, 189, 0.14);
+    padding: 10px;
+}
+
+#st-preset-page .st-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 2px 10px;
+}
+
+#st-preset-page .st-panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #c6678f;
+}
+
+#st-preset-page .st-inline-add-btn {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: 9px;
+    white-space: nowrap;
+}
+
+#st-preset-page .st-panel-card .st-prompt-list {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#st-preset-page [data-tab-panel="regex"] .st-regex-section {
+    width: 100%;
+    margin: 0;
+}
+
+#st-preset-page [data-tab-panel="regex"] .st-section-header {
+    padding-top: 10px;
+}
+
+@media (max-width: 760px) {
+    #st-preset-page .st-preset-tabbar,
+    #st-preset-page .st-tab-panels {
+        width: calc(100% - 14px);
+    }
+
+    #st-preset-page .st-preset-tabbar {
+        margin-top: 0;
+    }
+
+    #st-preset-page .st-panel-card {
+        padding: 8px;
+        border-radius: 14px;
+    }
+
+    #st-preset-page .st-panel-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding-bottom: 8px;
+    }
+
+    #st-preset-page .st-inline-add-btn {
+        width: 100%;
+        min-height: 34px;
+    }
+
+    #st-preset-page .st-preset-tab {
+        min-height: 32px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 420px) {
+    #st-preset-page .st-preset-tabbar,
+    #st-preset-page .st-tab-panels {
+        width: calc(100% - 12px);
+    }
+
+    #st-preset-page .st-preset-tabbar {
+        gap: 6px;
+        padding: 3px;
+        border-radius: 12px;
+    }
+}
+
+/* ========================================
+   提示词操作行：Token / 编辑 / 删除（3等分同一行）
+   ======================================== */
+
+#st-preset-page .st-prompt-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+#st-preset-page .st-prompt-main {
+    width: 100%;
+}
+
+#st-preset-page .st-prompt-tools {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+#st-preset-page .st-prompt-token,
+#st-preset-page .st-prompt-edit-btn,
+#st-preset-page .st-prompt-delete {
+    width: 100%;
+    min-width: 0;
+    min-height: 32px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+#st-preset-page .st-prompt-token {
+    border: 1px solid #ffd8e7;
+    background: #fff8fc;
+    color: #ba7f98;
+    font-weight: 700;
+}
+
+#st-preset-page .st-prompt-edit-btn {
+    border: 1px solid #ffd8e7;
+    background: #fff4fa;
+    color: #bd7596;
+    padding: 0 8px;
+}
+
+#st-preset-page .st-prompt-delete {
+    border: 1px solid #ffc9dd;
+    background: #fff0f6;
+    color: #d96a94;
+    padding: 0 8px;
+}
+
+#st-preset-page .st-regex-delete {
+    width: auto;
+    min-width: 56px;
+    padding: 0 10px;
+    border-radius: 8px;
+}
+
+/* ========================================
+   提示词编辑弹窗重设计 + 底部可见性修复
+   ======================================== */
+
+#st-preset-page .st-edit-modal {
+    align-items: center;
+    justify-content: center;
+    padding:
+        max(12px, env(safe-area-inset-top))
+        12px
+        max(12px, env(safe-area-inset-bottom));
+}
+
+#st-preset-page .st-edit-box {
+    width: min(94vw, 760px);
+    max-height: calc(100dvh - max(14px, env(safe-area-inset-top)) - max(14px, env(safe-area-inset-bottom)));
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#st-preset-page .st-edit-headline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid #ffe4ef;
+}
+
+#st-preset-page .st-edit-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #c95f89;
+    line-height: 1.2;
+}
+
+#st-preset-page .st-edit-body {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#st-preset-page .st-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#st-preset-page .st-edit-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ba7f98;
+    line-height: 1;
+}
+
+#st-preset-page .st-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page .st-edit-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page .st-edit-depth {
+    min-height: 40px;
+}
+
+#st-preset-page .st-edit-content {
+    min-height: 220px;
+}
+
+#st-preset-page .st-edit-footer {
+    margin-top: 0;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid #ffe4ef;
+    background: linear-gradient(180deg, #fffefe 0%, #fff7fc 100%);
+}
+
+#st-preset-page .st-edit-tokens {
+    justify-self: start;
+    padding: 0 10px;
+    min-height: 32px;
+    border-radius: 8px;
+    border: 1px solid #ffdce9;
+    background: #fff;
+    color: #ba7f98;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+#st-preset-page #st-edit-save {
+    min-height: 36px;
+    min-width: 118px;
+    padding: 0 14px;
+    border-radius: 10px;
+}
+
+@media (max-width: 760px) {
+    #st-preset-page .st-edit-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #st-preset-page .st-edit-box {
+        width: 100%;
+        max-width: none;
+        max-height: 96dvh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    #st-preset-page .st-edit-headline {
+        padding: 12px 12px 9px;
+    }
+
+    #st-preset-page .st-edit-body {
+        padding: 10px 12px;
+        gap: 9px;
+    }
+
+    #st-preset-page .st-edit-grid,
+    #st-preset-page .st-edit-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    #st-preset-page .st-edit-content {
+        min-height: 42dvh;
+    }
+
+    #st-preset-page .st-edit-footer {
+        grid-template-columns: 1fr;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    }
+
+    #st-preset-page .st-edit-tokens {
+        justify-self: center;
+        order: 2;
+    }
+
+    #st-preset-page #st-edit-save {
+        width: 100%;
+        min-width: 0;
+        min-height: 38px;
+    }
+}
+
+/* ========================================
+   提示词弹窗终版重构（新增/编辑统一）
+   ======================================== */
+
+#st-preset-page .st-edit-modal {
+    z-index: 32000;
+    padding: 0;
+}
+
+#st-preset-page .st-edit-box {
+    width: min(96vw, 820px);
+    height: min(90dvh, 860px);
+    max-height: 90dvh;
+    border-radius: 20px;
+    border: 1px solid #ffd8e9;
+    background: linear-gradient(180deg, #fffefe 0%, #fff8fc 100%);
+    box-shadow: 0 16px 42px rgba(237, 136, 177, 0.3);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+}
+
+#st-preset-page .st-edit-headline {
+    padding: 14px 14px 11px;
+    border-bottom: 1px solid #ffe4ef;
+    background: linear-gradient(180deg, #fffefe 0%, #fff7fc 100%);
+}
+
+#st-preset-page .st-edit-title-wrap {
+    min-width: 0;
+}
+
+#st-preset-page .st-edit-modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #c95f89;
+    line-height: 1.2;
+}
+
+#st-preset-page .st-edit-modal-subtitle {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #c290a8;
+    line-height: 1.4;
+}
+
+#st-preset-page .st-edit-close {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ffd8e9;
+    border-radius: 50%;
+    background: #fff3f9;
+    color: #bf7597;
+    font-size: 18px;
+    line-height: 1;
+}
+
+#st-preset-page .st-edit-body {
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#st-preset-page .st-edit-card {
+    border: 1px solid #ffe2ee;
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(245, 132, 174, 0.08);
+}
+
+#st-preset-page .st-edit-card-title {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #c76790;
+}
+
+#st-preset-page .st-edit-help {
+    margin-top: 6px;
+    padding: 7px 8px;
+    border-radius: 8px;
+    border: 1px solid #ffe6f0;
+    background: #fff9fc;
+    color: #c092a9;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+#st-preset-page .st-edit-field {
+    gap: 5px;
+}
+
+#st-preset-page .st-edit-label {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+    color: #bc839c;
+}
+
+#st-preset-page .st-edit-name,
+#st-preset-page .st-edit-select,
+#st-preset-page .st-edit-trigger,
+#st-preset-page .st-edit-content,
+#st-preset-page .st-edit-depth {
+    border: 1px solid #ffdce9;
+    background: #fff;
+    color: #9c5878;
+}
+
+#st-preset-page .st-edit-name,
+#st-preset-page .st-edit-select,
+#st-preset-page .st-edit-trigger {
+    min-height: 38px;
+}
+
+#st-preset-page .st-edit-content {
+    min-height: 240px;
+    resize: vertical;
+}
+
+#st-preset-page .st-edit-grid,
+#st-preset-page .st-edit-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page .st-edit-metrics .st-edit-depth {
+    min-height: 38px;
+    padding: 0 10px;
+}
+
+#st-preset-page .st-edit-metrics .st-edit-depth input {
+    width: 52px;
+}
+
+#st-preset-page .st-edit-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#st-preset-page .st-edit-card-content .st-edit-field {
+    flex: 1;
+}
+
+#st-preset-page .st-edit-card-content .st-edit-content {
+    flex: 1;
+    min-height: 300px;
+}
+
+#st-preset-page .st-edit-footer {
+    margin-top: 0;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid #ffe4ef;
+    background: linear-gradient(180deg, #fffefe 0%, #fff7fc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#st-preset-page .st-edit-tokens {
+    min-height: 32px;
+    padding: 0 11px;
+    border-radius: 8px;
+    border: 1px solid #ffdce9;
+    background: #fff;
+    color: #ba7f98;
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+#st-preset-page .st-edit-actions {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, auto));
+    gap: 8px;
+    min-width: 0;
+}
+
+#st-preset-page #st-edit-cancel,
+#st-preset-page #st-edit-save {
+    min-height: 36px;
+    min-width: 108px;
+    padding: 0 14px;
+    border-radius: 10px;
+}
+
+@media (max-width: 760px) {
+    #st-preset-page .st-edit-modal {
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+    }
+
+    #st-preset-page .st-edit-box {
+        width: 100%;
+        height: min(96dvh, 96dvh);
+        max-height: 96dvh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    #st-preset-page .st-edit-headline {
+        padding: 12px 12px 9px;
+    }
+
+    #st-preset-page .st-edit-modal-title {
+        font-size: 16px;
+    }
+
+    #st-preset-page .st-edit-modal-subtitle {
+        font-size: 11px;
+    }
+
+    #st-preset-page .st-edit-body {
+        padding: 10px 10px 8px;
+        gap: 9px;
+    }
+
+    #st-preset-page .st-edit-card {
+        padding: 9px;
+        border-radius: 11px;
+    }
+
+    #st-preset-page .st-edit-grid,
+    #st-preset-page .st-edit-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    #st-preset-page .st-edit-card-content .st-edit-content {
+        min-height: 42dvh;
+    }
+
+    #st-preset-page .st-edit-footer {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    }
+
+    #st-preset-page .st-edit-tokens {
+        align-self: center;
+    }
+
+    #st-preset-page .st-edit-actions {
+        width: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #st-preset-page #st-edit-cancel,
+    #st-preset-page #st-edit-save {
+        width: 100%;
+        min-width: 0;
+        min-height: 38px;
+        padding: 0 10px;
+    }
+}
+
+/* ========================================
+   最终版：简约精致布局（强覆盖）
+   ======================================== */
+
+#st-preset-page {
+    --mp-bg: #fff8fc;
+    --mp-card: #ffffff;
+    --mp-border: #f0d9e5;
+    --mp-text: #8e5f77;
+    --mp-title: #b35d84;
+    --mp-muted: #b88aa1;
+    --mp-accent: #f5a7c8;
+    --mp-accent-strong: #ee8cb6;
+    --mp-gap: 10px;
+}
+
+#st-preset-page .st-content-scroll {
+    background: var(--mp-bg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--mp-gap);
+    padding: 10px 0 12px;
+}
+
+#st-preset-page .st-preset-selector,
+#st-preset-page .st-preset-tabbar,
+#st-preset-page .st-tab-panels,
+#st-preset-page .st-prompt-list,
+#st-preset-page .st-regex-section {
+    width: min(calc(100% - 16px), 760px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#st-preset-page .st-preset-selector {
+    border: 1px solid var(--mp-border);
+    border-radius: 14px;
+    background: var(--mp-card);
+    box-shadow: 0 2px 10px rgba(216, 150, 181, 0.08);
+    padding: 10px;
+    gap: 8px;
+}
+
+#st-preset-page .st-preset-main-controls {
+    gap: 8px;
+}
+
+#st-preset-page .st-preset-field-label {
+    color: var(--mp-muted);
+    font-size: 11px;
+}
+
+#st-preset-page .st-preset-select,
+#st-preset-page .st-preset-name-input {
+    height: 36px;
+    border: 1px solid var(--mp-border);
+    background: #fff;
+    color: var(--mp-text);
+    border-radius: 9px;
+    font-size: 12px;
+}
+
+#st-preset-page .st-preset-action-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page .st-preset-btn {
+    min-height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--mp-border);
+    background: #fff;
+    color: var(--mp-text);
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+#st-preset-page .st-preset-btn.primary {
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, var(--mp-accent), var(--mp-accent-strong));
+}
+
+#st-preset-page .st-preset-tabbar {
+    border: 1px solid var(--mp-border);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: none;
+    padding: 3px;
+    gap: 6px;
+    position: static;
+}
+
+#st-preset-page .st-preset-tab {
+    min-height: 32px;
+    border-radius: 8px;
+    color: var(--mp-muted);
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#st-preset-page .st-preset-tab.active {
+    color: var(--mp-title);
+    border-color: #f3d3e3;
+    background: #fff6fb;
+    box-shadow: none;
+}
+
+#st-preset-page .st-panel-card,
+#st-preset-page .st-regex-section {
+    border: 1px solid var(--mp-border);
+    border-radius: 14px;
+    background: var(--mp-card);
+    box-shadow: 0 2px 10px rgba(216, 150, 181, 0.08);
+    padding: 10px;
+}
+
+#st-preset-page .st-panel-head {
+    padding: 0 0 8px;
+    border-bottom: 1px solid #f6e4ee;
+    margin-bottom: 8px;
+}
+
+#st-preset-page .st-panel-title,
+#st-preset-page .st-section-title {
+    color: var(--mp-title);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#st-preset-page .st-inline-add-btn,
+#st-preset-page .st-add-regex-btn {
+    min-height: 32px;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+    box-shadow: none;
+}
+
+#st-preset-page .st-prompt-item,
+#st-preset-page .st-regex-item {
+    border: 1px solid #f3dce8;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: none;
+    margin-bottom: 8px;
+}
+
+#st-preset-page .st-prompt-item::before {
+    width: 3px;
+    background: linear-gradient(180deg, #f6bad3 0%, #ef9fc2 100%);
+}
+
+#st-preset-page .st-prompt-header {
+    padding: 10px;
+    gap: 8px;
+}
+
+#st-preset-page .st-prompt-main {
+    grid-template-columns: 14px 42px minmax(0, 1fr);
+    gap: 7px;
+}
+
+#st-preset-page .st-prompt-name-display,
+#st-preset-page .st-regex-name {
+    color: var(--mp-text);
+    font-size: 13px;
+}
+
+#st-preset-page .st-prompt-tools {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+#st-preset-page .st-prompt-token,
+#st-preset-page .st-prompt-edit-btn,
+#st-preset-page .st-prompt-delete {
+    min-height: 30px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+#st-preset-page .st-prompt-token {
+    border: 1px solid #f3dce8;
+    background: #fff9fc;
+    color: var(--mp-muted);
+}
+
+#st-preset-page .st-prompt-edit-btn {
+    border: 1px solid #f3dce8;
+    background: #fff6fb;
+    color: var(--mp-text);
+}
+
+#st-preset-page .st-prompt-delete {
+    border: 1px solid #f4ccde;
+    background: #fff3f8;
+    color: #c8749c;
+}
+
+#st-preset-page .st-regex-header {
+    padding: 10px;
+}
+
+#st-preset-page .st-regex-tools {
+    gap: 6px;
+}
+
+#st-preset-page .st-regex-edit,
+#st-preset-page .st-regex-delete {
+    min-height: 30px;
+    border-radius: 8px;
+    font-size: 12px;
+    border: 1px solid #f3dce8;
+    box-shadow: none;
+}
+
+#st-preset-page .st-regex-edit {
+    background: #fff6fb;
+    color: var(--mp-text);
+}
+
+#st-preset-page .st-regex-delete {
+    background: #fff3f8;
+    color: #c8749c;
+    min-width: 56px;
+}
+
+#st-preset-page .st-regex-preview {
+    grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
+    padding: 0 10px 10px;
+}
+
+#st-preset-page .st-regex-pattern,
+#st-preset-page .st-regex-replace {
+    border: 1px solid #f5e2ec;
+    background: #fff9fc;
+    color: var(--mp-muted);
+    border-radius: 7px;
+}
+
+#st-preset-page .st-preset-footer {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid #f0d9e5;
+    background: #fff;
+}
+
+#st-preset-page .st-preset-footer .st-preset-btn {
+    width: 100%;
+}
+
+/* 编辑弹窗：简洁+完整可见 */
+#st-preset-page .st-edit-modal {
+    background: rgba(84, 24, 47, 0.16);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+#st-preset-page .st-edit-box {
+    width: min(96vw, 720px);
+    height: min(90dvh, 820px);
+    border: 1px solid var(--mp-border);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(196, 120, 158, 0.22);
+}
+
+#st-preset-page .st-edit-headline {
+    background: #fff;
+    border-bottom: 1px solid #f5e0eb;
+    padding: 12px;
+}
+
+#st-preset-page .st-edit-modal-title {
+    color: var(--mp-title);
+    font-size: 16px;
+}
+
+#st-preset-page .st-edit-modal-subtitle {
+    color: var(--mp-muted);
+    font-size: 11px;
+}
+
+#st-preset-page .st-edit-close {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #f0d9e5;
+    background: #fff7fb;
+    color: var(--mp-muted);
+}
+
+#st-preset-page .st-edit-body {
+    padding: 10px;
+    gap: 8px;
+}
+
+#st-preset-page .st-edit-card {
+    border: 1px solid #f3dce8;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: none;
+    padding: 9px;
+}
+
+#st-preset-page .st-edit-card-title {
+    font-size: 12px;
+    color: var(--mp-title);
+    margin-bottom: 7px;
+}
+
+#st-preset-page .st-edit-label {
+    color: var(--mp-muted);
+    font-size: 11px;
+}
+
+#st-preset-page .st-edit-name,
+#st-preset-page .st-edit-select,
+#st-preset-page .st-edit-trigger,
+#st-preset-page .st-edit-content,
+#st-preset-page .st-edit-depth {
+    border: 1px solid #f0d9e5;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--mp-text);
+}
+
+#st-preset-page .st-edit-name,
+#st-preset-page .st-edit-select,
+#st-preset-page .st-edit-trigger {
+    min-height: 36px;
+}
+
+#st-preset-page .st-edit-card-content .st-edit-content {
+    min-height: 280px;
+}
+
+#st-preset-page .st-edit-footer {
+    border-top: 1px solid #f5e0eb;
+    background: #fff;
+    padding: 10px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+}
+
+#st-preset-page .st-edit-tokens {
+    min-height: 30px;
+    border: 1px solid #f0d9e5;
+    background: #fff9fc;
+    color: var(--mp-muted);
+    font-size: 11px;
+}
+
+#st-preset-page .st-edit-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#st-preset-page #st-edit-cancel,
+#st-preset-page #st-edit-save {
+    min-width: 0;
+    min-height: 36px;
+}
+
+@media (max-width: 760px) {
+    #st-preset-page .st-preset-selector,
+    #st-preset-page .st-preset-tabbar,
+    #st-preset-page .st-tab-panels,
+    #st-preset-page .st-prompt-list,
+    #st-preset-page .st-regex-section {
+        width: calc(100% - 12px);
+    }
+
+    #st-preset-page .st-preset-main-controls {
+        grid-template-columns: 1fr;
+    }
+
+    #st-preset-page .st-panel-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    #st-preset-page .st-inline-add-btn,
+    #st-preset-page .st-add-regex-btn {
+        width: 100%;
+    }
+
+    #st-preset-page .st-prompt-header {
+        padding: 9px;
+    }
+
+    #st-preset-page .st-regex-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    #st-preset-page .st-regex-tools {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #st-preset-page .st-regex-edit,
+    #st-preset-page .st-regex-delete {
+        width: 100%;
+    }
+
+    #st-preset-page .st-preset-footer {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #st-preset-page #st-preset-save {
+        grid-column: 1 / -1;
+    }
+
+    #st-preset-page .st-edit-modal {
+        align-items: flex-end;
+    }
+
+    #st-preset-page .st-edit-box {
+        width: 100%;
+        height: min(96dvh, 96dvh);
+        border-radius: 16px 16px 0 0;
+    }
+
+    #st-preset-page .st-edit-grid,
+    #st-preset-page .st-edit-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    #st-preset-page .st-edit-card-content .st-edit-content {
+        min-height: 40dvh;
+    }
+
+    #st-preset-page .st-edit-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #st-preset-page .st-edit-tokens {
+        align-self: center;
+    }
+
+    #st-preset-page .st-edit-actions {
+        width: 100%;
+    }
+}
