@@ -1,3 +1,5 @@
+        const DEFAULT_APP_BACKGROUND_IMAGE = 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg';
+
         // 应用状态
         const AppState = {
             currentTab: 'msg-page',
@@ -104,6 +106,11 @@
                 hideDelay: 5000  // 5秒后自动隐藏
             }
         };
+
+        function getEffectiveUserBackgroundImage(bgImage) {
+            const normalizedBgImage = typeof bgImage === 'string' ? bgImage.trim() : '';
+            return normalizedBgImage || DEFAULT_APP_BACKGROUND_IMAGE;
+        }
 
         function normalizeSingleGreetingText(entity) {
             if (!entity) return '';
@@ -1557,8 +1564,12 @@
             }
 
             const editPreview = document.getElementById('card-edit-preview');
-            if (user.bgImage) {
-                editPreview.style.backgroundImage = `url(${user.bgImage})`;
+            if (editPreview) {
+                const effectiveEditBgImage = getEffectiveUserBackgroundImage(user.bgImage);
+                editPreview.style.backgroundImage = `url('${effectiveEditBgImage}')`;
+                editPreview.style.backgroundSize = 'cover';
+                editPreview.style.backgroundPosition = 'center';
+                editPreview.style.backgroundRepeat = 'no-repeat';
             }
 
             const editAvatarSmall = document.getElementById('edit-avatar-small');

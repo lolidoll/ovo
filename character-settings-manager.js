@@ -7,6 +7,11 @@
     'use strict';
 
     window.CharacterSettingsManager = {
+        defaultChatBgImage: 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg',
+
+        getEffectiveChatBgImage: function(chatBgImage) {
+            return chatBgImage || this.defaultChatBgImage;
+        },
         
         /**
          * 打开角色设置页面（全屏子页面）
@@ -369,8 +374,7 @@
                         <div class="card-body">
                             <div class="form-group">
                                 <label class="form-label">聊天背景</label>
-                                <div class="bg-preview" style="background-image:${chat.chatBgImage ? `url('${chat.chatBgImage}')` : 'none'};">
-                                    ${!chat.chatBgImage ? '<span class="bg-placeholder">暂无背景图</span>' : ''}
+                                <div class="bg-preview" style="background-image:url('${this.getEffectiveChatBgImage(chat.chatBgImage)}');">
                                 </div>
                                 <div class="button-group">
                                     <button id="chat-bg-upload-btn" class="btn-primary">选择背景图</button>
@@ -723,6 +727,7 @@
                 console.warn('⚠️ applyChatPageBackground - 未找到chat-page元素');
                 return;
             }
+            const effectiveBgImage = this.getEffectiveChatBgImage(chatBgImage);
 
             const selectors = [
                 '.chat-nav',
@@ -752,8 +757,8 @@
                 el.style.removeProperty('border-color');
             };
 
-            if (chatBgImage) {
-                chatPage.style.backgroundImage = `url('${chatBgImage}')`;
+            if (effectiveBgImage) {
+                chatPage.style.backgroundImage = `url('${effectiveBgImage}')`;
                 chatPage.style.backgroundSize = 'cover';
                 chatPage.style.backgroundPosition = 'center';
                 chatPage.style.backgroundRepeat = 'no-repeat';
@@ -761,7 +766,9 @@
                 chatPage.style.backgroundColor = 'transparent';
 
                 targets.forEach(setTransparent);
-                console.log('✅ applyChatPageBackground - 已应用整页聊天背景');
+                console.log(chatBgImage
+                    ? '✅ applyChatPageBackground - 已应用整页聊天背景（自定义）'
+                    : '✅ applyChatPageBackground - 已应用整页聊天背景（默认）');
                 return;
             }
 
