@@ -1,0 +1,10 @@
+name = "miao-chat-zone1"
+main = "worker.js"
+compatibility_date = "2026-03-11"
+
+[vars]
+ZONE_ID = "zone-1"
+ZONE_NAME = "喵机一区"
+MAX_ONLINE = "100"
+# 建议改为你的 GitHub Pages 域名，例如 https://yourname.github.io
+ALLOWED_ORIGIN = "*"

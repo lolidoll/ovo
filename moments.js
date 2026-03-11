@@ -16,6 +16,12 @@ function checkMomentsPageReady() {
 
 // 删除确认相关变量
 let pendingDeleteMomentId = null;
+const DEFAULT_MOMENTS_BACKGROUND_IMAGE = 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg';
+
+function getEffectiveMomentsBackgroundImage(bgImage) {
+  const normalizedBgImage = typeof bgImage === 'string' ? bgImage.trim() : '';
+  return normalizedBgImage || DEFAULT_MOMENTS_BACKGROUND_IMAGE;
+}
 
 // 显示删除确认弹窗
 function showDeleteConfirm(momentId) {
@@ -2090,12 +2096,13 @@ function applyMomentsBgImage(bgUrl) {
 // 恢复保存的背景图
 function restoreMomentsBgImage() {
   try {
-    if (momentsManager && momentsManager.profileData && momentsManager.profileData.bgImage) {
-      const bgImageData = momentsManager.profileData.bgImage;
-      const bgUrl = `url('${bgImageData}')`;
-      applyMomentsBgImage(bgUrl);
-      console.log('朋友圈背景图已从 localStorage 恢复');
-    }
+    const savedBgImage = momentsManager && momentsManager.profileData
+      ? momentsManager.profileData.bgImage
+      : '';
+    const effectiveBgImage = getEffectiveMomentsBackgroundImage(savedBgImage);
+    const bgUrl = `url('${effectiveBgImage}')`;
+    applyMomentsBgImage(bgUrl);
+    console.log(savedBgImage ? '朋友圈背景图已从 localStorage 恢复' : '朋友圈默认背景图已应用');
   } catch (e) {
     console.log('restoreMomentsBgImage出错:', e.message);
   }

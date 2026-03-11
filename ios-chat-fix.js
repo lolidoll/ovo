@@ -34,10 +34,12 @@
         
         console.log('✅ 修复返回按钮...');
         
-        // 1. 扩大点击区域 - 增加padding和最小尺寸
-        backBtn.style.setProperty('min-width', '50px', 'important');
-        backBtn.style.setProperty('min-height', '50px', 'important');
-        backBtn.style.setProperty('padding', '12px', 'important');
+        // 1. 不再用按钮盒子撑大间距，保持标题紧贴返回箭头SVG
+        backBtn.style.setProperty('min-width', '14px', 'important');
+        backBtn.style.setProperty('width', '14px', 'important');
+        backBtn.style.setProperty('min-height', '14px', 'important');
+        backBtn.style.setProperty('padding', '0', 'important');
+        backBtn.style.setProperty('margin', '0 2px 0 10px', 'important');
         backBtn.style.setProperty('display', 'flex', 'important');
         backBtn.style.setProperty('align-items', 'center', 'important');
         backBtn.style.setProperty('justify-content', 'center', 'important');

@@ -351,25 +351,25 @@ const MindStateManager = (function() {
         // 按分组显示心声数据
         const groupedItems = {
             '基本信息': [
-                { key: 'location', label: '位置', icon: '📍' },
-                { key: 'outfit', label: '穿搭', icon: '👗' }
+                { key: 'location', label: '位置' },
+                { key: 'outfit', label: '穿搭' }
             ],
             '情感与欲望': [
-                { key: 'jealousy', label: '醋意值', icon: '💚', hasProgress: true },
-                { key: 'jealousyTrigger', label: '触发因素', icon: '⚡' },
-                { key: 'excitement', label: '兴奋度', icon: '🔥', hasProgress: true },
-                { key: 'excitementDesc', label: '状态描述', icon: '💭' },
-                { key: 'bodyTrait', label: '身体反应', icon: '💓' }
+                { key: 'jealousy', label: '醋意值', hasProgress: true },
+                { key: 'jealousyTrigger', label: '触发因素' },
+                { key: 'excitement', label: '兴奋度', hasProgress: true },
+                { key: 'excitementDesc', label: '状态描述' },
+                { key: 'bodyTrait', label: '身体反应' }
             ],
             '随身物品': [
-                { key: 'items', label: '随身物品', icon: '🎒' }
+                { key: 'items', label: '随身物品' }
             ],
             '购物车': [
-                { key: 'shoppingCart', label: '购物车', icon: '🛒' }
+                { key: 'shoppingCart', label: '购物车' }
             ],
             '内心独白': [
-                { key: 'content', label: '心声', icon: '💬' },
-                { key: 'hiddenMeaning', label: '潜台词', icon: '🎭' }
+                { key: 'content', label: '心声' },
+                { key: 'hiddenMeaning', label: '潜台词' }
             ]
         };
         
@@ -394,7 +394,7 @@ const MindStateManager = (function() {
                     groupContent += `
                         <div style="margin-bottom:clamp(10px,2.5vw,12px);padding:clamp(12px,2.5vw,14px);background:rgba(255,255,255,0.6);border-radius:12px;border:1px solid rgba(255,218,228,0.3);">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                <span style="font-size:clamp(12px,2.8vw,13px);color:#ff85a6;font-weight:600;">${item.icon} ${item.label}</span>
+                                <span style="font-size:clamp(12px,2.8vw,13px);color:#ff85a6;font-weight:600;">${item.label}</span>
                                 <span style="font-size:clamp(12px,2.8vw,13px);color:${progressColor};font-weight:700;">${value}%</span>
                             </div>
                             <div style="width:100%;height:4px;background:rgba(255,218,228,0.3);border-radius:20px;overflow:hidden;">
@@ -413,7 +413,7 @@ const MindStateManager = (function() {
                         
                         groupContent += `
                             <div style="margin-bottom:clamp(10px,2.5vw,12px);padding:clamp(12px,2.5vw,14px);background:rgba(255,255,255,0.6);border-radius:12px;border:1px solid rgba(255,218,228,0.3);">
-                                <div style="font-size:clamp(11px,2.5vw,12px);color:#d4a5b8;font-weight:600;margin-bottom:6px;">${item.icon} ${item.label}</div>
+                                <div style="font-size:clamp(11px,2.5vw,12px);color:#d4a5b8;font-weight:600;margin-bottom:6px;">${item.label}</div>
                                 <div style="font-size:clamp(12px,2.8vw,13px);color:#9b7a9f;line-height:1.8;word-break:break-word;">${displayValue}</div>
                             </div>
                         `;
@@ -423,7 +423,7 @@ const MindStateManager = (function() {
                         
                         groupContent += `
                             <div style="margin-bottom:clamp(10px,2.5vw,12px);padding:clamp(12px,2.5vw,14px);background:rgba(255,255,255,0.6);border-radius:12px;border:1px solid rgba(255,218,228,0.3);">
-                                <div style="font-size:clamp(11px,2.5vw,12px);color:#d4a5b8;font-weight:600;margin-bottom:6px;">${item.icon} ${item.label}</div>
+                                <div style="font-size:clamp(11px,2.5vw,12px);color:#d4a5b8;font-weight:600;margin-bottom:6px;">${item.label}</div>
                                 <div style="font-size:clamp(12px,2.8vw,13px);color:#9b7a9f;line-height:1.8;word-break:break-word;white-space:pre-wrap;">${displayValue}</div>
                             </div>
                         `;
@@ -452,7 +452,7 @@ const MindStateManager = (function() {
             content += `
                 <div style="margin-top:clamp(16px,4vw,20px);padding:clamp(16px,3.5vw,20px);background:linear-gradient(135deg,#ffffff 0%,#fffafc 50%,#fff8fb 100%);border-radius:16px;border:2px solid rgba(255,133,166,0.3);box-shadow:0 8px 28px rgba(255,182,193,0.18);position:relative;overflow:hidden;">
                     <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(255,218,228,0.15),transparent 70%);"></div>
-                    <div style="position:relative;font-size:clamp(14px,3.5vw,15px);font-weight:700;color:#ff85a6;margin-bottom:12px;letter-spacing:0.5px;">💖 好感度</div>
+                    <div style="position:relative;font-size:clamp(14px,3.5vw,15px);font-weight:700;color:#ff85a6;margin-bottom:12px;letter-spacing:0.5px;">好感度</div>
                     <div style="width:100%;height:8px;background:linear-gradient(90deg,rgba(255,218,228,0.4),rgba(255,228,235,0.4));border-radius:20px;overflow:hidden;position:relative;box-shadow:inset 0 1px 3px rgba(255,182,193,0.1);">
                         <div style="width:${currentState.affinity}%;height:100%;background:linear-gradient(90deg,#ffd5e0 0%,#ffabc0 50%,#ff85a6 100%);transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);border-radius:20px;box-shadow:0 0 12px rgba(255,133,166,0.5);"></div>
                     </div>

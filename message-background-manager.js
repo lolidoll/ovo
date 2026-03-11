@@ -12,6 +12,7 @@ const MessageBackgroundManager = {
     CURRENT_IDS_KEY: 'currentBackgroundIds',
     SEARCH_INPUT_STYLE_KEY: 'searchInputStyles',
     LEGACY_CURRENT_ID_KEY: 'currentBackgroundId',
+    DEFAULT_PAGE_BACKGROUND_IMAGE: 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg',
 
     backgroundImages: [],
     currentBackgroundIds: { msg: null, friend: null },
@@ -323,7 +324,7 @@ const MessageBackgroundManager = {
         this.syncLegacyCurrentBackgroundId();
 
         if (this.getActivePageType() === normalized) {
-            this.applyBackgroundToContainer(background);
+            this.applyBackgroundToContainer(background, normalized);
         }
     },
 
@@ -416,15 +417,20 @@ const MessageBackgroundManager = {
         }
     },
 
-    applyBackgroundToContainer(background) {
+    applyBackgroundToContainer(background, pageType = this.currentPageType) {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) {
             return;
         }
 
-        if (background && background.imageData) {
+        const activePageType = pageType === 'msg' || pageType === 'friend' ? pageType : null;
+        const effectiveBackgroundImage = background && background.imageData
+            ? background.imageData
+            : (activePageType ? this.DEFAULT_PAGE_BACKGROUND_IMAGE : '');
+
+        if (effectiveBackgroundImage) {
             const useFixedAttachment = !(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
-            appContainer.style.backgroundImage = `url('${background.imageData}')`;
+            appContainer.style.backgroundImage = `url('${effectiveBackgroundImage}')`;
             appContainer.style.backgroundSize = 'cover';
             appContainer.style.backgroundPosition = 'center';
             appContainer.style.backgroundRepeat = 'no-repeat';
@@ -447,14 +453,14 @@ const MessageBackgroundManager = {
         this.setTransparentMode(pageType);
 
         if (!pageType) {
-            this.applyBackgroundToContainer(null);
+            this.applyBackgroundToContainer(null, null);
             return;
         }
 
         this.setCurrentPageType(pageType);
         const backgroundId = this.getStoredBackgroundId(pageType);
         const background = backgroundId ? this.getBackground(backgroundId, pageType) : null;
-        this.applyBackgroundToContainer(background);
+        this.applyBackgroundToContainer(background, pageType);
     },
 
     setPageTypeByTab(tabId) {

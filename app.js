@@ -85,7 +85,7 @@
             // 备注：对话级别的用户头像存储在conversation对象的userAvatar字段中
             dynamicFuncs: {
     moments: true,        // 朋友圈
-    forum: true,          // 论坛
+    forum: true,          // 真人联机聊天室
     reading: true,        // 阅读
     calendar: true,       // 日历
     weather: true,        // 天气
@@ -338,6 +338,14 @@
                 // 初始化表情包管理器
                 if (window.EmojiManager) {
                     window.EmojiManager.init();
+                }
+
+                // 初始化真人联机聊天室
+                if (window.RealtimeChat && typeof window.RealtimeChat.init === 'function') {
+                    window.RealtimeChat.init({
+                        getAppState: () => AppState,
+                        showToast
+                    });
                 }
                 
                 // 初始化朋友圈分组互动系统
@@ -1156,11 +1164,6 @@
             // 个性名片编辑页面
             document.getElementById('card-edit-back-btn').addEventListener('click', function() {
                 closeCardEditPage();
-            });
-
-            // 情侣空间返回按钮
-            document.getElementById('couples-space-back-btn').addEventListener('click', function() {
-                closeSubPage('couples-space-page');
             });
 
             document.getElementById('edit-avatar-btn').addEventListener('click', function() {
@@ -2245,6 +2248,13 @@
                         }
                     }, 100);
                 }
+
+                // 打开真人联机聊天室页面时启动实时拉取
+                if (pageId === 'forum-page' && window.RealtimeChat && typeof window.RealtimeChat.onPageOpen === 'function') {
+                    setTimeout(function() {
+                        window.RealtimeChat.onPageOpen();
+                    }, 60);
+                }
             });
         }
 
@@ -2266,18 +2276,13 @@
                         tabBar.style.pointerEvents = '';
                     }
                 }
+
+                // 关闭真人联机聊天室页面时停止轮询并离房
+                if (pageId === 'forum-page' && window.RealtimeChat && typeof window.RealtimeChat.onPageClose === 'function') {
+                    window.RealtimeChat.onPageClose();
+                }
             });
         }
-
-        // 打开情侣空间
-        function openCouplespaceArea() {
-            openSubPage('couples-space-page');
-            // 初始化情侣空间
-            if (typeof CouplesSpace !== 'undefined' && typeof CouplesSpace.init === 'function') {
-                CouplesSpace.init();
-            }
-        }
-
 
         // 处理侧边栏菜单点击
         function handleMenuClick(func) {
@@ -2315,8 +2320,8 @@
                             }
                         }, 50);
                         break;
-                    case 'couples-space':
-                        openCouplespaceArea();
+                    case 'forum':
+                        openSubPage('forum-page');
                         break;
                     case 'worldbook':
                         openSubPage('worldbook-page');
@@ -11187,7 +11192,7 @@
                     </div>
                     
                     <div style="padding:16px;">
-                        <!-- 头像区域 - 情侣空间风格 -->
+                        <!-- 头像区域 - 双头像风格 -->
                         <div style="text-align:center;margin-bottom:24px;">
                             <div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;margin-bottom:12px;">
                                 <!-- 角色头像 -->

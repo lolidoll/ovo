@@ -83,14 +83,16 @@ new_menu = '''            <div class="menu-list">
                     </div>
                     <div class="menu-text">钱包</div>
                 </div>
-                
-                <div class="menu-item" data-func="couples-space">
+
+                <div class="menu-item" data-func="forum">
                     <div class="menu-icon">
                         <svg class="icon-svg" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <line x1="9" y1="10" x2="15" y2="10"></line>
+                            <line x1="9" y1="14" x2="13" y2="14"></line>
                         </svg>
                     </div>
-                    <div class="menu-text">情侣空间</div>
+                    <div class="menu-text">真人联机聊天室</div>
                 </div>
                 
                 <div class="menu-item" data-func="decoration">

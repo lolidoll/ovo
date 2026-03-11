@@ -3536,6 +3536,15 @@ input[type="range"]::-ms-fill-upper {
             isolation: isolate !important;
         }
 
+        .chat-nav-main {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0 !important;
+            overflow: hidden !important;
+        }
+
         /* iOS PWA 顶部安全区 - 聊天页导航 */
         .ios-standalone .chat-nav,
         [data-adapt-mode="ios"] .chat-nav {
@@ -3583,16 +3592,33 @@ input[type="range"]::-ms-fill-upper {
         .chat-nav .back-btn {
             display: flex !important;
             align-items: center !important;
+            justify-content: center !important;
             gap: 0px !important;
-            padding: 8px 0 8px 8px !important;
+            padding: 0 !important;
             cursor: pointer !important;
             color: #666 !important;
             font-size: 16px !important;
             flex-shrink: 0 !important;
-            min-width: 0 !important;
-            margin: 0 !important;
+            min-width: 14px !important;
+            width: 14px !important;
+            margin: 0 2px 0 10px !important;
             position: relative !important;
             z-index: 10 !important;
+        }
+
+        .chat-nav .back-btn::before {
+            content: "" !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: -24px !important;
+            width: 44px !important;
+            height: 44px !important;
+            transform: translateY(-50%) !important;
+        }
+
+        .chat-nav .back-btn:hover,
+        .chat-nav .back-btn:active {
+            transform: none !important;
         }
         
         .chat-nav .back-arrow {
@@ -3604,7 +3630,7 @@ input[type="range"]::-ms-fill-upper {
         }
         
         .chat-title-area {
-            flex: 1 !important;
+            flex: 1 1 auto !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: flex-start !important;
@@ -3615,7 +3641,7 @@ input[type="range"]::-ms-fill-upper {
             min-width: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
-            margin-left: -6px !important;
+            margin-left: 0 !important;
             font-size: 17px !important;
         }
         

@@ -279,20 +279,47 @@
     font-size: 0 !important;
 }
 
+/* 左侧主区（返回+标题） */
+.chat-nav-main {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+}
+
 /* 返回按钮 */
 .chat-nav .back-btn {
     display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 0px !important;
-    padding: 8px 30px 8px 10px !important;
+    padding: 0 !important;
     cursor: pointer !important;
     color: #666 !important;
     font-size: 16px !important;
     flex-shrink: 0 !important;
-    min-width: 60px !important;
-    margin: 0 !important;
+    min-width: 14px !important;
+    width: 14px !important;
+    margin: 0 2px 0 10px !important;
     position: relative !important;
     z-index: 10 !important;
+}
+
+.chat-nav .back-btn::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: -24px !important;
+    width: 44px !important;
+    height: 44px !important;
+    transform: translateY(-50%) !important;
+}
+
+.chat-nav .back-btn:hover,
+.chat-nav .back-btn:active {
+    transform: none !important;
 }
 
 .chat-nav .back-arrow {
@@ -305,7 +332,7 @@
 
 /* 标题区域 */
 .chat-title-area {
-    flex: 1 !important;
+    flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -316,7 +343,7 @@
     min-width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
-    margin-left: -20px !important;
+    margin-left: 0 !important;
     font-size: 17px !important;
 }
 
@@ -350,7 +377,7 @@
     pointer-events: auto !important;
     position: relative !important;
     z-index: 100 !important;
-    margin-left: auto !important;
+    margin-left: 8px !important;
     padding-right: 10px !important;
     font-size: 16px !important;
 }

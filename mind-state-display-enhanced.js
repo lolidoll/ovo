@@ -30,7 +30,6 @@ function openCharacterMindStateEnhanced(chat) {
     const mindGroups = [
         {
             title: '基本信息',
-            icon: '📍',
             color: '#ff85a6',
             items: [
                 { key: 'location', label: '位置' },
@@ -39,7 +38,6 @@ function openCharacterMindStateEnhanced(chat) {
         },
         {
             title: '情感与欲望',
-            icon: '💕',
             color: '#ff6b9d',
             items: [
                 { key: 'jealousy', label: '醋意值', subKey: 'jealousyTrigger', subLabel: '触发因素', hasProgress: true },
@@ -49,7 +47,6 @@ function openCharacterMindStateEnhanced(chat) {
         },
         {
             title: '随身物品',
-            icon: '🎒',
             color: '#ffabc0',
             items: [
                 { key: 'items', label: '随身物品' }
@@ -57,7 +54,6 @@ function openCharacterMindStateEnhanced(chat) {
         },
         {
             title: '购物车',
-            icon: '🛒',
             color: '#ff9bb3',
             items: [
                 { key: 'shoppingCart', label: '购物车' }
@@ -65,7 +61,6 @@ function openCharacterMindStateEnhanced(chat) {
         },
         {
             title: '内心独白',
-            icon: '💭',
             color: '#ff85a6',
             items: [
                 { key: 'content', label: '心声' },
@@ -96,10 +91,7 @@ function openCharacterMindStateEnhanced(chat) {
         content += `
             <div style="margin-bottom:clamp(18px,4vw,24px);padding:clamp(20px,5vw,28px) clamp(18px,4vw,24px);background:linear-gradient(135deg,#ffffff 0%,#fffafc 50%,#fff8fb 100%);border-radius:20px;border:1px solid rgba(255,218,228,0.5);box-shadow:0 10px 32px rgba(255,182,193,0.2);position:relative;overflow:hidden;">
                 <div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(255,218,228,0.2),transparent 70%);"></div>
-                <div style="position:relative;font-size:clamp(15px,4vw,17px);font-weight:700;color:#ff85a6;margin-bottom:12px;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;">
-                    <span>💖</span>
-                    <span>好感度</span>
-                </div>
+                <div style="position:relative;font-size:clamp(15px,4vw,17px);font-weight:700;color:#ff85a6;margin-bottom:12px;letter-spacing:0.5px;">好感度</div>
                 <div style="width:100%;height:8px;background:linear-gradient(90deg,rgba(255,218,228,0.4),rgba(255,228,235,0.4));border-radius:20px;margin-top:12px;overflow:hidden;position:relative;box-shadow:inset 0 1px 3px rgba(255,182,193,0.15);">
                     <div style="width:${affinity}%;height:100%;background:linear-gradient(90deg,#ffd5e0 0%,#ffabc0 50%,#ff85a6 100%);transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);border-radius:20px;box-shadow:0 0 12px rgba(255,133,166,0.5);"></div>
                 </div>
@@ -128,10 +120,7 @@ function openCharacterMindStateEnhanced(chat) {
         
         content += `
             <div style="margin-bottom:clamp(16px,4vw,20px);">
-                <div style="font-size:clamp(14px,3.5vw,16px);font-weight:700;color:${group.color};margin-bottom:12px;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;">
-                    <span>${group.icon}</span>
-                    <span>${group.title}</span>
-                </div>
+                <div style="font-size:clamp(14px,3.5vw,16px);font-weight:700;color:${group.color};margin-bottom:12px;letter-spacing:0.5px;">${group.title}</div>
                 <div style="display:flex;flex-direction:column;gap:clamp(10px,2.5vw,12px);">
         `;
         
