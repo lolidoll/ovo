@@ -5512,7 +5512,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 /* 对话中的地理位置卡片 */
 .location-bubble {
-    width: min(260px, 74vw);
+    width: min(206px, 60vw);
     padding: 0;
     border-radius: 14px;
     display: flex;
@@ -5544,7 +5544,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 
 .location-map-preview {
     width: 100%;
-    height: 82px;
+    height: 56px;
     background:
         radial-gradient(circle at 22% 30%, rgba(255, 170, 206, 0.42) 0%, transparent 48%),
         radial-gradient(circle at 78% 75%, rgba(255, 199, 221, 0.48) 0%, transparent 52%),
@@ -5569,8 +5569,8 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .location-map-pin {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     background: linear-gradient(135deg, #ff699f 0%, #ff4f8f 100%);
     border-radius: 50%;
     box-shadow: 0 0 0 4px rgba(255, 111, 165, 0.2), 0 3px 10px rgba(194, 74, 130, 0.3);
@@ -5581,8 +5581,8 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 .location-map-pin::after {
     content: '';
     position: absolute;
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
     background: #fff;
     border-radius: 50%;
     left: 50%;
@@ -5591,7 +5591,7 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .location-card-body {
-    padding: 9px 10px 10px;
+    padding: 6px 7px 7px;
 }
 
 .location-card-row {
@@ -5602,34 +5602,34 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
 }
 
 .location-card-title {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     color: #8f4867;
     letter-spacing: 0.2px;
 }
 
 .location-card-distance {
-    font-size: 11px;
+    font-size: 9px;
     color: #b36d89;
-    padding: 2px 8px;
+    padding: 1px 6px;
     border-radius: 999px;
     border: 1px solid #f2bfd6;
     background: #fff;
 }
 
 .location-card-address {
-    margin-top: 8px;
-    font-size: 12px;
+    margin-top: 6px;
+    font-size: 10px;
     line-height: 1.56;
     color: #583242;
     word-break: break-word;
 }
 
 .location-card-meta {
-    margin-top: 8px;
-    padding-top: 7px;
+    margin-top: 6px;
+    padding-top: 5px;
     border-top: 1px dashed #f1cfe0;
-    font-size: 11px;
+    font-size: 9px;
     color: #a56d87;
     line-height: 1.4;
 }
