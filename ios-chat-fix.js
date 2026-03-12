@@ -13,6 +13,13 @@
     
     // 检测是否为 iOS 设备
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalonePWA = Boolean(
+        window.navigator.standalone ||
+        (window.matchMedia && (
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches
+        ))
+    );
     
     if (!isIOS) {
         console.log('🔍 非iOS设备，跳过iOS聊天页面修复');
@@ -109,8 +116,13 @@
             chatPage.style.setProperty('left', '0', 'important');
             chatPage.style.setProperty('right', '0', 'important');
             chatPage.style.setProperty('bottom', '0', 'important');
-            chatPage.style.setProperty('height', '100%', 'important');
-            chatPage.style.setProperty('height', '-webkit-fill-available', 'important');
+            if (isStandalonePWA) {
+                chatPage.style.setProperty('height', 'var(--app-height, 100dvh)', 'important');
+                chatPage.style.setProperty('max-height', 'var(--app-height, 100dvh)', 'important');
+            } else {
+                chatPage.style.setProperty('height', '100%', 'important');
+                chatPage.style.setProperty('height', '-webkit-fill-available', 'important');
+            }
             chatPage.style.setProperty('overflow', 'hidden', 'important');
         }
         
@@ -133,12 +145,18 @@
         toolbar.style.setProperty('flex-shrink', '0', 'important');
         toolbar.style.setProperty('position', 'relative', 'important');
         toolbar.style.setProperty('bottom', 'auto', 'important');
-        toolbar.style.setProperty('min-height', '44px', 'important');
         toolbar.style.setProperty('height', 'auto', 'important');
         toolbar.style.setProperty('padding', '2px 0', 'important');
         
-        // 5. 底部间距收敛：安全区由页面统一处理，避免输入区和工具栏重复叠加
-        toolbar.style.setProperty('padding-bottom', '0px', 'important');
+        if (isStandalonePWA) {
+            toolbar.style.setProperty('min-height', 'calc(44px + max(0px, env(safe-area-inset-bottom, 0px)))', 'important');
+            // 5. iOS PWA 下仅在工具栏保留一次底部安全区
+            toolbar.style.setProperty('padding-bottom', 'max(0px, env(safe-area-inset-bottom, 0px))', 'important');
+        } else {
+            toolbar.style.setProperty('min-height', '44px', 'important');
+            // 5. 非 PWA 模式收敛到底部紧凑布局
+            toolbar.style.setProperty('padding-bottom', '0px', 'important');
+        }
         
         // 6. 确保工具栏按钮可以被点击
         toolbar.style.setProperty('pointer-events', 'auto', 'important');
@@ -208,10 +226,14 @@
         console.log('✅ 修复更多功能面板...');
         
         // 1. 添加iOS安全区域支持 - 底部
-        morePanel.style.setProperty('padding-bottom', `env(safe-area-inset-bottom, 0px)`, 'important');
+        morePanel.style.setProperty('padding-bottom', 'max(0px, env(safe-area-inset-bottom, 0px))', 'important');
         
         // 2. 确保面板有足够的最大高度
-        morePanel.style.setProperty('max-height', 'calc(70vh - env(safe-area-inset-bottom, 0px))', 'important');
+        if (isStandalonePWA) {
+            morePanel.style.setProperty('max-height', 'calc(var(--app-height, 100dvh) * 0.7)', 'important');
+        } else {
+            morePanel.style.setProperty('max-height', 'calc(70vh - env(safe-area-inset-bottom, 0px))', 'important');
+        }
         
         console.log('✅ 更多功能面板修复完成');
     }

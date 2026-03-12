@@ -1742,11 +1742,57 @@ ${initiatorInfo}
     /**
      * Toast提示
      */
+    function showLocalToast(message) {
+        const oldToast = document.getElementById('video-call-toast');
+        if (oldToast) oldToast.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'video-call-toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 72px;
+            left: 50%;
+            transform: translateX(-50%) translateY(24px) scale(0.92);
+            opacity: 0;
+            background: linear-gradient(145deg, rgba(255, 251, 254, 0.98) 0%, rgba(255, 234, 245, 0.96) 100%);
+            color: #8f4b67;
+            padding: 12px 22px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            border: 1px solid rgba(255, 194, 220, 0.9);
+            box-shadow: 0 10px 28px rgba(255, 154, 196, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2147483000;
+            max-width: min(82vw, 360px);
+            text-align: center;
+            line-height: 1.45;
+            word-break: break-word;
+            pointer-events: none;
+            transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+        });
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(24px) scale(0.92)';
+            setTimeout(() => toast.remove(), 280);
+        }, 2000);
+    }
+
     function showToast(message) {
         if (typeof window.showToast === 'function') {
             window.showToast(message);
         } else {
-            console.log('[VideoCall Toast]', message);
+            showLocalToast(message);
         }
     }
     

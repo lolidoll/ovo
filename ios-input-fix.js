@@ -10,6 +10,13 @@
     
     // 检测是否为 iOS 设备
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalonePWA = Boolean(
+        window.navigator.standalone ||
+        (window.matchMedia && (
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches
+        ))
+    );
     
     if (!isIOS) {
         console.log('🔍 非iOS设备，跳过iOS输入框修复');
@@ -22,6 +29,11 @@
      * 设置 Flex 布局，确保页面正确撑满
      */
     function setupFlexLayout() {
+        // iOS PWA 全屏交给统一的 viewport 变量驱动，避免重复改根布局
+        if (isStandalonePWA) {
+            return;
+        }
+
         // 设置 body 为 flex 容器
         document.body.style.setProperty('display', 'flex', 'important');
         document.body.style.setProperty('flex-direction', 'column', 'important');
@@ -80,8 +92,14 @@
             chatPage.style.setProperty('left', '0', 'important');
             chatPage.style.setProperty('right', '0', 'important');
             chatPage.style.setProperty('bottom', '0', 'important');
-            chatPage.style.setProperty('height', '100%', 'important');
-            chatPage.style.setProperty('height', '-webkit-fill-available', 'important');
+
+            if (isStandalonePWA) {
+                chatPage.style.setProperty('height', 'var(--app-height, 100dvh)', 'important');
+                chatPage.style.setProperty('max-height', 'var(--app-height, 100dvh)', 'important');
+            } else {
+                chatPage.style.setProperty('height', '100%', 'important');
+                chatPage.style.setProperty('height', '-webkit-fill-available', 'important');
+            }
         }
         
         // 4. 修复消息区域
@@ -181,7 +199,7 @@
         });
         
         // 9. 监听 visualViewport 变化（iOS 13+）
-        if (window.visualViewport) {
+        if (window.visualViewport && !isStandalonePWA) {
             window.visualViewport.addEventListener('resize', function() {
                 const newHeight = window.visualViewport.height;
                 console.log('📱 visualViewport 变化:', newHeight);

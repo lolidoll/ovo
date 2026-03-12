@@ -1825,7 +1825,7 @@ ${initiatorInfo}
     /**
      * 显示提示消息
      */
-    function showToast(message) {
+    function showLocalToast(message) {
         const toast = document.createElement('div');
         toast.className = 'ringtone-toast';
         toast.textContent = message;
@@ -1859,7 +1859,7 @@ ${initiatorInfo}
         if (window.showToast) {
             window.showToast(message);
         } else {
-            console.log('Toast:', message);
+            showLocalToast(message);
         }
     }
     

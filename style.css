@@ -165,10 +165,10 @@
             min-height: 100%;
         }
 
-        /* iOS PWA全屏模式：body添加底部安全区域 */
+        /* iOS PWA全屏模式：根容器不再预留底部安全区，避免重复计算 */
         .is-standalone body,
         .is-pwa body {
-            padding-bottom: var(--safe-area-inset-bottom);
+            padding-bottom: 0;
         }
         
         #app-container {
@@ -251,10 +251,10 @@
             padding-top: 0 !important;
         }
 
-        /* iOS PWA全屏模式：为底部安全区域添加padding */
+        /* iOS PWA全屏模式：底部安全区由底部栏和页面内容自身处理 */
         .is-standalone #app-container,
         .is-pwa #app-container {
-            padding-bottom: var(--safe-area-inset-bottom);
+            padding-bottom: 0;
         }
 
         .icon-svg {
@@ -1819,8 +1819,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: calc(48px + env(safe-area-inset-bottom));
-            min-height: calc(48px + env(safe-area-inset-bottom));
+            height: 48px;
+            min-height: 48px;
             width: 100%;
             background-color: #ffffff;
             border-top: 1px solid transparent;
@@ -8531,10 +8531,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
         bottom: auto !important;
     }
 
-    /* iOS PWA全屏模式：添加底部安全区域 */
+    /* iOS PWA全屏模式：根容器不再预留底部安全区，避免重复计算 */
     .is-standalone body,
     .is-pwa body {
-        padding-bottom: var(--safe-area-inset-bottom) !important;
+        padding-bottom: 0 !important;
     }
 
     html {
@@ -8552,10 +8552,10 @@ div[id$="-list"][style*="overflow-x"] input[type="checkbox"]:checked {
         left: auto !important;
     }
 
-    /* iOS PWA全屏模式：app-container添加底部安全区域 */
+    /* iOS PWA全屏模式：app-container不再预留底部安全区 */
     .is-standalone #app-container,
     .is-pwa #app-container {
-        padding-bottom: var(--safe-area-inset-bottom) !important;
+        padding-bottom: 0 !important;
     }
 }
 
@@ -8884,6 +8884,31 @@ body.keyboard-open .chat-toolbar,
     padding-bottom: 0 !important;
     padding-left: 4px !important;
     padding-right: 4px !important;
+}
+
+/* iPhone PWA 聊天页全屏兜底：统一高度与底部安全区，避免出现底部空白 */
+html.ios-standalone .chat-page,
+html.is-standalone .chat-page,
+html.ios-standalone .chat-page.open,
+html.is-standalone .chat-page.open {
+    height: var(--app-height, 100dvh) !important;
+    max-height: var(--app-height, 100dvh) !important;
+}
+
+html.ios-standalone .chat-messages,
+html.is-standalone .chat-messages {
+    padding-bottom: 12px !important;
+}
+
+html.ios-standalone .chat-input-area,
+html.is-standalone .chat-input-area {
+    padding-bottom: 2px !important;
+}
+
+html.ios-standalone .chat-toolbar,
+html.is-standalone .chat-toolbar {
+    min-height: calc(44px + max(env(safe-area-inset-bottom), 0px)) !important;
+    padding-bottom: max(env(safe-area-inset-bottom), 0px) !important;
 }
 
 /* ========================================

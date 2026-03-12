@@ -581,10 +581,12 @@
     border-top: none;
     flex-shrink: 0;
     min-height: 50px;
-    z-index: 60;
+    z-index: 230 !important;
     position: relative;
     pointer-events: auto;
     touch-action: manipulation;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
 }
 
 .chat-input {
@@ -656,36 +658,40 @@
 .chat-toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    padding: 0;
-    background: #f7f7f7;
-    border-top: none;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 8px;
+    background: linear-gradient(180deg, #fffafc 0%, #fff3f7 100%);
+    border-top: 1px solid #f2d9e3;
+    box-shadow: 0 -6px 18px rgba(246, 167, 188, 0.12);
     flex-shrink: 0;
-    min-height: 36px;
-    height: 36px;
-    z-index: 55;
+    min-height: 48px;
+    height: auto;
+    z-index: 220 !important;
     position: relative;
     pointer-events: auto;
     touch-action: manipulation;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
 }
 
 /* 工具栏按钮 - 6个核心按钮 */
 .tb-btn {
     flex: 1;
     height: 36px;
-    max-width: 60px;
-    min-width: 44px;
+    max-width: none;
+    min-width: 0;
     min-height: 44px;
-    border: none;
-    background: none;
+    border: 1px solid transparent;
+    background: transparent !important;
+    border-radius: 12px;
+    box-shadow: none;
     cursor: pointer;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    padding: 0;
-    transition: opacity 0.2s;
+    padding: 0 4px;
+    transition: all 0.18s ease;
     pointer-events: auto;
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(0,0,0,0.05);
@@ -693,23 +699,32 @@
     -webkit-user-select: none;
 }
 
+.tb-btn:hover {
+    border-color: transparent;
+    background: transparent !important;
+    box-shadow: none;
+}
+
 .tb-btn:active {
-    opacity: 0.6;
+    transform: scale(0.98);
+    border-color: transparent;
+    background: transparent !important;
+    box-shadow: none;
 }
 
 .tb-btn svg {
-    width: 22px;
-    height: 22px;
-    stroke: #666;
-    stroke-width: 1.8;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    display: none !important;
     pointer-events: none;
 }
 
 .tb-btn-label {
-    display: none;
+    display: block;
+    font-size: 12px;
+    line-height: 1;
+    color: #a46279;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
     pointer-events: none;
 }
 
@@ -722,16 +737,20 @@
    更多功能面板 - QQ风格
 ======================================== */
 .toolbar-more-panel {
-    position: fixed;
+    position: absolute !important;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #f7f7f7;
-    border-top: 0.5px solid #e5e5e5;
-    z-index: 160;
+    background: linear-gradient(180deg, #fffafc 0%, #fff4f8 52%, #fff0f6 100%);
+    border-top: 1px solid rgba(244, 192, 209, 0.42);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -16px 36px rgba(239, 162, 184, 0.24);
+    backdrop-filter: saturate(120%) blur(8px);
+    z-index: 180 !important;
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    max-height: 70vh;
+    max-height: 74vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -748,16 +767,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px;
-    border-bottom: 0.5px solid #e5e5e5;
-    background: #fff;
+    padding: 10px 12px 11px;
+    border-bottom: 1px solid rgba(244, 201, 215, 0.5);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 245, 249, 0.88) 100%);
 }
 
 .more-panel-close-btn {
-    width: 32px;
-    height: 4px;
-    background: #d0d0d0;
-    border-radius: 2px;
+    width: 44px;
+    height: 5px;
+    background: linear-gradient(90deg, #e2b5c6 0%, #d79fb4 100%);
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(215, 159, 180, 0.35);
     border: none;
     cursor: pointer;
 }
@@ -782,7 +802,7 @@
     width: 100%;
     flex-shrink: 0;
     scroll-snap-align: start;
-    padding: 20px 16px;
+    padding: 18px 14px 14px;
     box-sizing: border-box;
 }
 
@@ -790,7 +810,7 @@
 .more-panel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px 12px;
+    gap: 14px 10px;
 }
 
 /* 功能项 */
@@ -798,40 +818,51 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    border: none;
-    background: none;
+    gap: 7px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.66);
+    border-radius: 14px;
     cursor: pointer;
-    padding: 8px 4px;
-    transition: opacity 0.2s;
+    padding: 10px 6px;
+    transition: all 0.2s ease;
     pointer-events: auto;
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(0,0,0,0.05);
     user-select: none;
     -webkit-user-select: none;
-    min-width: 60px;
-    min-height: 60px;
+    min-width: 62px;
+    min-height: 82px;
+    box-shadow: 0 2px 10px rgba(240, 184, 202, 0.18);
+}
+
+.more-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(236, 185, 202, 0.52);
+    transform: translateY(-1px);
 }
 
 .more-item:active {
-    opacity: 0.6;
+    transform: scale(0.97);
+    background: rgba(255, 245, 249, 0.95);
+    border-color: rgba(228, 162, 184, 0.42);
 }
 
 .more-item-icon {
-    width: 48px;
-    height: 48px;
-    background: #fff;
-    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(180deg, #ffffff 0%, #fff5f8 100%);
+    border: 1px solid rgba(240, 188, 204, 0.45);
+    border-radius: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(239, 180, 200, 0.24);
 }
 
 .more-item-icon svg {
     width: 24px;
     height: 24px;
-    stroke: #666;
+    stroke: #ab6980;
     stroke-width: 1.8;
     fill: none;
     stroke-linecap: round;
@@ -840,7 +871,9 @@
 
 .more-item span {
     font-size: 12px;
-    color: #000;
+    color: #8e5d72;
+    font-weight: 600;
+    letter-spacing: 0.1px;
     text-align: center;
     line-height: 1.2;
 }
@@ -851,22 +884,23 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 12px;
-    background: #f7f7f7;
+    padding: 10px 12px 12px;
+    background: transparent;
 }
 
 .more-panel-dot {
-    width: 6px;
+    width: 7px;
     height: 6px;
-    background: #d0d0d0;
-    border-radius: 50%;
+    background: #e6bfd0;
+    border-radius: 999px;
     transition: all 0.3s;
 }
 
 .more-panel-dot.active {
-    width: 18px;
-    background: #666;
-    border-radius: 3px;
+    width: 20px;
+    background: #d28ca4;
+    box-shadow: 0 0 0 2px rgba(210, 140, 164, 0.16);
+    border-radius: 999px;
 }
 
 /* ========================================
@@ -1071,16 +1105,11 @@
     }
     
     .tb-btn {
-        max-width: 55px;
+        min-height: 40px;
     }
-    
-    .tb-btn svg {
-        width: 20px;
-        height: 20px;
-    }
-    
+
     .tb-btn-label {
-        font-size: 9px;
+        font-size: 11px;
     }
     
     .more-panel-grid {
@@ -1105,7 +1134,7 @@
     }
     
     .tb-btn {
-        height: 30px;
+        height: 32px;
     }
     
     .toolbar-more-panel {

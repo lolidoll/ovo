@@ -28,6 +28,7 @@
         
         // 初始化更多面板
         initMorePanel();
+        setupMorePanelObserver();
         
         // 初始化按钮映射
         initButtonMappings();
@@ -102,6 +103,11 @@
         
         morePanel.classList.add('show');
         morePanelState.isOpen = true;
+
+        // 参考表情包库行为：更多栏弹出时同步上移输入框和工具栏
+        setTimeout(() => {
+            updateBottomAreaPositionForMorePanel();
+        }, 0);
         
         console.log('📱 打开更多面板');
     }
@@ -115,8 +121,76 @@
         
         morePanel.classList.remove('show');
         morePanelState.isOpen = false;
+        resetBottomAreaPosition();
         
         console.log('📱 关闭更多面板');
+    }
+
+    /**
+     * 重置输入框和工具栏位置
+     */
+    function resetBottomAreaPosition() {
+        const inputArea = document.querySelector('.chat-input-area');
+        const toolbar = document.getElementById('chat-toolbar');
+        if (inputArea) inputArea.style.transform = 'translateY(0)';
+        if (toolbar) toolbar.style.transform = 'translateY(0)';
+    }
+
+    /**
+     * 更多栏弹出时，输入框和工具栏同步上移
+     */
+    function updateBottomAreaPositionForMorePanel() {
+        const morePanel = document.getElementById('toolbar-more-panel');
+        const inputArea = document.querySelector('.chat-input-area');
+        const toolbar = document.getElementById('chat-toolbar');
+        if (!morePanel || !inputArea || !toolbar) return;
+
+        if (!morePanel.classList.contains('show')) {
+            resetBottomAreaPosition();
+            return;
+        }
+
+        // 优先使用实际渲染高度，避免 fixed/absolute 布局下偏移不准
+        let panelHeight = morePanel.offsetHeight;
+
+        // 兜底：如果高度还没渲染完成，则读取 max-height 推算
+        if (!panelHeight) {
+            const maxHeight = window.getComputedStyle(morePanel).maxHeight || '';
+            if (maxHeight.includes('vh')) {
+                panelHeight = (window.innerHeight * parseFloat(maxHeight)) / 100;
+            } else if (maxHeight.endsWith('px')) {
+                panelHeight = parseFloat(maxHeight);
+            }
+        }
+
+        if (panelHeight > 0) {
+            const offset = Math.round(panelHeight);
+            inputArea.style.transform = `translateY(-${offset}px)`;
+            toolbar.style.transform = `translateY(-${offset}px)`;
+        }
+    }
+
+    /**
+     * 监听更多栏尺寸变化，保持输入框和工具栏位置同步
+     */
+    function setupMorePanelObserver() {
+        const morePanel = document.getElementById('toolbar-more-panel');
+        if (!morePanel) return;
+
+        if (typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(() => {
+                if (morePanelState.isOpen) {
+                    updateBottomAreaPositionForMorePanel();
+                }
+            });
+            resizeObserver.observe(morePanel);
+        }
+
+        window.addEventListener('resize', () => {
+            if (morePanelState.isOpen) {
+                updateBottomAreaPositionForMorePanel();
+            }
+        });
     }
     
     /**
@@ -497,12 +571,57 @@
     }
     
     // 工具函数
+    function showLocalToast(message) {
+        const oldToast = document.getElementById('chat-qq-toolbar-toast');
+        if (oldToast) oldToast.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'chat-qq-toolbar-toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 72px;
+            left: 50%;
+            transform: translateX(-50%) translateY(24px) scale(0.92);
+            opacity: 0;
+            background: linear-gradient(145deg, rgba(255, 251, 254, 0.98) 0%, rgba(255, 234, 245, 0.96) 100%);
+            color: #8f4b67;
+            padding: 12px 22px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            border: 1px solid rgba(255, 194, 220, 0.9);
+            box-shadow: 0 10px 28px rgba(255, 154, 196, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2147483000;
+            max-width: min(82vw, 360px);
+            text-align: center;
+            line-height: 1.45;
+            word-break: break-word;
+            pointer-events: none;
+            transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+        });
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(24px) scale(0.92)';
+            setTimeout(() => toast.remove(), 280);
+        }, 2000);
+    }
+
     function showToast(message) {
         if (window.showToast) {
             window.showToast(message);
         } else {
-            console.log('Toast:', message);
-            alert(message);
+            showLocalToast(message);
         }
     }
     
