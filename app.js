@@ -1349,16 +1349,10 @@
             // 注意：btn-voice-msg 和 btn-location 的事件处理器由各自的模块负责
             // 不需要在这里重复绑定事件
 
-
-            const btnVoice = document.getElementById('btn-voicecall');
-            if (btnVoice) btnVoice.addEventListener('click', function() { showToast('语音通话功能尚未实现'); });
-
             const btnVideo = document.getElementById('btn-videocall');
             if (btnVideo) btnVideo.addEventListener('click', function() { showToast('视频通话功能尚未实现'); });
 
-            // 线下功能按钮
-            const btnOffline = document.getElementById('btn-offline');
-            if (btnOffline) btnOffline.addEventListener('click', function() { showToast('线下功能尚未实现'); });
+            // 注意：btn-offline 由 chat-qq-toolbar.js 处理
 
             const btnTakeout = document.getElementById('btn-takeout');
             if (btnTakeout) btnTakeout.addEventListener('click', function() { showToast('点外卖功能尚未实现'); });
@@ -4523,8 +4517,9 @@
                     const duration = msg.duration || 1;
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div class="voice-bubble">
+                        <div class="voice-bubble" role="button" tabindex="0" aria-label="语音条，时长${duration}秒">
                             <div class="voice-waveform">
+                                <span class="wave"></span>
                                 <span class="wave"></span>
                                 <span class="wave"></span>
                                 <span class="wave"></span>
@@ -4534,28 +4529,32 @@
                     `;
                     bubble.classList.add('voice-message');
                 } else if (msg.type === 'location') {
-                    // 地理位置消息渲染 - 复杂精细设计
-                    const locationName = escapeHtml(msg.locationName || '位置');
-                    const locationAddress = msg.locationAddress ? escapeHtml(msg.locationAddress) : '';
-                    const locationDistance = msg.locationDistance || 5;
+                    // 地理位置消息渲染 - 浅粉白卡片样式（详细地址 + 距离）
+                    const rawLocationAddress = String(msg.locationAddress || msg.locationName || '').trim();
+                    const locationAddress = escapeHtml(rawLocationAddress || '未填写详细地址');
+                    const parsedDistance = parseInt(msg.locationDistance, 10);
+                    const locationDistance = (!isNaN(parsedDistance) && parsedDistance > 0) ? parsedDistance : 10;
                     const senderName = msg.sender === 'sent' ? AppState.user.name : AppState.currentChat.name;
+                    const geoMeta = msg.geoMeta && typeof msg.geoMeta === 'object' ? msg.geoMeta : null;
+                    const geoLat = geoMeta ? Number(geoMeta.lat) : NaN;
+                    const geoLng = geoMeta ? Number(geoMeta.lng) : NaN;
+                    const locationMeta = (Number.isFinite(geoLat) && Number.isFinite(geoLng))
+                        ? `真实定位 · ${geoLat.toFixed(4)}, ${geoLng.toFixed(4)}`
+                        : `${escapeHtml(senderName)} 发送`;
+
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div class="location-bubble" style="cursor:pointer;">
-                            <div class="location-map-preview"></div>
-                            <div class="location-info">
-                                <div class="location-sender-info">
-                                    <span class="location-sender-name">${escapeHtml(senderName)}</span>
-                                    <span>发送了位置</span>
+                        <div class="location-bubble">
+                            <div class="location-map-preview">
+                                <span class="location-map-pin"></span>
+                            </div>
+                            <div class="location-card-body">
+                                <div class="location-card-row">
+                                    <div class="location-card-title">地理位置</div>
+                                    <div class="location-card-distance">约${locationDistance}米</div>
                                 </div>
-                                <div class="location-header">
-                                    <div class="location-icon"></div>
-                                    <div class="location-details-info">
-                                        <div class="location-name">${locationName}</div>
-                                        ${locationAddress ? `<div class="location-address">${locationAddress}</div>` : '<div class="location-address">位置信息</div>'}
-                                        <div class="location-distance">约${locationDistance}米范围</div>
-                                    </div>
-                                </div>
+                                <div class="location-card-address">${locationAddress}</div>
+                                <div class="location-card-meta">${locationMeta}</div>
                             </div>
                         </div>
                     `;
@@ -5054,41 +5053,99 @@
                         }
                     }
                 } else if (msg.isPhotoDescription) {
-                    // 图片描述消息 - 文字卡片形式
+                    // 图片描述消息 - 图片翻转卡片（正面图片，背面描述）
                     const photoDesc = escapeHtml(msg.photoDescription || msg.content || '');
+                    const defaultPhotoCardImage = (typeof window !== 'undefined' && window.PHOTO_DESCRIPTION_CARD_IMAGE)
+                        ? window.PHOTO_DESCRIPTION_CARD_IMAGE
+                        : 'https://img.heliar.top/file/1773290751509_IMG_20260312_124453.jpg';
+                    const photoCardImage = escapeHtml(msg.photoCardImage || defaultPhotoCardImage);
                     
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div class="photo-description-card" style="
-                            background: #fff;
-                            border: 1px solid #e0e0e0;
-                            border-radius: 8px;
-                            padding: 12px;
-                            max-width: 260px;
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                        <div class="photo-description-card photo-description-flip-card" role="button" tabindex="0" aria-label="图片描述卡片" style="
+                            width: 142px;
+                            max-width: 142px;
+                            cursor: pointer;
+                            perspective: 1000px;
+                            user-select: none;
                         ">
-                            <div style="
-                                display: flex;
-                                align-items: center;
-                                gap: 4px;
-                                margin-bottom: 8px;
-                                padding-bottom: 6px;
-                                border-bottom: 1px solid #f0f0f0;
+                            <div class="photo-description-card-inner" style="
+                                position: relative;
+                                width: 100%;
+                                height: 162px;
+                                transition: transform 0.52s cubic-bezier(0.2, 0.7, 0.2, 1);
+                                transform-style: preserve-3d;
+                                transform: rotateY(0deg);
                             ">
-                                <svg viewBox="0 0 24 24" width="10" height="10" style="fill: #999;">
-                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                                </svg>
-                                <span style="font-size: 9px; color: #999; font-weight: 400;">图片描述</span>
+                                <div class="photo-description-face photo-description-front" style="
+                                    position: absolute;
+                                    inset: 0;
+                                    backface-visibility: hidden;
+                                    border: 1px solid #f0d6e1;
+                                    border-radius: 8px;
+                                    overflow: hidden;
+                                    box-shadow: 0 4px 11px rgba(206, 120, 151, 0.24);
+                                    background: #fffdfd;
+                                ">
+                                    <img src="${photoCardImage}" alt="图片描述卡片" style="
+                                        display: block;
+                                        width: 100%;
+                                        height: 100%;
+                                        object-fit: cover;
+                                        background: #f7eef2;
+                                    ">
+                                </div>
+                                <div class="photo-description-face photo-description-back" style="
+                                    position: absolute;
+                                    inset: 0;
+                                    backface-visibility: hidden;
+                                    transform: rotateY(180deg);
+                                    border: 1px solid #f0d6e1;
+                                    border-radius: 8px;
+                                    overflow: hidden;
+                                    box-shadow: 0 4px 11px rgba(206, 120, 151, 0.24);
+                                    background: linear-gradient(180deg, #fffdfd 0%, #fff4f9 100%);
+                                    padding: 7px 7px 6px;
+                                ">
+                                    <div style="
+                                        font-size: 10px;
+                                        color: #ac7086;
+                                        font-weight: 600;
+                                        letter-spacing: 0.2px;
+                                        padding-bottom: 4px;
+                                        border-bottom: 1px solid #f5dcea;
+                                    ">图片描述</div>
+                                    <div style="
+                                        margin-top: 5px;
+                                        font-size: 11px;
+                                        color: #5f3344;
+                                        line-height: 1.45;
+                                        word-break: break-word;
+                                        max-height: 128px;
+                                        overflow: auto;
+                                    ">${photoDesc || '（无描述）'}</div>
+                                </div>
                             </div>
-                            <div style="
-                                font-size: 12px;
-                                color: #333;
-                                line-height: 1.5;
-                                word-break: break-word;
-                            ">${photoDesc}</div>
                         </div>
                     `;
                     bubble.classList.add('photo-description-message');
+
+                    const flipCard = bubble.querySelector('.photo-description-flip-card');
+                    const flipCardInner = bubble.querySelector('.photo-description-card-inner');
+                    if (flipCard && flipCardInner) {
+                        const toggleFlip = function(event) {
+                            if (event) event.stopPropagation();
+                            const isFlipped = flipCard.classList.toggle('is-flipped');
+                            flipCardInner.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+                        };
+                        flipCard.addEventListener('click', toggleFlip);
+                        flipCard.addEventListener('keydown', function(event) {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                toggleFlip(event);
+                            }
+                        });
+                    }
                 } else if (msg.isForward && msg.forwardedMoment) {
                     // 转发朋友圈消息 - 简洁优雅的卡片（黑白灰风格）
                     console.log('🎯 检测到转发朋友圈消息:', msg);
@@ -5314,7 +5371,19 @@
         }
         
         // ========== 消息事件处理器初始化（只执行一次）==========
-        function initializeMessageEventHandlers(container, messages) {
+        function initializeMessageEventHandlers(container) {
+            const getCurrentConversationMessages = () => {
+                const convId = AppState.currentChat?.id;
+                if (!convId) return [];
+                return AppState.messages[convId] || [];
+            };
+
+            const findMessageById = (msgId) => {
+                if (!msgId) return null;
+                const currentMessages = getCurrentConversationMessages();
+                return currentMessages.find(m => m.id === msgId) || null;
+            };
+
             // 1. 头像双击事件（桌面端）
             const avatarDblClickHandler = (e) => {
                 const av = e.target.closest('.chat-avatar');
@@ -5366,7 +5435,7 @@
                 if (closeTransBtn) {
                     e.stopPropagation();
                     const msgId = closeTransBtn.dataset.msgId;
-                    const msg = messages.find(m => m.id === msgId);
+                    const msg = findMessageById(msgId);
                     if (msg) {
                         msg.translation = null;
                         saveToStorage();
@@ -5389,7 +5458,7 @@
                     const bubble = voiceBubble.closest('.chat-bubble');
                     if (bubble) {
                         const msgId = bubble.dataset.msgId;
-                        const msg = messages.find(m => m.id === msgId);
+                        const msg = findMessageById(msgId);
                         if (msg) {
                             if (msg.sender === 'received' && window.MinimaxTTS && MinimaxTTS.isConfigured()) {
                                 MinimaxTTS.speak(msg.content).catch(err => {
@@ -5427,7 +5496,7 @@
                 if (bubble) {
                     e.preventDefault();
                     const msgId = bubble.dataset.msgId;
-                    const msg = messages.find(m => m.id === msgId);
+                    const msg = findMessageById(msgId);
                     if (msg) {
                         showMessageContextMenu(msg, e, bubble);
                     }
@@ -5461,7 +5530,7 @@
                                 window.getSelection().removeAllRanges();
                             }
                             const msgId = touchedBubble.dataset.msgId;
-                            const msg = messages.find(m => m.id === msgId);
+                            const msg = findMessageById(msgId);
                             if (msg) {
                                 showMessageContextMenu(msg, null, touchedBubble);
                             }
@@ -5610,7 +5679,7 @@
             // 优化：只在第一次渲染时初始化事件监听器
             // 使用容器标志位避免重复绑定
             if (!container._eventHandlersInitialized) {
-                initializeMessageEventHandlers(container, messages);
+                initializeMessageEventHandlers(container);
                 container._eventHandlersInitialized = true;
             }
             
@@ -9095,32 +9164,57 @@
             }
             
             // ========== 第五步：处理地理位置信息 ==========
-            // 匹配地理位置标记：【地理位置】位置名称|地址|距离【/地理位置】或【地理位置】位置名称|地址【/地理位置】
-            const locationRegex = /【地理位置】([^|【]+)\|?([^|【]*)\|?([^【]*)【\/地理位置】/;
+            // 兼容格式：
+            // 1) 【地理位置】位置名称|详细地址|距离【/地理位置】
+            // 2) 【地理位置】详细地址|距离【/地理位置】
+            // 3) 【地理位置】详细地址【/地理位置】
+            const locationRegex = /【地理位置】([^【]+?)【\/地理位置】/;
             const locationMatch = text.match(locationRegex);
-            let locationName = null;
-            let locationAddress = null;
+            let locationName = '';
+            let locationAddress = '';
             let locationDistance = 10; // 默认10米，但AI应该根据实际情况设置
             let isLocation = false;
             
             if (locationMatch && locationMatch[1]) {
-                isLocation = true;
-                locationName = locationMatch[1].trim();
-                locationAddress = locationMatch[2] ? locationMatch[2].trim() : '';
-                if (locationMatch[3]) {
-                    const distanceStr = locationMatch[3].trim();
-                    const parsedDistance = parseInt(distanceStr);
-                    if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                        locationDistance = parsedDistance;
+                const locationPayload = locationMatch[1].trim();
+                if (locationPayload) {
+                    const parts = locationPayload.split('|').map(part => part.trim());
+                    const p1 = parts[0] || '';
+                    const p2 = parts[1] || '';
+                    const p3 = parts[2] || '';
+
+                    if (parts.length >= 3) {
+                        locationName = p1;
+                        locationAddress = p2 || p1;
+                        const parsedDistance = parseInt(p3, 10);
+                        if (!isNaN(parsedDistance) && parsedDistance > 0) {
+                            locationDistance = parsedDistance;
+                        }
+                    } else if (parts.length === 2) {
+                        const parsedDistance = parseInt(p2, 10);
+                        if (!isNaN(parsedDistance) && parsedDistance > 0) {
+                            // 新格式：详细地址|距离
+                            locationAddress = p1;
+                            locationName = '';
+                            locationDistance = parsedDistance;
+                        } else {
+                            // 旧格式：位置名称|详细地址
+                            locationName = p1;
+                            locationAddress = p2 || p1;
+                        }
+                    } else {
+                        // 单字段：按详细地址处理
+                        locationAddress = p1;
                     }
                 }
+
+                if (!locationAddress && locationName) {
+                    locationAddress = locationName;
+                }
+                isLocation = !!(locationAddress || locationName);
+
                 // 从文本中移除地理位置标记
                 text = text.replace(locationRegex, '').trim();
-                
-                // 如果AI没有提供距离值（使用默认值），记录警告
-                if (!locationMatch[3] || !locationMatch[3].trim()) {
-                    console.warn('⚠️ AI发送地理位置时未指定距离值，使用默认值:', locationDistance, '米');
-                }
             }
             
             // ========== 第5.5步：处理语音通话信息 ==========
@@ -9226,13 +9320,14 @@
             }
             
             // 如果检测到地理位置消息，创建地理位置消息
-            if (isLocation && locationName) {
+            if (isLocation && (locationAddress || locationName)) {
+                const effectiveLocationAddress = locationAddress || locationName;
                 const aiLocationMsg = {
                     id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     type: 'location',
-                    content: `${locationName}${locationAddress ? ' - ' + locationAddress : ''} (${locationDistance}米范围)`,
-                    locationName: locationName,
-                    locationAddress: locationAddress || '',
+                    content: `${effectiveLocationAddress} (${locationDistance}米范围)`,
+                    locationName: locationName || '',
+                    locationAddress: effectiveLocationAddress,
                     locationDistance: locationDistance,
                     sender: 'received',
                     time: new Date().toISOString(),
@@ -9466,24 +9561,48 @@
                         content = content.replace(voiceRegex, '').trim();
                     }
                     
-                    // 处理地理位置
-                    const locationRegex = /【地理位置】([^|【]+)\|?([^|【]*)\|?([^【]*)【\/地理位置】/;
+                    // 处理地理位置（兼容旧格式与无位置名格式）
+                    const locationRegex = /【地理位置】([^【]+?)【\/地理位置】/;
                     const locationMatch = content.match(locationRegex);
                     let isLocation = false;
-                    let locationName = null;
-                    let locationAddress = null;
-                    let locationDistance = 5;
+                    let locationName = '';
+                    let locationAddress = '';
+                    let locationDistance = 10;
                     
                     if (locationMatch && locationMatch[1]) {
-                        isLocation = true;
-                        locationName = locationMatch[1].trim();
-                        locationAddress = locationMatch[2] ? locationMatch[2].trim() : '';
-                        if (locationMatch[3]) {
-                            const parsedDistance = parseInt(locationMatch[3].trim());
-                            if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                                locationDistance = parsedDistance;
+                        const locationPayload = locationMatch[1].trim();
+                        if (locationPayload) {
+                            const parts = locationPayload.split('|').map(part => part.trim());
+                            const p1 = parts[0] || '';
+                            const p2 = parts[1] || '';
+                            const p3 = parts[2] || '';
+
+                            if (parts.length >= 3) {
+                                locationName = p1;
+                                locationAddress = p2 || p1;
+                                const parsedDistance = parseInt(p3, 10);
+                                if (!isNaN(parsedDistance) && parsedDistance > 0) {
+                                    locationDistance = parsedDistance;
+                                }
+                            } else if (parts.length === 2) {
+                                const parsedDistance = parseInt(p2, 10);
+                                if (!isNaN(parsedDistance) && parsedDistance > 0) {
+                                    locationAddress = p1;
+                                    locationName = '';
+                                    locationDistance = parsedDistance;
+                                } else {
+                                    locationName = p1;
+                                    locationAddress = p2 || p1;
+                                }
+                            } else {
+                                locationAddress = p1;
                             }
                         }
+
+                        if (!locationAddress && locationName) {
+                            locationAddress = locationName;
+                        }
+                        isLocation = !!(locationAddress || locationName);
                         content = content.replace(locationRegex, '').trim();
                     }
                     
@@ -9527,13 +9646,14 @@
                     }
                     
                     // 创建地理位置消息
-                    if (isLocation && locationName) {
+                    if (isLocation && (locationAddress || locationName)) {
+                        const effectiveLocationAddress = locationAddress || locationName;
                         aiMsg = {
                             id: 'msg_' + Date.now() + '_' + Math.random(),
                             type: 'location',
-                            content: `${locationName}${locationAddress ? ' - ' + locationAddress : ''} (${locationDistance}米范围)`,
-                            locationName: locationName,
-                            locationAddress: locationAddress || '',
+                            content: `${effectiveLocationAddress} (${locationDistance}米范围)`,
+                            locationName: locationName || '',
+                            locationAddress: effectiveLocationAddress,
                             locationDistance: locationDistance,
                             sender: 'received',
                             time: new Date().toISOString(),

@@ -3,6 +3,8 @@
  * 处理带描述对话框的图片发送功能
  */
 
+const PHOTO_DESCRIPTION_CARD_IMAGE = 'https://img.heliar.top/file/1773290751509_IMG_20260312_124453.jpg';
+
 // 初始化相机按钮事件监听
 function initCameraButton() {
     const btnCamera = document.getElementById('btn-camera');
@@ -23,7 +25,7 @@ function showPhotoDescriptionDialog(imageData) {
     modal = document.createElement('div');
     modal.id = 'photo-description-modal';
     modal.className = 'emoji-mgmt-modal show';
-    modal.style.cssText = 'background:rgba(0,0,0,0.7);';
+    modal.style.cssText = 'background:rgba(255,236,246,0.72);backdrop-filter:blur(4px);';
     
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
@@ -35,16 +37,16 @@ function showPhotoDescriptionDialog(imageData) {
     window.currentPhotoData = imageData;
     
     modal.innerHTML = `
-        <div class="emoji-mgmt-content" style="max-width:300px;background:#fff;border-radius:12px;overflow:hidden;">
-            <div style="padding:16px;text-align:center;border-bottom:1px solid #e8e8e8;">
-                <h3 style="margin:0;font-size:16px;color:#333;font-weight:600;">图片描述</h3>
+        <div class="emoji-mgmt-content" style="max-width:320px;background:linear-gradient(180deg,#fffdfd 0%,#fff5fa 100%);border-radius:16px;overflow:hidden;border:1px solid #ffd7e8;box-shadow:0 14px 36px rgba(226,130,164,0.24);">
+            <div style="padding:16px 16px 14px;text-align:center;border-bottom:1px solid #ffe3ef;background:linear-gradient(180deg,#fff8fb 0%,#fff2f8 100%);">
+                <h3 style="margin:0;font-size:16px;color:#9f4e6f;font-weight:700;letter-spacing:0.4px;">图片描述</h3>
             </div>
             <div style="padding:16px;">
-                <textarea id="photo-desc-input" placeholder="请输入图片描述内容..." style="width:100%;height:100px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;resize:vertical;"></textarea>
+                <textarea id="photo-desc-input" placeholder="请输入图片描述内容..." style="width:100%;height:104px;padding:10px 11px;border:1px solid #f3bfd5;border-radius:10px;font-size:13px;line-height:1.5;resize:vertical;background:#fffdfd;color:#5f3847;outline:none;"></textarea>
             </div>
-            <div style="padding:12px;border-top:1px solid #e8e8e8;display:flex;gap:8px;justify-content:flex-end;">
-                <button onclick="document.getElementById('photo-description-modal').remove();" style="padding:8px 16px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
-                <button onclick="sendPhotoWithDescription(null);" style="padding:8px 16px;border:none;border-radius:4px;background:#000;color:#fff;cursor:pointer;font-size:13px;">发送</button>
+            <div style="padding:12px 14px;border-top:1px solid #ffe4ef;display:flex;gap:10px;justify-content:flex-end;background:#fff9fc;">
+                <button onclick="document.getElementById('photo-description-modal').remove();" style="padding:8px 16px;border:1px solid #efc3d7;border-radius:9px;background:#fff;cursor:pointer;font-size:13px;color:#8f4d67;">取消</button>
+                <button onclick="sendPhotoWithDescription(window.currentPhotoData);" style="padding:8px 18px;border:none;border-radius:9px;background:linear-gradient(135deg,#ff7cae 0%,#ff94bf 100%);box-shadow:0 6px 14px rgba(255,123,172,0.35);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">发送</button>
             </div>
         </div>
     `;
@@ -105,6 +107,8 @@ function sendPhotoWithDescription(imageData, descFromParam, needsVision) {
             showToast('请输入图片描述');
             return;
         }
+
+        const cardImageUrl = window.PHOTO_DESCRIPTION_CARD_IMAGE || PHOTO_DESCRIPTION_CARD_IMAGE;
         
         const msg = {
             id: 'msg_' + Date.now(),
@@ -112,6 +116,7 @@ function sendPhotoWithDescription(imageData, descFromParam, needsVision) {
             content: desc,
             isPhotoDescription: true,  // 标记为图片描述消息
             photoDescription: desc,  // 保存图片描述
+            photoCardImage: cardImageUrl,  // 图片描述卡片封面图
             time: new Date().toISOString()
         };
         
@@ -137,6 +142,7 @@ function sendPhotoWithDescription(imageData, descFromParam, needsVision) {
 // 暴露函数到全局作用域
 window.showPhotoDescriptionDialog = showPhotoDescriptionDialog;
 window.sendPhotoWithDescription = sendPhotoWithDescription;
+window.PHOTO_DESCRIPTION_CARD_IMAGE = PHOTO_DESCRIPTION_CARD_IMAGE;
 
 // 页面加载完成后初始化
 if (document.readyState === 'loading') {

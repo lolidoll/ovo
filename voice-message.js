@@ -31,37 +31,14 @@ const VoiceMessageModule = (function() {
             document.body.appendChild(modal);
         }
 
+        bindVoiceModalEvents(modal);
+        modal.classList.add('show');
         modal.style.display = 'flex';
         voiceModalOpen = true;
-        document.getElementById('voice-input').value = '';
-        document.getElementById('voice-input').focus();
-
-        // 添加遮罩和关闭事件
-        const backdrop = modal.querySelector('.voice-modal-backdrop');
-        if (backdrop) {
-            backdrop.addEventListener('click', closeVoiceModal);
-        }
-
-        // 关闭按钮
-        const closeBtn = modal.querySelector('.voice-modal-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeVoiceModal);
-        }
-
-        // 发送按钮
-        const sendBtn = modal.querySelector('.voice-send-btn');
-        if (sendBtn) {
-            sendBtn.addEventListener('click', sendVoiceMessage);
-        }
-
-        // 回车快速发送
-        const input = modal.querySelector('.voice-input');
+        const input = modal.querySelector('#voice-input');
         if (input) {
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                    sendVoiceMessage();
-                }
-            });
+            input.value = '';
+            requestAnimationFrame(() => input.focus());
         }
     }
 
@@ -69,6 +46,7 @@ const VoiceMessageModule = (function() {
     function closeVoiceModal() {
         const modal = document.getElementById('voice-modal');
         if (modal) {
+            modal.classList.remove('show');
             modal.style.display = 'none';
             voiceModalOpen = false;
         }
@@ -100,25 +78,70 @@ const VoiceMessageModule = (function() {
             </div>
         `;
 
-        // 绑定取消按钮
+        return modal;
+    }
+
+    // 绑定弹窗事件（只绑定一次，避免重复打开叠加监听器）
+    function bindVoiceModalEvents(modal) {
+        if (!modal || modal.dataset.bound === '1') return;
+
+        const backdrop = modal.querySelector('.voice-modal-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', closeVoiceModal);
+        }
+
+        const closeBtn = modal.querySelector('.voice-modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeVoiceModal);
+        }
+
         const cancelBtn = modal.querySelector('.voice-cancel-btn');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', closeVoiceModal);
         }
 
-        return modal;
+        const sendBtn = modal.querySelector('.voice-send-btn');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', sendVoiceMessage);
+        }
+
+        const input = modal.querySelector('.voice-input');
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    sendVoiceMessage();
+                }
+            });
+        }
+
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && voiceModalOpen) {
+                e.preventDefault();
+                closeVoiceModal();
+            }
+        });
+
+        modal.dataset.bound = '1';
     }
 
     // 发送语音消息
     function sendVoiceMessage() {
         const input = document.getElementById('voice-input');
         const durationInput = document.getElementById('voice-duration-input');
+        if (!input) return;
+
         const text = input.value.trim();
-        const duration = durationInput ? parseInt(durationInput.value) || 1 : 1;
+        const parsedDuration = durationInput ? parseInt(durationInput.value, 10) : 1;
+        const duration = Math.max(1, Math.min(300, Number.isFinite(parsedDuration) ? parsedDuration : 1));
 
         if (!text) {
             alert('请输入语音内容');
             return;
+        }
+
+        if (durationInput) {
+            durationInput.value = String(duration);
         }
 
         // 获取当前对话

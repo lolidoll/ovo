@@ -35,6 +35,9 @@
         
         // 初始化"回复"按钮
         initReplyButton();
+
+        // 初始化"线下"按钮
+        initOfflineButton();
     }
     
     /**
@@ -351,12 +354,10 @@
             'more-camera': handleCamera,
             'more-photo': handlePhoto,
             'more-location': handleLocation,
-            'more-voicecall': handleVoiceCall,
             'more-videocall': handleVideoCall,
             'more-redenvelope': handleRedEnvelope,
             'more-transfer': handleTransfer,
             'more-takeout': handleTakeout,
-            'more-offline': handleOffline,
             'more-listen': handleListen,
             'more-fiction': handleFiction,
             'more-diary': handleDiary,
@@ -394,6 +395,20 @@
         
         console.log('✅ 回复按钮已初始化');
     }
+
+    /**
+     * 初始化"线下"按钮
+     */
+    function initOfflineButton() {
+        const btnOffline = document.getElementById('btn-offline');
+        if (!btnOffline) return;
+
+        btnOffline.addEventListener('click', function() {
+            handleOffline();
+        });
+
+        console.log('✅ 线下按钮已初始化');
+    }
     
     // ==================== 按钮功能处理函数 ====================
     
@@ -423,21 +438,6 @@
             window.LocationMessageModule.openLocationModal();
         } else {
             showToast('位置功能尚未实现');
-        }
-    }
-    
-    function handleVoiceCall() {
-        console.log('[Toolbar] 触发语音通话');
-        
-        // 关闭更多面板
-        closeMorePanel();
-        
-        // 调用语音通话系统
-        if (window.VoiceCallSystem && typeof window.VoiceCallSystem.startCall === 'function') {
-            window.VoiceCallSystem.startCall();
-        } else {
-            console.warn('⚠️ 语音通话系统未初始化');
-            showToast('语音通话功能加载中，请稍后再试');
         }
     }
     
