@@ -25,6 +25,12 @@
         console.log('🔍 非iOS设备，跳过iOS聊天页面修复');
         return;
     }
+
+    // iOS PWA 全屏由统一的 viewport + safe-area 方案处理，避免旧逻辑重复改布局
+    if (isStandalonePWA) {
+        console.log('🔍 iOS PWA全屏模式，跳过旧版聊天布局修复');
+        return;
+    }
     
     console.log('🔧 检测到iOS设备，应用聊天页面修复...');
     

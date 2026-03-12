@@ -531,34 +531,41 @@ app.post('/api/proxy', async (req, res) => {
 });
 
 /**
- * 404 处理
- */
-app.use((req, res) => {
-    res.status(404).json({
-        error: '未找到',
-        message: '请求的端点不存在'
-    });
-});
-
-/**
  * 音乐图片代理端点 - 解决GD API图片CORS问题
- * GET /api/music/pic?pic_id=xxx&size=300
+ * GET /api/music/pic?pic_id=xxx&source=netease&size=300
  */
 app.get('/api/music/pic', async (req, res) => {
     try {
-        const { pic_id, size = 300 } = req.query;
+        const { pic_id } = req.query;
+        const sourceRaw = (req.query.source || 'netease').toString().toLowerCase();
+        const sizeRaw = parseInt(req.query.size, 10);
+        const size = Number.isFinite(sizeRaw) && sizeRaw > 0 ? sizeRaw : 300;
+        const source = ['netease', 'kuwo', 'joox'].includes(sourceRaw) ? sourceRaw : 'netease';
         
         if (!pic_id) {
             return res.status(400).json({ error: '缺少 pic_id 参数' });
         }
         
-        console.log(`🎵 获取音乐图片: ${pic_id} (${size}x${size})`);
+        console.log(`🎵 获取音乐图片: source=${source}, pic_id=${pic_id}, size=${size}`);
         
-        // 使用GD API的图片接口
-        const gdPicUrl = `https://music-api.gdstudio.xyz/api.php?types=pic&source=netease&id=${pic_id}&size=${size}`;
+        // 先调用 GD API 获取真实图片 URL
+        const gdPicApi = `https://music-api.gdstudio.xyz/api.php?types=pic&source=${encodeURIComponent(source)}&id=${encodeURIComponent(pic_id)}&size=${size}`;
+        const gdResponse = await axios.get(gdPicApi, {
+            timeout: 8000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
         
-        const response = await axios.get(gdPicUrl, {
-            timeout: 5000,
+        const realPicUrl = gdResponse?.data?.url;
+        if (!realPicUrl || typeof realPicUrl !== 'string') {
+            console.error('❌ GD图片接口返回异常:', gdResponse?.data);
+            return res.status(502).json({ error: 'GD图片接口返回异常' });
+        }
+        
+        // 再回源真实图片并转发给前端
+        const imageResponse = await axios.get(realPicUrl, {
+            timeout: 8000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
@@ -567,17 +574,27 @@ app.get('/api/music/pic', async (req, res) => {
         
         // 设置响应头允许跨域和缓存
         res.set({
-            'Content-Type': response.headers['content-type'] || 'image/jpeg',
+            'Content-Type': imageResponse.headers['content-type'] || 'image/jpeg',
             'Cache-Control': 'public, max-age=86400',
             'Access-Control-Allow-Origin': '*'
         });
         
-        res.send(response.data);
+        res.send(imageResponse.data);
         
     } catch (error) {
         console.error('❌ 图片代理失败:', error.message);
-        res.status(500).json({ error: '图片获取失败' });
+        res.status(500).json({ error: '图片获取失败', message: error.message });
     }
+});
+
+/**
+ * 404 处理
+ */
+app.use((req, res) => {
+    res.status(404).json({
+        error: '未找到',
+        message: '请求的端点不存在'
+    });
 });
 
 /**

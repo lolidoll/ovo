@@ -32,9 +32,7 @@
             app6: { url: '', name: '钱包' },
             app7: { url: '', name: '邮件' },
             app8: { url: '', name: '抖音' },
-            app9: { url: '', name: '小红书' },
-            app10: { url: '', name: '最小化' },
-            app11: { url: '', name: '关机' }
+            app9: { url: '', name: '小红书' }
         },
         dockIcons: {
             dock0: { url: '', name: '电话' },
@@ -43,6 +41,18 @@
             dock3: { url: '', name: '设置' }
         }
     };
+
+    function normalizeIconsConfig(icons) {
+        const source = icons || {};
+        const normalized = {};
+
+        for (let i = 0; i <= 9; i++) {
+            const key = `app${i}`;
+            normalized[key] = { ...defaultConfig.icons[key], ...(source[key] || {}) };
+        }
+
+        return normalized;
+    }
 
     // 当前配置
     let currentConfig = JSON.parse(JSON.stringify(defaultConfig));
@@ -60,7 +70,7 @@
                     colors: { ...defaultConfig.colors, ...(savedConfig.colors || {}) },
                     backgrounds: { ...defaultConfig.backgrounds, ...(savedConfig.backgrounds || {}) },
                     display: { ...defaultConfig.display, ...(savedConfig.display || {}) },
-                    icons: { ...defaultConfig.icons, ...(savedConfig.icons || {}) },
+                    icons: normalizeIconsConfig(savedConfig.icons),
                     dockIcons: { ...defaultConfig.dockIcons, ...(savedConfig.dockIcons || {}) }
                 };
             } catch (e) {
@@ -73,6 +83,7 @@
 
     // 保存配置
     function saveConfig() {
+        currentConfig.icons = normalizeIconsConfig(currentConfig.icons);
         localStorage.setItem('iphone-simulator-config', JSON.stringify(currentConfig));
         applyConfig();
     }

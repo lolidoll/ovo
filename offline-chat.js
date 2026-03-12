@@ -18,7 +18,8 @@
         maxRetries: 3, // 最大重试次数
         theme: 'dark', // 主题: dark, light, girly
         customBackground: null, // 自定义背景图
-        messageLayout: 'default' // 消息布局: default (默认), centered (居中)
+        messageLayout: 'default', // 消息布局: default (默认), centered (居中)
+        stickToBottom: true // 是否跟随到底部（用户上滑查看历史后会关闭）
     };
     
     // 加载/保存数据
@@ -62,7 +63,8 @@
         
         document.getElementById('st-chat-page').classList.add('show');
         State.isOpen = true;
-        scrollBottom();
+        State.stickToBottom = true;
+        scrollBottom(true);
     }
     
     function close() {
@@ -71,6 +73,7 @@
         State.isOpen = false;
         State.isSelectMode = false;
         State.selectedMessages.clear();
+        State.stickToBottom = true;
         State.chatId = null;
         const contextBar = document.getElementById('st-context-bar');
         if (contextBar) contextBar.style.display = 'none';
@@ -204,9 +207,9 @@
         // 更新token统计
         updateTokenStats(msgs);
 
-        // 空消息提示
+        // 空消息时不显示初始提示文案
         if (!msgs.length) {
-            container.innerHTML = `<div class="st-empty-hint">开始对话吧</div>`;
+            container.innerHTML = '';
             return;
         }
 
@@ -248,13 +251,13 @@
                 </div>
             ` : '';
 
-            // 对齐ST: reasoning显示 - 支持auto_expand和duration
+            // 线下模块默认折叠思维链，不自动展开
             const reasoningDuration = m.extra?.reasoning_duration;
             const durationText = reasoningDuration 
                 ? `${(reasoningDuration / 1000).toFixed(1)}s` 
                 : '';
-            const autoExpanded = reasoningSettings.auto_expand ? 'expanded' : '';
-            const autoShow = reasoningSettings.auto_expand ? 'show' : '';
+            const autoExpanded = '';
+            const autoShow = '';
 
             // 根据布局类型渲染不同的HTML结构
             if (isCentered) {
@@ -364,7 +367,8 @@
         
         save();
         render();
-        scrollBottom();
+        State.stickToBottom = true;
+        scrollBottom(true);
         
         setTimeout(() => callAI(), 300);
     }
@@ -1439,8 +1443,13 @@
             e.target.style.height = e.target.scrollHeight + 'px';
         });
 
+        const messagesEl = document.getElementById('st-messages');
+        messagesEl.addEventListener('scroll', () => {
+            State.stickToBottom = isNearBottom(messagesEl);
+        }, { passive: true });
+
         // 消息列表事件
-        document.getElementById('st-messages').addEventListener('click', e => {
+        messagesEl.addEventListener('click', e => {
             const msgEl = e.target.closest('.st-message');
 
             // 多选模式 - 点击整个消息选择（SillyTavern风格：选择该消息及之后的所有消息）
@@ -1573,7 +1582,7 @@
         let longPressTimer = null;
         let isLongPress = false;
 
-        document.getElementById('st-messages').addEventListener('touchstart', e => {
+        messagesEl.addEventListener('touchstart', e => {
             if (State.isSelectMode) return;
 
             const msgEl = e.target.closest('.st-message');
@@ -1588,7 +1597,7 @@
             }, 500);
         }, { passive: true });
 
-        document.getElementById('st-messages').addEventListener('touchend', e => {
+        messagesEl.addEventListener('touchend', e => {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
@@ -1613,7 +1622,7 @@
             isLongPress = false;
         });
 
-        document.getElementById('st-messages').addEventListener('touchmove', e => {
+        messagesEl.addEventListener('touchmove', e => {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
@@ -1715,9 +1724,18 @@
     }
     
     // 工具函数
-    function scrollBottom() {
+    function isNearBottom(el, threshold = 120) {
+        if (!el) return true;
+        const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        return distanceToBottom <= threshold;
+    }
+
+    function scrollBottom(force = false) {
         const el = document.getElementById('st-messages');
-        if (el) el.scrollTop = el.scrollHeight;
+        if (!el) return;
+        if (!force && !State.stickToBottom && !isNearBottom(el)) return;
+        el.scrollTop = el.scrollHeight;
+        State.stickToBottom = true;
     }
     
     // 提取思维链 - 严格对齐SillyTavern的处理方式

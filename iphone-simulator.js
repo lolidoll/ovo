@@ -174,18 +174,6 @@
                                     </div>
                                     <span class="app-name">小红书</span>
                                 </div>
-                                <div class="app-icon">
-                                    <div class="app-icon-image app-minimize">
-                                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#999"/><path d="M7 11h10v2H7z" fill="white"/></svg>
-                                    </div>
-                                    <span class="app-name">最小化</span>
-                                </div>
-                                <div class="app-icon">
-                                    <div class="app-icon-image app-shutdown">
-                                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ff3b30"/><path d="M12 6v6M12 15h.01" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-                                    </div>
-                                    <span class="app-name">关机</span>
-                                </div>
                             </div>
                         </div>
                         
@@ -390,6 +378,7 @@
         
         // 应用用户的显示设置（包括灵动岛的显示/隐藏）
         applyUserDisplaySettings();
+        removeLegacyMinimizeIcon();
         
         overlay.classList.add('show');
         updateTime();
@@ -464,6 +453,38 @@
         }
     }
 
+    function normalizeLegacyHomeIcons(rawIcons) {
+        if (!rawIcons || typeof rawIcons !== 'object') {
+            return { icons: rawIcons, changed: false };
+        }
+
+        const normalized = {};
+        let changed = false;
+
+        for (let i = 0; i <= 9; i++) {
+            const key = `app${i}`;
+            if (rawIcons[key]) {
+                normalized[key] = { ...rawIcons[key] };
+            }
+        }
+
+        if (rawIcons.app10 || rawIcons.app11) {
+            changed = true;
+        }
+
+        return { icons: normalized, changed };
+    }
+
+    function removeLegacyMinimizeIcon() {
+        const appIcons = document.querySelectorAll('.home-screen .app-icon');
+        appIcons.forEach(icon => {
+            const nameEl = icon.querySelector('.app-name');
+            if (nameEl && String(nameEl.textContent || '').trim() === '最小化') {
+                icon.remove();
+            }
+        });
+    }
+
     // 应用用户的所有设置
     function applyUserDisplaySettings() {
         try {
@@ -471,6 +492,17 @@
             if (!saved) return;
             
             const config = JSON.parse(saved);
+
+            // 兼容旧配置：移除已删除的图标槽位（app10/app11）
+            if (config && config.icons) {
+                const normalized = normalizeLegacyHomeIcons(config.icons);
+                if (normalized.icons) {
+                    config.icons = normalized.icons;
+                    if (normalized.changed) {
+                        localStorage.setItem('iphone-simulator-config', JSON.stringify(config));
+                    }
+                }
+            }
             
             // 1. 应用灵动岛显示设置
             if (config.display && typeof config.display.showDynamicIsland !== 'undefined') {
@@ -579,6 +611,9 @@
                     }
                 });
             }
+
+            // 双保险：旧缓存或异常场景下，强制移除“最小化”图标
+            removeLegacyMinimizeIcon();
             
             // 5. 应用Dock图标设置
             if (config.dockIcons) {
@@ -1193,14 +1228,6 @@
                     if (window.iPhoneMail) {
                         window.iPhoneMail.show();
                     }
-                    return;
-                } else if (appName === '最小化') {
-                    // 最小化查手机
-                    minimizeiPhoneSimulator();
-                    return;
-                } else if (appName === '关机') {
-                    // 直接关闭查手机
-                    hideiPhoneSimulator();
                     return;
                 }
             };

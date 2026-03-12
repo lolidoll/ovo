@@ -3973,7 +3973,7 @@
                     hasUnreadAI = true;
                 }
                 // 其他AI发送的消息类型（语音、位置、通话等）
-                if ((msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall') && msg.sender === 'received' && msg.readByUser !== true) {
+                if ((msg.type === 'voice' || msg.type === 'location'  || msg.type === 'videocall') && msg.sender === 'received' && msg.readByUser !== true) {
                     msg.readByUser = true;
                     hasUnreadAI = true;
                 }
@@ -4864,16 +4864,14 @@
                     `;
                     bubble.classList.add('goods-card-bubble');
                 } else if (msg.type === 'listen_invite') {
-                    // 一起听邀请卡片消息渲染 - 毛玻璃风格
+                    // 一起听邀请卡片消息渲染 - 浅粉白主题
                     const isSent = msg.sender === 'sent';
-                    const cursorStyle = isSent ? 'default' : 'pointer';
                     const songName = msg.songName || '正在听音乐';
                     
                     // 获取邀请的响应状态
                     const convId = AppState.currentChat.id;
                     const msgs = AppState.messages[convId] || [];
                     let responseStatus = null;
-                    let responseText = null;
                     
                     // 检查是否已关闭（一起听页面被关闭）
                     if (msg.isListenTogetherClosed) {
@@ -4887,118 +4885,63 @@
                             const m = msgs[i];
                             if (m.type === 'received' && m.isRejectionMessage) {
                                 responseStatus = 'rejected';
-                                responseText = m.content;
                                 break;
                             } else if (m.type === 'received' && m.isAcceptListenInvitation) {
                                 // 【修复】只有明确标记为接受的消息才算同意
                                 responseStatus = 'accepted';
-                                responseText = m.content;
                                 break;
                             }
                         }
                     }
                     
                     // 确定状态文本和颜色
-                    let statusText, statusColor;
+                    let statusText;
                     if (responseStatus === 'closed') {
                         statusText = '已关闭';
-                        statusColor = '#999';
                     } else if (responseStatus === 'accepted') {
                         statusText = '已同意';
-                        statusColor = '#4a90e2';
                     } else if (responseStatus === 'rejected') {
                         statusText = '已拒绝';
-                        statusColor = '#e74c3c';
                     } else {
                         statusText = '等待回应...';
-                        statusColor = '#999';
                     }
                     
                     // 未回复时显示按钮，已回复时显示状态
                     // 【用户邀请AI】时：按钮禁用（AI应自主决定，不通过按钮强制）
                     // 【AI邀请用户】时：按钮启用
                     const shouldDisableButtons = isSent; // 用户邀请AI时禁用
+                    const inviteRoleClass = isSent ? 'is-sent' : 'is-received';
+                    const statusClassMap = {
+                        accepted: 'is-accepted',
+                        rejected: 'is-rejected',
+                        closed: 'is-closed'
+                    };
+                    const statusClass = statusClassMap[responseStatus] || 'is-pending';
                     const buttonHtml = !responseStatus ? `
-                        <div style="
-                            display: flex;
-                            gap: 8px;
-                            margin-top: 14px;
-                            justify-content: center;
-                            opacity: ${shouldDisableButtons ? '0.5' : '1'};
-                            pointer-events: ${shouldDisableButtons ? 'none' : 'auto'};
-                        ">
-                            <button class="listen-invite-accept-btn" style="
-                                flex: 1;
-                                padding: 8px 12px;
-                                background: #4a90e2;
-                                color: white;
-                                border: none;
-                                border-radius: 16px;
-                                cursor: ${shouldDisableButtons ? 'not-allowed' : 'pointer'};
-                                font-size: 12px;
-                                font-weight: 500;
-                                transition: all 0.2s;
-                                user-select: none;
-                            ">同意</button>
-                            <button class="listen-invite-reject-btn" style="
-                                flex: 1;
-                                padding: 8px 12px;
-                                background: #e74c3c;
-                                color: white;
-                                border: none;
-                                border-radius: 16px;
-                                cursor: ${shouldDisableButtons ? 'not-allowed' : 'pointer'};
-                                font-size: 12px;
-                                font-weight: 500;
-                                transition: all 0.2s;
-                                user-select: none;
-                            ">拒绝</button>
+                        <div class="listen-invite-actions${shouldDisableButtons ? ' is-disabled' : ''}">
+                            <button class="listen-invite-btn listen-invite-accept-btn" ${shouldDisableButtons ? 'disabled' : ''}>同意</button>
+                            <button class="listen-invite-btn listen-invite-reject-btn" ${shouldDisableButtons ? 'disabled' : ''}>拒绝</button>
                         </div>
                     ` : `
-                        <div style="
-                            font-size: 12px;
-                            color: ${statusColor};
-                            text-align: center;
-                            font-weight: 500;
-                            margin-top: 14px;
-                        ">${statusText}</div>
+                        <div class="listen-invite-status-chip ${statusClass}">${statusText}</div>
                     `;
                     
                     bubble.innerHTML = `
                         <div class="chat-avatar">${avatarContent}</div>
-                        <div class="listen-invite-card" style="
-                            background: rgba(255, 255, 255, 0.95);
-                            backdrop-filter: blur(10px);
-                            -webkit-backdrop-filter: blur(10px);
-                            border: 1px solid rgba(200, 210, 230, 0.5);
-                            border-radius: 20px;
-                            padding: 18px 16px;
-                            max-width: 260px;
-                            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-                            color: #1a1a1a;
-                            user-select: none;
-                            transition: all 0.3s ease;
-                        ">
-                            <div style="
-                                font-size: 36px;
-                                text-align: center;
-                                margin-bottom: 12px;
-                                line-height: 1;
-                            ">♪</div>
-                            <div style="
-                                font-size: 15px;
-                                font-weight: 600;
-                                color: #1a1a1a;
-                                text-align: center;
-                                margin-bottom: 8px;
-                            ">${isSent ? '邀请加入一起听' : '要一起来听音乐吗'}</div>
-                            <div style="
-                                font-size: 13px;
-                                color: #666;
-                                text-align: center;
-                                margin-bottom: 12px;
-                                line-height: 1.4;
-                            ">${escapeHtml(songName)}</div>
+                        <div class="listen-invite-card ${inviteRoleClass}">
+                            <div class="listen-invite-topline">
+                                <span class="listen-invite-meta">${isSent ? '你发出的邀请' : 'TA 发来的邀请'}</span>
+                            </div>
+                            <div class="listen-invite-main">
+                                <div class="listen-invite-icon-wrap">
+                                    <span class="listen-invite-icon">♫</span>
+                                </div>
+                                <div class="listen-invite-copy">
+                                    <div class="listen-invite-title">${isSent ? '邀请加入一起听' : '要一起来听音乐吗'}</div>
+                                    <div class="listen-invite-song">${escapeHtml(songName)}</div>
+                                </div>
+                            </div>
+                            <div class="listen-invite-divider"></div>
                             ${buttonHtml}
                         </div>
                     `;
@@ -5012,12 +4955,6 @@
                         const rejectBtn = bubble.querySelector('.listen-invite-reject-btn');
                         
                         if (acceptBtn) {
-                            acceptBtn.addEventListener('mouseenter', function() {
-                                this.style.background = '#357abd';
-                            });
-                            acceptBtn.addEventListener('mouseleave', function() {
-                                this.style.background = '#4a90e2';
-                            });
                             acceptBtn.addEventListener('click', (e) => {
                                 e.stopPropagation();
                                 handleListenInvitationResponse(msg, 'accept', isSent);
@@ -5025,30 +4962,9 @@
                         }
                         
                         if (rejectBtn) {
-                            rejectBtn.addEventListener('mouseenter', function() {
-                                this.style.background = '#c73f2d';
-                            });
-                            rejectBtn.addEventListener('mouseleave', function() {
-                                this.style.background = '#e74c3c';
-                            });
                             rejectBtn.addEventListener('click', (e) => {
                                 e.stopPropagation();
                                 handleListenInvitationResponse(msg, 'reject', isSent);
-                            });
-                        }
-                    }
-                    
-                    // AI邀请卡片添加悬停效果
-                    if (!isSent) {
-                        const listenCardEl = bubble.querySelector('.listen-invite-card');
-                        if (listenCardEl && responseStatus) {
-                            listenCardEl.addEventListener('mouseenter', () => {
-                                listenCardEl.style.transform = 'translateY(-2px)';
-                                listenCardEl.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.12)';
-                            });
-                            listenCardEl.addEventListener('mouseleave', () => {
-                                listenCardEl.style.transform = 'translateY(0)';
-                                listenCardEl.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)';
                             });
                         }
                     }

@@ -1311,13 +1311,6 @@
     font-size: 14px;
     line-height: 1.8;
 }
-.st-empty-hint::before {
-    content: '💬';
-    display: block;
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
 
 /* 消息动画 */
 .st-message {

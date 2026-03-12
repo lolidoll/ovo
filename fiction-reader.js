@@ -11,6 +11,10 @@ const fictionReaderManager = {
         pages: [], // 分页内容
         isDarkMode: false,
         isTransitioning: false, // 翻页动画进行中
+        resizeHandler: null,
+        resizeTimer: null,
+        viewportResizeHandler: null,
+        viewportScrollHandler: null,
         settings: {
             fontSize: 16,
             lineHeight: 1.8,
@@ -21,6 +25,82 @@ const fictionReaderManager = {
             brightness: 100
         },
         readingProgress: {} // 存储各书籍的阅读进度：{bookId: {chapterIndex, pageIndex}}
+    },
+
+    escapeHTML(text) {
+        return String(text ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
+    getPagePadding(viewportWidth) {
+        if (viewportWidth <= 480) {
+            return { paddingY: 16, paddingX: 12 };
+        }
+        if (viewportWidth <= 768) {
+            return { paddingY: 20, paddingX: 14 };
+        }
+        return { paddingY: 28, paddingX: 20 };
+    },
+
+    buildPageContentHTML({ chapterTitle, paragraphs, showTitle, fontSize, lineHeight, paragraphSpacing, titleFontSize }) {
+        let html = '';
+        if (showTitle) {
+            html += `<div class="fiction-reader-chapter-title" style="font-size:${titleFontSize}px;margin-bottom:${paragraphSpacing}px;">${this.escapeHTML(chapterTitle)}</div>`;
+        }
+
+        (paragraphs || []).forEach((para) => {
+            const trimmed = String(para ?? '').trim();
+            if (!trimmed) return;
+            html += `<p style="margin:0 0 ${paragraphSpacing}px 0;line-height:${lineHeight};word-break:break-word;text-align:justify;font-size:${fontSize}px;">${this.escapeHTML(trimmed)}</p>`;
+        });
+
+        if (!html) {
+            html = `<p style="margin:0;line-height:${lineHeight};font-size:${fontSize}px;">暂无内容</p>`;
+        }
+
+        return `<div class="fiction-reader-content">${html}</div>`;
+    },
+
+    createPaginationMeasurer({ viewportWidth, viewportHeight, paddingX, paddingY, backgroundColor, textColor, fontSize, lineHeight }) {
+        const measurePage = document.createElement('div');
+        measurePage.className = 'fiction-reader-measure-page';
+        measurePage.style.cssText = `
+            position: fixed;
+            left: -99999px;
+            top: 0;
+            display: block;
+            width: ${viewportWidth}px;
+            height: ${viewportHeight}px;
+            padding: ${paddingY}px ${paddingX}px;
+            box-sizing: border-box;
+            overflow: hidden;
+            visibility: hidden;
+            pointer-events: none;
+            background: ${backgroundColor};
+            color: ${textColor};
+            font-size: ${fontSize}px;
+            line-height: ${lineHeight};
+            z-index: -1;
+        `;
+        document.body.appendChild(measurePage);
+
+        return {
+            page: measurePage,
+            fits(html) {
+                measurePage.innerHTML = html;
+                if (measurePage.clientHeight <= 0) {
+                    return false;
+                }
+                return measurePage.scrollHeight <= measurePage.clientHeight + 1;
+            },
+            destroy() {
+                measurePage.remove();
+            }
+        };
     },
 
     /**
@@ -116,10 +196,13 @@ const fictionReaderManager = {
         
         this.loadReadingProgress();
         
-        // 直接使用传入的章节索引（用户选择的章节优先）
-        this.state.currentChapterIndex = chapterIndex;
+        const totalChapters = Array.isArray(book?.chapters) ? book.chapters.length : 0;
+        const safeChapterIndex = Math.max(0, Math.min(chapterIndex, Math.max(0, totalChapters - 1)));
+
+        // 使用有效章节索引（用户选择章节优先）
+        this.state.currentChapterIndex = safeChapterIndex;
         this.state.currentPageIndex = 0;
-        console.log(`打开第${chapterIndex + 1}章`);
+        console.log(`打开第${safeChapterIndex + 1}章`);
         
         // 创建阅读器HTML
         this.createReaderHTML();
@@ -321,10 +404,10 @@ const fictionReaderManager = {
     },
 
     /**
-     * 分页章节（关键算法：基于行数计算）
+     * 分页章节（关键算法：基于真实DOM测量）
      */
-    paginateChapter(chapterIndex) {
-        const chapter = this.state.currentBook.chapters[chapterIndex];
+    paginateChapter(chapterIndex, retryCount = 0) {
+        const chapter = this.state.currentBook?.chapters?.[chapterIndex];
         if (!chapter) return;
 
         const container = document.getElementById('fictionReaderPages');
@@ -332,174 +415,258 @@ const fictionReaderManager = {
             console.error('❌ 页面容器未找到');
             return;
         }
-        
-        container.innerHTML = '';
-        this.state.pages = [];
 
-        // 获取阅读区域的实际尺寸
         const mainArea = document.getElementById('fictionReaderMain');
         if (!mainArea) return;
 
-        // 等待DOM渲染完成后再计算
-        const computedStyle = window.getComputedStyle(mainArea);
-        const viewportHeight = mainArea.clientHeight;
-        const viewportWidth = mainArea.clientWidth;
-        
-        // 获取当前设置
-        const fontSize = this.state.settings.fontSize || 16;
-        const lineHeight = parseFloat(this.state.settings.lineHeight) || 1.8;
-        const paragraphSpacing = this.state.settings.paragraphSpacing || 16;
-        
-        // 计算页面padding（根据屏幕宽度）
-        let paddingY, paddingX;
-        if (viewportWidth <= 480) {
-            paddingY = 16;
-            paddingX = 12;
-        } else if (viewportWidth <= 768) {
-            paddingY = 20;
-            paddingX = 14;
-        } else {
-            paddingY = 28;
-            paddingX = 20;
-        }
-        
-        // 计算每行高度和每页可容纳的行数
-        const lineHeightPx = fontSize * lineHeight;
-        const availableHeight = viewportHeight - (paddingY * 2);
-        const availableWidth = viewportWidth - (paddingX * 2);
-        
-        // 标题占用的行数（大约3-4行高度）
-        const titleLines = 4;
-        const titleHeight = titleLines * lineHeightPx;
-        
-        // 每页可以放多少行文字
-        const linesPerPage = Math.floor(availableHeight / lineHeightPx);
-        const linesPerPageWithTitle = Math.floor((availableHeight - titleHeight) / lineHeightPx);
-        
-        console.log('📐 分页参数:', {
-            viewportHeight,
-            availableHeight,
-            fontSize,
-            lineHeightPx,
-            linesPerPage,
-            linesPerPageWithTitle
-        });
+        let viewportHeight = mainArea.clientHeight;
+        let viewportWidth = mainArea.clientWidth;
 
-        // 解析章节内容
-        const rawContent = chapter.content.trim();
-        let paragraphs = rawContent
-            .split(/\n+/)
-            .map(p => p.trim())
-            .filter(p => p.length > 0);
-
-        if (paragraphs.length === 0) {
-            paragraphs = [chapter.content || '暂无内容'];
-        }
-
-        // 计算每个段落占用的行数
-        const charsPerLine = Math.floor(availableWidth / fontSize);
-        
-        function estimateParagraphLines(text) {
-            // 估算段落行数：字符数/每行字符数，向上取整，再加段落间距
-            const lines = Math.ceil(text.length / charsPerLine);
-            return Math.max(lines, 1);
-        }
-
-        // 创建分页
-        const pages = [];
-        let currentPageParagraphs = [];
-        let currentLines = 0;
-        let isFirstPage = true;
-        
-        for (let i = 0; i < paragraphs.length; i++) {
-            const paragraph = paragraphs[i];
-            const paraLines = estimateParagraphLines(paragraph);
-            // 段落间距算作额外行数
-            const paraLinesWithSpacing = paraLines + Math.ceil(paragraphSpacing / lineHeightPx);
-            
-            // 当前页可用行数
-            const maxLines = isFirstPage && pages.length === 0 ? linesPerPageWithTitle : linesPerPage;
-            
-            // 判断是否需要换页
-            if (currentLines + paraLinesWithSpacing > maxLines && currentPageParagraphs.length > 0) {
-                // 保存当前页
-                pages.push({
-                    paragraphs: [...currentPageParagraphs],
-                    showTitle: isFirstPage && pages.length === 0
-                });
-                
-                // 开始新页
-                currentPageParagraphs = [paragraph];
-                currentLines = paraLinesWithSpacing;
-                isFirstPage = false;
-            } else {
-                // 添加到当前页
-                currentPageParagraphs.push(paragraph);
-                currentLines += paraLinesWithSpacing;
-            }
-        }
-
-        // 保存最后一页
-        if (currentPageParagraphs.length > 0) {
-            pages.push({
-                paragraphs: currentPageParagraphs,
-                showTitle: isFirstPage && pages.length === 0
+        if (viewportHeight < 120 || viewportWidth < 120) {
+            console.warn('⚠️ 阅读区域尺寸异常，使用回退尺寸分页', {
+                viewportWidth,
+                viewportHeight,
+                retryCount
             });
         }
 
-        // 确保至少有一页
+        // 兜底尺寸，防止极端浏览器返回0
+        viewportHeight = Math.max(viewportHeight, Math.max(220, window.innerHeight - 110));
+        viewportWidth = Math.max(viewportWidth, Math.max(220, window.innerWidth));
+
+        container.innerHTML = '';
+        this.state.pages = [];
+
+        const { paddingY, paddingX } = this.getPagePadding(viewportWidth);
+
+        const fontSize = this.state.settings.fontSize || 16;
+        const lineHeight = parseFloat(this.state.settings.lineHeight) || 1.8;
+        const paragraphSpacing = this.state.settings.paragraphSpacing || 16;
+        const titleFontSize = Math.min(fontSize * 1.2, 20);
+        const chapterTitle = String(chapter.title || `第${chapterIndex + 1}章`).trim();
+        const chapterContent = typeof chapter.content === 'string'
+            ? chapter.content
+            : String(chapter.content ?? '');
+
+        const rawParagraphs = chapterContent
+            .replace(/\r/g, '')
+            .split(/\n+/)
+            .map((p) => p.replace(/\s+/g, ' ').trim())
+            .filter(Boolean);
+
+        const sourceParagraphs = rawParagraphs.length > 0 ? rawParagraphs : ['暂无内容'];
+
+        const measurer = this.createPaginationMeasurer({
+            viewportWidth,
+            viewportHeight,
+            paddingX,
+            paddingY,
+            backgroundColor: this.state.settings.backgroundColor,
+            textColor: this.state.settings.textColor,
+            fontSize,
+            lineHeight
+        });
+
+        const testFit = (paragraphs, showTitle) => {
+            const html = this.buildPageContentHTML({
+                chapterTitle,
+                paragraphs,
+                showTitle,
+                fontSize,
+                lineHeight,
+                paragraphSpacing,
+                titleFontSize
+            });
+            return measurer.fits(html);
+        };
+
+        const findBestSplitIndex = (baseParagraphs, text, showTitle) => {
+            if (!text) return 0;
+            let low = 1;
+            let high = text.length;
+            let best = 0;
+
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                const candidate = text.slice(0, mid).trim();
+                if (!candidate) {
+                    low = mid + 1;
+                    continue;
+                }
+                if (testFit([...baseParagraphs, candidate], showTitle)) {
+                    best = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+
+            if (best <= 0) return 0;
+
+            // 尽量落在自然断句，阅读体验更好
+            const boundaryPattern = /[。！？；,.，、\s]/;
+            let natural = best;
+            for (let i = best; i > Math.max(1, best - 40); i--) {
+                if (boundaryPattern.test(text.charAt(i - 1))) {
+                    natural = i;
+                    break;
+                }
+            }
+
+            if (natural !== best) {
+                const naturalCandidate = text.slice(0, natural).trim();
+                if (naturalCandidate && testFit([...baseParagraphs, naturalCandidate], showTitle)) {
+                    return natural;
+                }
+            }
+
+            return best;
+        };
+
+        const pages = [];
+        let paragraphIndex = 0;
+        let carry = '';
+        let guard = 0;
+
+        while ((paragraphIndex < sourceParagraphs.length || carry) && guard < 3000) {
+            guard++;
+            const showTitle = pages.length === 0;
+            const pageParagraphs = [];
+
+            while (true) {
+                const usingCarry = !!carry;
+                const textRaw = usingCarry ? carry : sourceParagraphs[paragraphIndex];
+                const text = String(textRaw ?? '').trim();
+
+                if (!text) {
+                    if (usingCarry) {
+                        carry = '';
+                        paragraphIndex++;
+                    } else {
+                        paragraphIndex++;
+                    }
+                    if (paragraphIndex >= sourceParagraphs.length && !carry) break;
+                    continue;
+                }
+
+                if (testFit([...pageParagraphs, text], showTitle)) {
+                    pageParagraphs.push(text);
+                    carry = '';
+                    paragraphIndex++;
+                    continue;
+                }
+
+                const splitIndex = findBestSplitIndex(pageParagraphs, text, showTitle);
+                if (splitIndex > 0) {
+                    const head = text.slice(0, splitIndex).trim();
+                    const tail = text.slice(splitIndex).trim();
+
+                    if (head) {
+                        pageParagraphs.push(head);
+                    }
+                    carry = tail;
+                    if (!carry) {
+                        paragraphIndex++;
+                    }
+                    break;
+                }
+
+                // 当前页已经有内容，下一页再放这段
+                if (pageParagraphs.length > 0) {
+                    carry = text;
+                    break;
+                }
+
+                // 单段超长且空白页也放不下，至少塞1字符防止死循环
+                pageParagraphs.push(text.charAt(0));
+                carry = text.slice(1).trim();
+                if (!carry) {
+                    paragraphIndex++;
+                }
+                break;
+            }
+
+            if (pageParagraphs.length === 0) {
+                pageParagraphs.push('暂无内容');
+                carry = '';
+                paragraphIndex = Math.min(paragraphIndex + 1, sourceParagraphs.length);
+            }
+
+            pages.push({
+                paragraphs: pageParagraphs,
+                showTitle
+            });
+        }
+
+        measurer.destroy();
+
         if (pages.length === 0) {
             pages.push({
-                paragraphs: [''],
+                paragraphs: ['暂无内容'],
                 showTitle: true
             });
         }
 
-        console.log(`✅ 分页完成，共${pages.length}页`);
-
-        // 创建页面DOM
-        const titleFontSize = Math.min(fontSize * 1.2, 20);
-        
         pages.forEach((pageData, pageIndex) => {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'fiction-reader-page';
             pageDiv.dataset.pageIndex = pageIndex;
-            
-            let pageHTML = '';
-            
-            // 显示标题（仅第一页）
-            if (pageData.showTitle) {
-                pageHTML += `<div class="fiction-reader-chapter-title" style="font-size:${titleFontSize}px;margin-bottom:${paragraphSpacing}px;">${chapter.title}</div>`;
-            }
-            
-            // 添加所有段落
-            pageData.paragraphs.forEach(para => {
-                if (para.trim()) {
-                    pageHTML += `<p style="margin:0 0 ${paragraphSpacing}px 0;line-height:${lineHeight};word-break:break-word;text-align:justify;">${para}</p>`;
-                }
+            pageDiv.innerHTML = this.buildPageContentHTML({
+                chapterTitle,
+                paragraphs: pageData.paragraphs,
+                showTitle: pageData.showTitle,
+                fontSize,
+                lineHeight,
+                paragraphSpacing,
+                titleFontSize
             });
-            
-            pageDiv.innerHTML = pageHTML;
             container.appendChild(pageDiv);
-            
             this.state.pages.push(pageData);
         });
 
         this.state.currentPageIndex = 0;
+        this.updateVisiblePage();
+        this.state.isTransitioning = false;
+        console.log(`✅ 分页完成，共${pages.length}页`, {
+            chapterIndex,
+            viewportWidth,
+            viewportHeight,
+            fontSize,
+            lineHeight,
+            paragraphSpacing
+        });
+    },
+
+    updateVisiblePage() {
+        const pagesContainer = document.getElementById('fictionReaderPages');
+        if (!pagesContainer) return;
+
+        const pageNodes = pagesContainer.querySelectorAll('.fiction-reader-page');
+        pageNodes.forEach((page, index) => {
+            if (index === this.state.currentPageIndex) {
+                page.classList.add('active');
+            } else {
+                page.classList.remove('active');
+            }
+        });
     },
 
     /**
      * 内部渲染页面（跳过翻页动画）
      */
     _renderPage() {
-        if (!this.state.pages || this.state.pages.length === 0) return;
+        if (!this.state.pages || this.state.pages.length === 0) {
+            this.state.isTransitioning = false;
+            return;
+        }
 
         const pagesContainer = document.getElementById('fictionReaderPages');
-        const offset = -this.state.currentPageIndex * 100;
-        
-        // 不使用transition，直接跳转（跨章节时）
-        pagesContainer.style.transition = 'none';
-        pagesContainer.style.transform = `translateX(${offset}%)`;
+        if (!pagesContainer) {
+            this.state.isTransitioning = false;
+            return;
+        }
+
+        this.updateVisiblePage();
 
         // 更新UI信息
         const totalPages = this.state.pages.length;
@@ -523,12 +690,7 @@ const fictionReaderManager = {
         // 保存阅读进度
         this.saveReadingProgress();
 
-        // 600ms后允许下一次翻页
-        setTimeout(() => {
-            this.state.isTransitioning = false;
-            // 恢复transition用于下一次翻页
-            pagesContainer.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-        }, 600);
+        this.state.isTransitioning = false;
     },
 
     /**
@@ -538,6 +700,7 @@ const fictionReaderManager = {
         // 处理无效的页数
         if (!this.state.pages || this.state.pages.length === 0) {
             console.warn('⚠️ 没有可显示的页面');
+            this.state.isTransitioning = false;
             return;
         }
 
@@ -552,21 +715,18 @@ const fictionReaderManager = {
         this.state.isTransitioning = true;
 
         const pagesContainer = document.getElementById('fictionReaderPages');
-        const oldPageIndex = this.state.currentPageIndex;
-        const isForward = pageIndex > oldPageIndex; // 向前翻（下一页）
+        if (!pagesContainer) {
+            this.state.isTransitioning = false;
+            return;
+        }
 
-        // 计算平滑的transform过渡
         this.state.currentPageIndex = pageIndex;
-        const offset = -pageIndex * 100;
-        
-        // 使用平滑过渡
-        pagesContainer.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-        pagesContainer.style.transform = `translateX(${offset}%)`;
+        this.updateVisiblePage();
 
-        // 600ms后移除过渡标志
+        // 短暂节流防止连续点击触发重入
         setTimeout(() => {
             this.state.isTransitioning = false;
-        }, 600);
+        }, 80);
 
         // 更新进度条
         const totalPages = this.state.pages.length;
@@ -628,6 +788,11 @@ const fictionReaderManager = {
      */
     setTheme(theme) {
         const container = document.getElementById('fictionReaderContainer');
+        const toolbar = document.getElementById('fictionReaderToolbar');
+        const main = document.getElementById('fictionReaderMain');
+        const footer = document.getElementById('fictionReaderFooter');
+        const settings = document.getElementById('fictionReaderSettings');
+        const toc = document.getElementById('fictionReaderToc');
         const isDark = theme === 'dark' || theme === 'eye';
 
         if (isDark) {
@@ -635,6 +800,12 @@ const fictionReaderManager = {
         } else {
             container.classList.remove('dark');
         }
+
+        [toolbar, main, footer, settings, toc].forEach((el) => {
+            if (el) {
+                el.classList.toggle('dark', isDark);
+            }
+        });
 
         // 设置背景和文字颜色
         if (theme === 'light') {
@@ -676,10 +847,11 @@ const fictionReaderManager = {
 
         // 应用亮度
         const main = document.getElementById('fictionReaderMain');
-        main.style.filter = `brightness(${this.state.settings.brightness}%)`;
-
-        // 应用背景色到主容器
-        document.getElementById('fictionReaderMain').style.backgroundColor = this.state.settings.backgroundColor;
+        if (main) {
+            main.style.filter = `brightness(${this.state.settings.brightness}%)`;
+            // 应用背景色到主容器
+            main.style.backgroundColor = this.state.settings.backgroundColor;
+        }
     },
 
     /**
@@ -1001,6 +1173,35 @@ const fictionReaderManager = {
             }
         });
 
+        // 屏幕尺寸变化后重分页，避免旋转/窗口变化导致空白
+        if (this.state.resizeHandler) {
+            window.removeEventListener('resize', this.state.resizeHandler);
+        }
+        if (this.state.viewportResizeHandler && window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', this.state.viewportResizeHandler);
+        }
+        if (this.state.viewportScrollHandler && window.visualViewport) {
+            window.visualViewport.removeEventListener('scroll', this.state.viewportScrollHandler);
+        }
+        this.state.resizeHandler = () => {
+            if (this.state.resizeTimer) {
+                clearTimeout(this.state.resizeTimer);
+            }
+            this.state.resizeTimer = setTimeout(() => {
+                const keepPageIndex = this.state.currentPageIndex;
+                this.paginateChapter(this.state.currentChapterIndex);
+                this.showPage(Math.min(keepPageIndex, this.state.pages.length - 1));
+                this.applySettings();
+            }, 120);
+        };
+        window.addEventListener('resize', this.state.resizeHandler);
+        if (window.visualViewport) {
+            this.state.viewportResizeHandler = this.state.resizeHandler;
+            this.state.viewportScrollHandler = this.state.resizeHandler;
+            window.visualViewport.addEventListener('resize', this.state.viewportResizeHandler);
+            window.visualViewport.addEventListener('scroll', this.state.viewportScrollHandler);
+        }
+
         // 应用初始设置
         this.applySettings();
     },
@@ -1011,6 +1212,23 @@ const fictionReaderManager = {
     closeReader() {
         // 关闭前保存进度
         this.saveReadingProgress();
+
+        if (this.state.resizeHandler) {
+            window.removeEventListener('resize', this.state.resizeHandler);
+            this.state.resizeHandler = null;
+        }
+        if (this.state.viewportResizeHandler && window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', this.state.viewportResizeHandler);
+            this.state.viewportResizeHandler = null;
+        }
+        if (this.state.viewportScrollHandler && window.visualViewport) {
+            window.visualViewport.removeEventListener('scroll', this.state.viewportScrollHandler);
+            this.state.viewportScrollHandler = null;
+        }
+        if (this.state.resizeTimer) {
+            clearTimeout(this.state.resizeTimer);
+            this.state.resizeTimer = null;
+        }
         
         const container = document.getElementById('fictionReaderContainer');
         if (container) {

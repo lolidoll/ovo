@@ -9,7 +9,7 @@
     // 同人文页面状态
     let fictionState = {
         isOpen: false,
-        currentPage: 'category',
+        currentPage: 'bookstore',
         currentCategory: 0,
         categories: [
             '现代言情', '豪门总裁', '甜宠暖文', '先婚后爱', '追妻火葬场',
@@ -17,11 +17,91 @@
             '古代言情', '宫斗宅斗', '种田经商', '女尊女强', '仙侠玄幻',
             '修真修仙', '奇幻魔法', '悬疑灵异', '科幻星际', '末世囤货'
         ],
-        books: {}, // 存储生成的书籍信息 { categoryIndex: [{title, author, intro, cover, chapters}, ...] }
-        bookshelf: [], // 书架：存储收藏的书籍 [{categoryIndex, bookId, title, author, cover}, ...]
+        books: {}, // 当前角色作用域下的小说数据
+        bookshelf: [], // 当前角色作用域下的书架
         currentBook: null, // 当前打开的书籍详情
-        currentCharInfo: null // 当前角色和用户信息
+        currentCharInfo: null, // 当前角色和用户信息
+        currentCharacterId: '__global__',
+        currentCharacterName: '默认角色'
     };
+
+    function escapeHTML(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function normalizeStorageScope(rawId) {
+        const normalized = String(rawId ?? '').trim();
+        if (!normalized) return '__global__';
+        return normalized;
+    }
+
+    function getFictionStorageKey() {
+        return `fiction_books_data_v2_${encodeURIComponent(fictionState.currentCharacterId)}`;
+    }
+
+    function getBookshelfStorageKey() {
+        return `fiction_bookshelf_data_v2_${encodeURIComponent(fictionState.currentCharacterId)}`;
+    }
+
+    function extractChatFromOpenOptions(openOptions = {}) {
+        const options = openOptions && typeof openOptions === 'object' ? openOptions : {};
+        const currentChat = window.AppState?.currentChat || null;
+        const conversations = Array.isArray(window.AppState?.conversations) ? window.AppState.conversations : [];
+
+        if (options.chat && typeof options.chat === 'object') {
+            return options.chat;
+        }
+
+        if (options.conversation && typeof options.conversation === 'object') {
+            return options.conversation;
+        }
+
+        if (options.chatId != null || options.conversationId != null || options.sourceChatId != null) {
+            const targetId = String(options.chatId ?? options.conversationId ?? options.sourceChatId);
+            const matched = conversations.find(c => String(c?.id) === targetId);
+            if (matched) return matched;
+        }
+
+        if (currentChat) return currentChat;
+        return conversations[0] || null;
+    }
+
+    function applyCharacterScope(chat) {
+        const nextCharacterId = normalizeStorageScope(chat?.id || chat?.convId || (chat?.name ? `name:${chat.name}` : ''));
+        const nextCharacterName = chat?.name || '默认角色';
+        const changed = fictionState.currentCharacterId !== nextCharacterId;
+
+        fictionState.currentCharacterId = nextCharacterId;
+        fictionState.currentCharacterName = nextCharacterName;
+
+        if (changed) {
+            loadFictionDataFromStorage();
+            loadBookshelfFromStorage();
+            fictionState.currentBook = null;
+            console.log(`📚 同人文作用域切换: ${nextCharacterName} (${nextCharacterId})`);
+        }
+    }
+
+    function refreshScopedFictionView() {
+        fictionState.categories.forEach((_, index) => {
+            const grid = document.getElementById(`fiction-grid-${index}`);
+            if (grid) {
+                grid.innerHTML = generateBookCards(index).join('');
+            }
+        });
+
+        const recommendGrid = document.getElementById('fiction-recommend-grid');
+        if (recommendGrid) {
+            recommendGrid.innerHTML = generateBookCards(-1).join('');
+        }
+
+        updateBookshelfDisplay();
+    }
     
     /**
      * 初始化同人文功能
@@ -42,15 +122,35 @@
      */
     function loadFictionDataFromStorage() {
         try {
-            const storageKey = 'fiction_books_data';
-            const saved = localStorage.getItem(storageKey);
+            const storageKey = getFictionStorageKey();
+            const migrationKey = 'fiction_books_data_legacy_migrated_v2';
+            let saved = localStorage.getItem(storageKey);
+
+            // 兼容旧版全局存储：仅迁移一次到当前角色作用域
+            if (!saved && !localStorage.getItem(migrationKey)) {
+                const legacySaved = localStorage.getItem('fiction_books_data');
+                if (legacySaved) {
+                    saved = legacySaved;
+                    localStorage.setItem(storageKey, legacySaved);
+                    localStorage.setItem(migrationKey, '1');
+                    console.log(`📦 已将旧版小说数据迁移到角色作用域: ${fictionState.currentCharacterId}`);
+                }
+            }
+
             if (saved) {
                 const data = JSON.parse(saved);
-                fictionState.books = data;
-                console.log('📚 已从本地加载', Object.keys(data).length, '个分类的小说数据');
+                if (data && typeof data === 'object') {
+                    fictionState.books = data;
+                } else {
+                    fictionState.books = {};
+                }
+                console.log('📚 已从本地加载', Object.keys(fictionState.books).length, '个分类的小说数据');
+            } else {
+                fictionState.books = {};
             }
         } catch (e) {
             console.warn('⚠️ 加载本地数据失败:', e.message);
+            fictionState.books = {};
         }
     }
     
@@ -59,7 +159,7 @@
      */
     function saveFictionDataToStorage() {
         try {
-            const storageKey = 'fiction_books_data';
+            const storageKey = getFictionStorageKey();
             localStorage.setItem(storageKey, JSON.stringify(fictionState.books));
             console.log('💾 已保存小说数据到本地');
         } catch (e) {
@@ -72,7 +172,7 @@
      */
     function clearFictionDataFromStorage() {
         try {
-            const storageKey = 'fiction_books_data';
+            const storageKey = getFictionStorageKey();
             localStorage.removeItem(storageKey);
             fictionState.books = {};
             console.log('🗑️ 已清空本地小说数据');
@@ -99,7 +199,7 @@
                 <!-- 页面容器 -->
                 <div class="fiction-container">
                     <!-- 分类页面 -->
-                    <div id="fiction-category" class="fiction-content active">
+                    <div id="fiction-category" class="fiction-content">
                         <div class="fiction-category">
                             <div class="fiction-cat-left" id="fictionCatLeft">
                                 ${fictionState.categories.map((cat, index) => 
@@ -125,7 +225,7 @@
                     </div>
                     
                     <!-- 书库页面 -->
-                    <div id="fiction-bookstore" class="fiction-content">
+                    <div id="fiction-bookstore" class="fiction-content active">
                         <div class="fiction-bookstore">
                             <div class="fiction-section">
                                 <div class="fiction-section-title">
@@ -306,8 +406,8 @@
                 
                 <!-- 底部导航 -->
                 <div class="fiction-tabbar">
-                    <div class="fiction-tab active" data-page="category">分类</div>
-                    <div class="fiction-tab" data-page="bookstore">书库</div>
+                    <div class="fiction-tab active" data-page="bookstore">书库</div>
+                    <div class="fiction-tab" data-page="category">分类</div>
                     <div class="fiction-tab" data-page="bookshelf">书架</div>
                     <div class="fiction-tab" data-page="mine">我的</div>
                 </div>
@@ -369,10 +469,11 @@
         for (let i = 0; i < 9; i++) {
             const book = books[i];
             if (book) {
+                const safeTitle = escapeHTML(book.title);
                 cards.push(`
                     <div class="fiction-card" data-category-index="${categoryIndex}" data-book-id="${i}">
                         <div class="fiction-cover" style="background-image: url('${book.cover}'); background-size: cover; background-position: center;"></div>
-                        <div class="fiction-title">${book.title}</div>
+                        <div class="fiction-title">${safeTitle}</div>
                     </div>
                 `);
             } else {
@@ -840,7 +941,7 @@
     /**
      * 打开同人文页面
      */
-    function openFiction() {
+    function openFiction(openOptions = {}) {
         const fictionPage = document.getElementById('fiction-page');
         if (!fictionPage) {
             console.warn('⚠️ 同人文页面DOM未创建');
@@ -848,13 +949,15 @@
         }
         
         // 获取当前角色和用户信息
-        loadCharacterInfo();
+        loadCharacterInfo(openOptions);
+        refreshScopedFictionView();
+        switchFictionPage('bookstore');
         
         fictionPage.classList.add('active');
         fictionState.isOpen = true;
         closeChatComponents();
         
-        console.log('📚 同人文页面已打开');
+        console.log(`📚 同人文页面已打开：${fictionState.currentCharacterName} (${fictionState.currentCharacterId})`);
     }
     
     /**
@@ -919,11 +1022,10 @@
     /**
      * 加载角色和用户信息
      */
-    function loadCharacterInfo() {
+    function loadCharacterInfo(openOptions = {}) {
         try {
-            // 获取当前活跃的对话
-            const conversations = window.AppState?.conversations || [];
-            const currentChat = conversations[0]; // 获取第一个（当前）对话
+            // 获取当前活跃的对话（优先使用当前聊天）
+            const currentChat = extractChatFromOpenOptions(openOptions);
             
             if (!currentChat) {
                 console.warn('未找到当前对话');
@@ -933,8 +1035,12 @@
                     userName: '你',
                     userDescription: ''
                 };
-                return;
+                applyCharacterScope(null);
+                return null;
             }
+
+            // 切换到当前角色作用域，确保不同角色数据完全隔离
+            applyCharacterScope(currentChat);
             
             // 获取角色名称和描述
             const charName = currentChat.name || '女主';
@@ -973,6 +1079,7 @@
             };
             
             console.log('✅ 已加载角色信息:', fictionState.currentCharInfo);
+            return currentChat;
         } catch (e) {
             console.error('加载角色信息失败:', e);
             fictionState.currentCharInfo = {
@@ -981,6 +1088,8 @@
                 userName: '你',
                 userDescription: ''
             };
+            applyCharacterScope(null);
+            return null;
         }
     }
     
@@ -1107,7 +1216,6 @@ ${trends}
             const recommendGrid = document.getElementById('fiction-recommend-grid');
             if (recommendGrid) {
                 recommendGrid.innerHTML = generateBookCards(-1).join('');
-                setupBookCardListeners(); // 重新绑定卡片事件
             }
             
             console.log('✅ 已生成9部推荐小说');
@@ -1335,38 +1443,9 @@ ${trends}
         const grid = document.getElementById(gridId);
         
         if (!grid) return;
-        
+
+        grid.innerHTML = generateBookCards(categoryIndex).join('');
         const books = fictionState.books[categoryIndex] || [];
-        
-        // 清空现有内容
-        grid.innerHTML = '';
-        
-        // 创建卡片 - 使用与占位卡片完全相同的HTML结构
-        books.forEach((book, index) => {
-            const card = document.createElement('div');
-            card.className = 'fiction-card';
-            card.dataset.categoryIndex = categoryIndex;  // 用于事件委托
-            card.dataset.bookId = index;  // 用于事件委托
-            
-            // 创建cover div（使用background-image，与占位卡片完全相同）
-            const coverDiv = document.createElement('div');
-            coverDiv.className = 'fiction-cover';
-            coverDiv.style.backgroundImage = `url('${book.cover}')`;
-            coverDiv.style.backgroundSize = 'cover';
-            coverDiv.style.backgroundPosition = 'center';
-            
-            // 创建title div
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'fiction-title';
-            titleDiv.textContent = book.title;
-            
-            card.appendChild(coverDiv);
-            card.appendChild(titleDiv);
-            
-            // 不再在这里绑定事件，由setupBookCardListeners使用事件委托统一处理
-            grid.appendChild(card);
-        });
-        
         console.log(`✅ 已更新分类${categoryIndex}的显示，共${books.length}部小说`);
     }
     
@@ -1425,7 +1504,7 @@ ${trends}
         backBtn.textContent = '<';
         backBtn.addEventListener('click', function() {
             // 返回到之前的页面
-            const returnPage = fictionState.previousPage || 'category';
+            const returnPage = fictionState.previousPage || 'bookstore';
             switchFictionPage(returnPage);
         });
         
@@ -1450,18 +1529,21 @@ ${trends}
         
         const infoDiv = document.createElement('div');
         infoDiv.className = 'fiction-detail-info';
+        const safeBookTitle = escapeHTML(book.title);
+        const safeBookAuthor = escapeHTML(book.author);
+        const safeBookIntro = escapeHTML(book.intro);
         infoDiv.innerHTML = `
             <div class="fiction-info-row">
                 <span class="fiction-label">书名：</span>
-                <span class="fiction-value">${book.title}</span>
+                <span class="fiction-value">${safeBookTitle}</span>
             </div>
             <div class="fiction-info-row">
                 <span class="fiction-label">作者：</span>
-                <span class="fiction-value">${book.author}</span>
+                <span class="fiction-value">${safeBookAuthor}</span>
             </div>
             <div class="fiction-info-row fiction-intro-row">
                 <span class="fiction-label">简介：</span>
-                <span class="fiction-intro">${book.intro}</span>
+                <span class="fiction-intro">${safeBookIntro}</span>
             </div>
         `;
         
@@ -1485,10 +1567,13 @@ ${trends}
                 cleanTitle = cleanTitle.replace(/^第[0-9零一二三四五六七八九十百千万]+章\s*/, '').trim();
                 cleanTitle = cleanTitle.replace(/^第[0-9]+章\s*/, '').trim();
                 cleanTitle = cleanTitle.replace(/^[\s\u3000]*/, '').trim();
+                const previewText = String(ch.content || '').replace(/\s+/g, ' ').trim().slice(0, 100);
+                const safeChapterTitle = escapeHTML(`第${idx + 1}章 ${cleanTitle}`);
+                const safePreviewText = escapeHTML(previewText);
                 
                 chapterDiv.innerHTML = `
-                    <div class="fiction-chapter-title">第${idx + 1}章 ${cleanTitle}</div>
-                    <div class="fiction-chapter-preview">${ch.content.substring(0, 100)}...</div>
+                    <div class="fiction-chapter-title">${safeChapterTitle}</div>
+                    <div class="fiction-chapter-preview">${safePreviewText}...</div>
                 `;
                 chapterDiv.addEventListener('click', function() {
                     showChapterDetail(categoryIndex, bookId, idx);
@@ -1594,7 +1679,7 @@ ${trends}
      * 切换收藏状态
      */
     function toggleCollectBook(categoryIndex, bookId, btn) {
-        const book = fictionState.books[categoryIndex][bookId];
+        const book = fictionState.books[categoryIndex] && fictionState.books[categoryIndex][bookId];
         if (!book) return;
         
         const isCollected = btn.dataset.collected === 'true';
@@ -1632,7 +1717,7 @@ ${trends}
      */
     function saveBookshelfToStorage() {
         try {
-            const storageKey = 'fiction_bookshelf_data';
+            const storageKey = getBookshelfStorageKey();
             localStorage.setItem(storageKey, JSON.stringify(fictionState.bookshelf));
             console.log('💾 已保存书架数据到本地');
         } catch (e) {
@@ -1645,14 +1730,31 @@ ${trends}
      */
     function loadBookshelfFromStorage() {
         try {
-            const storageKey = 'fiction_bookshelf_data';
-            const saved = localStorage.getItem(storageKey);
+            const storageKey = getBookshelfStorageKey();
+            const migrationKey = 'fiction_bookshelf_data_legacy_migrated_v2';
+            let saved = localStorage.getItem(storageKey);
+
+            // 兼容旧版全局书架：仅迁移一次到当前角色作用域
+            if (!saved && !localStorage.getItem(migrationKey)) {
+                const legacySaved = localStorage.getItem('fiction_bookshelf_data');
+                if (legacySaved) {
+                    saved = legacySaved;
+                    localStorage.setItem(storageKey, legacySaved);
+                    localStorage.setItem(migrationKey, '1');
+                    console.log(`📦 已将旧版书架数据迁移到角色作用域: ${fictionState.currentCharacterId}`);
+                }
+            }
+
             if (saved) {
-                fictionState.bookshelf = JSON.parse(saved);
+                const data = JSON.parse(saved);
+                fictionState.bookshelf = Array.isArray(data) ? data : [];
                 console.log('📚 已加载书架，共', fictionState.bookshelf.length, '本');
+            } else {
+                fictionState.bookshelf = [];
             }
         } catch (e) {
             console.warn('⚠️ 加载书架失败:', e.message);
+            fictionState.bookshelf = [];
         }
     }
     
@@ -1805,7 +1907,7 @@ ${trends}
      * 显示章节详情（全文）
      */
     function showChapterDetail(categoryIndex, bookId, chapterIdx) {
-        const book = fictionState.books[categoryIndex][bookId];
+        const book = fictionState.books[categoryIndex] && fictionState.books[categoryIndex][bookId];
         if (!book || !book.chapters || !book.chapters[chapterIdx]) {
             console.warn('❌ 章节不存在');
             return;

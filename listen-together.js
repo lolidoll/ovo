@@ -5,39 +5,227 @@
     'use strict';
     
     // 【新增】后端代理地址检测
-    let PROXY_URL = 'http://localhost:3000';  // 默认本地后端
+    let PROXY_URL = (window.LISTEN_PROXY_URL && String(window.LISTEN_PROXY_URL).trim()) || 'http://localhost:3000';
     let proxyAvailable = false;  // 后端代理是否可用
+    let proxyChecked = false;    // 是否已完成可用性检测
+    const picUrlCache = new Map();
+    const picUrlPending = new Map();
+    
+    function isLocalHost() {
+        const host = (window.location && window.location.hostname) || '';
+        return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+    }
     
     // 检测后端代理是否可用
     async function checkProxyAvailability() {
+        if (proxyChecked) return proxyAvailable;
+        
+        // GitHub Pages / 线上静态部署默认无本地代理
+        if (!isLocalHost() && !window.LISTEN_PROXY_URL) {
+            proxyAvailable = false;
+            proxyChecked = true;
+            console.log('ℹ️ 当前非本地环境，跳过本地代理检测，使用前端直连封面策略');
+            return false;
+        }
+        
+        let timeoutId = null;
         try {
-            const res = await fetch(`${PROXY_URL}/health`, { 
+            const controller = new AbortController();
+            timeoutId = setTimeout(() => controller.abort(), 1800);
+            const res = await fetch(`${PROXY_URL}/health`, {
                 method: 'GET',
-                timeout: 2000 
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
+            
             if (res.ok) {
                 proxyAvailable = true;
+                proxyChecked = true;
                 console.log('✅ 后端代理可用');
                 return true;
             }
         } catch (e) {
             console.warn('❌ 后端代理不可用，将使用备用方案');
             proxyAvailable = false;
+            proxyChecked = true;
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
         }
+        proxyChecked = true;
         return false;
     }
     
-    // 获取图片URL的函数
-    function getPicUrl(pic_id, size = 300) {
+    // 统一音乐源名称，避免大小写或未知值导致封面路径错误
+    function normalizeMusicSource(source) {
+        const s = (source || '').toString().trim().toLowerCase();
+        return ['netease', 'kuwo', 'joox'].includes(s) ? s : 'netease';
+    }
+    
+    function inferSourceFromPicId(picId) {
+        const raw = (picId || '').toString().trim();
+        if (!raw) return 'netease';
+        if (/^\d+\/\d+\/\d+\/.+\.(jpg|jpeg|png|webp)$/i.test(raw)) return 'kuwo';
+        if (/^[a-f0-9]{16}$/i.test(raw)) return 'joox';
+        return 'netease';
+    }
+    
+    function isBrokenCoverUrl(url) {
+        if (!url || typeof url !== 'string') return true;
+        const normalized = url.trim();
+        if (!normalized) return true;
+        // 线上环境下，本地代理地址必定不可用（旧缓存常见）
+        if (/^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?\/api\/music\/pic\?/i.test(normalized) && !isLocalHost()) return true;
+        // 历史错误格式：缺失网易云 hash 路径，必定 404
+        if (/^https?:\/\/p\d?\.music\.126\.net\/\d+(?:\?|$)/i.test(normalized)) return true;
+        // GD types=pic 接口返回 JSON，不是图片资源
+        if (/music-api\.gdstudio\.xyz\/api\.php\?/i.test(normalized) && /(?:\?|&)types=pic(?:&|$)/i.test(normalized)) return true;
+        return false;
+    }
+    
+    function getPicCacheKey(picId, source, size) {
+        return `${normalizeMusicSource(source)}|${String(picId || '').trim()}|${size}`;
+    }
+    
+    // 直连图片地址（后端不可用时的回退，仅用于可直接拼接的源）
+    function buildDirectPicUrl(pic_id, source = 'netease', size = 300) {
+        const rawId = (pic_id || '').toString().trim();
+        if (!rawId) return null;
+        
+        if (/^(https?:)?\/\//i.test(rawId) || /^data:image\//i.test(rawId)) {
+            return isBrokenCoverUrl(rawId) ? null : rawId;
+        }
+        
+        const normalizedSource = normalizeMusicSource(source || inferSourceFromPicId(rawId));
+        
+        if (normalizedSource === 'kuwo') {
+            const cleaned = rawId.replace(/^\/+/, '');
+            return `https://img2.kuwo.cn/star/albumcover/${size}/${cleaned}`;
+        }
+        
+        if (normalizedSource === 'joox') {
+            return `https://image.joox.com/JOOXcover/0/${encodeURIComponent(rawId)}/${size}`;
+        }
+        
+        // 网易云直连需要 hash 路径，纯 pic_id 无法稳定构造，回退为 null 让上层使用占位图
+        return null;
+    }
+    
+    function getPicApiCandidates() {
+        const candidates = [];
+        if (Array.isArray(selectedAPIIndices) && selectedAPIIndices.length) {
+            selectedAPIIndices.forEach(idx => {
+                const api = APIS[idx];
+                if (api && !candidates.includes(api)) candidates.push(api);
+            });
+        }
+        if (!candidates.includes('https://music-api.gdstudio.xyz/api.php')) {
+            candidates.push('https://music-api.gdstudio.xyz/api.php');
+        }
+        return candidates;
+    }
+    
+    async function fetchPicUrlFromAPI(pic_id, source = 'netease', size = 300, maxRetries = 2) {
+        const rawId = (pic_id || '').toString().trim();
+        if (!rawId) return null;
+        
+        const normalizedSource = normalizeMusicSource(source || inferSourceFromPicId(rawId));
+        const cacheKey = getPicCacheKey(rawId, normalizedSource, size);
+        
+        if (picUrlCache.has(cacheKey)) {
+            return picUrlCache.get(cacheKey);
+        }
+        
+        if (picUrlPending.has(cacheKey)) {
+            return picUrlPending.get(cacheKey);
+        }
+        
+        const task = (async () => {
+            const apis = getPicApiCandidates();
+            
+            for (const api of apis) {
+                for (let retry = 1; retry <= maxRetries; retry++) {
+                    let timeoutId = null;
+                    try {
+                        const controller = new AbortController();
+                        timeoutId = setTimeout(() => controller.abort(), 5000);
+                        const url = `${api}?types=pic&source=${encodeURIComponent(normalizedSource)}&id=${encodeURIComponent(rawId)}&size=${size}`;
+                        const res = await fetch(url, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        if (!res.ok) continue;
+                        
+                        const data = await res.json();
+                        const resolved = (data && typeof data.url === 'string') ? data.url.trim() : '';
+                        if (resolved && !isBrokenCoverUrl(resolved)) {
+                            picUrlCache.set(cacheKey, resolved);
+                            return resolved;
+                        }
+                    } catch (e) {
+                        // 继续重试/换源
+                    } finally {
+                        if (timeoutId) clearTimeout(timeoutId);
+                    }
+                }
+            }
+            
+            // 本地代理可用时最后兜底
+            if (proxyAvailable) {
+                const proxied = `${PROXY_URL}/api/music/pic?pic_id=${encodeURIComponent(rawId)}&source=${encodeURIComponent(normalizedSource)}&size=${size}`;
+                picUrlCache.set(cacheKey, proxied);
+                return proxied;
+            }
+            
+            return null;
+        })();
+        
+        picUrlPending.set(cacheKey, task);
+        try {
+            return await task;
+        } finally {
+            picUrlPending.delete(cacheKey);
+        }
+    }
+    
+    // 获取图片URL的函数（优先走后端代理，失败时按源回退）
+    function getPicUrl(pic_id, size = 300, source = 'netease') {
         if (!pic_id) return null;
         
-        if (proxyAvailable) {
-            // 如果后端可用，使用后端代理（有缓存）
-            return `${PROXY_URL}/api/music/pic?pic_id=${pic_id}&size=${size}`;
-        } else {
-            // 备用方案1：直接使用网易云CDN（可能受防盗链限制）
-            return `https://p2.music.126.net/${pic_id}?param=${size}y${size}`;
+        const normalizedSource = normalizeMusicSource(source || inferSourceFromPicId(pic_id));
+        const directUrl = buildDirectPicUrl(pic_id, normalizedSource, size);
+        
+        // 可直接拼接的地址优先使用
+        if (directUrl) {
+            return directUrl;
         }
+        
+        // 已缓存的真实地址
+        const cacheKey = getPicCacheKey(pic_id, normalizedSource, size);
+        const cached = picUrlCache.get(cacheKey);
+        if (cached && !isBrokenCoverUrl(cached)) {
+            return cached;
+        }
+        
+        if (proxyAvailable) {
+            // 后端会先查询 GD 的 pic 接口，再回源真实图片
+            return `${PROXY_URL}/api/music/pic?pic_id=${encodeURIComponent(pic_id)}&source=${encodeURIComponent(normalizedSource)}&size=${size}`;
+        }
+        
+        return null;
+    }
+    
+    function sanitizeSongCoverFields(song) {
+        if (!song || typeof song !== 'object') return false;
+        let changed = false;
+        
+        if (song.pic && isBrokenCoverUrl(song.pic)) {
+            song.pic = null;
+            changed = true;
+        }
+        if (song.cover && isBrokenCoverUrl(song.cover)) {
+            song.cover = null;
+            changed = true;
+        }
+        
+        return changed;
     }
     
     // GD音乐台API（主要使用网易云源）
@@ -77,6 +265,14 @@
     let currentIdx = null;
     let isPlaying = false;
     let favorites = JSON.parse(localStorage.getItem('listen-favorites') || '[]');
+    if (!Array.isArray(favorites)) favorites = [];
+    let favoriteCoverChanged = false;
+    favorites.forEach(song => {
+        if (sanitizeSongCoverFields(song)) favoriteCoverChanged = true;
+    });
+    if (favoriteCoverChanged) {
+        localStorage.setItem('listen-favorites', JSON.stringify(favorites));
+    }
     let playMode = localStorage.getItem('listen-playmode') || 'order'; // order, random, loop
     let currentLyrics = [];
     let currentView = 'search'; // search, favorites
@@ -203,6 +399,86 @@
     
     // 默认占位图
     const PLACEHOLDER = 'https://img.heliar.top/file/1772015240645_IMG_20260225_182612.jpg';
+    
+    function resolveSongCover(song, size = 300) {
+        if (!song) return PLACEHOLDER;
+        
+        const explicitSource = song.source || song.platform || song.musicSource;
+        const picIdFromSong = song.pic_id || song.picId || song.album_pic_id || song.albumPicId || song.cover_id;
+        const source = normalizeMusicSource(explicitSource || inferSourceFromPicId(picIdFromSong));
+        
+        // 优先使用歌曲对象中已给出的完整封面 URL（排除历史错误格式）
+        const directCandidates = [
+            song.pic,
+            song.cover,
+            song.pic_url,
+            song.album_pic,
+            song.image,
+            song.img
+        ];
+        
+        for (const candidate of directCandidates) {
+            if (typeof candidate !== 'string') continue;
+            const trimmed = candidate.trim();
+            if (!trimmed) continue;
+            if (/^(https?:)?\/\//i.test(trimmed) || /^data:image\//i.test(trimmed)) {
+                if (!isBrokenCoverUrl(trimmed)) return trimmed;
+                continue;
+            }
+            
+            // 某些源会把相对图片路径塞在 pic 字段里，按 source 补全
+            const rebuilt = buildDirectPicUrl(trimmed, source, size);
+            if (rebuilt) return rebuilt;
+        }
+        
+        // 再尝试 pic_id / album_pic_id
+        if (picIdFromSong) {
+            const cacheKey = getPicCacheKey(picIdFromSong, source, size);
+            const cached = picUrlCache.get(cacheKey);
+            if (cached && !isBrokenCoverUrl(cached)) return cached;
+            
+            const fromPicId = getPicUrl(picIdFromSong, size, source);
+            if (fromPicId) return fromPicId;
+        }
+        
+        return PLACEHOLDER;
+    }
+    
+    async function resolveSongCoverAsync(song, size = 300) {
+        if (!song) return PLACEHOLDER;
+        
+        const immediate = resolveSongCover(song, size);
+        if (immediate && immediate !== PLACEHOLDER) return immediate;
+        
+        const explicitSource = song.source || song.platform || song.musicSource;
+        const picIdFromSong = song.pic_id || song.picId || song.album_pic_id || song.albumPicId || song.cover_id;
+        if (!picIdFromSong) return immediate || PLACEHOLDER;
+        
+        const source = normalizeMusicSource(explicitSource || inferSourceFromPicId(picIdFromSong));
+        const fetched = await fetchPicUrlFromAPI(picIdFromSong, source, size);
+        
+        if (fetched && !isBrokenCoverUrl(fetched)) {
+            song.pic = fetched;
+            song.cover = fetched;
+            return fetched;
+        }
+        
+        return immediate || PLACEHOLDER;
+    }
+    
+    async function applySongCoverToImg(img, song, size = 300) {
+        if (!img) return;
+        
+        const immediate = resolveSongCover(song, size);
+        img.src = immediate || PLACEHOLDER;
+        
+        if (immediate && immediate !== PLACEHOLDER) return;
+        
+        const asyncCover = await resolveSongCoverAsync(song, size);
+        if (img.isConnected && asyncCover && asyncCover !== img.src) {
+            img.src = asyncCover;
+        }
+    }
     
     function createModal() {
         if (document.getElementById('listen-together-modal')) return;
@@ -401,18 +677,19 @@
         
         if (result && result.songs && result.songs.length > 0) {
             songs = result.songs.map((item, idx) => {
+                const source = normalizeMusicSource(item.source || result.source);
                 return {
                     id: item.id,
                     name: item.name,
                     title: item.name,
                     artist: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
                     author: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
-                    pic: item.pic_id ? `https://p2.music.126.net/${item.pic_id}?param=500y500` : (item.pic || null),
-                    pic_id: item.pic_id,
-                    cover: null,
+                    pic: item.pic || item.pic_url || item.album_pic || null,
+                    pic_id: item.pic_id || item.album_pic_id || null,
+                    cover: item.cover || item.pic || item.pic_url || item.album_pic || null,
                     lrc: null,
                     lyric_id: item.lyric_id,
-                    source: result.source,
+                    source,
                     url: null
                 };
             });
@@ -438,13 +715,13 @@
             if (Array.isArray(name)) name = name[0] || '未知';
             if (Array.isArray(artist)) artist = artist.join('/') || '未知';
             
-            // 【改进】使用getPicUrl获取图片URL（自动选择后端或CDN）
-            const pic = s.pic_id ? getPicUrl(s.pic_id, 300) : PLACEHOLDER;
-            console.log(`📍 歌曲${i}: ${name} - pic_id="${s.pic_id}" -> URL: ${pic}`);
+            // 统一封面解析：兼容 pic / cover / pic_id + source
+            const pic = resolveSongCover(s, 300);
+            console.log(`📍 歌曲${i}: ${name} - source="${s.source || 'netease'}" pic_id="${s.pic_id || ''}" -> URL: ${pic}`);
             
             return `
             <div class="listen-song-item${currentIdx === i ? ' active' : ''}" data-idx="${i}">
-                <img class="listen-song-cover" src="${PLACEHOLDER}" data-src="${pic}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
+                <img class="listen-song-cover" src="${PLACEHOLDER}" data-cover-idx="${i}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
                 <div class="listen-song-info">
                     <div class="listen-song-name">${name}</div>
                     <div class="listen-song-artist">${artist}</div>
@@ -452,14 +729,16 @@
             </div>`;
         }).join('');
         
-        // 【优化】延迟加载图片 - 避免一次性加载所有图片导致卡顿
+        // 延迟加载并异步解析封面
         setTimeout(() => {
-            container.querySelectorAll('.listen-song-cover[data-src]').forEach((img, idx) => {
+            container.querySelectorAll('.listen-song-cover[data-cover-idx]').forEach((img, idx) => {
                 setTimeout(() => {
-                    img.src = img.dataset.src;
-                }, idx * 100);  // 每100ms加载一张，分散请求
+                    const songIdx = parseInt(img.dataset.coverIdx, 10);
+                    const song = Number.isFinite(songIdx) ? validSongs[songIdx] : validSongs[idx];
+                    applySongCoverToImg(img, song, 300);
+                }, idx * 80);
             });
-        }, 200);
+        }, 120);
         
         container.querySelectorAll('.listen-song-item').forEach(item => {
             item.onclick = () => {
@@ -488,8 +767,11 @@
         document.getElementById('listen-topbar-title').textContent = `${name} - ${artist}`;
         const cover = document.getElementById('listen-now-cover');
         
-        // GD音乐台API：使用pic_id + 后端代理获取图片
-        const pic = song.pic_id ? getPicUrl(song.pic_id, 500) : PLACEHOLDER;
+        let pic = resolveSongCover(song, 500);
+        // 统一回填，避免分享卡片/上下文读取到历史错误封面
+        song.pic = pic;
+        song.cover = pic;
+        localStorage.setItem('listen-songs', JSON.stringify(songs));
         
         cover.src = pic;
         cover.onerror = () => {
@@ -498,6 +780,19 @@
         };
         // 动态背景模糊
         document.getElementById('listen-together-modal').style.setProperty('--listen-bg', `url(${pic})`);
+        
+        // 无后端部署时，异步获取真实封面再回填
+        if (pic === PLACEHOLDER) {
+            const asyncPic = await resolveSongCoverAsync(song, 500);
+            if (currentIdx === idx && asyncPic && asyncPic !== PLACEHOLDER) {
+                pic = asyncPic;
+                cover.src = asyncPic;
+                document.getElementById('listen-together-modal').style.setProperty('--listen-bg', `url(${asyncPic})`);
+                song.pic = asyncPic;
+                song.cover = asyncPic;
+                localStorage.setItem('listen-songs', JSON.stringify(songs));
+            }
+        }
         
         renderSongs();
         loadLyric(song);
@@ -696,12 +991,11 @@
             if (Array.isArray(name)) name = name[0] || '未知';
             if (Array.isArray(artist)) artist = artist.join('/') || '未知';
             
-            // 【改进】使用getPicUrl获取图片URL（自动选择后端或CDN）
-            const pic = s.pic_id ? getPicUrl(s.pic_id, 300) : PLACEHOLDER;
+            const pic = resolveSongCover(s, 300);
             
             return `
             <div class="listen-song-item" data-fav-idx="${i}">
-                <img class="listen-song-cover" src="${PLACEHOLDER}" data-src="${pic}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
+                <img class="listen-song-cover" src="${PLACEHOLDER}" data-fav-cover-idx="${i}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
                 <div class="listen-song-info">
                     <div class="listen-song-name">${name}</div>
                     <div class="listen-song-artist">${artist}</div>
@@ -709,14 +1003,16 @@
             </div>`;
         }).join('');
         
-        // 【优化】延迟加载图片 - 避免一次性加载所有图片导致卡顿
+        // 延迟加载并异步解析封面
         setTimeout(() => {
-            container.querySelectorAll('.listen-song-cover[data-src]').forEach((img, idx) => {
+            container.querySelectorAll('.listen-song-cover[data-fav-cover-idx]').forEach((img, idx) => {
                 setTimeout(() => {
-                    img.src = img.dataset.src;
-                }, idx * 100);  // 每100ms加载一张，分散请求
+                    const songIdx = parseInt(img.dataset.favCoverIdx, 10);
+                    const song = Number.isFinite(songIdx) ? validFavs[songIdx] : validFavs[idx];
+                    applySongCoverToImg(img, song, 300);
+                }, idx * 80);
             });
-        }, 200);
+        }, 120);
         
         container.querySelectorAll('.listen-song-item').forEach(item => {
             item.onclick = () => {
@@ -931,7 +1227,7 @@ ${recentChat.substring(0, 1500)}
     };
     
     // 分享歌曲
-    function shareSong() {
+    async function shareSong() {
         if (currentIdx === null || !songs[currentIdx]) { alert('请先播放一首歌'); return; }
         const AS = window.AppState;
         if (!AS || !AS.conversations || !AS.conversations.length) return;
@@ -939,7 +1235,7 @@ ${recentChat.substring(0, 1500)}
         const song = songs[currentIdx];
         const songName = song.name || song.title || '未知';
         const artist = song.artist || song.author || '未知';
-        const pic = song.pic || song.cover || PLACEHOLDER;
+        const pic = await resolveSongCoverAsync(song, 300);
         
         // 弹出角色选择
         const list = AS.conversations.map((c, i) => `<div class="listen-share-item" data-idx="${i}">
@@ -1123,6 +1419,14 @@ ${recentChat.substring(0, 1500)}
                 const savedIdx = localStorage.getItem('listen-currentIdx');
                 if (saved && savedIdx !== null) {
                     songs = JSON.parse(saved);
+                    if (!Array.isArray(songs)) songs = [];
+                    let changed = false;
+                    songs.forEach(song => {
+                        if (sanitizeSongCoverFields(song)) changed = true;
+                    });
+                    if (changed) {
+                        localStorage.setItem('listen-songs', JSON.stringify(songs));
+                    }
                     playSong(parseInt(savedIdx));
                 }
             } catch(e) {}
@@ -2083,9 +2387,11 @@ ${recentChat.substring(0, 1500)}
                                 title: item.name,
                                 artist: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
                                 author: Array.isArray(item.artist) ? item.artist.join('/') : item.artist,
-                                pic_id: item.pic_id,
+                                pic: item.pic || item.pic_url || item.album_pic || null,
+                                cover: item.cover || item.pic || item.pic_url || item.album_pic || null,
+                                pic_id: item.pic_id || item.album_pic_id || null,
                                 lyric_id: item.lyric_id,
-                                source: 'netease'
+                                source: normalizeMusicSource(item.source || 'netease')
                             }));
                             break;
                         }

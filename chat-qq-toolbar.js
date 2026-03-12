@@ -533,7 +533,11 @@
     function openFiction() {
         // 检查是否已加载同人文模块
         if (window.FictionModule && typeof window.FictionModule.open === 'function') {
-            window.FictionModule.open();
+            const currentChat = window.AppState?.currentChat || null;
+            window.FictionModule.open({
+                chat: currentChat,
+                chatId: currentChat?.id
+            });
         } else {
             console.warn('⚠️ 同人文模块未初始化');
             showToast('同人文功能加载中，请稍后再试');

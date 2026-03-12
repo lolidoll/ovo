@@ -129,21 +129,29 @@ const MobileResponsiveAdapter = {
         const root = document.documentElement;
         const body = document.body;
         const visualViewport = window.visualViewport;
+        const isPWA = this.displayModes.isPWA();
 
         const innerHeight = window.innerHeight || document.documentElement.clientHeight || 0;
         const innerWidth = window.innerWidth || document.documentElement.clientWidth || 0;
         const visualHeight = visualViewport ? visualViewport.height : innerHeight;
         const visualTop = visualViewport ? (visualViewport.offsetTop || 0) : 0;
-        const viewportHeight = Math.max(320, Math.round(visualHeight || innerHeight || 0));
         const viewportWidth = Math.max(320, Math.round(innerWidth || 0));
 
         this.state.baseInnerHeight = Math.max(this.state.baseInnerHeight, innerHeight);
 
-        const keyboardDelta = visualViewport
+        let keyboardDelta = visualViewport
             ? Math.max(0, Math.round(innerHeight - visualHeight - visualTop))
             : Math.max(0, Math.round(this.state.baseInnerHeight - innerHeight));
 
+        // iOS standalone often reports minor visualViewport deltas even when keyboard is closed.
+        if (this.browsers.isIOS && isPWA && keyboardDelta <= 90) {
+            keyboardDelta = 0;
+        }
+
         const keyboardOpen = this.isEditableElement(document.activeElement) && keyboardDelta > 90;
+        const viewportHeight = (this.browsers.isIOS && isPWA && !keyboardOpen)
+            ? Math.max(320, Math.round(innerHeight || visualHeight || 0))
+            : Math.max(320, Math.round(visualHeight || innerHeight || 0));
 
         const vh = viewportHeight * 0.01;
         root.style.setProperty('--vh', `${vh}px`);
@@ -151,7 +159,7 @@ const MobileResponsiveAdapter = {
         root.style.setProperty('--window-height', `${innerHeight}px`);
         root.style.setProperty('--screen-height', `${window.screen.height || viewportHeight}px`);
         root.style.setProperty('--viewport-width', `${viewportWidth}px`);
-        root.style.setProperty('--visual-viewport-height', `${viewportHeight}px`);
+        root.style.setProperty('--visual-viewport-height', `${Math.round(visualHeight || innerHeight || 0)}px`);
         root.style.setProperty('--chat-viewport-height', `${viewportHeight}px`);
         root.style.setProperty('--keyboard-height', keyboardOpen ? `${keyboardDelta}px` : '0px');
         root.style.setProperty('--chat-keyboard-offset', keyboardOpen ? `${keyboardDelta}px` : '0px');

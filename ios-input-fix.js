@@ -22,6 +22,12 @@
         console.log('🔍 非iOS设备，跳过iOS输入框修复');
         return;
     }
+
+    // iOS PWA 全屏已由统一适配器处理，避免重复注入内联布局导致输入框异常
+    if (isStandalonePWA) {
+        console.log('🔍 iOS PWA全屏模式，跳过旧版输入框修复逻辑');
+        return;
+    }
     
     console.log('🔧 检测到iOS设备，应用聊天输入框修复...');
     
