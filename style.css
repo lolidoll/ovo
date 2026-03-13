@@ -9892,3 +9892,494 @@
                 width: min(94vw, 520px);
             }
         }
+
+        /* Memory shards page */
+        #memory-shards-page {
+            background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 60%, #fffdfd 100%);
+        }
+
+        #memory-shards-page .memory-shards-content {
+            padding: 14px 14px 24px;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #fff8fc 0%, #fff2f8 60%, #fffdfd 100%);
+        }
+
+        #memory-shards-page .memory-shards-hero {
+            padding: 16px 16px 14px;
+            border-radius: 16px;
+            border: 1px solid #ffe0ed;
+            background: linear-gradient(135deg, #ffffff 0%, #fff5fa 100%);
+            box-shadow: 0 6px 16px rgba(238, 151, 187, 0.16);
+            margin-bottom: 14px;
+        }
+
+        #memory-shards-page .memory-shards-hero-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #c96289;
+            margin-bottom: 6px;
+        }
+
+        #memory-shards-page .memory-shards-hero-desc {
+            font-size: 12px;
+            color: #c796ad;
+            line-height: 1.6;
+        }
+
+        #memory-shards-page .memory-shards-toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        #memory-shards-page .memory-shards-toolbar-btn {
+            border: 1px solid #ffd4e3;
+            background: #fff;
+            color: #c06a90;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 14px;
+            cursor: pointer;
+        }
+
+        #memory-shards-page .memory-shards-toolbar-btn.primary {
+            border: none;
+            color: #fff;
+            background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+        }
+
+        #memory-shards-page .memory-shards-toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #memory-shards-page .memory-shards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #memory-shards-page .memory-shard-item {
+            position: relative;
+            padding: 16px 16px 14px 18px;
+            border-radius: 16px;
+            border: 1px solid #ffe0ed;
+            background: linear-gradient(135deg, #ffffff 0%, #fff7fb 100%);
+            box-shadow: 0 2px 12px rgba(236, 143, 180, 0.14);
+            overflow: hidden;
+        }
+
+        #memory-shards-page .memory-shard-item-accent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #ffb7d1 0%, #ff95ba 100%);
+        }
+
+        #memory-shards-page .memory-shard-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        #memory-shards-page .memory-shard-header-main {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        #memory-shards-page .memory-shard-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #memory-shards-page .memory-shard-select {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #c06a90;
+        }
+
+        #memory-shards-page .memory-shard-select-input {
+            width: 14px;
+            height: 14px;
+            accent-color: #ff95ba;
+        }
+
+        #memory-shards-page .memory-shard-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #c06288;
+            margin-bottom: 6px;
+        }
+
+        #memory-shards-page .memory-shard-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        #memory-shards-page .memory-shard-tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #b06f90;
+            background: #fff0f6;
+            border: 1px solid #ffd4e3;
+        }
+
+        #memory-shards-page .memory-shard-tag-muted {
+            color: #b58fa3;
+            background: #fff7fb;
+            border-color: #ffe7f1;
+        }
+
+        #memory-shards-page .memory-shard-tag-video {
+            color: #a5557a;
+            background: #ffe6f1;
+            border-color: #ffcfe0;
+        }
+
+        #memory-shards-page .memory-shard-tag-offline {
+            color: #9b6a86;
+            background: #fff2f8;
+            border-color: #ffdbe9;
+        }
+
+        #memory-shards-page .memory-shard-tag-online {
+            color: #c06a90;
+            background: #fff0f6;
+            border-color: #ffd4e3;
+        }
+
+        #memory-shards-page .memory-shard-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #memory-shards-page .memory-shard-action-btn {
+            border: 1px solid #ffd4e3;
+            background: #fff;
+            color: #c06a90;
+            border-radius: 10px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+        #memory-shards-page .memory-shard-action-btn:active {
+            transform: scale(0.96);
+        }
+
+        #memory-shards-page .memory-shard-action-btn.danger {
+            border: none;
+            color: #fff;
+            background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+        }
+
+        #memory-shards-page .memory-shard-meta {
+            font-size: 11px;
+            color: #c39ab0;
+            margin-bottom: 10px;
+        }
+
+        #memory-shards-page .memory-shard-body {
+            margin-top: 6px;
+        }
+
+        #memory-shards-page .memory-shard-item.is-collapsed .memory-shard-body {
+            display: none;
+        }
+
+        #memory-shards-page .memory-shard-content {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #b06f90;
+            background: #fff;
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid #ffe7f1;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        #memory-shards-page .memory-shard-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        #memory-shards-page .memory-shard-section {
+            border-radius: 12px;
+            border: 1px solid #ffe3ee;
+            background: #fff;
+            padding: 10px 12px;
+            box-shadow: 0 1px 6px rgba(236, 143, 180, 0.08);
+        }
+
+        #memory-shards-page .memory-shard-section-review {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #fff7fb 0%, #fff0f6 100%);
+            border-color: #ffd4e3;
+        }
+
+        #memory-shards-page .memory-shard-section-events {
+            background: #fff9fd;
+            border-color: #ffd9ea;
+        }
+
+        #memory-shards-page .memory-shard-section-promise {
+            background: #fff8f2;
+            border-color: #ffe4d8;
+        }
+
+        #memory-shards-page .memory-shard-section-anniversary {
+            background: #fff8f6;
+            border-color: #ffe2d5;
+        }
+
+        #memory-shards-page .memory-shard-section-growth {
+            background: #fef7fb;
+            border-color: #f7d8e8;
+        }
+
+        #memory-shards-page .memory-shard-section-bond {
+            background: #fef8fb;
+            border-color: #f3dbe8;
+        }
+
+        #memory-shards-page .memory-shard-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #c26a90;
+            margin-bottom: 6px;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        #memory-shards-page .memory-shard-section-body {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #b06f90;
+        }
+
+        #memory-shards-page .memory-shard-section-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        #memory-shards-page .memory-shard-section-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 4px;
+        }
+
+        #memory-shards-page .memory-shard-section-list li {
+            position: relative;
+            padding-left: 10px;
+        }
+
+        #memory-shards-page .memory-shard-section-list li::before {
+            content: '\2022';
+            position: absolute;
+            left: 0;
+            color: #d18aa8;
+        }
+
+        #memory-shards-page .memory-shard-section-empty {
+            color: #d1a0b6;
+            font-style: italic;
+        }
+
+        #memory-shards-page .memory-shards-empty {
+            padding: 60px 20px;
+            text-align: center;
+            border-radius: 18px;
+            border: 1px dashed #ffd9e8;
+            background: linear-gradient(180deg, #ffffff 0%, #fff8fc 100%);
+            color: #c495ab;
+        }
+
+        #memory-shards-page .memory-shards-empty-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+
+        #memory-shards-page .memory-shards-empty-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #c06a90;
+            margin-bottom: 4px;
+        }
+
+        #memory-shards-page .memory-shards-empty-desc {
+            font-size: 12px;
+            color: #c39ab0;
+        }
+
+        #memory-shards-page .memory-shards-refresh-btn {
+            border: 1px solid #ffd4e3;
+            background: #fff;
+            color: #c06a90;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            margin-left: auto;
+            cursor: pointer;
+        }
+
+        #memory-shards-page .memory-shards-refresh-btn:active {
+            transform: scale(0.96);
+        }
+
+        .memory-shards-callout {
+            margin-top: 14px;
+            padding: 12px 12px 14px;
+            border-radius: 14px;
+            border: 1px dashed #ffd4e3;
+            background: linear-gradient(135deg, #fff9fc 0%, #fff1f7 100%);
+        }
+
+        .memory-shards-callout-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #c46287;
+            margin-bottom: 6px;
+        }
+
+        .memory-shards-callout-desc {
+            font-size: 12px;
+            color: #c39ab0;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .memory-shards-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            background: rgba(84, 24, 47, 0.22);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 500000;
+        }
+
+        .memory-shards-modal-content {
+            width: min(92vw, 520px);
+            border-radius: 18px;
+            border: 1px solid #ffd9e9;
+            background: linear-gradient(180deg, #ffffff 0%, #fff7fb 100%);
+            box-shadow: 0 12px 30px rgba(237, 136, 177, 0.28);
+            overflow: hidden;
+        }
+
+        .memory-shards-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid #ffe4ef;
+        }
+
+        .memory-shards-modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #c46287;
+        }
+
+        .memory-shards-modal-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            border: 1px solid #ffd9e8;
+            background: #fff3f9;
+            color: #bd7495;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .memory-shards-modal-body {
+            padding: 14px 16px 10px;
+        }
+
+        .memory-shards-modal-desc {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #a35c7c;
+        }
+
+        .memory-shards-editor {
+            width: 100%;
+            min-height: 220px;
+            border-radius: 12px;
+            border: 1px solid #ffdce9;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #9c5878;
+            resize: vertical;
+            background: #fff;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .memory-shards-editor:focus {
+            border-color: #ffb0cc;
+            box-shadow: 0 0 0 2px rgba(255, 176, 204, 0.2);
+        }
+
+        .memory-shards-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 16px 16px;
+            border-top: 1px solid #ffe4ef;
+        }
+
+        .memory-shards-modal-btn {
+            min-height: 34px;
+            border-radius: 10px;
+            border: 1px solid #ffd7e7;
+            background: #fff;
+            color: #be7394;
+            padding: 0 14px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .memory-shards-modal-btn.primary {
+            border: none;
+            color: #fff;
+            background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+        }
+
+        .memory-shards-modal-btn.danger {
+            border: none;
+            color: #fff;
+            background: linear-gradient(135deg, #ff9dbf 0%, #ff7fa9 100%);
+        }

@@ -360,8 +360,10 @@
                                 <span>立即生成总结</span>
                             </button>
 
-                            <div id="summaries-container" class="summaries-list">
-                                ${hasSummaries ? this.renderSummariesList(conv.summaries, chat.id) : '<div class="empty-state">暂无总结记录</div>'}
+                            <div class="memory-shards-callout">
+                                <div class="memory-shards-callout-title">记忆区</div>
+                                <div class="memory-shards-callout-desc">总结内容已集中收纳，支持统一编辑与删除</div>
+                                <button id="open-memory-shards-btn" class="btn-secondary btn-full">查看记忆区</button>
                             </div>
                         </div>
                     </div>
@@ -1048,6 +1050,17 @@
             if (manualSummaryBtn) {
                 manualSummaryBtn.addEventListener('click', () => {
                     this.manualSummarize(chat.id);
+                });
+            }
+
+            const openMemoryShardsBtn = document.getElementById('open-memory-shards-btn');
+            if (openMemoryShardsBtn) {
+                openMemoryShardsBtn.addEventListener('click', () => {
+                    if (typeof window.openMemoryShardsPage === 'function') {
+                        window.openMemoryShardsPage(chat.id);
+                    } else {
+                        showToast('记忆区页面加载中');
+                    }
                 });
             }
             
@@ -1743,21 +1756,31 @@
             const conv = window.AppState.conversations && window.AppState.conversations.find(c => c.id === convId);
             if (!conv) {
                 showToast('对话未找到');
+                if (window.__OFFLINE_SUMMARY_CONTEXT__) {
+                    window.__OFFLINE_SUMMARY_CONTEXT__ = false;
+                }
                 return;
             }
 
             const hasSecondaryApi = window.AppState.apiSettings.secondaryEndpoint && 
                                    window.AppState.apiSettings.secondaryApiKey && 
                                    window.AppState.apiSettings.secondarySelectedModel;
+            const hasMainApi = window.AppState.apiSettings.endpoint && window.AppState.apiSettings.selectedModel;
             
-            if (!hasSecondaryApi) {
-                showToast('请先配置副API设置');
+            if (!hasSecondaryApi && !hasMainApi) {
+                showToast('请先配置主API或副API设置');
+                if (window.__OFFLINE_SUMMARY_CONTEXT__) {
+                    window.__OFFLINE_SUMMARY_CONTEXT__ = false;
+                }
                 return;
             }
 
             const messages = window.AppState.messages[convId] || [];
             if (messages.length === 0) {
                 showToast('没有消息可以总结');
+                if (window.__OFFLINE_SUMMARY_CONTEXT__) {
+                    window.__OFFLINE_SUMMARY_CONTEXT__ = false;
+                }
                 return;
             }
 
@@ -1770,41 +1793,76 @@
                 }
             });
 
-            window.summarizeTextViaSecondaryAPI(
-                conversationText,
+            const summaryModeLabel = window.__OFFLINE_SUMMARY_CONTEXT__ ? '线下功能' : '线上聊天';
+            const summaryInput = typeof window.buildSummaryInput === 'function'
+                ? window.buildSummaryInput(conversationText, {
+                    conv: conv,
+                    modeLabel: summaryModeLabel
+                })
+                : conversationText;
+
+            const summarizeFn = (!hasSecondaryApi && hasMainApi && window.summarizeTextViaMainAPI)
+                ? window.summarizeTextViaMainAPI
+                : window.summarizeTextViaSecondaryAPI;
+
+            if (!summarizeFn) {
+                showToast('总结功能未加载');
+                if (window.__OFFLINE_SUMMARY_CONTEXT__) {
+                    window.__OFFLINE_SUMMARY_CONTEXT__ = false;
+                }
+                return;
+            }
+
+            summarizeFn(
+                summaryInput,
                 (result) => {
+                    const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                        ? window.normalizeSummaryContent(result)
+                        : result;
+
                     if (!conv.summaries) {
                         conv.summaries = [];
                     }
-                    
+
+                    const isOfflineSummary = !!window.__OFFLINE_SUMMARY_CONTEXT__;
+
                     conv.summaries.push({
-                        content: result,
+                        content: normalizedSummary,
                         isAutomatic: isAutomatic,
+                        isOffline: isOfflineSummary,
                         timestamp: new Date().toISOString(),
                         messageCount: messages.length
                     });
-                    
+
+                    if (isOfflineSummary) {
+                        window.__OFFLINE_SUMMARY_CONTEXT__ = false;
+                    }
+
                     saveToStorage();
                     showToast('总结已生成');
-                    
+
+                    if (typeof window.renderMemoryShardsPage === 'function') {
+                        window.renderMemoryShardsPage(convId);
+                    }
+
                     // 如果是自动总结，清理旧消息，只保留最新的N条
                     if (isAutomatic) {
                         const keepLatest = window.AppState.apiSettings.summaryKeepLatest || 10;
                         const allMessages = window.AppState.messages[convId] || [];
-                        
+
                         if (allMessages.length > keepLatest) {
                             // 标记旧消息为已总结
                             const oldMessages = allMessages.slice(0, allMessages.length - keepLatest);
                             oldMessages.forEach(m => {
                                 m.isSummarized = true;
                             });
-                            
+
                             saveToStorage();
                             console.log(`✅ 自动总结完成，标记了 ${oldMessages.length} 条旧消息为已总结`);
                             showToast(`已标记 ${oldMessages.length} 条旧消息，保留最新 ${keepLatest} 条`);
                         }
                     }
-                    
+
                     // 刷新总结列表
                     const summariesContainer = document.getElementById('summaries-container');
                     if (summariesContainer) {
@@ -1814,6 +1872,10 @@
                 (error) => {
                     console.error('总结生成出错:', error);
                     showToast('总结生成失败: ' + error);
+
+                    if (window.__OFFLINE_SUMMARY_CONTEXT__) {
+                        window.__OFFLINE_SUMMARY_CONTEXT__ = false;
+                    }
                 }
             );
         },
@@ -1831,6 +1893,10 @@
             if (newContent && newContent.trim()) {
                 summary.content = newContent.trim();
                 saveToStorage();
+
+                if (typeof window.renderMemoryShardsPage === 'function') {
+                    window.renderMemoryShardsPage();
+                }
                 
                 const summariesContainer = document.getElementById('summaries-container');
                 if (summariesContainer) {
@@ -1852,6 +1918,10 @@
 
             conv.summaries.splice(summaryIndex, 1);
             saveToStorage();
+
+            if (typeof window.renderMemoryShardsPage === 'function') {
+                window.renderMemoryShardsPage();
+            }
             
             const summariesContainer = document.getElementById('summaries-container');
             if (summariesContainer) {

@@ -21,6 +21,21 @@
         messageLayout: 'default', // 消息布局: default (默认), centered (居中)
         stickToBottom: true // 是否跟随到底部（用户上滑查看历史后会关闭）
     };
+
+    function getActiveChatId() {
+        return State.chatId || window.AppState?.currentChat?.id || null;
+    }
+
+    function getActiveChat() {
+        const chatId = getActiveChatId();
+        if (!chatId) return null;
+        const conversations = window.AppState?.conversations || [];
+        const conv = conversations.find(c => String(c?.id) === String(chatId));
+        if (conv) return conv;
+        const current = window.AppState?.currentChat;
+        if (current && String(current.id) === String(chatId)) return current;
+        return null;
+    }
     
     // 加载/保存数据
     function load() {
@@ -197,7 +212,8 @@
         if (!container || !State.chatId) return;
 
         const msgs = State.messages[State.chatId] || [];
-        const chat = window.AppState?.currentChat;
+        const chat = getActiveChat();
+        if (!chat) return;
         const charAvatar = chat?.avatar || '';
         const userAvatar = chat?.userAvatar || window.AppState?.user?.avatar || '';
         const charName = chat?.remark || chat?.name || '角色';
@@ -395,8 +411,9 @@
             const api = window.AppState?.apiSettings;
             if (!api?.endpoint || !api?.selectedModel) throw new Error('请先配置API');
             
-            const chat = window.AppState?.currentChat;
-            const conv = window.AppState?.conversations?.find(c => c.id === chat?.id);
+            const chat = getActiveChat();
+            if (!chat) throw new Error('请先打开一个聊天');
+            const conv = window.AppState?.conversations?.find(c => c.id === chat.id) || chat;
             const charName = conv?.name || 'Assistant';
             const userName = conv?.userNameForChar || window.AppState?.user?.name || 'User';
             
@@ -404,7 +421,7 @@
             const chatHistory = [];
             
             // 线上消息历史
-            const online = window.AppState?.messages?.[chat?.id] || [];
+            const online = window.AppState?.messages?.[State.chatId] || [];
             online.slice(-50).forEach(m => {
                 if (m.type === 'sent') chatHistory.push({ role: 'user', content: m.content || '' });
                 else if (m.type === 'received') chatHistory.push({ role: 'assistant', content: m.content || '' });
@@ -976,14 +993,14 @@
 
     // 显示总结对话框
     function showSummaryDialog() {
-        const chat = window.AppState?.currentChat;
+        const chat = getActiveChat();
         if (!chat) {
             showToast('请先打开一个聊天');
             return;
         }
 
-        const conv = window.AppState?.conversations?.find(c => c.id === chat.id);
-        const msgs = State.messages[chat.id] || [];
+        const conv = window.AppState?.conversations?.find(c => c.id === chat.id) || chat;
+        const msgs = State.messages[State.chatId] || [];
 
         const modal = document.createElement('div');
         modal.className = 'st-modal-overlay';
@@ -1057,13 +1074,13 @@
 
     // 生成总结
     async function generateSummary() {
-        const chat = window.AppState?.currentChat;
+        const chat = getActiveChat();
         if (!chat) {
             showToast('请先打开一个聊天');
             return;
         }
 
-        const msgs = State.messages[chat.id] || [];
+        const msgs = State.messages[State.chatId] || [];
         if (msgs.length < 3) {
             showToast('消息过少，无需总结');
             return;
@@ -1073,7 +1090,7 @@
         const allMessages = [];
 
         // 线上消息
-        const online = window.AppState?.messages?.[chat.id] || [];
+        const online = window.AppState?.messages?.[State.chatId] || [];
         online.forEach(m => {
             if (m.type === 'sent' && !m.isRetracted) {
                 allMessages.push({ role: 'user', content: m.content || '' });
@@ -1094,7 +1111,7 @@
         }
 
         // 构建对话文本
-        const conv = window.AppState?.conversations?.find(c => c.id === chat.id);
+        const conv = window.AppState?.conversations?.find(c => c.id === chat.id) || chat;
         const charName = conv?.name || '角色';
         const userName = conv?.userNameForChar || window.AppState?.user?.name || '用户';
 
@@ -1106,69 +1123,65 @@
 
         // 使用CharacterSettingsManager的总结功能
         if (window.CharacterSettingsManager) {
+            window.__OFFLINE_SUMMARY_CONTEXT__ = true;
             await window.CharacterSettingsManager.summarizeConversation(chat.id, false);
             showToast('总结已生成');
         } else {
-            // 使用副API
             const hasSecondaryApi = window.AppState.apiSettings.secondaryEndpoint &&
                                    window.AppState.apiSettings.secondaryApiKey &&
                                    window.AppState.apiSettings.secondarySelectedModel;
+            const hasMainApi = window.AppState.apiSettings.endpoint && window.AppState.apiSettings.selectedModel;
 
-            if (!hasSecondaryApi) {
-                showToast('请先配置副API设置');
+            if (!hasSecondaryApi && !hasMainApi) {
+                showToast('请先配置主API或副API设置');
                 return;
             }
 
-            // 调用副API
-            const prompt = window.AppState.apiSettings.secondaryPrompts?.summarize ||
-                '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。';
+            const summaryInput = typeof window.buildSummaryInput === 'function'
+                ? window.buildSummaryInput(conversationText, {
+                    conv: conv,
+                    modeLabel: '线下功能'
+                })
+                : conversationText;
 
-            try {
-                // 规范化副API endpoint，确保包含/v1
-                const normalized = window.AppState.apiSettings.secondaryEndpoint.replace(/\/$/, '');
-                const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
-                const endpoint = baseEndpoint + '/chat/completions';
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + window.AppState.apiSettings.secondaryApiKey
+            const summarizeFn = (!hasSecondaryApi && hasMainApi && window.summarizeTextViaMainAPI)
+                ? window.summarizeTextViaMainAPI
+                : window.summarizeTextViaSecondaryAPI;
+
+            if (summarizeFn) {
+                summarizeFn(
+                    summaryInput,
+                    (result) => {
+                        const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                            ? window.normalizeSummaryContent(result)
+                            : result;
+
+                        if (!conv.summaries) {
+                            conv.summaries = [];
+                        }
+                        conv.summaries.push({
+                            content: normalizedSummary,
+                            isAutomatic: false,
+                            isOffline: true,
+                            timestamp: new Date().toISOString(),
+                            messageCount: allMessages.length
+                        });
+
+                        if (window.saveToStorage) {
+                            window.saveToStorage();
+                        }
+                        showToast('总结已生成');
+
+                        if (typeof window.renderMemoryShardsPage === 'function') {
+                            window.renderMemoryShardsPage();
+                        }
                     },
-                    body: JSON.stringify({
-                        model: window.AppState.apiSettings.secondarySelectedModel,
-                        messages: [
-                            { role: 'system', content: prompt },
-                            { role: 'user', content: conversationText }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 1000
-                    })
-                });
-
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const data = await res.json();
-                const result = window.APIUtils ? window.APIUtils.extractTextFromResponse(data) : data.choices?.[0]?.message?.content || '';
-
-                if (result) {
-                    // 保存总结到conversation
-                    if (!conv.summaries) {
-                        conv.summaries = [];
+                    (error) => {
+                        showToast('总结失败: ' + error);
                     }
-                    conv.summaries.push({
-                        content: result,
-                        isAutomatic: false,
-                        timestamp: new Date().toISOString(),
-                        messageCount: allMessages.length
-                    });
-
-                    if (window.saveToStorage) {
-                        window.saveToStorage();
-                    }
-                    showToast('总结已生成');
-                }
-            } catch (e) {
-                showToast('总结失败: ' + e.message);
+                );
+            } else {
+                showToast('总结功能未加载');
             }
         }
     }
@@ -1273,7 +1286,7 @@
             return;
         }
 
-        const chat = window.AppState?.currentChat;
+        const chat = getActiveChat();
         const charName = chat?.remark || chat?.name || '角色';
         const userName = window.AppState?.user?.name || '我';
 

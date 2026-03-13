@@ -264,19 +264,230 @@
     let songs = [];
     let currentIdx = null;
     let isPlaying = false;
-    let favorites = JSON.parse(localStorage.getItem('listen-favorites') || '[]');
-    if (!Array.isArray(favorites)) favorites = [];
-    let favoriteCoverChanged = false;
-    favorites.forEach(song => {
-        if (sanitizeSongCoverFields(song)) favoriteCoverChanged = true;
-    });
-    if (favoriteCoverChanged) {
-        localStorage.setItem('listen-favorites', JSON.stringify(favorites));
-    }
+    let favorites = [];
     let playMode = localStorage.getItem('listen-playmode') || 'order'; // order, random, loop
     let currentLyrics = [];
     let currentView = 'search'; // search, favorites
-    let cachedComments = JSON.parse(localStorage.getItem('listen-comments-cache') || '{}');
+    let cachedComments = {};
+    let activeListenChatId = null;
+    const listenRuntimeByChat = new Map();
+
+    function getListenChatId() {
+        return (window.AppState && window.AppState.currentChat && window.AppState.currentChat.id) || activeListenChatId || null;
+    }
+
+    function getListenConversation(chatId) {
+        const targetId = chatId != null ? String(chatId) : null;
+        const conversations = window.AppState && Array.isArray(window.AppState.conversations) ? window.AppState.conversations : [];
+        if (targetId) {
+            const conv = conversations.find(c => String(c && c.id) === targetId);
+            if (conv) return conv;
+        }
+        const current = window.AppState && window.AppState.currentChat ? window.AppState.currentChat : null;
+        if (current && (!targetId || String(current.id) === targetId)) return current;
+        return null;
+    }
+
+    function getListenStorageKey(chatId, suffix) {
+        return `listen-${suffix}-${chatId}`;
+    }
+
+    function safeJsonParse(raw, fallback) {
+        if (!raw) return fallback;
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function loadArrayForChat(chatId, suffix, fallbackKey) {
+        if (!chatId) return [];
+        const key = getListenStorageKey(chatId, suffix);
+        const raw = localStorage.getItem(key);
+        let value = safeJsonParse(raw, null);
+        let fromFallback = false;
+        if (!Array.isArray(value) && fallbackKey) {
+            value = safeJsonParse(localStorage.getItem(fallbackKey), []);
+            fromFallback = true;
+        }
+        const result = Array.isArray(value) ? value : [];
+        if (fromFallback) saveArrayForChat(chatId, suffix, result);
+        return result;
+    }
+
+    function loadObjectForChat(chatId, suffix, fallbackKey) {
+        if (!chatId) return {};
+        const key = getListenStorageKey(chatId, suffix);
+        const raw = localStorage.getItem(key);
+        let value = safeJsonParse(raw, null);
+        let fromFallback = false;
+        if (!value && fallbackKey) {
+            value = safeJsonParse(localStorage.getItem(fallbackKey), {});
+            fromFallback = true;
+        }
+        const result = value && typeof value === 'object' ? value : {};
+        if (fromFallback) saveObjectForChat(chatId, suffix, result);
+        return result;
+    }
+
+    function loadNumberForChat(chatId, suffix, fallbackKey) {
+        if (!chatId) return null;
+        const key = getListenStorageKey(chatId, suffix);
+        let raw = localStorage.getItem(key);
+        let fromFallback = false;
+        if (raw === null && fallbackKey) {
+            raw = localStorage.getItem(fallbackKey);
+            fromFallback = true;
+        }
+        if (raw === null || raw === undefined || raw === '') return null;
+        const value = parseInt(raw, 10);
+        if (Number.isNaN(value)) return null;
+        if (fromFallback) saveCurrentIdxForChat(chatId, value);
+        return value;
+    }
+
+    function saveArrayForChat(chatId, suffix, value) {
+        if (!chatId) return;
+        localStorage.setItem(getListenStorageKey(chatId, suffix), JSON.stringify(value || []));
+    }
+
+    function saveObjectForChat(chatId, suffix, value) {
+        if (!chatId) return;
+        localStorage.setItem(getListenStorageKey(chatId, suffix), JSON.stringify(value || {}));
+    }
+
+    function saveCurrentIdxForChat(chatId, idx) {
+        if (!chatId) return;
+        if (idx === null || idx === undefined) {
+            localStorage.removeItem(getListenStorageKey(chatId, 'currentIdx'));
+            return;
+        }
+        localStorage.setItem(getListenStorageKey(chatId, 'currentIdx'), String(idx));
+    }
+
+    function saveSongs() {
+        saveArrayForChat(activeListenChatId, 'songs', songs);
+    }
+
+    function saveFavorites() {
+        saveArrayForChat(activeListenChatId, 'favorites', favorites);
+    }
+
+    function saveCommentsCache() {
+        saveObjectForChat(activeListenChatId, 'comments-cache', cachedComments);
+    }
+
+    function saveCurrentIdx() {
+        saveCurrentIdxForChat(activeListenChatId, currentIdx);
+    }
+
+    function sanitizeFavorites(list) {
+        if (!Array.isArray(list)) return false;
+        let changed = false;
+        list.forEach(song => {
+            if (sanitizeSongCoverFields(song)) changed = true;
+        });
+        return changed;
+    }
+
+    function createDefaultListenState(chatId = null) {
+        return {
+            isActive: false,
+            initiator: null,
+            startTime: null,
+            currentSong: null,
+            isPlaying: false,
+            lyrics: [],
+            context: {},
+            chatId
+        };
+    }
+
+    function storeRuntimeForChat(chatId) {
+        if (!chatId) return;
+        listenRuntimeByChat.set(String(chatId), {
+            songs,
+            currentIdx,
+            favorites,
+            cachedComments,
+            listenState: Object.assign({}, listenState),
+            listenEvents: listenEvents.slice(),
+            listenStartTime,
+            currentView,
+            currentLyrics,
+            isPlaying
+        });
+    }
+
+    function restoreRuntimeForChat(chatId) {
+        if (!chatId) return;
+        const cached = listenRuntimeByChat.get(String(chatId));
+        if (cached) {
+            songs = cached.songs || [];
+            currentIdx = cached.currentIdx ?? null;
+            favorites = cached.favorites || [];
+            cachedComments = cached.cachedComments || {};
+            listenState = Object.assign(createDefaultListenState(chatId), cached.listenState || {});
+            listenEvents = cached.listenEvents || [];
+            listenStartTime = cached.listenStartTime || null;
+            currentView = cached.currentView || 'search';
+            currentLyrics = cached.currentLyrics || [];
+            isPlaying = !!cached.isPlaying;
+            return;
+        }
+
+        songs = loadArrayForChat(chatId, 'songs', 'listen-songs');
+        currentIdx = loadNumberForChat(chatId, 'currentIdx', 'listen-currentIdx');
+        favorites = loadArrayForChat(chatId, 'favorites', 'listen-favorites');
+        cachedComments = loadObjectForChat(chatId, 'comments-cache', 'listen-comments-cache');
+        currentView = 'search';
+        currentLyrics = [];
+        isPlaying = false;
+        listenState = createDefaultListenState(chatId);
+        listenEvents = [];
+        listenStartTime = null;
+
+        let songsChanged = false;
+        songs.forEach(song => {
+            if (sanitizeSongCoverFields(song)) songsChanged = true;
+        });
+        if (songsChanged) {
+            saveSongs();
+        }
+        if (sanitizeFavorites(favorites)) {
+            saveFavorites();
+        }
+    }
+
+    function pauseListenAudio() {
+        if (!audio) return;
+        if (!audio.paused) {
+            audio.pause();
+        }
+        isPlaying = false;
+    }
+
+    function ensureListenContext(chatId) {
+        if (!chatId) return null;
+        const id = String(chatId);
+        if (activeListenChatId && activeListenChatId !== id) {
+            storeRuntimeForChat(activeListenChatId);
+            pauseListenAudio();
+        }
+        if (activeListenChatId !== id) {
+            restoreRuntimeForChat(id);
+            activeListenChatId = id;
+            const chat = getListenConversation(id);
+            updateListenModalContext(chat);
+            if (document.getElementById('listen-together-modal')) {
+                renderSongs();
+                renderFavSongs();
+            }
+        }
+        listenState.chatId = id;
+        return getListenConversation(id);
+    }
     
     // 【新增】音质选择 - 128, 320, 999(无损)
     let musicQuality = localStorage.getItem('listen-music-quality') || '320';
@@ -480,14 +691,28 @@
         }
     }
     
-    function createModal() {
-        if (document.getElementById('listen-together-modal')) return;
+    function updateListenModalContext(chat) {
+        const modal = document.getElementById('listen-together-modal');
+        if (!modal) return;
+        const userAvatar = (chat && chat.userAvatar) || (window.AppState && AppState.user && AppState.user.avatar) || PLACEHOLDER;
+        const aiAvatar = (chat && chat.avatar) || PLACEHOLDER;
+        const avatars = modal.querySelectorAll('.listen-avatar');
+        if (avatars[0]) avatars[0].src = userAvatar;
+        if (avatars[1]) avatars[1].src = aiAvatar;
+    }
+
+    function createModal(chat) {
+        const existing = document.getElementById('listen-together-modal');
+        if (existing) {
+            updateListenModalContext(chat);
+            return;
+        }
         
         // 【新增】检测后端代理可用性
         checkProxyAvailability();
         
-        const userAvatar = (window.AppState && AppState.currentChat && AppState.currentChat.userAvatar) || (window.AppState && AppState.user && AppState.user.avatar) || PLACEHOLDER;
-        const aiAvatar = (window.AppState && AppState.currentChat && AppState.currentChat.avatar) || PLACEHOLDER;
+        const userAvatar = (chat && chat.userAvatar) || (window.AppState && AppState.user && AppState.user.avatar) || PLACEHOLDER;
+        const aiAvatar = (chat && chat.avatar) || PLACEHOLDER;
         
         const html = `
         <div class="listen-together-modal" id="listen-together-modal">
@@ -755,8 +980,8 @@
         currentIdx = idx;
         
         // 持久化播放状态
-        localStorage.setItem('listen-songs', JSON.stringify(songs));
-        localStorage.setItem('listen-currentIdx', String(idx));
+        saveSongs();
+        saveCurrentIdx();
         
         let name = song.name || song.title || '未知';
         let artist = song.artist || song.author || '未知';
@@ -771,7 +996,7 @@
         // 统一回填，避免分享卡片/上下文读取到历史错误封面
         song.pic = pic;
         song.cover = pic;
-        localStorage.setItem('listen-songs', JSON.stringify(songs));
+        saveSongs();
         
         cover.src = pic;
         cover.onerror = () => {
@@ -790,7 +1015,7 @@
                 document.getElementById('listen-together-modal').style.setProperty('--listen-bg', `url(${asyncPic})`);
                 song.pic = asyncPic;
                 song.cover = asyncPic;
-                localStorage.setItem('listen-songs', JSON.stringify(songs));
+                saveSongs();
             }
         }
         
@@ -944,12 +1169,12 @@
             // 【改进】使用主题样式的确认对话框
             showRemoveFavoriteConfirmDialog(song, () => {
                 favorites.splice(idx, 1);
-                localStorage.setItem('listen-favorites', JSON.stringify(favorites));
+                saveFavorites();
                 updateFavBtn();
             });
         } else {
             favorites.push(song);
-            localStorage.setItem('listen-favorites', JSON.stringify(favorites));
+            saveFavorites();
             updateFavBtn();
         }
     }
@@ -1109,7 +1334,8 @@
         const songName = song.name || song.title || '未知';
         const artist = song.artist || song.author || '未知';
         const AS = window.AppState;
-        const chat = AS && AS.currentChat;
+        const chatId = getListenChatId();
+        const chat = ensureListenContext(chatId);
         const charName = chat ? chat.name : 'AI';
         const charDesc = chat ? (chat.description || '') : '';
         const userName = AS && AS.user ? AS.user.name : '用户';
@@ -1165,7 +1391,7 @@ ${recentChat.substring(0, 1500)}
                 const key = getSongKey();
                 if (key) {
                     cachedComments[key] = { comments, charName };
-                    localStorage.setItem('listen-comments-cache', JSON.stringify(cachedComments));
+                    saveCommentsCache();
                 }
                 renderComments(comments, charName);
             } else {
@@ -1179,11 +1405,12 @@ ${recentChat.substring(0, 1500)}
     
     function renderComments(comments, charName) {
         const container = document.getElementById('listen-comments');
+        const chat = getListenConversation(activeListenChatId);
         container.innerHTML = comments.map((c, i) => {
             const isChar = c.user === charName;
             let avatar;
             if (isChar) {
-                avatar = (window.AppState?.currentChat?.avatar) || PLACEHOLDER;
+                avatar = (chat && chat.avatar) || PLACEHOLDER;
             } else {
                 // 基于用户名生成初始 QQ 号（1000万-1亿范围）
                 const nameHash = c.user ? Array.from(c.user).reduce((h, ch) => ((h << 5) - h + ch.charCodeAt(0)) | 0, 0) : i;
@@ -1228,6 +1455,11 @@ ${recentChat.substring(0, 1500)}
     
     // 分享歌曲
     async function shareSong() {
+        const chatId = getListenChatId();
+        if (!ensureListenContext(chatId)) {
+            showToast('请先打开一个聊天');
+            return;
+        }
         if (currentIdx === null || !songs[currentIdx]) { alert('请先播放一首歌'); return; }
         const AS = window.AppState;
         if (!AS || !AS.conversations || !AS.conversations.length) return;
@@ -1291,9 +1523,11 @@ ${recentChat.substring(0, 1500)}
     // 发送邀请一起听的消息给AI
     function sendListenInvitationToAI() {
         const AS = window.AppState;
-        if (!AS || !AS.currentChat) return;
+        const chatId = getListenChatId();
+        const conv = ensureListenContext(chatId);
+        if (!AS || !conv) return;
         
-        const convId = AS.currentChat.id;
+        const convId = conv.id;
         if (!AS.messages[convId]) AS.messages[convId] = [];
         
         // 【修复】检查是否已经有未回复的邀请卡片，防止重复发送
@@ -1328,9 +1562,9 @@ ${recentChat.substring(0, 1500)}
         AS.messages[convId].push(systemMsg);
         
         // 更新对话最后一条消息
-        AS.currentChat.lastMsg = '邀请加入一起听';
-        AS.currentChat.time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        AS.currentChat.lastMessageTime = systemMsg.time;
+        conv.lastMsg = '邀请加入一起听';
+        conv.time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        conv.lastMessageTime = systemMsg.time;
         
         // 保存存储
         if (window.saveToStorage) window.saveToStorage();
@@ -1342,15 +1576,7 @@ ${recentChat.substring(0, 1500)}
     }
     
     // 一起听状态管理
-    let listenState = {
-        isActive: false,
-        initiator: null, // 'user' or 'ai'
-        startTime: null,
-        currentSong: null,
-        isPlaying: false,
-        lyrics: [],
-        context: {}
-    };
+    let listenState = createDefaultListenState();
     
     // 一起听事件记录
     let listenEvents = [];
@@ -1382,17 +1608,24 @@ ${recentChat.substring(0, 1500)}
     }
     
     function open(shouldSendInvitation = true) {
+        const chatId = getListenChatId();
+        const chat = ensureListenContext(chatId);
+        if (!chat) {
+            showToast('请先打开一个聊天');
+            return;
+        }
+
         // 检查当前是否已处于一起听状态
         if (listenState.isActive && shouldSendInvitation) {
             // 已经在一起听状态，用户再次邀请时直接打开一起听页面，不发送邀请卡片
-            createModal();
+            createModal(chat);
             const modal = document.getElementById('listen-together-modal');
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
             return;
         }
         
-        createModal();
+        createModal(chat);
         const modal = document.getElementById('listen-together-modal');
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -1413,23 +1646,8 @@ ${recentChat.substring(0, 1500)}
         });
         
         // 恢复上次播放状态
-        if (currentIdx === null) {
-            try {
-                const saved = localStorage.getItem('listen-songs');
-                const savedIdx = localStorage.getItem('listen-currentIdx');
-                if (saved && savedIdx !== null) {
-                    songs = JSON.parse(saved);
-                    if (!Array.isArray(songs)) songs = [];
-                    let changed = false;
-                    songs.forEach(song => {
-                        if (sanitizeSongCoverFields(song)) changed = true;
-                    });
-                    if (changed) {
-                        localStorage.setItem('listen-songs', JSON.stringify(songs));
-                    }
-                    playSong(parseInt(savedIdx));
-                }
-            } catch(e) {}
+        if (currentIdx !== null && songs[currentIdx]) {
+            playSong(currentIdx);
         }
         
         // 仅在用户主动点击且不处于一起听状态时发送邀请卡片
@@ -1472,8 +1690,8 @@ ${recentChat.substring(0, 1500)}
         if (existingDialog) existingDialog.remove();
         
         // 获取AI名称
-        const AS = window.AppState;
-        const aiName = (AS && AS.currentChat && AS.currentChat.name) || 'TA';
+        const chat = getListenConversation(activeListenChatId || getListenChatId());
+        const aiName = (chat && chat.name) || 'TA';
         
         const dialogOverlay = document.createElement('div');
         dialogOverlay.id = 'listen-close-confirm-dialog';
@@ -2088,6 +2306,8 @@ ${recentChat.substring(0, 1500)}
     }
     
     function close() {
+        const chatId = getListenChatId();
+        ensureListenContext(chatId);
         // 【改进】使用主题样式的确认对话框
         showCloseConfirmDialog(() => {
             // 【修复】停止音乐播放
@@ -2137,6 +2357,10 @@ ${recentChat.substring(0, 1500)}
             // 标记该聊天中所有相关的邀请卡片为已关闭
             if (window.endListenTogetherAndMarkClosed) {
                 window.endListenTogetherAndMarkClosed();
+            }
+
+            if (activeListenChatId) {
+                listenRuntimeByChat.delete(String(activeListenChatId));
             }
         });
     }
@@ -2347,8 +2571,8 @@ ${recentChat.substring(0, 1500)}
     
     // 在模态框创建后初始化
     const originalCreateModal = createModal;
-    createModal = function() {
-        originalCreateModal();
+    createModal = function(chat) {
+        originalCreateModal(chat);
         initListenTogether();
     };
     
@@ -2360,6 +2584,11 @@ ${recentChat.substring(0, 1500)}
         playNext,
         // 【新增】搜索歌曲并添加到喜欢库（用于AI收藏）
         searchAndAddFavorite: async function(songQuery) {
+            const chatId = getListenChatId();
+            if (!ensureListenContext(chatId)) {
+                showToast('请先打开一个聊天');
+                return false;
+            }
             if (!songQuery || !songQuery.trim()) {
                 console.log('⚠️ 搜索关键词为空');
                 return false;
@@ -2423,7 +2652,7 @@ ${recentChat.substring(0, 1500)}
                 
                 // 添加到喜欢库
                 favorites.push(song);
-                localStorage.setItem('listen-favorites', JSON.stringify(favorites));
+                saveFavorites();
                 
                 const displayName = Array.isArray(songName) ? songName[0] : songName;
                 const displayArtist = Array.isArray(songArtist) ? songArtist.join('/') : songArtist;
@@ -2437,6 +2666,11 @@ ${recentChat.substring(0, 1500)}
         },
         // 【新增】根据歌曲名称从喜欢库中查找并播放
         playSongByName: function(songQuery) {
+            const chatId = getListenChatId();
+            if (!ensureListenContext(chatId)) {
+                showToast('请先打开一个聊天');
+                return false;
+            }
             if (!songQuery || !songQuery.trim()) {
                 return playNext(); // 降级到下一首
             }
@@ -2487,7 +2721,7 @@ ${recentChat.substring(0, 1500)}
             
             if (!songExists) {
                 songs.push(foundSong);
-                localStorage.setItem('listen-songs', JSON.stringify(songs));
+                saveSongs();
             }
             
             // 查找并播放这首歌
@@ -2510,17 +2744,24 @@ ${recentChat.substring(0, 1500)}
             return playNext(); // 降级到下一首
         },
         getState: function() {
+            const chatId = getListenChatId();
+            ensureListenContext(chatId);
             const modal = document.getElementById('listen-together-modal');
-            listenState.isActive = modal && modal.classList.contains('show') && !isMinimized;
+            const isModalActive = modal && modal.classList.contains('show') && !isMinimized;
+            listenState.isActive = isModalActive && (!chatId || String(chatId) === String(activeListenChatId));
             listenState.currentSong = currentIdx !== null ? songs[currentIdx] : null;
             listenState.isPlaying = !audio.paused;
+            listenState.chatId = activeListenChatId;
             
             return listenState;
         }, 
         setState: function(newState) {
+            const chatId = getListenChatId();
+            ensureListenContext(chatId);
             if (newState) {
                 Object.assign(listenState, newState);
             }
+            listenState.chatId = activeListenChatId;
             return listenState;
         },
         // 【改进4】获取当前歌词上下文 - 供API生成更有沉浸感的对话
@@ -2560,6 +2801,8 @@ ${recentChat.substring(0, 1500)}
             return contextLyrics;
         },
         getLastEvent: function() {
+            const chatId = getListenChatId();
+            ensureListenContext(chatId);
             return listenEvents.length > 0 ? listenEvents[listenEvents.length - 1] : null;
         },
         addEvent: addListenTogetherEvent

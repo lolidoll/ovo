@@ -31,6 +31,21 @@
     
     // 对话记录
     let currentVideoCallConversation = [];
+
+    function getVideoCallConversationId() {
+        return videoCallState.callerId || window.AppState?.currentChat?.id || null;
+    }
+
+    function getVideoCallConversation() {
+        const convId = getVideoCallConversationId();
+        if (!convId) return window.AppState?.currentChat || null;
+        const conversations = window.AppState?.conversations || [];
+        const conv = conversations.find(c => String(c?.id) === String(convId));
+        if (conv) return conv;
+        const current = window.AppState?.currentChat;
+        if (current && String(current.id) === String(convId)) return current;
+        return null;
+    }
     
     // 消息队列系统
     let isVideoAIResponding = false;
@@ -98,7 +113,7 @@
         
         // 如果没有角色照片，使用角色头像作为默认
         if (!videoCallState.currentCharacterPhoto) {
-            const currentChat = window.AppState?.currentChat;
+            const currentChat = getVideoCallConversation();
             videoCallState.currentCharacterPhoto = currentChat?.avatar || '';
         }
         
@@ -387,12 +402,114 @@
             videoCallConnected();
         }, waitTime);
     }
+
+    function removeIncomingVideoCallModal() {
+        const modal = document.getElementById('video-call-incoming-modal');
+        if (!modal) return;
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
+
+    function showIncomingVideoCallModal(characterName, characterAvatar) {
+        const existingModal = document.getElementById('video-call-incoming-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'video-call-incoming-modal';
+        modal.className = 'video-call-confirm-modal';
+        modal.innerHTML = `
+            <div class="video-call-confirm-content">
+                <div class="video-call-confirm-avatar">
+                    <img src="${characterAvatar || ''}" alt="avatar">
+                </div>
+                <div class="video-call-confirm-title">视频来电</div>
+                <div class="video-call-confirm-text">${characterName || '对方'}邀请你进行视频通话</div>
+                <div class="video-call-confirm-buttons">
+                    <button class="video-call-confirm-btn cancel" id="video-call-incoming-reject">拒绝</button>
+                    <button class="video-call-confirm-btn ok" id="video-call-incoming-accept">接听</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        const acceptBtn = modal.querySelector('#video-call-incoming-accept');
+        const rejectBtn = modal.querySelector('#video-call-incoming-reject');
+        if (acceptBtn) acceptBtn.addEventListener('click', acceptIncomingVideoCall);
+        if (rejectBtn) rejectBtn.addEventListener('click', rejectIncomingVideoCall);
+    }
+
+    function acceptIncomingVideoCall() {
+        console.log('[VideoCall] 接听视频来电');
+
+        if (videoCallState.isInCall) {
+            removeIncomingVideoCallModal();
+            return;
+        }
+
+        removeIncomingVideoCallModal();
+
+        videoCallState.callType = 'incoming';
+        videoCallState.callerId = videoCallState.callerId || getVideoCallConversationId();
+
+        // 初始化照片
+        initVideoCallPhotos(videoCallState.callerId);
+
+        // 清空对话记录
+        currentVideoCallConversation = [];
+
+        // 添加calling状态记录
+        addVideoCallRecordToChat('calling', 0);
+
+        // 设置通话状态
+        videoCallState.isInCall = true;
+        videoCallState.callStartTime = Date.now();
+
+        // 显示视频通话界面
+        showVideoCallInterface();
+
+        // 移除等待状态（来电接听后直接接通）
+        const videoInterface = document.getElementById('video-call-interface');
+        if (videoInterface) {
+            setTimeout(() => {
+                videoInterface.classList.remove('waiting');
+            }, 100);
+        }
+
+        // 开始计时
+        startDurationTimer();
+
+        // 更新聊天页面状态
+        updateChatPageStatus();
+
+        showToast('视频通话已接通');
+
+        // AI主动打招呼
+        setTimeout(() => {
+            triggerVideoAIGreeting();
+        }, 800);
+    }
+
+    function rejectIncomingVideoCall() {
+        console.log('❌ 拒绝视频来电');
+
+        removeIncomingVideoCallModal();
+
+        // 记录到聊天
+        addVideoCallRecordToChat('cancelled', 0);
+
+        resetVideoCallState();
+        showToast('已拒绝视频通话');
+    }
     
     /**
      * 添加视频通话记录到聊天
      */
     function addVideoCallRecordToChat(status, duration) {
-        const currentConv = window.AppState?.currentChat;
+        const currentConv = getVideoCallConversation();
         if (!currentConv) return;
         
         const convId = currentConv.id;
@@ -463,7 +580,7 @@
     function summarizeVideoCallConversation() {
         console.log('[VideoCall] 开始总结视频通话内容');
         
-        const currentConv = window.AppState?.currentChat;
+        const currentConv = getVideoCallConversation();
         if (!currentConv) {
             console.warn('[VideoCall] 无法总结：未找到当前对话');
             return;
@@ -472,13 +589,14 @@
         const hasSecondaryApi = window.AppState?.apiSettings?.secondaryEndpoint &&
                                window.AppState?.apiSettings?.secondaryApiKey &&
                                window.AppState?.apiSettings?.secondarySelectedModel;
+        const hasMainApi = window.AppState?.apiSettings?.endpoint && window.AppState?.apiSettings?.selectedModel;
         
-        if (!hasSecondaryApi) {
-            console.log('[VideoCall] 副API未配置，跳过视频通话总结');
+        if (!hasSecondaryApi && !hasMainApi) {
+            showToast('请先配置主API或副API设置');
             return;
         }
         
-        if (currentVideoConversation.length === 0) {
+        if (currentVideoCallConversation.length === 0) {
             console.log('[VideoCall] 没有视频通话内容需要总结');
             return;
         }
@@ -489,25 +607,40 @@
             Math.floor((Date.now() - videoCallState.callStartTime) / 1000) : 0;
         
         let callText = `【视频通话记录】\n时间：${new Date().toLocaleString('zh-CN')}\n通话时长：${formatVideoDuration(callDuration)}\n\n`;
-        currentVideoConversation.forEach(msg => {
-            const speaker = msg.role === 'user' ? userName : charName;
-            callText += `${speaker}: ${msg.content}\n`;
+        currentVideoCallConversation.forEach(msg => {
+            const speaker = msg.sender === 'user' ? userName : charName;
+            callText += `${speaker}: ${msg.text}\n`;
         });
         
+        const summaryInput = typeof window.buildSummaryInput === 'function'
+            ? window.buildSummaryInput(callText, {
+                conv: currentConv,
+                modeLabel: '视频聊天'
+            })
+            : callText;
+
         console.log('[VideoCall] 视频通话文本长度:', callText.length);
         
-        if (window.summarizeTextViaSecondaryAPI) {
-            window.summarizeTextViaSecondaryAPI(
-                callText,
+        const summarizeFn = (!hasSecondaryApi && hasMainApi && window.summarizeTextViaMainAPI)
+            ? window.summarizeTextViaMainAPI
+            : window.summarizeTextViaSecondaryAPI;
+
+        if (summarizeFn) {
+            summarizeFn(
+                summaryInput,
                 (summary) => {
                     console.log('[VideoCall] 视频通话总结成功');
+
+                    const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                        ? window.normalizeSummaryContent(summary)
+                        : summary;
                     
                     if (!currentConv.summaries) {
                         currentConv.summaries = [];
                     }
                     
                     currentConv.summaries.push({
-                        content: `📹 视频通话总结\n\n${summary}`,
+                        content: normalizedSummary,
                         isAutomatic: true,
                         isVideoCall: true,
                         timestamp: new Date().toISOString(),
@@ -521,13 +654,17 @@
                     
                     console.log('[VideoCall] 视频通话总结已保存到角色记忆');
                     showToast('✅ 视频通话内容已自动总结');
+
+                    if (typeof window.renderMemoryShardsPage === 'function') {
+                        window.renderMemoryShardsPage();
+                    }
                 },
                 (error) => {
                     console.error('[VideoCall] 视频通话总结失败:', error);
                 }
             );
         } else {
-            console.error('[VideoCall] summarizeTextViaSecondaryAPI 函数不存在');
+            console.error('[VideoCall] summarizeTextViaSecondaryAPI/summarizeTextViaMainAPI 函数不存在');
         }
     }
     
@@ -818,7 +955,7 @@
     /**
      * 接收来电（AI主动呼叫）
      */
-    function receiveIncomingVideoCall(characterName, characterAvatar) {
+    function receiveIncomingVideoCall(characterName, characterAvatar, conversationId = null) {
         if (videoCallState.isInCall) {
             console.log('⚠️ 当前正在视频通话中，拒绝新来电');
             return;
@@ -828,49 +965,13 @@
         
         // 设置来电状态
         videoCallState.callType = 'incoming';
-        const currentConv = window.AppState?.currentChat;
-        if (currentConv) {
-            videoCallState.callerId = currentConv.id;
-            videoCallState.callerName = characterName;
-            videoCallState.callerAvatar = characterAvatar;
-        }
+        const currentConv = getVideoCallConversation();
+        videoCallState.callerId = conversationId || currentConv?.id || null;
+        videoCallState.callerName = characterName;
+        videoCallState.callerAvatar = characterAvatar;
         
-        // 直接开始视频通话（自动接听）
-        console.log('[VideoCall] 自动接听视频来电');
-        
-        // 初始化照片
-        initVideoCallPhotos(videoCallState.callerId);
-        
-        // 添加calling状态记录
-        addVideoCallRecordToChat('calling', 0);
-        
-        // 设置通话状态
-        videoCallState.isInCall = true;
-        videoCallState.callStartTime = Date.now();
-        
-        // 显示视频通话界面
-        showVideoCallInterface();
-        
-        // 移除等待状态（来电直接接通，不需要等待）
-        const videoInterface = document.getElementById('video-call-interface');
-        if (videoInterface) {
-            setTimeout(() => {
-                videoInterface.classList.remove('waiting');
-            }, 100);
-        }
-        
-        // 开始计时
-        startDurationTimer();
-        
-        // 更新聊天页面状态
-        updateChatPageStatus();
-        
-        showToast('视频通话已接通');
-        
-        // AI主动打招呼
-        setTimeout(() => {
-            triggerVideoAIGreeting();
-        }, 800);
+        // 显示来电弹窗，等待用户接听或拒绝
+        showIncomingVideoCallModal(characterName, characterAvatar);
     }
     
     /**
@@ -1080,8 +1181,10 @@
     function updateChatPageStatus() {
         const statusBar = document.querySelector('.chat-status-bar');
         if (!statusBar) return;
+        const currentChatId = window.AppState?.currentChat?.id;
+        const shouldShow = videoCallState.isInCall && videoCallState.callerId && String(currentChatId) === String(videoCallState.callerId);
         
-        if (videoCallState.isInCall) {
+        if (shouldShow) {
             const duration = Math.floor((Date.now() - videoCallState.callStartTime) / 1000);
             const minutes = Math.floor(duration / 60);
             const seconds = duration % 60;
@@ -1147,7 +1250,7 @@
      * 添加视频通话记录到聊天
      */
     function addVideoCallRecordToChat(status, duration) {
-        const currentConv = window.AppState?.currentChat;
+        const currentConv = getVideoCallConversation();
         if (!currentConv) return;
         
         const convId = currentConv.id;
@@ -1205,7 +1308,7 @@
      * 更新最后一条视频通话记录
      */
     function updateLastVideoCallRecord(newStatus, newDuration) {
-        const currentConv = window.AppState?.currentChat;
+        const currentConv = getVideoCallConversation();
         if (!currentConv) return;
         
         const convId = currentConv.id;
@@ -1264,7 +1367,7 @@
             }
             
             // 获取当前角色信息
-            const currentChat = window.AppState?.currentChat;
+            const currentChat = getVideoCallConversation();
             if (!currentChat) {
                 isVideoAIResponding = false;
                 console.error('[VideoCall] 未找到当前对话');
@@ -1482,7 +1585,7 @@ ${initiatorInfo}
     function summarizeVideoCallConversation() {
         console.log('[VideoCall] 开始总结视频通话内容');
         
-        const currentConv = window.AppState?.currentChat;
+        const currentConv = getVideoCallConversation();
         if (!currentConv) {
             console.warn('[VideoCall] 无法总结：未找到当前对话');
             return;
@@ -1491,13 +1594,14 @@ ${initiatorInfo}
         const hasSecondaryApi = window.AppState?.apiSettings?.secondaryEndpoint &&
                                window.AppState?.apiSettings?.secondaryApiKey &&
                                window.AppState?.apiSettings?.secondarySelectedModel;
+        const hasMainApi = window.AppState?.apiSettings?.endpoint && window.AppState?.apiSettings?.selectedModel;
         
-        if (!hasSecondaryApi) {
-            console.log('[VideoCall] 副API未配置，跳过视频通话总结');
+        if (!hasSecondaryApi && !hasMainApi) {
+            showToast('请先配置主API或副API设置');
             return;
         }
         
-        if (currentVideoConversation.length === 0) {
+        if (currentVideoCallConversation.length === 0) {
             console.log('[VideoCall] 没有视频通话内容需要总结');
             return;
         }
@@ -1508,25 +1612,40 @@ ${initiatorInfo}
             Math.floor((Date.now() - videoCallState.callStartTime) / 1000) : 0;
         
         let callText = `【视频通话记录】\n时间：${new Date().toLocaleString('zh-CN')}\n通话时长：${formatVideoDuration(callDuration)}\n\n`;
-        currentVideoConversation.forEach(msg => {
+        currentVideoCallConversation.forEach(msg => {
             const speaker = msg.sender === 'user' ? userName : charName;
             callText += `${speaker}: ${msg.text}\n`;
         });
         
+        const summaryInput = typeof window.buildSummaryInput === 'function'
+            ? window.buildSummaryInput(callText, {
+                conv: currentConv,
+                modeLabel: '视频聊天'
+            })
+            : callText;
+
         console.log('[VideoCall] 视频通话文本长度:', callText.length);
         
-        if (window.summarizeTextViaSecondaryAPI) {
-            window.summarizeTextViaSecondaryAPI(
-                callText,
+        const summarizeFn = (!hasSecondaryApi && hasMainApi && window.summarizeTextViaMainAPI)
+            ? window.summarizeTextViaMainAPI
+            : window.summarizeTextViaSecondaryAPI;
+
+        if (summarizeFn) {
+            summarizeFn(
+                summaryInput,
                 (summary) => {
                     console.log('[VideoCall] 视频通话总结成功');
+
+                    const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                        ? window.normalizeSummaryContent(summary)
+                        : summary;
                     
                     if (!currentConv.summaries) {
                         currentConv.summaries = [];
                     }
                     
                     currentConv.summaries.push({
-                        content: `📹 视频通话总结\n\n${summary}`,
+                        content: normalizedSummary,
                         isAutomatic: true,
                         isVideoCall: true,
                         timestamp: new Date().toISOString(),
@@ -1546,7 +1665,7 @@ ${initiatorInfo}
                 }
             );
         } else {
-            console.error('[VideoCall] summarizeTextViaSecondaryAPI 函数不存在');
+            console.error('[VideoCall] summarizeTextViaSecondaryAPI/summarizeTextViaMainAPI 函数不存在');
         }
     }
     
@@ -1802,7 +1921,7 @@ ${initiatorInfo}
      * 打开照片管理器
      */
     function openPhotoManager() {
-        const currentChat = window.AppState?.currentChat;
+        const currentChat = getVideoCallConversation();
         if (!currentChat) {
             showToast('请先打开一个聊天会话');
             return;

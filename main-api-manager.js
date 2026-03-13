@@ -457,6 +457,28 @@ const MainAPIManager = {
         return result;
     },
 
+    normalizeLocationDistanceKm: function(distance, unit, fallbackKm = 1) {
+        const numeric = Number(distance);
+        if (!Number.isFinite(numeric) || numeric <= 0) return fallbackKm;
+        const normalizedUnit = String(unit || '').toLowerCase();
+        if (normalizedUnit === 'km') return numeric;
+        if (!normalizedUnit || normalizedUnit === 'm') return numeric / 1000;
+        return numeric;
+    },
+
+    formatLocationDistanceKm: function(distanceKm) {
+        if (!Number.isFinite(distanceKm) || distanceKm <= 0) return '1';
+        let formatted = '';
+        if (distanceKm < 1) {
+            formatted = distanceKm.toFixed(2);
+        } else if (distanceKm < 10) {
+            formatted = distanceKm.toFixed(1);
+        } else {
+            formatted = String(Math.round(distanceKm));
+        }
+        return formatted.replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+    },
+
     
     
     /**
@@ -945,6 +967,7 @@ const MainAPIManager = {
 5. 【视频通话消息】你可以主动发起视频通话请求
    - 你会在合适的时候主动发起视频通话
    - 用户会收到视频通话提示
+    - 发起方式：在回复中使用【视频通话】【/视频通话】
    - 用于更亲密的交流或紧急情况
 
 记住：表情包是情绪表达工具,图片是视觉内容,图片描述是虚拟场景,商品卡片是购物分享；处理时方式完全不同。`);
@@ -977,10 +1000,9 @@ const MainAPIManager = {
 规则：
 1. 每条消息用[MSG1][/MSG1]等标签包裹，禁止用换行符分隔，禁止多条消息只用一个标签包裹
 2. 标签间的数字表示第几条消息
-3. [WAIT:秒数]控制下条消息的延迟`);
+3. [WAIT:秒数]控制下条消息的延迟
 
-        // 添加对话风格指令 (Conversational Style Guidelines)
-        systemPrompts.push(`### Core Guidelines for Authentic Role-Play
+### Core Guidelines for Authentic Role-Play
 
 Core Overall Cognition
 
@@ -1158,8 +1180,8 @@ Figuring this out is far more effective than memorizing a hundred rules.
         }
         
         // 添加语音消息、地理位置、红包和转账发送说明
-        systemPrompts.push(`【语音消息、地理位置、红包和转账发送格式】
-你可以结合上下文语境自然地发送语音消息、地理位置、红包和转账,使用以下格式：
+        systemPrompts.push(`【语音消息、地理位置、红包、转账和视频通话发送格式】
+    你可以结合上下文语境自然地发送语音消息、地理位置、红包、转账和视频通话,使用以下格式：
 
 1. 【语音消息】使用格式：【语音条】语音内容文字|时长【/语音条】
    - 语音内容：你想说的话（会被转换为语音条显示）
@@ -1169,12 +1191,12 @@ Figuring this out is far more effective than memorizing a hundred rules.
    - 注意：语音条适合表达犹豫、思考、私密的话,或者想要更亲密的交流时使用
 
 2. 【地理位置】使用格式：【地理位置】详细地址|距离【/地理位置】
-   - 详细地址：具体地址（必填）
-   - 距离：角色与用户之间的距离,单位米（必填）
-   - 当用户发送地理位置给你时,你会收到用户设置的距离值。如果你要回复地理位置,根据对话情境设置一个合理的距离（在同一地点5-50米,附近100-500米,同城不同区域1000-10000米）
-   - 示例：【地理位置】星巴克咖啡|北京市朝阳区建国路1号|15【/地理位置】
-   - 示例：【地理位置】天安门广场|北京市东城区|3000【/地理位置】
-   - 注意：分享位置适合约见面、推荐地点或告诉对方你在哪里时使用
+    - 详细地址：具体地址（必填）
+    - 距离：角色与用户之间的距离,单位km（必填）
+    - 当用户发送地理位置给你时,你会收到用户设置的距离值。如果你要回复地理位置,根据对话情境设置一个合理的距离（同一地点0.01-0.05km,附近0.1-0.5km,同城不同区域1-10km）
+    - 示例：【地理位置】北京市朝阳区建国路1号|0.2【/地理位置】
+    - 示例：【地理位置】北京市东城区天安门广场|3【/地理位置】
+    - 注意：距离表示角色与用户之间的距离，分享位置适合约见面、推荐地点或告诉对方你在哪里时使用
 
 3. 【红包】使用格式：
    - 发送红包：【红包】金额|留言【/红包】
@@ -1244,6 +1266,11 @@ Figuring this out is far more effective than memorizing a hundred rules.
    - 注意：
      * 描述要生动具体,让用户能想象出画面
      * 可以描述环境、人物、物品、天气等各种内容
+
+7. 【视频通话】使用格式：【视频通话】【/视频通话】
+     - 在合适的时候主动发起视频通话邀请
+     - 用户会看到接听或拒绝的选项
+     - 示例：我有点想见你了【视频通话】【/视频通话】
 
 使用建议：
 - 根据对话情境自然地选择
@@ -1398,6 +1425,30 @@ Figuring this out is far more effective than memorizing a hundred rules.
 
                 systemPrompts.push(groupPrompt);
             }
+        }
+
+        const isAssistantMessage = (msg) => {
+            if (!msg || msg.isRetracted) return false;
+            if (msg.type === 'received' || msg.type === 'assistant') return true;
+            if (msg.type === 'voice' || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall' || msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card') {
+                return msg.sender !== 'sent';
+            }
+            return false;
+        };
+
+        const recentAssistantMessages = msgs.filter(isAssistantMessage).slice(-20);
+        if (recentAssistantMessages.length > 0) {
+            const idLines = recentAssistantMessages.map(msg => {
+                let preview = '';
+                if (typeof msg.content === 'string') {
+                    preview = msg.content.replace(/\s+/g, ' ').trim();
+                }
+                if (!preview) {
+                    preview = msg.type ? `[${msg.type}]` : '[非文本消息]';
+                }
+                return `- ${msg.id}: ${preview.substring(0, 40)}`;
+            }).join('\n');
+            systemPrompts.push(`【消息ID参考】以下是你最近发送的消息ID（用于撤回指令）：\n${idLines}`);
         }
         
         // 合并所有系统提示
@@ -1625,16 +1676,17 @@ Figuring this out is far more effective than memorizing a hundred rules.
             if (m.type === 'location') {
                 const locationName = m.locationName || '位置';
                 const locationAddress = m.locationAddress || '';
-                const locationDistance = m.locationDistance || 5;
+                const locationDistanceKm = this.normalizeLocationDistanceKm(m.locationDistance, m.locationDistanceUnit, 1);
+                const locationDistanceLabel = this.formatLocationDistanceKm(locationDistanceKm);
                 const senderName = m.sender === 'sent' ? (userNameToUse || '用户') : charName;
                 
                 // 根据发送者提供不同的提示
                 if (m.sender === 'sent') {
                     // 用户发送的地理位置
-                    messageContent = `[${senderName}发送了地理位置]\n详细地址：${locationAddress}\n距离：${senderName}距离这个位置约${locationDistance}米`;
+                    messageContent = `[${senderName}发送了地理位置]\n详细地址：${locationAddress}\n双方距离：约${locationDistanceLabel}km`;
                 } else {
                     // AI发送的地理位置
-                    messageContent = `[${senderName}发送了地理位置]\n详细地址：${locationAddress}\n双方距离：约${locationDistance}米`;
+                    messageContent = `[${senderName}发送了地理位置]\n详细地址：${locationAddress}\n双方距离：约${locationDistanceLabel}km`;
                 }
             }
             

@@ -3893,6 +3893,9 @@
                 <button class="tb-btn" id="btn-phone" title="查手机">
                     <span class="tb-btn-label">查手机</span>
                 </button>
+                <button class="tb-btn" id="btn-memory-area" title="记忆区">
+                    <span class="tb-btn-label">记忆区</span>
+                </button>
                 <button class="tb-btn" id="btn-offline" title="线下">
                     <span class="tb-btn-label">线下</span>
                 </button>
@@ -4118,6 +4121,26 @@
             <!-- 隐藏的文件输入 -->
             <input type="file" id="emoji-manager-image-input" accept="image/*" multiple style="display:none">
             <input type="file" id="emoji-manager-json-input" accept=".json,application/json" style="display:none">
+        </div>
+
+        <!-- 记忆区页面 -->
+        <div class="sub-page memory-shards-page" id="memory-shards-page">
+            <div class="sub-nav friend-nav settings-config-nav">
+                <div class="back-btn" data-back="memory-shards-page" aria-label="返回"></div>
+                <div class="sub-title">记忆区</div>
+                <button class="memory-shards-refresh-btn" id="memory-shards-refresh-btn" type="button">刷新</button>
+            </div>
+            <div class="sub-content memory-shards-content">
+                <div class="memory-shards-hero">
+                    <div class="memory-shards-hero-title">记忆区</div>
+                    <div class="memory-shards-hero-desc">本角色的视频聊天、线上聊天、线下功能模块的总结已集中在这里</div>
+                </div>
+                <div class="memory-shards-toolbar">
+                    <button class="memory-shards-toolbar-btn" id="memory-shards-select-btn" type="button">多选总结</button>
+                    <button class="memory-shards-toolbar-btn primary" id="memory-shards-merge-btn" type="button" disabled>生成大总结</button>
+                </div>
+                <div class="memory-shards-list" id="memory-shards-list"></div>
+            </div>
         </div>
 
         <!-- 图片选择弹窗 -->

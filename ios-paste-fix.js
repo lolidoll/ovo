@@ -8,6 +8,23 @@
 
 (function() {
     'use strict';
+
+    function attachPasteGuards(input) {
+        if (!input || input.dataset.iosPasteGuard === '1') return;
+
+        input.dataset.iosPasteGuard = '1';
+
+        const guardEvents = ['touchstart', 'touchend', 'touchmove', 'touchcancel', 'contextmenu', 'copy', 'cut', 'paste'];
+        guardEvents.forEach(eventName => {
+            const options = eventName.startsWith('touch')
+                ? { passive: true, capture: true }
+                : { capture: true };
+
+            input.addEventListener(eventName, function(e) {
+                e.stopPropagation();
+            }, options);
+        });
+    }
     
     /**
      * 修复iOS Safari输入框粘贴问题
@@ -46,14 +63,8 @@
                 // 2. 确保输入框可以接收焦点
                 input.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.1)', 'important');
                 
-                // 3. 强制覆盖所有可能的事件监听器
-                const allEventListeners = ['touchstart', 'touchend', 'touchmove', 'touchcancel', 'contextmenu', 'paste', 'copy', 'cut'];
-                allEventListeners.forEach(eventName => {
-                    input.addEventListener(eventName, function(e) {
-                        // 不阻止任何事件，让iOS原生行为正常工作
-                        console.log('📱 输入框事件:', eventName, e.type);
-                    }, { passive: true, capture: true });
-                });
+                // 3. 为输入框加保护，避免事件冒泡被拦截影响系统菜单
+                attachPasteGuards(input);
                  
                 // 4. 强制设置输入框的只读属性为false
                 if (input.hasAttribute('readonly')) {
@@ -138,6 +149,8 @@
         // 强制设置输入框的只读属性为false
         input.readOnly = false;
         input.disabled = false;
+
+        attachPasteGuards(input);
         
         // 确保父元素不会阻止事件
         let parent = input.parentElement;

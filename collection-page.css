@@ -153,6 +153,79 @@
     white-space: pre-wrap;
 }
 
+#collection-page .collection-message .collection-preview {
+    margin-top: 6px;
+    display: inline-block;
+    max-width: min(260px, 72vw);
+}
+
+#collection-page .collection-message .collection-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+}
+
+#collection-page .collection-message .collection-preview-emoji {
+    max-width: 110px;
+}
+
+#collection-page .collection-message .collection-preview-image {
+    max-width: min(220px, 70vw);
+}
+
+#collection-page .collection-message .collection-preview .voice-bubble {
+    max-width: min(240px, 70vw);
+}
+
+#collection-page .collection-message .collection-preview.received .voice-bubble {
+    background: #ffffff;
+    border-color: #e3e7ef;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+#collection-page .collection-message .collection-preview.sent .voice-bubble {
+    background: #ffffff;
+    border-color: #dde3ed;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+}
+
+#collection-page .collection-message .collection-preview.received .wave {
+    background: linear-gradient(180deg, #8b97ab 0%, #73839f 100%);
+}
+
+#collection-page .collection-message .collection-preview.sent .wave {
+    background: linear-gradient(180deg, #7f8ca3 0%, #677793 100%);
+}
+
+#collection-page .collection-message .collection-preview.received .voice-duration {
+    color: #6b7280;
+}
+
+#collection-page .collection-message .collection-preview.sent .voice-duration {
+    color: #5f6c80;
+}
+
+#collection-page .collection-message .collection-preview .location-bubble {
+    width: min(220px, 70vw);
+}
+
+#collection-page .collection-message .collection-preview .forward-moment-card {
+    width: min(220px, 70vw);
+}
+
+#collection-page .collection-message .collection-preview .photo-description-card {
+    width: min(160px, 50vw);
+}
+
+#collection-page .collection-message .collection-preview .listen-invite-card,
+#collection-page .collection-message .collection-preview .red-envelope-card,
+#collection-page .collection-message .collection-preview .transfer-card,
+#collection-page .collection-message .collection-preview .goods-card-message,
+#collection-page .collection-message .collection-preview .music-share-card {
+    max-width: min(260px, 72vw);
+}
+
 #collection-page .collection-origin-time {
     font-size: 11px;
     color: #caa0b4;

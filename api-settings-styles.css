@@ -1722,3 +1722,15 @@
         transform: none !important;
     }
 }
+
+/* iOS: ensure native copy/paste menu works inside settings inputs */
+@supports (-webkit-touch-callout: none) {
+    #api-settings-page input,
+    #api-settings-page textarea,
+    #api-settings-page select {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+        -webkit-touch-callout: default !important;
+        touch-callout: default !important;
+    }
+}

@@ -1,4 +1,5 @@
         const DEFAULT_APP_BACKGROUND_IMAGE = 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg';
+        const SUMMARY_PROMPT_V2 = '使用角色的第一人称写「精简记忆卡片」。不要引用原句，改写为更有画面感的精简总结。输出按以下分区，每区之间空一行：\n\n【剧情回顾】\n(概况完整覆盖所有剧情节点，<=150字)\n\n【关键事件】\n- ... (1-3条，每条<=12字)\n\n【约定】\n- ... / 暂无\n\n【纪念日】\n- ... / 暂无\n\n【成长】\n(1句，<=30字)\n\n【情感羁绊】\n阶段：...\n补充：...\n\n规则：\n- 仅输出以上栏目，不要输出【封面】、标题、章节或“本次总结”。\n- 输入会包含【章节名】【对话对象】，仅用于理解，不要在输出中直接复写标签。\n- 没有信息写“暂无”。\n- 可适度渲染情绪但不编造事实。\n- 简体中文。';
 
         // 应用状态
         const AppState = {
@@ -65,7 +66,7 @@
                 secondaryPrompts: {
                     translateChinese: '你是一个翻译助手。将用户提供的非中文文本翻译成简体中文。只返回翻译结果，不要有其他内容。',
                     translateEnglish: '你是一个翻译助手。将用户提供的中文文本翻译成英文。只返回翻译结果，不要有其他内容。',
-                    summarize: '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。总结应该：1. 抓住对话的核心内容和主题；2. 保留重要信息和决策；3. 简洁明了，长度适中（200-300字）；4. 用简体中文或原语言撰写。'
+                    summarize: SUMMARY_PROMPT_V2
                 },
                 // AI图片生成设置
                 imageEndpoint: '', // 图片生成API端点（可选，默认使用主API端点）
@@ -508,6 +509,21 @@
                     console.log('加载数据成功，用户背景图:', AppState.user.bgImage);
                 } else {
                     console.log('没有保存的数据');
+                }
+
+                const legacySummaryPromptA = '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。总结应该：1. 抓住对话的核心内容和主题；2. 保留重要信息和决策；3. 简洁明了，长度适中（200-300字）；4. 用简体中文或原语言撰写。';
+                const legacySummaryPromptB = '你是一个专业的对话总结员。请为下面的内容生成一份简洁准确的总结。总结应该：1. 抓住核心内容和主题；2. 保留重要信息；3. 简洁明了，长度适中（200-300字）；4. 用简体中文撰写。';
+                const legacySummaryPromptC = '请以角色的第一人称写成“画面式记忆档案”。不要引用或复述原句，改写为更具画面感的精简总结。输出必须包含以下栏目，且标题以【章节名】开头并包含【对话对象】：\n\n标题：\n本章纪实：\n关键事件：\n约定清单：\n纪念日：\n成长轨迹：\n情感羁绊（阶段）：\n\n补充：\n- 章节名从“序章/第一章/第二章...”中取用，以输入提供的【章节名】为准。\n- 没有信息的项写“暂无”。\n- 可以适度渲染情绪与关系走向，但不要编造对话中不存在的客观事实。\n- 简体中文。';
+                const legacySummaryPromptD = '使用角色的第一人称写「精简记忆卡片」。不要引用原句，改写为更有画面感的精简总结。输出按以下分区，每区之间空一行：\n\n【封面】\n标题：{章节名}｜与{对话对象}的{2~6字关键词}\n章节：{章节名}\n\n【本次总结】\n(1-2句，<=60字)\n\n【关键事件】\n- ... (1-3条，每条<=12字)\n\n【约定】\n- ... / 暂无\n\n【纪念日】\n- ... / 暂无\n\n【成长】\n(1句，<=30字)\n\n【情感羁绊】\n阶段：...\n一句话：...\n\n规则：\n- 章节名使用输入提供的【章节名】（如序章、第一章、第二章...），对话对象使用【对话对象】。\n- 没有信息写“暂无”。\n- 可适度渲染情绪但不编造事实。\n- 简体中文。';
+                if (!AppState.apiSettings) {
+                    AppState.apiSettings = {};
+                }
+                if (!AppState.apiSettings.secondaryPrompts) {
+                    AppState.apiSettings.secondaryPrompts = {};
+                }
+                const currentSummaryPrompt = AppState.apiSettings.secondaryPrompts.summarize;
+                if (!currentSummaryPrompt || currentSummaryPrompt === legacySummaryPromptA || currentSummaryPrompt === legacySummaryPromptB || currentSummaryPrompt === legacySummaryPromptC || currentSummaryPrompt === legacySummaryPromptD) {
+                    AppState.apiSettings.secondaryPrompts.summarize = SUMMARY_PROMPT_V2;
                 }
                 
                 // ===== 初始化示例数据 =====
@@ -1130,8 +1146,10 @@
                     e.preventDefault();
                     e.stopPropagation();
                     const quoteContainer = document.getElementById('quote-message-bar-container');
+                    const quoteBar = document.getElementById('quote-message-bar');
                     const chatInput = document.getElementById('chat-input');
                     if (quoteContainer) quoteContainer.style.display = 'none';
+                    if (quoteBar) quoteBar.style.display = '';
                     if (chatInput) delete chatInput.dataset.replyToId;
                 });
             }
@@ -4555,8 +4573,8 @@
                     // 地理位置消息渲染 - 浅粉白卡片样式（详细地址 + 距离）
                     const rawLocationAddress = String(msg.locationAddress || msg.locationName || '').trim();
                     const locationAddress = escapeHtml(rawLocationAddress || '未填写详细地址');
-                    const parsedDistance = parseInt(msg.locationDistance, 10);
-                    const locationDistance = (!isNaN(parsedDistance) && parsedDistance > 0) ? parsedDistance : 10;
+                    const locationDistanceKm = normalizeMessageDistanceKm(msg.locationDistance, msg.locationDistanceUnit, 1);
+                    const locationDistanceLabel = formatLocationDistanceKm(locationDistanceKm);
                     const senderName = msg.sender === 'sent' ? AppState.user.name : AppState.currentChat.name;
                     const geoMeta = msg.geoMeta && typeof msg.geoMeta === 'object' ? msg.geoMeta : null;
                     const geoLat = geoMeta ? Number(geoMeta.lat) : NaN;
@@ -4574,7 +4592,7 @@
                             <div class="location-card-body">
                                 <div class="location-card-row">
                                     <div class="location-card-title">地理位置</div>
-                                    <div class="location-card-distance">约${locationDistance}米</div>
+                                    <div class="location-card-distance">约${locationDistanceLabel}km</div>
                                 </div>
                                 <div class="location-card-address">${locationAddress}</div>
                                 <div class="location-card-meta">${locationMeta}</div>
@@ -5776,6 +5794,8 @@
             menu.id = 'message-context-menu';
             menu.className = 'message-context-menu';
             menu.classList.add(msg.isRetracted ? 'single-action' : 'multi-action');
+
+            const canEdit = isMessageEditable(msg);
             
             // 菜单项HTML - 支持收藏、修改、复制、引用、多选、撤回、删除
             
@@ -5786,9 +5806,12 @@
                     <button type="button" class="msg-menu-item danger" onclick="deleteMessage('${msg.id}')">删除</button>
                 `;
             } else {
+                const editBtnHtml = canEdit
+                    ? `<button type="button" class="msg-menu-item" onclick="editMessage('${msg.id}')">修改</button>`
+                    : '';
                 menuItems = `
                     <button type="button" class="msg-menu-item" onclick="addMessageToCollection('${msg.id}')">收藏</button>
-                    <button type="button" class="msg-menu-item" onclick="editMessage('${msg.id}')">修改</button>
+                    ${editBtnHtml}
                     <button type="button" class="msg-menu-item" onclick="copyMessage('${msg.id}')">复制</button>
                     <button type="button" class="msg-menu-item" onclick="replyMessage('${msg.id}')">引用</button>
                     <button type="button" class="msg-menu-item" onclick="enterMessageMultiSelect('${msg.id}')">多选</button>
@@ -6087,6 +6110,7 @@
             
             const chatInput = document.getElementById('chat-input');
             const quoteContainer = document.getElementById('quote-message-bar-container');
+            const quoteBar = document.getElementById('quote-message-bar');
             if (!chatInput || !quoteContainer) return;
             
             // 关闭菜单
@@ -6096,42 +6120,118 @@
             chatInput.dataset.replyToId = msgId;
             
             // 获取消息内容摘要和作者
-            let summary = '';
-            if (msg.emojiUrl) {
-                summary = '[表情包]';
-            } else if (msg.isImage && msg.imageData) {
-                summary = '[图片]';
-            } else {
-                summary = msg.content.substring(0, 30);
-                if (msg.content.length > 30) summary += '...';
-            }
+            let summary = getCollectionPreviewTextFromMessage(msg) || '';
+            if (summary.length > 30) summary = `${summary.slice(0, 30)}...`;
             const author = msg.type === 'sent' ? AppState.user.name : AppState.currentChat.name;
             
             // 更新引用消息显示区域
             const quoteContent = document.getElementById('quote-content');
             if (quoteContent) {
                 quoteContent.innerHTML = `<strong style="color:#333;">${author}:</strong> ${escapeHtml(summary)}`;
-                quoteContent.title = `${author}: ${msg.content}`; // 长按时显示完整内容
+                const fullPreview = getCollectionPreviewTextFromMessage(msg) || '';
+                quoteContent.title = `${author}: ${fullPreview}`; // 长按时显示完整内容
             }
             
             // 显示引用消息栏容器
-            if (quoteContainer) quoteContainer.style.display = 'block';
+            if (quoteContainer) quoteContainer.style.display = 'flex';
+            if (quoteBar) quoteBar.style.display = 'flex';
             
             // 聚焦输入框
             chatInput.focus();
+        }
+
+        function isMessageEditable(msg) {
+            if (!msg || msg.isRetracted) return false;
+
+            if (msg.type === 'voice') return true;
+            if (msg.isPhotoDescription) return true;
+
+            const isPlainTextType = msg.type === 'sent' || msg.type === 'received' || msg.type === 'assistant';
+            if (!isPlainTextType) return false;
+
+            if (msg.isImage || msg.emojiUrl || msg.isEmoji || msg.isForward || msg.forwardedMoment || msg.isForwarded) return false;
+            if (msg.musicCard || msg.type === 'location' || msg.type === 'voicecall' || msg.type === 'videocall') return false;
+            if (msg.type === 'redenvelope' || msg.type === 'transfer' || msg.type === 'goods_card' || msg.type === 'listen_invite') return false;
+
+            return typeof msg.content === 'string';
+        }
+
+        function getMessagePreviewText(msg) {
+            if (!msg) return '';
+
+            if (msg.emojiUrl || msg.isEmoji) return '[表情包]';
+            if (msg.isImage) return '[图片]';
+            if (msg.isPhotoDescription) return msg.photoDescription || msg.content || '[图片描述]';
+            if (msg.type === 'voice') return '[语音]';
+            if (msg.type === 'location') return '[位置]';
+            if (msg.type === 'voicecall') return '[语音通话]';
+            if (msg.type === 'videocall') return '[视频通话]';
+            if (msg.type === 'redenvelope') return '[红包]';
+            if (msg.type === 'transfer') return '[转账]';
+            if (msg.type === 'goods_card') return msg.goodsData?.name ? `[商品] ${msg.goodsData.name}` : '[商品]';
+            if (msg.type === 'listen_invite') return msg.songName ? `[一起听] ${msg.songName}` : '[一起听]';
+            if (msg.musicCard) return msg.musicCard.name ? `[音乐] ${msg.musicCard.name}` : '[音乐]';
+            if (msg.isForward && msg.forwardedMoment) return '[朋友圈]';
+
+            return typeof msg.content === 'string' ? msg.content : '';
+        }
+
+        function updateConversationAfterMessagesChange(convId) {
+            const conv = AppState.conversations.find(c => c.id === convId);
+            if (!conv) return;
+
+            const messages = AppState.messages[convId] || [];
+            const lastMsg = messages[messages.length - 1];
+
+            if (!lastMsg) {
+                conv.lastMsg = '';
+                conv.time = '';
+                conv.lastMessageTime = null;
+                return;
+            }
+
+            const previewText = getMessagePreviewText(lastMsg);
+            const lastTime = lastMsg.time || lastMsg.timestamp || new Date().toISOString();
+            conv.lastMsg = previewText;
+            conv.time = formatTime(new Date(lastTime));
+            conv.lastMessageTime = lastTime;
+        }
+
+        function purgeMessagesFromConversation(convId, msgIds) {
+            if (!convId || !Array.isArray(msgIds) || msgIds.length === 0) return 0;
+
+            const messages = AppState.messages[convId] || [];
+            const idSet = new Set(msgIds.map(id => String(id)));
+            msgIds.forEach(id => idSet.add(`sys_retract_${id}`));
+
+            let removedCount = 0;
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msgId = String(messages[i].id);
+                if (idSet.has(msgId)) {
+                    messages.splice(i, 1);
+                    removedCount++;
+                }
+            }
+
+            return removedCount;
         }
 
         function deleteMessage(msgId) {
             // 显示确认对话框
             showConfirmDialog('是否删除该条消息？删除后不可撤回', function() {
                 if (!AppState.currentChat) return;
-                const messages = AppState.messages[AppState.currentChat.id] || [];
-                const index = messages.findIndex(m => m.id === msgId);
-                
-                if (index > -1) {
-                    messages.splice(index, 1);
+
+                const convId = AppState.currentChat.id;
+                const removedCount = purgeMessagesFromConversation(convId, [msgId]);
+
+                if (removedCount > 0) {
+                    if (Array.isArray(AppState.selectedMessages) && AppState.selectedMessages.length) {
+                        AppState.selectedMessages = AppState.selectedMessages.filter(id => String(id) !== String(msgId));
+                    }
+                    updateConversationAfterMessagesChange(convId);
                     saveToStorage();
                     renderChatMessagesDebounced();
+                    renderConversations();
                     showToast('消息已删除');
                 }
                 
@@ -6194,9 +6294,33 @@
             const msg = messages.find(m => m.id === msgId);
             
             if (!msg) return;
+
+            if (!isMessageEditable(msg)) {
+                showToast('该消息类型暂不支持修改');
+                closeMessageContextMenu();
+                return;
+            }
             
             // 关闭菜单
             closeMessageContextMenu();
+
+            const isVoice = msg.type === 'voice';
+            const isPhotoDesc = msg.isPhotoDescription;
+            const dialogTitle = isVoice ? '修改语音条' : (isPhotoDesc ? '修改图片描述' : '修改消息');
+            const initialContent = isPhotoDesc
+                ? (msg.photoDescription || msg.content || '')
+                : (msg.content || '');
+            const durationValue = isVoice
+                ? Math.max(1, Math.min(300, parseInt(msg.duration, 10) || 1))
+                : null;
+            const durationInputHtml = isVoice
+                ? `
+                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                        <label for="edit-voice-duration" style="font-size: 12px; color: #666;">语音时长(秒)</label>
+                        <input id="edit-voice-duration" type="number" min="1" max="300" value="${durationValue}" style="width: 90px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;">
+                    </div>
+                `
+                : '';
             
             // 创建编辑对话框
             const modal = document.createElement('div');
@@ -6216,11 +6340,12 @@
             
             modal.innerHTML = `
                 <div style="background: white; border-radius: 12px; padding: 20px; min-width: 300px; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-                    <h3 style="margin: 0 0 16px 0; font-size: 16px; color: #333;">修改消息</h3>
-                    <textarea id="edit-msg-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px; box-sizing: border-box;">${escapeHtml(msg.content)}</textarea>
+                    <h3 style="margin: 0 0 16px 0; font-size: 16px; color: #333;">${dialogTitle}</h3>
+                    <textarea id="edit-msg-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px; box-sizing: border-box;">${escapeHtml(initialContent)}</textarea>
+                    ${durationInputHtml}
                     <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
                         <button onclick="document.getElementById('edit-message-modal').remove();" style="padding: 8px 16px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; font-size: 14px;">取消</button>
-                        <button onclick="saveEditedMessage('${msgId}', document.getElementById('edit-msg-input').value);" style="padding: 8px 16px; border: none; border-radius: 6px; background: #000; color: #fff; cursor: pointer; font-size: 14px;">保存</button>
+                        <button onclick="saveEditedMessageFromModal('${msgId}');" style="padding: 8px 16px; border: none; border-radius: 6px; background: #000; color: #fff; cursor: pointer; font-size: 14px;">保存</button>
                     </div>
                 </div>
             `;
@@ -6236,23 +6361,69 @@
             });
         }
 
-        function saveEditedMessage(msgId, newContent) {
+        function saveEditedMessageFromModal(msgId) {
+            const input = document.getElementById('edit-msg-input');
+            const durationInput = document.getElementById('edit-voice-duration');
+            const newContent = input ? input.value : '';
+            const durationValue = durationInput ? durationInput.value : null;
+            saveEditedMessage(msgId, newContent, durationValue);
+        }
+
+        function saveEditedMessage(msgId, newContent, durationOverride) {
             if (!AppState.currentChat) return;
             const messages = AppState.messages[AppState.currentChat.id] || [];
             const msg = messages.find(m => m.id === msgId);
             
             if (!msg || !newContent.trim()) return;
-            
-            msg.content = newContent;
+
+            const trimmedContent = newContent.trim();
+
+            if (msg.type === 'voice') {
+                msg.content = trimmedContent;
+                const parsedDuration = parseInt(durationOverride, 10);
+                if (Number.isFinite(parsedDuration)) {
+                    msg.duration = Math.max(1, Math.min(300, parsedDuration));
+                }
+            } else if (msg.isPhotoDescription) {
+                msg.photoDescription = trimmedContent;
+                msg.content = trimmedContent;
+            } else {
+                msg.content = trimmedContent;
+            }
+
+            if (msg.translation) {
+                msg.translation = null;
+            }
             msg.isEdited = true;
+            msg.editedAt = new Date().toISOString();
+
+            if (msg.type === 'sent' || msg.sender === 'sent') {
+                msg.readByAI = false;
+            }
+
+            updateConversationAfterMessagesChange(AppState.currentChat.id);
+            syncCollectionItemsForMessage(msg);
             
             saveToStorage();
             renderChatMessagesDebounced();
+            renderConversations();
             showToast('消息已修改');
             
             // 关闭编辑对话框
             const modal = document.getElementById('edit-message-modal');
             if (modal) modal.remove();
+        }
+
+        function syncCollectionItemsForMessage(msg) {
+            if (!msg || !Array.isArray(AppState.collections)) return;
+
+            const previewText = getCollectionPreviewTextFromMessage(msg);
+            AppState.collections.forEach(item => {
+                if (String(item.messageId) === String(msg.id)) {
+                    item.messageContent = previewText;
+                    item.messageSnapshot = buildCollectionMessageSnapshot(msg);
+                }
+            });
         }
 
         function enterMessageMultiSelect(msgId) {
@@ -6331,20 +6502,20 @@
             
             showConfirmDialog(`删除${AppState.selectedMessages.length}条消息？删除后不可撤回`, function() {
                 if (!AppState.currentChat) return;
-                
-                const messages = AppState.messages[AppState.currentChat.id] || [];
-                AppState.selectedMessages.forEach(msgId => {
-                    const index = messages.findIndex(m => m.id === msgId);
-                    if (index > -1) {
-                        messages.splice(index, 1);
-                    }
-                });
-                
+
+                const convId = AppState.currentChat.id;
+                const idsToDelete = [...AppState.selectedMessages];
+                const removedCount = purgeMessagesFromConversation(convId, idsToDelete);
+
                 AppState.selectedMessages = [];
                 AppState.isSelectMode = false;
-                
-                saveToStorage();
-                renderChatMessagesDebounced();
+
+                if (removedCount > 0) {
+                    updateConversationAfterMessagesChange(convId);
+                    saveToStorage();
+                    renderChatMessagesDebounced();
+                    renderConversations();
+                }
 
                 const toolbar = document.getElementById('msg-multi-select-toolbar');
                 if (toolbar) toolbar.remove();
@@ -6581,17 +6752,138 @@
             callSecondaryAPIWithDynamicPrompt(text, promptType, onSuccess, onError);
         }
 
+        function toChineseChapterNumber(num) {
+            const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+            if (num <= 0) return '零';
+            if (num < 10) return digits[num];
+            if (num === 10) return '十';
+            if (num < 20) return `十${digits[num % 10]}`;
+            const tens = Math.floor(num / 10);
+            const ones = num % 10;
+            return ones === 0 ? `${digits[tens]}十` : `${digits[tens]}十${digits[ones]}`;
+        }
+
+        function getSummaryChapterLabel(conv) {
+            const count = Array.isArray(conv?.summaries) ? conv.summaries.length : 0;
+            if (count === 0) return '序章';
+            return `第${toChineseChapterNumber(count)}章`;
+        }
+
+        function buildSummaryInput(rawText, options = {}) {
+            const conv = options.conv || AppState.currentChat || {};
+            const partnerName = options.partnerName || conv.userNameForChar || AppState.user?.name || '你';
+            const chapterLabel = options.chapterLabel || getSummaryChapterLabel(conv);
+            const modeLabel = options.modeLabel || '线上聊天';
+            const header = `【章节名】${chapterLabel}\n【对话对象】${partnerName}\n【场景】${modeLabel}`;
+            return `${header}\n\n${rawText}`;
+        }
+
+        window.buildSummaryInput = buildSummaryInput;
+        window.getSummaryChapterLabel = getSummaryChapterLabel;
+
+        function normalizeSummaryContent(rawContent) {
+            const text = String(rawContent || '').trim();
+            if (!text) return '';
+
+            let cleaned = text.replace(/【本次总结】/g, '【剧情回顾】');
+            cleaned = cleaned.replace(/【封面】[\s\S]*?(?=【[^】]+】|$)/g, '').trim();
+            cleaned = cleaned.replace(/^(标题|章节名?|章节)：.*$/gm, '').trim();
+            cleaned = cleaned.replace(/^一句话[:：]/gm, '补充：');
+
+            return cleaned;
+        }
+
+        window.normalizeSummaryContent = normalizeSummaryContent;
+
+        function isSecondaryApiConfigured() {
+            if (window.SecondaryAPIManager && typeof window.SecondaryAPIManager.isConfigured === 'function') {
+                return window.SecondaryAPIManager.isConfigured();
+            }
+            const api = AppState.apiSettings || {};
+            return !!(api.secondaryEndpoint && api.secondaryApiKey && api.secondarySelectedModel);
+        }
+
+        function isMainApiConfigured() {
+            const api = AppState.apiSettings || {};
+            return !!(api.endpoint && api.selectedModel);
+        }
+
+        function summarizeTextViaMainAPI(text, onSuccess, onError) {
+            const api = AppState.apiSettings || {};
+
+            if (!isMainApiConfigured()) {
+                const errorMsg = '主API未配置';
+                showToast('请先在API设置中配置主API');
+                if (onError) onError(errorMsg);
+                return;
+            }
+
+            const systemPrompt = api.secondaryPrompts?.summarize || SUMMARY_PROMPT_V2;
+            const baseEndpoint = window.APIUtils.normalizeEndpoint(api.endpoint);
+            const endpoint = baseEndpoint + '/chat/completions';
+            const { controller, timeoutId } = window.APIUtils.createTimeoutController(300000);
+
+            const body = {
+                model: api.selectedModel,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: text }
+                ],
+                temperature: api.temperature !== undefined ? api.temperature : 0.8,
+                max_tokens: 10000,
+                frequency_penalty: api.frequencyPenalty !== undefined ? api.frequencyPenalty : 0.2,
+                presence_penalty: api.presencePenalty !== undefined ? api.presencePenalty : 0.1,
+                top_p: api.topP !== undefined ? api.topP : 1.0
+            };
+
+            const fetchOptions = window.APIUtils.createFetchOptions(api.apiKey || '', body, controller.signal);
+
+            fetch(endpoint, fetchOptions)
+            .then(res => {
+                window.APIUtils.clearTimeoutController(timeoutId);
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        const errorMsg = `HTTP ${res.status}: ${res.statusText}\n详情: ${text.substring(0, 200)}`;
+                        throw new Error(errorMsg);
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                const customFieldPaths = api.customResponseFieldPaths ? api.customResponseFieldPaths.split('\n').filter(p => p.trim()) : [];
+                const result = window.APIUtils.extractTextWithCustomMapping(data, customFieldPaths);
+                if (result && result.trim()) {
+                    if (onSuccess) onSuccess(result);
+                } else {
+                    throw new Error('响应格式错误：无法找到有效内容');
+                }
+            })
+            .catch(err => {
+                window.APIUtils.clearTimeoutController(timeoutId);
+                const userMessage = window.APIUtils.handleApiError(err, 300000);
+                window.APIUtils.logApiError('主API', api.endpoint, api.selectedModel, body.messages.length, userMessage);
+                showToast(`❌ ${userMessage}`);
+                if (onError) onError(userMessage);
+            });
+        }
+
         // ========== 副API功能函数：自动总结 ==========
         function summarizeTextViaSecondaryAPI(text, onSuccess, onError) {
             console.log('📝 调用副API总结:', {
                 textLength: text.length
             });
-            
-            callSecondaryAPIWithDynamicPrompt(text, 'summarize', onSuccess, onError);
+
+            if (isSecondaryApiConfigured() && window.SecondaryAPIManager && typeof window.SecondaryAPIManager.callWithDynamicPrompt === 'function') {
+                callSecondaryAPIWithDynamicPrompt(text, 'summarize', onSuccess, onError);
+                return;
+            }
+
+            summarizeTextViaMainAPI(text, onSuccess, onError);
         }
 
         // ========== 副API功能函数：总结对话 ==========
         function summarizeConversationViaSecondaryAPI(convId, onSuccess, onError) {
+            const conv = AppState.conversations.find(c => c.id === convId);
             const msgs = AppState.messages[convId] || [];
             
             if (msgs.length === 0) {
@@ -6611,8 +6903,12 @@
             });
             
             console.log('📝 准备总结对话，内容长度:', conversationText.length);
-            
-            summarizeTextViaSecondaryAPI(conversationText, onSuccess, onError);
+
+            const summaryInput = buildSummaryInput(conversationText, {
+                conv: conv,
+                modeLabel: '线上聊天'
+            });
+            summarizeTextViaSecondaryAPI(summaryInput, onSuccess, onError);
         }
 
         // ========== 【新架构】心声提取已移至主API响应处理 ==========
@@ -6645,15 +6941,23 @@
 
             showToast(isAutomatic ? '正在自动总结...' : '正在生成总结...');
 
+            const summaryInput = buildSummaryInput(conversationText, {
+                conv: conv,
+                modeLabel: '线上聊天'
+            });
             summarizeTextViaSecondaryAPI(
-                conversationText,
+                summaryInput,
                 (result) => {
+                    const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                        ? window.normalizeSummaryContent(result)
+                        : result;
+
                     if (!conv.summaries) {
                         conv.summaries = [];
                     }
                     
                     conv.summaries.push({
-                        content: result,
+                        content: normalizedSummary,
                         isAutomatic: isAutomatic,
                         timestamp: new Date().toISOString(),
                         messageCount: msgs.length
@@ -7128,8 +7432,10 @@
             // 移除引用显示栏（旧版本）和隐藏新版引用栏
             const replyBar = document.getElementById('reply-bar');
             if (replyBar) replyBar.remove();
+            const quoteContainer = document.getElementById('quote-message-bar-container');
+            if (quoteContainer) quoteContainer.style.display = 'none';
             const quoteBar = document.getElementById('quote-message-bar');
-            if (quoteBar) quoteBar.style.display = 'none';
+            if (quoteBar) quoteBar.style.display = '';
             delete input.dataset.replyToId;
         }
 
@@ -9104,14 +9410,14 @@
             
             // ========== 第五步：处理地理位置信息 ==========
             // 兼容格式：
-            // 1) 【地理位置】位置名称|详细地址|距离【/地理位置】
-            // 2) 【地理位置】详细地址|距离【/地理位置】
-            // 3) 【地理位置】详细地址【/地理位置】
+            // 1) 【地理位置】详细地址|距离【/地理位置】
+            // 2) 【地理位置】详细地址【/地理位置】
+            // 3) 【地理位置】任意|详细地址|距离【/地理位置】（兼容旧格式，忽略位置名）
             const locationRegex = /【地理位置】([^【]+?)【\/地理位置】/;
             const locationMatch = text.match(locationRegex);
             let locationName = '';
             let locationAddress = '';
-            let locationDistance = 10; // 默认10米，但AI应该根据实际情况设置
+            let locationDistance = 1; // 默认1km，但AI应该根据实际情况设置
             let isLocation = false;
             
             if (locationMatch && locationMatch[1]) {
@@ -9123,23 +9429,15 @@
                     const p3 = parts[2] || '';
 
                     if (parts.length >= 3) {
-                        locationName = p1;
+                        locationName = '';
                         locationAddress = p2 || p1;
-                        const parsedDistance = parseInt(p3, 10);
-                        if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                            locationDistance = parsedDistance;
-                        }
+                        locationDistance = parseLocationDistanceKm(p3, locationDistance);
                     } else if (parts.length === 2) {
-                        const parsedDistance = parseInt(p2, 10);
-                        if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                            // 新格式：详细地址|距离
-                            locationAddress = p1;
-                            locationName = '';
+                        const parsedDistance = parseLocationDistanceKm(p2, null);
+                        locationAddress = p1;
+                        locationName = '';
+                        if (parsedDistance !== null) {
                             locationDistance = parsedDistance;
-                        } else {
-                            // 旧格式：位置名称|详细地址
-                            locationName = p1;
-                            locationAddress = p2 || p1;
                         }
                     } else {
                         // 单字段：按详细地址处理
@@ -9150,7 +9448,7 @@
                 if (!locationAddress && locationName) {
                     locationAddress = locationName;
                 }
-                isLocation = !!(locationAddress || locationName);
+                isLocation = !!locationAddress;
 
                 // 从文本中移除地理位置标记
                 text = text.replace(locationRegex, '').trim();
@@ -9209,7 +9507,7 @@
                 // 延迟一小段时间后触发来电
                 setTimeout(() => {
                     if (window.VideoCallSystem && typeof window.VideoCallSystem.receiveCall === 'function') {
-                        window.VideoCallSystem.receiveCall(characterName, characterAvatar);
+                        window.VideoCallSystem.receiveCall(characterName, characterAvatar, convId);
                     } else {
                         console.warn('⚠️ 视频通话系统未初始化');
                     }
@@ -9261,13 +9559,15 @@
             // 如果检测到地理位置消息，创建地理位置消息
             if (isLocation && (locationAddress || locationName)) {
                 const effectiveLocationAddress = locationAddress || locationName;
+                const locationDistanceLabel = formatLocationDistanceKm(locationDistance);
                 const aiLocationMsg = {
                     id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     type: 'location',
-                    content: `${effectiveLocationAddress} (${locationDistance}米范围)`,
+                    content: `${effectiveLocationAddress} (${locationDistanceLabel}km)`,
                     locationName: locationName || '',
                     locationAddress: effectiveLocationAddress,
                     locationDistance: locationDistance,
+                    locationDistanceUnit: 'km',
                     sender: 'received',
                     time: new Date().toISOString(),
                     apiCallRound: currentApiCallRound,
@@ -9466,6 +9766,76 @@
                     
                     // 清理内容
                     content = cleanAIResponse(content);
+
+                    // 处理撤回标记
+                    const retractRegex = /【撤回】([^【]+?)【\/撤回】/;
+                    const retractMatch = content.match(retractRegex);
+                    if (retractMatch && retractMatch[1]) {
+                        const targetMsgId = retractMatch[1].trim();
+                        if (!AppState.messages[convId]) {
+                            AppState.messages[convId] = [];
+                        }
+                        const messages = AppState.messages[convId];
+                        const msgIndex = messages.findIndex(m => m.id === targetMsgId);
+
+                        if (msgIndex > -1) {
+                            const originalMsg = messages[msgIndex];
+                            const characterName = AppState.conversations.find(c => c.id === convId)?.name || 'AI';
+                            const retractText = `${characterName}撤回了一条消息`;
+
+                            const retractMsg = {
+                                id: targetMsgId,
+                                type: originalMsg.type,
+                                content: retractText,
+                                timestamp: originalMsg.timestamp,
+                                isRetracted: true,
+                                retractedContent: originalMsg.content
+                            };
+
+                            messages[msgIndex] = retractMsg;
+
+                            saveToStorage();
+                            if (AppState.currentChat && AppState.currentChat.id === convId) renderChatMessagesDebounced();
+                            renderConversations();
+                        }
+
+                        content = content.replace(retractRegex, '').trim();
+                        if (!content) {
+                            return;
+                        }
+                    }
+
+                    // 处理语音通话标记
+                    const voiceCallRegex = /【语音通话】【\/语音通话】/;
+                    if (voiceCallRegex.test(content)) {
+                        content = content.replace(voiceCallRegex, '').trim();
+                        const conv = AppState.conversations.find(c => c.id === convId);
+                        const characterName = conv?.name || '未知角色';
+                        const characterAvatar = getCharacterAvatar();
+                        setTimeout(() => {
+                            if (window.VoiceCallSystem && typeof window.VoiceCallSystem.receiveCall === 'function') {
+                                window.VoiceCallSystem.receiveCall(characterName, characterAvatar);
+                            } else {
+                                console.warn('⚠️ 语音通话系统未初始化');
+                            }
+                        }, 800);
+                    }
+
+                    // 处理视频通话标记
+                    const videoCallRegex = /【视频通话】【\/视频通话】/;
+                    if (videoCallRegex.test(content)) {
+                        content = content.replace(videoCallRegex, '').trim();
+                        const conv = AppState.conversations.find(c => c.id === convId);
+                        const characterName = conv?.name || '未知角色';
+                        const characterAvatar = getCharacterAvatar();
+                        setTimeout(() => {
+                            if (window.VideoCallSystem && typeof window.VideoCallSystem.receiveCall === 'function') {
+                                window.VideoCallSystem.receiveCall(characterName, characterAvatar, convId);
+                            } else {
+                                console.warn('⚠️ 视频通话系统未初始化');
+                            }
+                        }, 800);
+                    }
                     
                     // 处理表情包
                     let emojiUrl = null;
@@ -9500,13 +9870,13 @@
                         content = content.replace(voiceRegex, '').trim();
                     }
                     
-                    // 处理地理位置（兼容旧格式与无位置名格式）
+                    // 处理地理位置（仅使用详细地址和距离，兼容旧格式）
                     const locationRegex = /【地理位置】([^【]+?)【\/地理位置】/;
                     const locationMatch = content.match(locationRegex);
                     let isLocation = false;
                     let locationName = '';
                     let locationAddress = '';
-                    let locationDistance = 10;
+                    let locationDistance = 1;
                     
                     if (locationMatch && locationMatch[1]) {
                         const locationPayload = locationMatch[1].trim();
@@ -9517,21 +9887,15 @@
                             const p3 = parts[2] || '';
 
                             if (parts.length >= 3) {
-                                locationName = p1;
+                                locationName = '';
                                 locationAddress = p2 || p1;
-                                const parsedDistance = parseInt(p3, 10);
-                                if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                                    locationDistance = parsedDistance;
-                                }
+                                locationDistance = parseLocationDistanceKm(p3, locationDistance);
                             } else if (parts.length === 2) {
-                                const parsedDistance = parseInt(p2, 10);
-                                if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                                    locationAddress = p1;
-                                    locationName = '';
+                                const parsedDistance = parseLocationDistanceKm(p2, null);
+                                locationAddress = p1;
+                                locationName = '';
+                                if (parsedDistance !== null) {
                                     locationDistance = parsedDistance;
-                                } else {
-                                    locationName = p1;
-                                    locationAddress = p2 || p1;
                                 }
                             } else {
                                 locationAddress = p1;
@@ -9541,7 +9905,7 @@
                         if (!locationAddress && locationName) {
                             locationAddress = locationName;
                         }
-                        isLocation = !!(locationAddress || locationName);
+                        isLocation = !!locationAddress;
                         content = content.replace(locationRegex, '').trim();
                     }
                     
@@ -9561,6 +9925,8 @@
                     // 【新架构】心声已在 appendAssistantMessage 中从主API响应自动提取
                     
                     content = cleanAIResponse(content);
+                    content = content.replace(/【[^】]*】[^【】]*【\/[^】]*】/g, '').trim();
+                    content = content.replace(/\n{3,}/g, '\n\n').trim();
                     
                     if (!AppState.messages[convId]) {
                         AppState.messages[convId] = [];
@@ -9587,13 +9953,15 @@
                     // 创建地理位置消息
                     if (isLocation && (locationAddress || locationName)) {
                         const effectiveLocationAddress = locationAddress || locationName;
+                        const locationDistanceLabel = formatLocationDistanceKm(locationDistance);
                         aiMsg = {
                             id: 'msg_' + Date.now() + '_' + Math.random(),
                             type: 'location',
-                            content: `${effectiveLocationAddress} (${locationDistance}米范围)`,
+                            content: `${effectiveLocationAddress} (${locationDistanceLabel}km)`,
                             locationName: locationName || '',
                             locationAddress: effectiveLocationAddress,
                             locationDistance: locationDistance,
+                            locationDistanceUnit: 'km',
                             sender: 'received',
                             time: new Date().toISOString(),
                             apiCallRound: currentApiCallRound,
@@ -11751,7 +12119,1075 @@
             }
         };
 
+        function formatMemoryShardTime(value) {
+            if (!value) return '未知时间';
+            const time = new Date(value);
+            if (Number.isNaN(time.getTime())) return '未知时间';
+            return time.toLocaleString('zh-CN');
+        }
+
+        let memoryShardsActiveConvId = null;
+        let memoryShardsSelectionMode = false;
+        let memoryShardsSelectedKeys = new Set();
+
+        function getMemoryShardKey(convId, summaryIndex) {
+            return `${convId}::${summaryIndex}`;
+        }
+
+        function clearMemoryShardsSelection() {
+            memoryShardsSelectedKeys.clear();
+        }
+
+        function updateMemoryShardsToolbar() {
+            const selectBtn = document.getElementById('memory-shards-select-btn');
+            const mergeBtn = document.getElementById('memory-shards-merge-btn');
+            if (!selectBtn || !mergeBtn) return;
+
+            const selectedCount = memoryShardsSelectedKeys.size;
+            const isSelecting = memoryShardsSelectionMode;
+
+            selectBtn.textContent = isSelecting ? '退出多选' : '多选总结';
+            mergeBtn.disabled = !isSelecting || selectedCount < 2;
+            mergeBtn.textContent = isSelecting && selectedCount > 0
+                ? `生成大总结(${selectedCount})`
+                : '生成大总结';
+        }
+
+        function setMemoryShardsSelectionMode(enabled) {
+            memoryShardsSelectionMode = !!enabled;
+            if (!memoryShardsSelectionMode) {
+                clearMemoryShardsSelection();
+            }
+            renderMemoryShardsPage(memoryShardsActiveConvId);
+        }
+
+        function summarizeSelectedMemoryShards() {
+            const convId = memoryShardsActiveConvId || AppState.currentChat?.id;
+            if (!convId) {
+                showToast('请先打开一个对话');
+                return;
+            }
+
+            const conv = AppState.conversations.find(c => String(c.id || '') === String(convId));
+            if (!conv || !Array.isArray(conv.summaries)) {
+                showToast('对话未找到');
+                return;
+            }
+
+            const selectedIndices = Array.from(memoryShardsSelectedKeys)
+                .filter(key => key.startsWith(`${convId}::`))
+                .map(key => Number(key.split('::')[1]))
+                .filter(Number.isFinite);
+
+            if (selectedIndices.length < 2) {
+                showToast('请至少选择两条总结');
+                return;
+            }
+
+            const sortedIndices = selectedIndices.slice().sort((a, b) => a - b);
+            const selectedSummaries = sortedIndices
+                .map(idx => conv.summaries[idx])
+                .filter(Boolean);
+
+            if (selectedSummaries.length < 2) {
+                showToast('可用总结不足');
+                return;
+            }
+
+            const mergedText = selectedSummaries.map((summary, index) => {
+                const content = String(summary.content || '').trim();
+                return `【总结${index + 1}】\n${content}`;
+            }).join('\n\n');
+
+            const summaryInput = typeof window.buildSummaryInput === 'function'
+                ? window.buildSummaryInput(mergedText, {
+                    conv: conv,
+                    modeLabel: '记忆区大总结'
+                })
+                : mergedText;
+
+            const summarizeFn = window.summarizeTextViaSecondaryAPI || window.summarizeTextViaMainAPI;
+            if (!summarizeFn) {
+                showToast('总结功能未加载');
+                return;
+            }
+
+            showToast('正在生成大总结...');
+
+            summarizeFn(
+                summaryInput,
+                (result) => {
+                    const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                        ? window.normalizeSummaryContent(result)
+                        : result;
+
+                    const indicesToRemove = selectedIndices.slice().sort((a, b) => b - a);
+                    indicesToRemove.forEach(idx => {
+                        if (conv.summaries[idx]) {
+                            conv.summaries.splice(idx, 1);
+                        }
+                    });
+
+                    const totalMessages = selectedSummaries.reduce((sum, item) => {
+                        return sum + (Number(item.messageCount) || 0);
+                    }, 0);
+
+                    conv.summaries.push({
+                        content: normalizedSummary,
+                        isAutomatic: false,
+                        timestamp: new Date().toISOString(),
+                        messageCount: totalMessages || selectedSummaries.length
+                    });
+
+                    saveToStorage();
+                    memoryShardsSelectionMode = false;
+                    clearMemoryShardsSelection();
+                    renderMemoryShardsPage(convId);
+                    showToast('大总结已生成');
+                },
+                (error) => {
+                    console.error('大总结生成出错:', error);
+                    showToast('大总结失败: ' + error);
+                }
+            );
+        }
+
+        function getMemoryShardEntries(filterConvId) {
+            const entries = [];
+            const conversations = Array.isArray(AppState.conversations) ? AppState.conversations : [];
+            const targetId = filterConvId ? String(filterConvId) : '';
+
+            conversations.forEach((conv) => {
+                if (targetId && String(conv.id || '') !== targetId) {
+                    return;
+                }
+                const summaries = Array.isArray(conv.summaries) ? conv.summaries : [];
+                summaries.forEach((summary, index) => {
+                    const content = String(summary.content || '');
+                    const isVideoCall = !!summary.isVideoCall || content.includes('视频通话');
+                    const isOffline = !!summary.isOffline;
+
+                    entries.push({
+                        convId: String(conv.id || ''),
+                        convName: String(conv.remark || conv.name || '未命名'),
+                        summaryIndex: index,
+                        content,
+                        isAutomatic: !!summary.isAutomatic,
+                        isVideoCall,
+                        isOffline,
+                        messageCount: summary.messageCount,
+                        timestamp: summary.timestamp || ''
+                    });
+                });
+            });
+
+            entries.sort((a, b) => {
+                const timeA = new Date(a.timestamp || 0).getTime();
+                const timeB = new Date(b.timestamp || 0).getTime();
+                return timeB - timeA;
+            });
+
+            return entries;
+        }
+
+        function parseMemoryShardSections(content) {
+            const text = String(content || '').replace(/\r\n/g, '\n').trim();
+            if (!text) return null;
+
+            const matches = Array.from(text.matchAll(/【([^】]+)】/g));
+            if (matches.length === 0) return null;
+
+            const sections = {};
+            matches.forEach((match, index) => {
+                const title = String(match[1] || '').trim();
+                const start = match.index + match[0].length;
+                const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
+                const raw = text.slice(start, end).trim();
+                if (title) {
+                    sections[title] = raw;
+                }
+            });
+
+            return sections;
+        }
+
+        function normalizeMemoryShardSections(sectionMap) {
+            if (!sectionMap) return null;
+
+            const normalized = { ...sectionMap };
+            const aliasMap = {
+                '本次总结': '剧情回顾',
+                '本章纪实': '剧情回顾',
+                '约定清单': '约定',
+                '成长轨迹': '成长',
+                '情感羁绊（阶段）': '情感羁绊'
+            };
+
+            Object.keys(aliasMap).forEach((legacyKey) => {
+                const targetKey = aliasMap[legacyKey];
+                if (normalized[legacyKey] && !normalized[targetKey]) {
+                    normalized[targetKey] = normalized[legacyKey];
+                }
+            });
+
+            ['封面', '标题', '章节', '章节名'].forEach((legacyKey) => {
+                if (legacyKey in normalized) {
+                    delete normalized[legacyKey];
+                }
+            });
+
+            return normalized;
+        }
+
+        function hasKnownMemoryShardSections(sectionMap) {
+            if (!sectionMap) return false;
+            const knownKeys = ['剧情回顾', '关键事件', '约定', '纪念日', '成长', '情感羁绊'];
+            return knownKeys.some(key => String(sectionMap[key] || '').trim());
+        }
+
+        function normalizeMemoryShardLines(value) {
+            return String(value || '')
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean)
+                .map(line => line.replace(/^[-•·]\s*/, ''));
+        }
+
+        function renderMemoryShardSectionBody(value, preferList) {
+            const safeValue = String(value || '').trim();
+            if (!safeValue) {
+                return '<div class="memory-shard-section-empty">暂无</div>';
+            }
+
+            if (preferList) {
+                const lines = normalizeMemoryShardLines(safeValue);
+                if (lines.length === 0) {
+                    return '<div class="memory-shard-section-empty">暂无</div>';
+                }
+                const itemsHtml = lines.map(line => `<li>${escapeHtml(line)}</li>`).join('');
+                return `<ul class="memory-shard-section-list">${itemsHtml}</ul>`;
+            }
+
+            const formatted = escapeHtml(safeValue).replace(/\n/g, '<br>');
+            return `<div class="memory-shard-section-text">${formatted}</div>`;
+        }
+
+        function renderMemoryShardSections(sectionMap) {
+            const sectionDefinitions = [
+                { key: '剧情回顾', label: '剧情回顾', className: 'review', list: false },
+                { key: '关键事件', label: '关键事件', className: 'events', list: true },
+                { key: '约定', label: '约定', className: 'promise', list: true },
+                { key: '纪念日', label: '纪念日', className: 'anniversary', list: true },
+                { key: '成长', label: '成长', className: 'growth', list: false },
+                { key: '情感羁绊', label: '情感羁绊', className: 'bond', list: false }
+            ];
+
+            const sectionsHtml = sectionDefinitions.map(section => {
+                let value = sectionMap?.[section.key] || '';
+                if (section.key === '情感羁绊') {
+                    value = String(value || '').replace(/^一句话[:：]/gm, '补充：');
+                }
+                const bodyHtml = renderMemoryShardSectionBody(value, section.list);
+                return `
+                    <section class="memory-shard-section memory-shard-section-${section.className}">
+                        <div class="memory-shard-section-title">${escapeHtml(section.label)}</div>
+                        <div class="memory-shard-section-body">${bodyHtml}</div>
+                    </section>
+                `;
+            }).join('');
+
+            return `<div class="memory-shard-sections">${sectionsHtml}</div>`;
+        }
+
+        function renderMemoryShardsPage(targetConvId) {
+            const page = document.getElementById('memory-shards-page');
+            const list = document.getElementById('memory-shards-list');
+            if (!page || !list) return;
+
+            const previousConvId = memoryShardsActiveConvId;
+            const resolvedConvId = targetConvId !== undefined && targetConvId !== null
+                ? String(targetConvId)
+                : (memoryShardsActiveConvId || AppState.currentChat?.id || '');
+            if (previousConvId && resolvedConvId && previousConvId !== resolvedConvId) {
+                memoryShardsSelectionMode = false;
+                clearMemoryShardsSelection();
+            }
+            memoryShardsActiveConvId = resolvedConvId || null;
+
+            const conv = resolvedConvId
+                ? AppState.conversations.find(c => String(c.id || '') === resolvedConvId)
+                : null;
+
+            if (!conv) {
+                memoryShardsSelectionMode = false;
+                clearMemoryShardsSelection();
+            }
+
+            const heroTitle = page.querySelector('.memory-shards-hero-title');
+            const heroDesc = page.querySelector('.memory-shards-hero-desc');
+            if (heroTitle) {
+                const convName = conv ? String(conv.remark || conv.name || '记忆区') : '记忆区';
+                heroTitle.textContent = conv ? `${convName}的记忆碎片` : '记忆区';
+            }
+            if (heroDesc) {
+                heroDesc.textContent = conv
+                    ? '管理视频聊天、线上聊天、线下功能模块的所有总结'
+                    : '请先打开一个对话查看对应记忆区';
+            }
+
+            updateMemoryShardsToolbar();
+
+            const entries = conv ? getMemoryShardEntries(resolvedConvId) : [];
+            if (entries.length === 0) {
+                memoryShardsSelectionMode = false;
+                clearMemoryShardsSelection();
+                updateMemoryShardsToolbar();
+                list.innerHTML = `
+                    <div class="memory-shards-empty">
+                        <div class="memory-shards-empty-title">暂无记忆区</div>
+                        <div class="memory-shards-empty-desc">生成对话总结后会自动收录在这里</div>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = entries.map((entry) => {
+                const sourceLabel = entry.isVideoCall ? '视频聊天' : (entry.isOffline ? '线下功能' : '线上聊天');
+                const sourceClass = entry.isVideoCall ? 'video' : (entry.isOffline ? 'offline' : 'online');
+                const summaryType = entry.isAutomatic ? '自动总结' : '手动总结';
+                const messageCount = entry.messageCount || '?';
+                const timeText = formatMemoryShardTime(entry.timestamp);
+                const metaText = `${messageCount}楼层     ${timeText}`;
+                const rawSectionMap = parseMemoryShardSections(entry.content);
+                const sectionMap = normalizeMemoryShardSections(rawSectionMap);
+                const sectionsHtml = sectionMap && hasKnownMemoryShardSections(sectionMap)
+                    ? renderMemoryShardSections(sectionMap)
+                    : `<div class="memory-shard-content">${escapeHtml(entry.content)}</div>`;
+
+                const itemKey = getMemoryShardKey(entry.convId, entry.summaryIndex);
+                const isSelected = memoryShardsSelectedKeys.has(itemKey);
+                const selectionHtml = memoryShardsSelectionMode
+                    ? `
+                        <label class="memory-shard-select">
+                            <input class="memory-shard-select-input" type="checkbox" data-memory-select="true" data-conv-id="${escapeHtml(entry.convId)}" data-summary-index="${entry.summaryIndex}" ${isSelected ? 'checked' : ''}>
+                            <span>选择</span>
+                        </label>
+                    `
+                    : '';
+                const collapsedClass = 'is-collapsed';
+                const selectingClass = memoryShardsSelectionMode ? 'is-selecting' : '';
+
+                return `
+                    <article class="memory-shard-item ${collapsedClass} ${selectingClass}" data-collapsed="true" data-conv-id="${escapeHtml(entry.convId)}" data-summary-index="${entry.summaryIndex}">
+                        <div class="memory-shard-item-accent"></div>
+                        <div class="memory-shard-header">
+                            <div class="memory-shard-header-main">
+                                <div class="memory-shard-title-row">
+                                    ${selectionHtml}
+                                    <div class="memory-shard-title">${escapeHtml(entry.convName)}</div>
+                                </div>
+                                <div class="memory-shard-tags">
+                                    <span class="memory-shard-tag memory-shard-tag-${sourceClass}">${escapeHtml(sourceLabel)}</span>
+                                    <span class="memory-shard-tag memory-shard-tag-muted">${escapeHtml(summaryType)}</span>
+                                </div>
+                            </div>
+                            <div class="memory-shard-actions">
+                                <button class="memory-shard-action-btn" type="button" data-memory-action="toggle" aria-expanded="false">展开</button>
+                                <button class="memory-shard-action-btn" type="button" data-memory-action="edit" data-conv-id="${escapeHtml(entry.convId)}" data-summary-index="${entry.summaryIndex}">编辑</button>
+                                <button class="memory-shard-action-btn danger" type="button" data-memory-action="delete" data-conv-id="${escapeHtml(entry.convId)}" data-summary-index="${entry.summaryIndex}">删除</button>
+                            </div>
+                        </div>
+                        <div class="memory-shard-meta">${escapeHtml(metaText)}</div>
+                        <div class="memory-shard-body">
+                            ${sectionsHtml}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function openMemoryShardEditor(convId, summaryIndex) {
+            const conv = AppState.conversations.find(c => String(c.id) === String(convId));
+            if (!conv || !Array.isArray(conv.summaries) || !conv.summaries[summaryIndex]) return;
+
+            const summary = conv.summaries[summaryIndex];
+            let modal = document.getElementById('memory-shards-editor-modal');
+            if (modal) modal.remove();
+
+            modal = document.createElement('div');
+            modal.id = 'memory-shards-editor-modal';
+            modal.className = 'memory-shards-modal show';
+            modal.innerHTML = `
+                <div class="memory-shards-modal-content">
+                    <div class="memory-shards-modal-header">
+                        <div class="memory-shards-modal-title">编辑记忆</div>
+                        <button class="memory-shards-modal-close" type="button" data-memory-action="close">×</button>
+                    </div>
+                    <div class="memory-shards-modal-body">
+                        <textarea class="memory-shards-editor" id="memory-shards-editor-text" placeholder="输入记忆内容...">${escapeHtml(summary.content || '')}</textarea>
+                    </div>
+                    <div class="memory-shards-modal-actions">
+                        <button class="memory-shards-modal-btn" type="button" data-memory-action="cancel">取消</button>
+                        <button class="memory-shards-modal-btn primary" type="button" data-memory-action="save" data-conv-id="${escapeHtml(convId)}" data-summary-index="${summaryIndex}">保存</button>
+                    </div>
+                </div>
+            `;
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            document.body.appendChild(modal);
+            const textarea = modal.querySelector('#memory-shards-editor-text');
+            if (textarea) {
+                textarea.focus();
+            }
+
+            const closeModal = () => {
+                if (modal) modal.remove();
+            };
+
+            const closeBtn = modal.querySelector('[data-memory-action="close"]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+
+            const cancelBtn = modal.querySelector('[data-memory-action="cancel"]');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closeModal);
+            }
+
+            const saveBtn = modal.querySelector('[data-memory-action="save"]');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    const editor = modal.querySelector('#memory-shards-editor-text');
+                    if (editor) {
+                        saveMemoryShardEdit(convId, summaryIndex, editor.value);
+                    }
+                });
+            }
+        }
+
+        function saveMemoryShardEdit(convId, summaryIndex, newContent) {
+            const conv = AppState.conversations.find(c => String(c.id) === String(convId));
+            if (!conv || !Array.isArray(conv.summaries) || !conv.summaries[summaryIndex]) return;
+
+            const content = String(newContent || '').trim();
+            if (!content) {
+                showToast('记忆内容不能为空');
+                return;
+            }
+
+            conv.summaries[summaryIndex].content = content;
+            saveToStorage();
+            renderMemoryShardsPage(convId);
+            showToast('记忆已保存');
+
+            const modal = document.getElementById('memory-shards-editor-modal');
+            if (modal) modal.remove();
+        }
+
+        function deleteMemoryShard(convId, summaryIndex) {
+            openMemoryShardDeleteConfirm(convId, summaryIndex);
+        }
+
+        function openMemoryShardDeleteConfirm(convId, summaryIndex) {
+            let modal = document.getElementById('memory-shards-delete-modal');
+            if (modal) modal.remove();
+
+            modal = document.createElement('div');
+            modal.id = 'memory-shards-delete-modal';
+            modal.className = 'memory-shards-modal show';
+            modal.innerHTML = `
+                <div class="memory-shards-modal-content">
+                    <div class="memory-shards-modal-header">
+                        <div class="memory-shards-modal-title">删除记忆</div>
+                        <button class="memory-shards-modal-close" type="button" aria-label="关闭">×</button>
+                    </div>
+                    <div class="memory-shards-modal-body">
+                        <div class="memory-shards-modal-desc">确定要删除这条记忆区内容吗？</div>
+                    </div>
+                    <div class="memory-shards-modal-actions">
+                        <button class="memory-shards-modal-btn" type="button" data-memory-action="cancel">取消</button>
+                        <button class="memory-shards-modal-btn danger" type="button" data-memory-action="delete">删除</button>
+                    </div>
+                </div>
+            `;
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            const closeBtn = modal.querySelector('.memory-shards-modal-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => modal.remove());
+            }
+
+            const cancelBtn = modal.querySelector('[data-memory-action="cancel"]');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => modal.remove());
+            }
+
+            const deleteBtn = modal.querySelector('[data-memory-action="delete"]');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    performDeleteMemoryShard(convId, summaryIndex);
+                    modal.remove();
+                });
+            }
+
+            document.body.appendChild(modal);
+        }
+
+        function performDeleteMemoryShard(convId, summaryIndex) {
+            const conv = AppState.conversations.find(c => String(c.id) === String(convId));
+            if (!conv || !Array.isArray(conv.summaries)) return;
+
+            conv.summaries.splice(summaryIndex, 1);
+            saveToStorage();
+            memoryShardsSelectionMode = false;
+            clearMemoryShardsSelection();
+            renderMemoryShardsPage(convId);
+            showToast('记忆已删除');
+        }
+
+        function bindMemoryShardsPageEvents() {
+            const page = document.getElementById('memory-shards-page');
+            if (!page || page.dataset.bound === 'true') return;
+
+            page.dataset.bound = 'true';
+
+            page.addEventListener('click', (event) => {
+                const selectBtn = event.target.closest('#memory-shards-select-btn');
+                if (selectBtn) {
+                    setMemoryShardsSelectionMode(!memoryShardsSelectionMode);
+                    return;
+                }
+
+                const mergeBtn = event.target.closest('#memory-shards-merge-btn');
+                if (mergeBtn) {
+                    summarizeSelectedMemoryShards();
+                    return;
+                }
+
+                const refreshBtn = event.target.closest('#memory-shards-refresh-btn');
+                if (refreshBtn) {
+                    renderMemoryShardsPage();
+                    return;
+                }
+
+                const actionBtn = event.target.closest('[data-memory-action]');
+                if (!actionBtn) return;
+
+                const action = actionBtn.dataset.memoryAction;
+                if (action === 'toggle') {
+                    const item = actionBtn.closest('.memory-shard-item');
+                    if (!item) return;
+                    const isCollapsed = item.classList.contains('is-collapsed');
+                    if (isCollapsed) {
+                        item.classList.remove('is-collapsed');
+                        item.dataset.collapsed = 'false';
+                        actionBtn.textContent = '折叠';
+                        actionBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        item.classList.add('is-collapsed');
+                        item.dataset.collapsed = 'true';
+                        actionBtn.textContent = '展开';
+                        actionBtn.setAttribute('aria-expanded', 'false');
+                    }
+                    return;
+                }
+                if (action === 'edit') {
+                    openMemoryShardEditor(actionBtn.dataset.convId, Number(actionBtn.dataset.summaryIndex));
+                    return;
+                }
+                if (action === 'delete') {
+                    deleteMemoryShard(actionBtn.dataset.convId, Number(actionBtn.dataset.summaryIndex));
+                    return;
+                }
+                if (action === 'save') {
+                    const textarea = document.getElementById('memory-shards-editor-text');
+                    if (textarea) {
+                        saveMemoryShardEdit(actionBtn.dataset.convId, Number(actionBtn.dataset.summaryIndex), textarea.value);
+                    }
+                    return;
+                }
+                if (action === 'cancel' || action === 'close') {
+                    const modal = document.getElementById('memory-shards-editor-modal');
+                    if (modal) modal.remove();
+                }
+            });
+
+            page.addEventListener('change', (event) => {
+                const checkbox = event.target.closest('.memory-shard-select-input');
+                if (!checkbox) return;
+
+                const convId = checkbox.dataset.convId;
+                const summaryIndex = Number(checkbox.dataset.summaryIndex);
+                const key = getMemoryShardKey(convId, summaryIndex);
+                if (checkbox.checked) {
+                    memoryShardsSelectedKeys.add(key);
+                } else {
+                    memoryShardsSelectedKeys.delete(key);
+                }
+                updateMemoryShardsToolbar();
+            });
+        }
+
+        function openMemoryShardsPage(convId) {
+            const page = document.getElementById('memory-shards-page');
+            const appContainer = document.getElementById('app-container');
+            if (page && appContainer && page.parentElement === appContainer) {
+                appContainer.appendChild(page);
+            }
+            bindMemoryShardsPageEvents();
+            renderMemoryShardsPage(convId);
+            openSubPage('memory-shards-page');
+        }
+
+        window.openMemoryShardsPage = openMemoryShardsPage;
+        window.renderMemoryShardsPage = renderMemoryShardsPage;
+
         // ======================== 新功能函数 ========================
+
+        function resolveCollectionEmojiUrl(msg) {
+            if (!msg) return '';
+            if (msg.emojiUrl) return String(msg.emojiUrl);
+            if (msg.isEmoji && msg.content && Array.isArray(AppState.emojis)) {
+                const emoji = AppState.emojis.find(e => e.text === msg.content);
+                if (emoji && emoji.url) return String(emoji.url);
+            }
+            return '';
+        }
+
+        function buildCollectionMessageSnapshot(msg) {
+            if (!msg) return null;
+
+            const musicCard = msg.musicCard
+                ? {
+                    name: msg.musicCard.name || '',
+                    artist: msg.musicCard.artist || '',
+                    pic: msg.musicCard.pic || ''
+                }
+                : null;
+
+            const forwardedMoment = msg.forwardedMoment
+                ? {
+                    author: msg.forwardedMoment.author || '',
+                    content: msg.forwardedMoment.content || '',
+                    timestamp: msg.forwardedMoment.timestamp || ''
+                }
+                : null;
+
+            const goodsData = msg.goodsData
+                ? {
+                    name: msg.goodsData.name || '',
+                    price: msg.goodsData.price ?? '',
+                    image: msg.goodsData.image || '',
+                    desc: msg.goodsData.desc || ''
+                }
+                : null;
+
+            const geoMeta = msg.geoMeta && typeof msg.geoMeta === 'object'
+                ? {
+                    lat: msg.geoMeta.lat,
+                    lng: msg.geoMeta.lng,
+                    source: msg.geoMeta.source
+                }
+                : null;
+
+            return {
+                id: msg.id,
+                type: msg.type,
+                sender: msg.sender,
+                content: typeof msg.content === 'string' ? msg.content : '',
+                isImage: !!msg.isImage,
+                imageData: msg.imageData || '',
+                needsVision: !!msg.needsVision,
+                isPhotoDescription: !!msg.isPhotoDescription,
+                photoDescription: msg.photoDescription || '',
+                photoCardImage: msg.photoCardImage || '',
+                emojiUrl: resolveCollectionEmojiUrl(msg),
+                isEmoji: !!msg.isEmoji,
+                musicCard,
+                forwardedMoment,
+                isForward: !!msg.isForward,
+                isForwarded: !!msg.isForwarded,
+                forwardHeaderText: msg.forwardHeaderText || '',
+                duration: msg.duration,
+                locationAddress: msg.locationAddress || '',
+                locationDistance: msg.locationDistance,
+                locationName: msg.locationName || '',
+                geoMeta,
+                callStatus: msg.callStatus,
+                callDuration: msg.callDuration,
+                amount: msg.amount,
+                message: msg.message,
+                status: msg.status,
+                goodsData,
+                songName: msg.songName || '',
+                isInvitationAnswered: msg.isInvitationAnswered,
+                invitationStatus: msg.invitationStatus,
+                isListenTogetherClosed: msg.isListenTogetherClosed,
+                isInvitationToListen: msg.isInvitationToListen
+            };
+        }
+
+        function getCollectionPreviewTextFromMessage(msg) {
+            if (!msg) return '';
+
+            if (msg.emojiUrl || msg.isEmoji) return '[表情包]';
+            if (msg.isImage) return '[图片]';
+            if (msg.isPhotoDescription) return msg.photoDescription || msg.content || '[图片描述]';
+            if (msg.type === 'voice') return msg.content ? `[语音] ${msg.content}` : '[语音]';
+            if (msg.type === 'location') return msg.locationAddress || msg.content || '[位置]';
+            if (msg.type === 'voicecall') return '[语音通话]';
+            if (msg.type === 'videocall') return '[视频通话]';
+            if (msg.type === 'redenvelope') return '[红包]';
+            if (msg.type === 'transfer') return '[转账]';
+            if (msg.type === 'goods_card') return msg.goodsData?.name ? `[商品] ${msg.goodsData.name}` : '[商品]';
+            if (msg.type === 'listen_invite') return msg.songName ? `[一起听] ${msg.songName}` : '[一起听]';
+            if (msg.musicCard) return msg.musicCard.name ? `[音乐] ${msg.musicCard.name}` : '[音乐]';
+            if (msg.isForward && msg.forwardedMoment) return '[朋友圈]';
+
+            return typeof msg.content === 'string' ? msg.content : '';
+        }
+
+        function resolveCollectionPreviewMessage(item) {
+            if (!item) return null;
+            return findCollectionSourceMessage(item) || item.messageSnapshot || null;
+        }
+
+        function buildCollectionMessagePreviewHtml(msg) {
+            if (!msg) return '';
+
+            const safe = escapeCollectionHtml;
+            const isSent = isCollectionSentMessage(msg);
+            const directionClass = isSent ? 'sent' : 'received';
+            const wrap = (inner) => `<div class="collection-preview ${directionClass}">${inner}</div>`;
+
+            if (msg.isPhotoDescription) {
+                const photoDesc = safe(msg.photoDescription || msg.content || '');
+                const defaultPhotoCardImage = (typeof window !== 'undefined' && window.PHOTO_DESCRIPTION_CARD_IMAGE)
+                    ? window.PHOTO_DESCRIPTION_CARD_IMAGE
+                    : 'https://img.heliar.top/file/1773290751509_IMG_20260312_124453.jpg';
+                const photoCardImage = safe(msg.photoCardImage || defaultPhotoCardImage);
+                const photoHtml = `
+                    <div class="photo-description-card" style="
+                        width: 142px;
+                        max-width: 142px;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        border: 1px solid #f0d6e1;
+                        background: #fffdfd;
+                        box-shadow: 0 4px 11px rgba(206, 120, 151, 0.24);
+                    ">
+                        <div style="width:100%;height:110px;overflow:hidden;">
+                            <img src="${photoCardImage}" alt="图片描述卡片" style="width:100%;height:100%;object-fit:cover;display:block;">
+                        </div>
+                        <div style="padding:6px 8px 8px;font-size:11px;color:#6a3c4d;line-height:1.4;word-break:break-word;">
+                            <div style="font-size:10px;color:#ac7086;font-weight:600;margin-bottom:4px;">图片描述</div>
+                            ${photoDesc || '（无描述）'}
+                        </div>
+                    </div>
+                `;
+                return wrap(photoHtml);
+            }
+
+            if (msg.isForward && msg.forwardedMoment) {
+                const forwarded = msg.forwardedMoment;
+                const momentAuthor = safe(forwarded.author || '用户');
+                const momentContent = safe(String(forwarded.content || '').trim()).split('\n').map(line => line.trim()).join('\n');
+                const momentDate = forwarded.timestamp
+                    ? new Date(forwarded.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit' })
+                    : '';
+                const forwardHtml = `
+                    <div class="forward-moment-card">
+                        <div class="forward-moment-header">
+                            <div class="forward-moment-title">
+                                <div class="forward-moment-icon"></div>
+                                <span class="forward-moment-label">朋友圈</span>
+                            </div>
+                            <div class="forward-moment-arrow"></div>
+                        </div>
+                        <div class="forward-moment-content">
+                            <div class="forward-moment-meta">
+                                <div class="forward-moment-author">${momentAuthor}</div>
+                                <div class="forward-moment-date">${momentDate}</div>
+                            </div>
+                            <div class="forward-moment-text">
+                                ${momentContent.length > 150 ? momentContent.substring(0, 150) + '...' : momentContent}
+                            </div>
+                            <div class="forward-moment-divider"></div>
+                            <div class="forward-moment-footer">转发自朋友圈</div>
+                        </div>
+                    </div>
+                `;
+                return wrap(forwardHtml);
+            }
+
+            if (msg.musicCard) {
+                const mc = msg.musicCard;
+                const musicHtml = `
+                    <div class="music-share-card" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,0,0,0.03);border-radius:10px;min-width:200px;max-width:260px;">
+                        <img src="${safe(mc.pic || '')}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;background:#eee;" onerror="this.style.background='#ddd'">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safe(mc.name || '')}</div>
+                            <div style="font-size:12px;color:#999;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safe(mc.artist || '')}</div>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="#ec4141"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                    </div>
+                `;
+                return wrap(musicHtml);
+            }
+
+            if (msg.isImage && msg.imageData) {
+                const imageHtml = `<img class="collection-preview-image" src="${safe(msg.imageData)}" alt="图片">`;
+                return wrap(imageHtml);
+            }
+
+            const emojiUrl = resolveCollectionEmojiUrl(msg);
+            if (emojiUrl) {
+                const emojiHtml = `<img class="collection-preview-emoji" src="${safe(emojiUrl)}" alt="表情">`;
+                return wrap(emojiHtml);
+            }
+
+            if (msg.type === 'voice') {
+                const duration = Math.max(1, parseInt(msg.duration, 10) || 1);
+                const voiceHtml = `
+                    <div class="voice-bubble">
+                        <div class="voice-waveform">
+                            <span class="wave"></span>
+                            <span class="wave"></span>
+                            <span class="wave"></span>
+                            <span class="wave"></span>
+                        </div>
+                        <div class="voice-duration">${duration}秒</div>
+                    </div>
+                `;
+                return wrap(voiceHtml);
+            }
+
+            if (msg.type === 'location') {
+                const rawLocationAddress = String(msg.locationAddress || msg.locationName || '').trim();
+                const locationAddress = safe(rawLocationAddress || '未填写详细地址');
+                const locationDistanceKm = normalizeMessageDistanceKm(msg.locationDistance, msg.locationDistanceUnit, 1);
+                const locationDistanceLabel = formatLocationDistanceKm(locationDistanceKm);
+                const geoMeta = msg.geoMeta && typeof msg.geoMeta === 'object' ? msg.geoMeta : null;
+                const geoLat = geoMeta ? Number(geoMeta.lat) : NaN;
+                const geoLng = geoMeta ? Number(geoMeta.lng) : NaN;
+                const locationMeta = (Number.isFinite(geoLat) && Number.isFinite(geoLng))
+                    ? `真实定位 · ${geoLat.toFixed(4)}, ${geoLng.toFixed(4)}`
+                    : '位置分享';
+                const locationHtml = `
+                    <div class="location-bubble">
+                        <div class="location-map-preview">
+                            <span class="location-map-pin"></span>
+                        </div>
+                        <div class="location-card-body">
+                            <div class="location-card-row">
+                                <div class="location-card-title">地理位置</div>
+                                <div class="location-card-distance">约${locationDistanceLabel}km</div>
+                            </div>
+                            <div class="location-card-address">${locationAddress}</div>
+                            <div class="location-card-meta">${safe(locationMeta)}</div>
+                        </div>
+                    </div>
+                `;
+                return wrap(locationHtml);
+            }
+
+            if (msg.type === 'voicecall' || msg.type === 'videocall') {
+                const isVideo = msg.type === 'videocall';
+                const callStatus = msg.callStatus || 'calling';
+                const callDuration = msg.callDuration || 0;
+
+                const formatDuration = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                };
+
+                let statusText = '';
+                let statusIcon = '';
+                let durationText = '';
+
+                if (callStatus === 'calling') {
+                    statusText = isVideo ? '视频通话中' : '语音通话中';
+                    statusIcon = isVideo
+                        ? `<div class="videocall-icon calling-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/>
+                            </svg>
+                        </div>`
+                        : `<div class="voicecall-icon calling-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="currentColor"/>
+                            </svg>
+                        </div>`;
+                } else if (callStatus === 'cancelled') {
+                    statusText = '已取消';
+                    statusIcon = `<div class="${isVideo ? 'videocall' : 'voicecall'}-icon cancelled-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" fill="currentColor"/>
+                        </svg>
+                    </div>`;
+                } else if (callStatus === 'ended') {
+                    durationText = callDuration > 0 ? formatDuration(callDuration) : '';
+                    statusText = durationText ? `已挂断，${durationText}` : '已挂断';
+                    statusIcon = isVideo
+                        ? `<div class="videocall-icon ended-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/>
+                            </svg>
+                        </div>`
+                        : `<div class="voicecall-icon ended-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z" fill="currentColor"/>
+                            </svg>
+                        </div>`;
+                }
+
+                const callHtml = isVideo
+                    ? `<div class="videocall-bubble ${callStatus}">
+                            ${statusIcon}
+                            <div class="videocall-info">
+                                <div class="videocall-title">视频通话</div>
+                                <div class="videocall-status">${safe(statusText)}${durationText ? ' ' + durationText : ''}</div>
+                            </div>
+                        </div>`
+                    : `<div class="voicecall-bubble ${callStatus}">
+                            ${statusIcon}
+                            <div class="voicecall-info">
+                                <div class="voicecall-title">语音通话</div>
+                                <div class="voicecall-status">${safe(statusText)}${durationText ? ' ' + durationText : ''}</div>
+                            </div>
+                        </div>`;
+
+                return wrap(callHtml);
+            }
+
+            if (msg.type === 'redenvelope') {
+                const status = msg.status || 'pending';
+                const statusText = status === 'received' ? '已领取' : (status === 'returned' ? '已退还' : '等待领取');
+                const titleText = safe(msg.message || '恭喜发财，大吉大利');
+                const envelopeHtml = `
+                    <div class="red-envelope-card ${status}">
+                        <div class="red-envelope-card-header">
+                            <div class="red-envelope-card-icon"></div>
+                            <div class="red-envelope-card-text">
+                                <div class="red-envelope-card-title">${titleText}</div>
+                            </div>
+                        </div>
+                        <div class="red-envelope-card-divider"></div>
+                        <div class="red-envelope-card-subtitle">${statusText}</div>
+                    </div>
+                `;
+                return wrap(envelopeHtml);
+            }
+
+            if (msg.type === 'transfer') {
+                const status = msg.status || 'pending';
+                const descText = status === 'received'
+                    ? '已被对方领取'
+                    : (status === 'returned' ? '转账已退还' : (isSent ? '你发起了一笔转账' : '收到一笔转账'));
+                const amountText = typeof msg.amount === 'number' ? msg.amount.toFixed(2) : safe(msg.amount || '0');
+                const transferHtml = `
+                    <div class="transfer-card ${status}">
+                        <div class="transfer-card-header">
+                            <div class="transfer-card-icon"></div>
+                            <div class="transfer-card-info">
+                                <div class="transfer-card-title">¥${amountText}</div>
+                                <div class="transfer-card-note">${safe(descText)}</div>
+                            </div>
+                        </div>
+                        <div class="transfer-card-divider"></div>
+                        <div class="transfer-card-status">转账</div>
+                    </div>
+                `;
+                return wrap(transferHtml);
+            }
+
+            if (msg.type === 'goods_card' && msg.goodsData) {
+                const goods = msg.goodsData;
+                const goodsName = safe(goods.name || '商品');
+                const goodsPrice = safe(goods.price ?? '0');
+                const goodsImage = safe(goods.image || '');
+                const goodsDesc = safe(String(goods.desc || '')).substring(0, 60);
+                const goodsHtml = `
+                    <div class="goods-card-message" style="
+                        background: #fff;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        max-width: 260px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    ">
+                        <div style="width: 100%; height: 180px; background: #f5f5f5; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <img src="${goodsImage}" alt="${goodsName}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div style="padding: 12px;">
+                            <div style="font-size: 14px; color: #333; font-weight: 500; margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${goodsName}</div>
+                            <div style="font-size: 11px; color: #999; margin-bottom: 8px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${goodsDesc}</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="font-size: 18px; color: #ff4400; font-weight: bold;">¥${goodsPrice}</div>
+                                <div style="font-size: 11px; color: #999; background: #f5f5f5; padding: 3px 8px; border-radius: 3px;">淘宝商品</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return wrap(goodsHtml);
+            }
+
+            if (msg.type === 'listen_invite') {
+                let responseStatus = null;
+                if (msg.isListenTogetherClosed) {
+                    responseStatus = 'closed';
+                } else if (msg.isInvitationAnswered) {
+                    responseStatus = msg.invitationStatus || null;
+                }
+
+                let statusText = '等待回应...';
+                if (responseStatus === 'closed') statusText = '已关闭';
+                if (responseStatus === 'accepted') statusText = '已同意';
+                if (responseStatus === 'rejected') statusText = '已拒绝';
+
+                const statusClassMap = {
+                    accepted: 'is-accepted',
+                    rejected: 'is-rejected',
+                    closed: 'is-closed'
+                };
+                const statusClass = statusClassMap[responseStatus] || 'is-pending';
+                const inviteRoleClass = isSent ? 'is-sent' : 'is-received';
+                const songName = safe(msg.songName || '正在听音乐');
+
+                const inviteHtml = `
+                    <div class="listen-invite-card ${inviteRoleClass}">
+                        <div class="listen-invite-topline">
+                            <span class="listen-invite-meta">${isSent ? '你发出的邀请' : 'TA 发来的邀请'}</span>
+                        </div>
+                        <div class="listen-invite-main">
+                            <div class="listen-invite-icon-wrap">
+                                <span class="listen-invite-icon">♫</span>
+                            </div>
+                            <div class="listen-invite-copy">
+                                <div class="listen-invite-title">${isSent ? '邀请加入一起听' : '要一起来听音乐吗'}</div>
+                                <div class="listen-invite-song">${songName}</div>
+                            </div>
+                        </div>
+                        <div class="listen-invite-divider"></div>
+                        <div class="listen-invite-status-chip ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+                return wrap(inviteHtml);
+            }
+
+            return '';
+        }
 
         // 添加消息到收藏
         function addMessageToCollection(messageId) {
@@ -11792,11 +13228,16 @@
                 ? (conv.avatar || '')
                 : (isSentMessage ? (conv.userAvatar || AppState.user?.avatar || '') : (conv.avatar || ''));
 
+            const messageSnapshot = buildCollectionMessageSnapshot(msg);
+            const previewText = getCollectionPreviewTextFromMessage(messageSnapshot || msg);
+
             const collectionItem = {
                 id: 'col_' + Date.now(),
                 convId: convId,
                 messageId: messageId,
-                messageContent: msg.content || msg.text || '',
+                messageContent: previewText || msg.content || msg.text || '',
+                messageType: msg.type || '',
+                messageSnapshot: messageSnapshot,
                 senderName: senderName,
                 senderAvatar: senderAvatar,
                 senderType: isSentMessage ? 'sent' : 'received',
@@ -11945,8 +13386,14 @@
                 const displayMeta = resolveCollectionDisplayMeta(item);
                 const senderName = String(displayMeta.displayName || '未命名').trim() || '未命名';
                 const senderAvatar = String(displayMeta.avatarUrl || '').trim();
-                const messageText = String(item.messageContent || '').trim() || '（空消息）';
+                const previewSource = resolveCollectionPreviewMessage(item);
+                const rawText = previewSource
+                    ? getCollectionPreviewTextFromMessage(previewSource)
+                    : String(item.messageContent || '').trim();
+                const messageText = rawText || '（空消息）';
                 const previewText = messageText.length > 150 ? `${messageText.slice(0, 150)}...` : messageText;
+                const previewHtml = previewSource ? buildCollectionMessagePreviewHtml(previewSource) : '';
+                const messageHtml = previewHtml || escapeCollectionHtml(previewText);
                 const collectionId = String(item.id || '');
 
                 return `
@@ -11962,7 +13409,7 @@
                                         <div class="collection-sender">${escapeCollectionHtml(senderName)}</div>
                                     </div>
                                 </div>
-                                <div class="collection-message">${escapeCollectionHtml(previewText)}</div>
+                                <div class="collection-message">${messageHtml}</div>
                                 ${item.originalMessageTime ? `
                                     <div class="collection-origin-time">原消息时间: ${escapeCollectionHtml(formatCollectionTime(item.originalMessageTime, true))}</div>
                                 ` : ''}

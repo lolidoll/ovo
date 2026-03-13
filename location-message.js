@@ -33,7 +33,7 @@ window.LocationMessageModule = (function() {
         const addressInput = modal.querySelector('#location-address-input');
         const distanceInput = modal.querySelector('#location-distance-input');
         if (addressInput) addressInput.value = '';
-        if (distanceInput) distanceInput.value = '10';
+        if (distanceInput) distanceInput.value = '1';
 
         delete modal.dataset.geoLat;
         delete modal.dataset.geoLng;
@@ -68,9 +68,9 @@ window.LocationMessageModule = (function() {
                         <textarea class="location-address-input" id="location-address-input" placeholder="例如：上海市浦东新区世纪大道100号" rows="3"></textarea>
                     </div>
                     <div class="location-form-group">
-                        <label class="location-label">距离范围 (米)</label>
-                        <input class="location-input" id="location-distance-input" type="number" placeholder="例如：120" value="10" min="1" max="99999" />
-                        <div class="location-distance-tip">提示：填写你距离该地址的大致距离</div>
+                        <label class="location-label">距离 (km)</label>
+                        <input class="location-input" id="location-distance-input" type="number" placeholder="例如：1.5" value="1" min="0.01" max="9999" step="0.01" />
+                        <div class="location-distance-tip">提示：填写你与TA之间的大致距离</div>
                     </div>
                     <div class="location-geolocate-row">
                         <button class="location-geolocate-btn" type="button">获取真实定位（可选）</button>
@@ -129,9 +129,10 @@ window.LocationMessageModule = (function() {
     }
 
     function normalizeDistance(value) {
-        const parsed = parseInt(value, 10);
-        if (!Number.isFinite(parsed) || parsed <= 0) return 10;
-        return Math.min(parsed, 99999);
+        const parsed = parseFloat(value);
+        if (!Number.isFinite(parsed) || parsed <= 0) return 1;
+        const clamped = Math.min(Math.max(parsed, 0.01), 9999);
+        return Math.round(clamped * 100) / 100;
     }
 
     async function requestRealLocation() {
@@ -226,6 +227,7 @@ window.LocationMessageModule = (function() {
         const locationDistanceInput = document.getElementById('location-distance-input');
         const locationAddress = locationAddressInput ? locationAddressInput.value.trim() : '';
         const locationDistance = normalizeDistance(locationDistanceInput ? locationDistanceInput.value : '');
+        const locationDistanceText = String(locationDistance);
 
         if (!locationAddress) {
             notify('请输入详细地址');
@@ -256,10 +258,11 @@ window.LocationMessageModule = (function() {
             id: generateMessageId(),
             conversationId: convId,
             type: 'location',
-            content: `${locationAddress} (${locationDistance}米范围)`,
+            content: `${locationAddress} (${locationDistanceText}km)`,
             locationName: '',
             locationAddress: locationAddress,
             locationDistance: locationDistance,
+            locationDistanceUnit: 'km',
             sender: 'sent',
             time: nowIso,
             timestamp: nowIso
@@ -272,6 +275,7 @@ window.LocationMessageModule = (function() {
             locationName: '',
             locationAddress: locationAddress,
             locationDistance: locationDistance,
+            locationDistanceUnit: 'km',
             geoMeta: geoMeta || null,
             type: 'location'
         });
@@ -303,20 +307,22 @@ window.LocationMessageModule = (function() {
         closeLocationModal();
     }
 
-    function sendAILocationMessage(conversationId, locationName, locationAddress = '', locationDistance = 10) {
+    function sendAILocationMessage(conversationId, locationName, locationAddress = '', locationDistance = 1) {
         const normalizedAddress = String(locationAddress || locationName || '').trim();
         if (!normalizedAddress) return;
 
         const normalizedDistance = normalizeDistance(locationDistance);
+        const normalizedDistanceText = String(normalizedDistance);
         const nowIso = new Date().toISOString();
         const locationMsg = {
             id: generateMessageId(),
             conversationId: conversationId,
             type: 'location',
-            content: `${normalizedAddress} (${normalizedDistance}米范围)`,
+            content: `${normalizedAddress} (${normalizedDistanceText}km)`,
             locationName: locationName || '',
             locationAddress: normalizedAddress,
             locationDistance: normalizedDistance,
+            locationDistanceUnit: 'km',
             sender: 'received',
             time: nowIso,
             timestamp: nowIso
@@ -326,6 +332,7 @@ window.LocationMessageModule = (function() {
             locationName: locationName || '',
             locationAddress: normalizedAddress,
             locationDistance: normalizedDistance,
+            locationDistanceUnit: 'km',
             type: 'location'
         });
 

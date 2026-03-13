@@ -527,7 +527,12 @@
         setTimeout(() => {
             if (window.AppState) {
                 // 设置当前对话
-                window.AppState.currentChat = convId;
+                const conv = window.AppState.conversations?.find(c => c.id === convId) || null;
+                if (conv) {
+                    window.AppState.currentChat = conv;
+                } else {
+                    console.warn('⚠️ 未找到对话对象，无法设置currentChat:', convId);
+                }
                 
                 // 尝试多种渲染方法，确保消息显示
                 if (window.renderConversation) {

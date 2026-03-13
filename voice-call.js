@@ -2112,12 +2112,19 @@ ${initiatorInfo}
             callText += `${speaker}: ${msg.content}\n`;
         });
         
+        const summaryInput = typeof window.buildSummaryInput === 'function'
+            ? window.buildSummaryInput(callText, {
+                conv: currentConv,
+                modeLabel: '语音聊天'
+            })
+            : callText;
+
         console.log('[VoiceCall] 通话文本长度:', callText.length);
         
         // 调用副API进行总结
         if (window.summarizeTextViaSecondaryAPI) {
             window.summarizeTextViaSecondaryAPI(
-                callText,
+                summaryInput,
                 (summary) => {
                     console.log('[VoiceCall] 通话总结成功');
                     

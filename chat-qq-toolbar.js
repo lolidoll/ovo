@@ -38,6 +38,9 @@
 
         // 初始化"线下"按钮
         initOfflineButton();
+
+        // 初始化"记忆区"按钮
+        initMemoryAreaButton();
     }
     
     /**
@@ -409,6 +412,20 @@
 
         console.log('✅ 线下按钮已初始化');
     }
+
+    /**
+     * 初始化"记忆区"按钮
+     */
+    function initMemoryAreaButton() {
+        const btnMemoryArea = document.getElementById('btn-memory-area');
+        if (!btnMemoryArea) return;
+
+        btnMemoryArea.addEventListener('click', function() {
+            handleMemoryShards();
+        });
+
+        console.log('✅ 记忆区按钮已初始化');
+    }
     
     // ==================== 按钮功能处理函数 ====================
     
@@ -552,6 +569,20 @@
     
     function handleMemo() {
         showToast('备忘录功能尚未实现');
+    }
+
+    function handleMemoryShards() {
+        const currentChat = window.AppState?.currentChat || null;
+        if (!currentChat) {
+            showToast('请先打开一个对话');
+            return;
+        }
+
+        if (typeof window.openMemoryShardsPage === 'function') {
+            window.openMemoryShardsPage(currentChat.id);
+        } else {
+            showToast('记忆区页面加载中');
+        }
     }
     
     function handleFrog() {

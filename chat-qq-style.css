@@ -517,6 +517,10 @@
     position: relative;
 }
 
+html.is-android .quote-message-bar-container {
+    z-index: 260;
+}
+
 .quote-message-bar-container[style*="display: block"],
 .quote-message-bar-container[style*="display:block"] {
     display: flex !important;
