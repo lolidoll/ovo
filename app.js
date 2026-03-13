@@ -667,11 +667,34 @@
                 }
             }, { capture: true });
 
-            // 添加按钮
-            document.getElementById('add-btn').addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleAddPopup();
-            });
+            // 添加按钮（iOS 普通浏览器 touchend 兜底，避免 click 被吞）
+            const addBtn = document.getElementById('add-btn');
+            if (addBtn) {
+                const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                let addBtnTapLockUntil = 0;
+
+                const handleAddBtnTap = function(e) {
+                    if (e) {
+                        e.stopPropagation();
+                    }
+                    const now = Date.now();
+                    if (now < addBtnTapLockUntil) {
+                        return;
+                    }
+                    addBtnTapLockUntil = now + 320;
+                    toggleAddPopup();
+                };
+
+                addBtn.addEventListener('click', handleAddBtnTap);
+
+                if (isIOSDevice) {
+                    addBtn.style.touchAction = 'manipulation';
+                    addBtn.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        handleAddBtnTap(e);
+                    }, { passive: false });
+                }
+            }
 
             // 点击其他地方关闭弹窗
             document.addEventListener('click', function(e) {
@@ -12077,7 +12100,7 @@
                 
                 <style>
                     #decoration-main-page .decoration-tab-main-content {
-                        padding: 10px 10px calc(88px + env(safe-area-inset-bottom));
+                        padding: 10px 10px calc(88px + var(--safe-area-inset-bottom));
                         overflow-y: auto;
                         background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 58%, #fffdfd 100%);
                     }
@@ -12589,7 +12612,7 @@
 
                     @media (max-width: 480px) {
                         #decoration-main-page .decoration-tab-main-content {
-                            padding: 8px 8px calc(82px + env(safe-area-inset-bottom));
+                            padding: 8px 8px calc(82px + var(--safe-area-inset-bottom));
                         }
 
                         #decoration-main-page .decoration-card {

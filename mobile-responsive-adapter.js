@@ -473,8 +473,8 @@ const MobileResponsiveAdapter = {
                 .is-standalone .chat-input-area,
                 .is-pwa .chat-toolbar,
                 .is-standalone .chat-toolbar {
-                    padding-left: max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left));
-                    padding-right: max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right));
+                    padding-left: max(var(--safe-area-inset-left, 0px), 0px);
+                    padding-right: max(var(--safe-area-inset-right, 0px), 0px);
                 }
             }
         `;

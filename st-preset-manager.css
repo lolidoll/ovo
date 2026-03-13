@@ -16,12 +16,16 @@
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
     /* iOS 安全区域适配 */
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: var(--safe-area-inset-top);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+    padding-bottom: var(--safe-area-inset-bottom);
 }
-.st-preset-page.show { opacity: 1; visibility: visible; }
+
+.st-preset-page.show {
+    opacity: 1;
+    visibility: visible;
+}
 
 /* 顶部导航栏 - 毛玻璃 */
 .st-preset-nav {
@@ -39,14 +43,22 @@
 }
 
 .st-preset-back {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #1c1c1e;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #1c1c1e;
     margin-left: -8px;
     border-radius: 22px;
     transition: background 0.2s;
 }
-.st-preset-back:active { background: rgba(0, 0, 0, 0.04); }
+
+.st-preset-back:active {
+    background: rgba(0, 0, 0, 0.04);
+}
+
 .st-preset-title {
     font-size: 17px;
     font-weight: 600;
@@ -68,7 +80,7 @@
     -webkit-backdrop-filter: saturate(120%) blur(20px);
     margin: 8px;
     border-radius: 14px;
-    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
     overflow-x: auto;
     flex-shrink: 0;
 }
@@ -87,6 +99,7 @@
         min-height: fit-content;
     }
 }
+
 .st-preset-select {
     flex: 1 1 auto;
     min-width: 60px;
@@ -102,7 +115,11 @@
     appearance: none;
     transition: background 0.2s;
 }
-.st-preset-select:focus { background: rgba(120, 120, 128, 0.1); }
+
+.st-preset-select:focus {
+    background: rgba(120, 120, 128, 0.1);
+}
+
 .st-preset-name-input {
     flex: 1 1 auto;
     min-width: 50px;
@@ -116,7 +133,12 @@
     font-weight: 500;
     transition: background 0.2s;
 }
-.st-preset-name-input:focus { outline: none; background: rgba(120, 120, 128, 0.1); }
+
+.st-preset-name-input:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.1);
+}
+
 .st-preset-btn {
     flex: 1 1 auto;
     min-width: 45px;
@@ -133,15 +155,27 @@
     transition: all 0.2s;
     white-space: nowrap;
 }
-.st-preset-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.7); }
-.st-preset-btn.primary { 
+
+.st-preset-btn:active {
+    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.st-preset-btn.primary {
     background: #1c1c1e;
     color: #fff;
     border: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
-.st-preset-btn.primary:active { transform: scale(0.97); opacity: 0.85; }
-.st-preset-btn.danger { color: #8e8e93; }
+
+.st-preset-btn.primary:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+}
+
+.st-preset-btn.danger {
+    color: #8e8e93;
+}
 
 /* 内容滚动区 */
 .st-content-scroll {
@@ -156,6 +190,7 @@
     padding: 0 16px;
     min-height: 100px;
 }
+
 .st-prompt-item {
     background: rgba(255, 255, 255, 0.45);
     backdrop-filter: saturate(120%) blur(20px);
@@ -163,11 +198,19 @@
     border-radius: 14px;
     margin-bottom: 10px;
     overflow: hidden;
-    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
     transition: transform 0.2s, box-shadow 0.2s;
 }
-.st-prompt-item:active { transform: scale(0.99); }
-.st-prompt-item.dragging { opacity: 0.6; transform: scale(1.02); box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+
+.st-prompt-item:active {
+    transform: scale(0.99);
+}
+
+.st-prompt-item.dragging {
+    opacity: 0.6;
+    transform: scale(1.02);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
 
 /* 提示词头部 */
 .st-prompt-header {
@@ -177,14 +220,17 @@
     gap: 12px;
     background: transparent;
 }
+
 .st-prompt-drag {
     color: #c7c7cc;
     font-size: 16px;
     cursor: grab;
     opacity: 0.5;
 }
+
 .st-prompt-toggle {
-    width: 51px; height: 31px;
+    width: 51px;
+    height: 31px;
     background: rgba(120, 120, 128, 0.16);
     border-radius: 16px;
     position: relative;
@@ -192,18 +238,28 @@
     transition: background 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     flex-shrink: 0;
 }
-.st-prompt-toggle.on { background: #1c1c1e; }
+
+.st-prompt-toggle.on {
+    background: #1c1c1e;
+}
+
 .st-prompt-toggle::after {
     content: '';
     position: absolute;
-    width: 27px; height: 27px;
+    width: 27px;
+    height: 27px;
     background: #fff;
     border-radius: 50%;
-    top: 2px; left: 2px;
+    top: 2px;
+    left: 2px;
     transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
 }
-.st-prompt-toggle.on::after { transform: translateX(20px); }
+
+.st-prompt-toggle.on::after {
+    transform: translateX(20px);
+}
+
 .st-prompt-name {
     flex: 1;
     min-width: 60px;
@@ -214,8 +270,13 @@
     font-weight: 600;
     letter-spacing: -0.01em;
 }
-.st-prompt-name:focus { outline: none; }
-.st-prompt-role, .st-prompt-position {
+
+.st-prompt-name:focus {
+    outline: none;
+}
+
+.st-prompt-role,
+.st-prompt-position {
     padding: 7px 12px;
     background: rgba(120, 120, 128, 0.06);
     border: 0.33px solid rgba(60, 60, 67, 0.08);
@@ -226,6 +287,7 @@
     -webkit-appearance: none;
     appearance: none;
 }
+
 .st-prompt-depth {
     display: flex;
     align-items: center;
@@ -234,6 +296,7 @@
     color: #8e8e93;
     font-weight: 500;
 }
+
 .st-prompt-depth input {
     width: 48px;
     padding: 7px 8px;
@@ -245,6 +308,7 @@
     font-size: 13px;
     font-weight: 600;
 }
+
 .st-prompt-tokens {
     font-size: 12px;
     color: #8e8e93;
@@ -253,6 +317,7 @@
     font-weight: 500;
     font-variant-numeric: tabular-nums;
 }
+
 .st-prompt-pos {
     font-size: 11px;
     color: #636366;
@@ -262,6 +327,7 @@
     font-weight: 500;
     white-space: nowrap;
 }
+
 .st-prompt-sys-tag {
     font-size: 10px;
     color: #8e8e93;
@@ -271,9 +337,14 @@
     font-weight: 600;
     letter-spacing: 0.5px;
 }
-.st-prompt-collapse, .st-prompt-delete {
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
+
+.st-prompt-collapse,
+.st-prompt-delete {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: transparent;
     border: none;
     color: #8e8e93;
@@ -282,15 +353,26 @@
     border-radius: 8px;
     transition: background 0.15s;
 }
-.st-prompt-delete { color: #aeaeb2; }
-.st-prompt-collapse:active, .st-prompt-delete:active { background: rgba(0, 0, 0, 0.04); }
+
+.st-prompt-delete {
+    color: #aeaeb2;
+}
+
+.st-prompt-collapse:active,
+.st-prompt-delete:active {
+    background: rgba(0, 0, 0, 0.04);
+}
 
 /* 提示词内容 */
 .st-prompt-body {
     padding: 0 16px 16px;
     background: transparent;
 }
-.st-prompt-trigger { margin-bottom: 10px; }
+
+.st-prompt-trigger {
+    margin-bottom: 10px;
+}
+
 .st-prompt-trigger-input {
     width: 100%;
     padding: 12px 14px;
@@ -303,8 +385,17 @@
     box-sizing: border-box;
     transition: background 0.2s, border-color 0.2s;
 }
-.st-prompt-trigger-input:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
-.st-prompt-trigger-input::placeholder { color: #8e8e93; }
+
+.st-prompt-trigger-input:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.st-prompt-trigger-input::placeholder {
+    color: #8e8e93;
+}
+
 .st-prompt-content {
     width: 100%;
     min-height: 120px;
@@ -320,7 +411,12 @@
     box-sizing: border-box;
     transition: background 0.2s, border-color 0.2s;
 }
-.st-prompt-content:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
+
+.st-prompt-content:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
 
 /* 添加按钮 */
 .st-add-prompt {
@@ -340,7 +436,11 @@
     font-weight: 600;
     transition: all 0.2s;
 }
-.st-add-prompt:active { background: rgba(0, 0, 0, 0.03); transform: scale(0.98); }
+
+.st-add-prompt:active {
+    background: rgba(0, 0, 0, 0.03);
+    transform: scale(0.98);
+}
 
 /* 宏提示 - 已删除内容，保留样式以防万一 */
 .st-macro-hint {
@@ -352,13 +452,18 @@
     display: flex;
     gap: 10px;
     padding: 14px 20px;
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    padding-bottom: max(14px, var(--safe-area-inset-bottom));
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 0.33px solid rgba(0, 0, 0, 0.06);
 }
-.st-preset-footer .st-preset-btn { flex: 1; text-align: center; padding: 14px; }
+
+.st-preset-footer .st-preset-btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px;
+}
 
 /* 导入模态框 */
 .st-import-modal {
@@ -372,7 +477,11 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
-.st-import-modal.show { display: flex; }
+
+.st-import-modal.show {
+    display: flex;
+}
+
 .st-import-box {
     width: 100%;
     max-width: 500px;
@@ -381,9 +490,10 @@
     -webkit-backdrop-filter: saturate(180%) blur(30px);
     border-radius: 20px 20px 0 0;
     padding: 24px 20px;
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
-    box-shadow: 0 -2px 20px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    padding-bottom: max(24px, var(--safe-area-inset-bottom));
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
 }
+
 .st-import-title {
     font-size: 17px;
     font-weight: 600;
@@ -392,6 +502,7 @@
     text-align: center;
     letter-spacing: -0.02em;
 }
+
 .st-import-textarea {
     width: 100%;
     height: 200px;
@@ -406,13 +517,24 @@
     box-sizing: border-box;
     line-height: 1.5;
 }
-.st-import-textarea:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
+
+.st-import-textarea:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
 .st-import-actions {
     display: flex;
     gap: 10px;
     margin-top: 20px;
 }
-.st-import-actions .st-preset-btn { flex: 1; padding: 16px; font-size: 16px; }
+
+.st-import-actions .st-preset-btn {
+    flex: 1;
+    padding: 16px;
+    font-size: 16px;
+}
 
 /* 编辑弹窗 */
 .st-edit-modal {
@@ -427,7 +549,11 @@
     -webkit-backdrop-filter: blur(8px);
     padding: 16px;
 }
-.st-edit-modal.show { display: flex; }
+
+.st-edit-modal.show {
+    display: flex;
+}
+
 .st-edit-box {
     width: 100%;
     max-width: 560px;
@@ -437,17 +563,19 @@
     -webkit-backdrop-filter: saturate(180%) blur(30px);
     border-radius: 20px;
     padding: 20px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
+
 .st-edit-header {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
 }
+
 .st-edit-name {
     flex: 1;
     padding: 12px 14px;
@@ -458,9 +586,16 @@
     font-weight: 600;
     color: #1c1c1e;
 }
-.st-edit-name:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
+
+.st-edit-name:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
 .st-edit-close {
-    width: 36px; height: 36px;
+    width: 36px;
+    height: 36px;
     background: rgba(120, 120, 128, 0.08);
     border: none;
     border-radius: 50%;
@@ -468,12 +603,17 @@
     color: #8e8e93;
     cursor: pointer;
 }
-.st-edit-close:active { background: rgba(120, 120, 128, 0.15); }
+
+.st-edit-close:active {
+    background: rgba(120, 120, 128, 0.15);
+}
+
 .st-edit-row {
     display: flex;
     gap: 10px;
     margin-bottom: 12px;
 }
+
 .st-edit-select {
     flex: 1;
     padding: 10px 12px;
@@ -485,6 +625,7 @@
     -webkit-appearance: none;
     appearance: none;
 }
+
 .st-edit-depth {
     display: flex;
     align-items: center;
@@ -496,6 +637,7 @@
     font-size: 14px;
     color: #8e8e93;
 }
+
 .st-edit-depth input {
     width: 50px;
     padding: 10px 0;
@@ -505,6 +647,7 @@
     color: #1c1c1e;
     text-align: center;
 }
+
 .st-edit-trigger {
     width: 100%;
     padding: 12px 14px;
@@ -516,8 +659,17 @@
     margin-bottom: 12px;
     box-sizing: border-box;
 }
-.st-edit-trigger:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
-.st-edit-trigger::placeholder { color: #8e8e93; }
+
+.st-edit-trigger:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.st-edit-trigger::placeholder {
+    color: #8e8e93;
+}
+
 .st-edit-content {
     flex: 1;
     min-height: 200px;
@@ -532,19 +684,30 @@
     font-family: inherit;
     box-sizing: border-box;
 }
-.st-edit-content:focus { outline: none; background: rgba(120, 120, 128, 0.08); border-color: rgba(0, 0, 0, 0.12); }
+
+.st-edit-content:focus {
+    outline: none;
+    background: rgba(120, 120, 128, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
 .st-edit-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-top: 16px;
 }
+
 .st-edit-tokens {
     font-size: 13px;
     color: #8e8e93;
     font-weight: 500;
 }
-.st-edit-footer .st-preset-btn { padding: 10px 20px; flex-shrink: 0; }
+
+.st-edit-footer .st-preset-btn {
+    padding: 10px 20px;
+    flex-shrink: 0;
+}
 
 /* 简化的提示词项 */
 .st-prompt-header {
@@ -555,6 +718,7 @@
     background: transparent;
     flex-wrap: nowrap;
 }
+
 .st-prompt-name-display {
     flex: 1;
     min-width: 0;
@@ -565,6 +729,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .st-prompt-edit-btn {
     padding: 6px 14px;
     background: rgba(0, 0, 0, 0.04);
@@ -576,7 +741,11 @@
     cursor: pointer;
     flex-shrink: 0;
 }
-.st-prompt-edit-btn:active { background: rgba(0, 0, 0, 0.08); }
+
+.st-prompt-edit-btn:active {
+    background: rgba(0, 0, 0, 0.08);
+}
+
 .st-prompt-delete {
     flex-shrink: 0;
 }
@@ -594,7 +763,11 @@
     -webkit-backdrop-filter: blur(8px);
     padding: 20px;
 }
-.st-confirm-modal.show { display: flex; }
+
+.st-confirm-modal.show {
+    display: flex;
+}
+
 .st-confirm-box {
     width: 100%;
     max-width: 300px;
@@ -604,19 +777,25 @@
     border-radius: 16px;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
 }
+
 .st-confirm-title {
     font-size: 17px;
     font-weight: 600;
     color: #000;
     margin-bottom: 16px;
 }
+
 .st-confirm-actions {
     display: flex;
     gap: 10px;
 }
-.st-confirm-actions .st-preset-btn { flex: 1; padding: 12px; }
+
+.st-confirm-actions .st-preset-btn {
+    flex: 1;
+    padding: 12px;
+}
 
 /* 自定义输入弹窗 */
 .st-input-modal {
@@ -631,7 +810,11 @@
     -webkit-backdrop-filter: blur(8px);
     padding: 20px;
 }
-.st-input-modal.show { display: flex; }
+
+.st-input-modal.show {
+    display: flex;
+}
+
 .st-input-box {
     width: 100%;
     max-width: 300px;
@@ -641,19 +824,29 @@
     border-radius: 16px;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
     animation: st-modal-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
 @keyframes st-modal-in {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
+
 .st-input-title {
     font-size: 17px;
     font-weight: 600;
     color: #000;
     margin-bottom: 16px;
 }
+
 .st-input-modal .st-input-field {
     width: 100%;
     padding: 12px 14px;
@@ -669,17 +862,26 @@
     transition: border-color 0.2s;
     font-family: inherit;
 }
+
 .st-input-modal .st-input-field:focus {
     outline: none;
     border-color: rgba(0, 0, 0, 0.15);
     background: rgba(120, 120, 128, 0.08);
 }
-.st-input-modal .st-input-field::placeholder { color: #c7c7cc; }
+
+.st-input-modal .st-input-field::placeholder {
+    color: #c7c7cc;
+}
+
 .st-input-actions {
     display: flex;
     gap: 10px;
 }
-.st-input-actions .st-preset-btn { flex: 1; padding: 12px; }
+
+.st-input-actions .st-preset-btn {
+    flex: 1;
+    padding: 12px;
+}
 
 /* 正则替换区域 */
 .st-regex-section {
@@ -689,8 +891,9 @@
     -webkit-backdrop-filter: saturate(120%) blur(20px);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
 }
+
 .st-section-header {
     display: flex;
     align-items: center;
@@ -698,11 +901,13 @@
     padding: 12px 16px;
     border-bottom: 0.33px solid rgba(0, 0, 0, 0.05);
 }
+
 .st-section-title {
     font-size: 14px;
     font-weight: 600;
     color: #1c1c1e;
 }
+
 .st-add-regex-btn {
     padding: 6px 12px;
     background: #1c1c1e;
@@ -714,17 +919,22 @@
     cursor: pointer;
     transition: opacity 0.2s;
 }
-.st-add-regex-btn:active { opacity: 0.7; }
+
+.st-add-regex-btn:active {
+    opacity: 0.7;
+}
 
 .st-regex-list {
     padding: 8px;
 }
+
 .st-regex-empty {
     padding: 24px 16px;
     text-align: center;
     color: #8e8e93;
     font-size: 14px;
 }
+
 .st-regex-item {
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
@@ -732,26 +942,33 @@
     overflow: hidden;
     box-shadow: 0 0 0 0.33px rgba(0, 0, 0, 0.04);
 }
+
 .st-regex-header {
     display: flex;
     align-items: center;
     padding: 10px 12px;
     gap: 10px;
 }
+
 .st-regex-toggle {
     width: 44px;
     height: 26px;
-    background: rgba(120,120,128,0.16);
+    background: rgba(120, 120, 128, 0.16);
     border-radius: 13px;
     position: relative;
     cursor: pointer;
     transition: background 0.25s;
     flex-shrink: 0;
 }
-.st-regex-toggle.on { background: #1c1c1e; }
+
+.st-regex-toggle.on {
+    background: #1c1c1e;
+}
+
 .st-regex-toggle.on::after {
     transform: translateX(18px);
 }
+
 .st-regex-toggle::after {
     content: '';
     position: absolute;
@@ -762,14 +979,16 @@
     top: 2px;
     left: 2px;
     transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
+
 .st-regex-name {
     flex: 1;
     font-size: 14px;
     font-weight: 500;
     color: #1c1c1e;
 }
+
 .st-regex-edit {
     padding: 6px 10px;
     background: rgba(0, 0, 0, 0.04);
@@ -780,6 +999,7 @@
     font-weight: 500;
     cursor: pointer;
 }
+
 .st-regex-delete {
     width: 24px;
     height: 24px;
@@ -793,6 +1013,7 @@
     align-items: center;
     justify-content: center;
 }
+
 .st-regex-preview {
     display: flex;
     align-items: center;
@@ -801,6 +1022,7 @@
     font-size: 12px;
     font-family: 'SF Mono', Monaco, monospace;
 }
+
 .st-regex-pattern {
     flex: 1;
     padding: 6px 10px;
@@ -811,10 +1033,12 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .st-regex-arrow {
     color: #c7c7cc;
     font-weight: 500;
 }
+
 .st-regex-replace {
     flex: 1;
     padding: 6px 10px;
@@ -839,7 +1063,12 @@
     visibility: hidden;
     transition: opacity 0.25s, visibility 0.25s;
 }
-.st-regex-modal.show { opacity: 1; visibility: visible; }
+
+.st-regex-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
 .st-regex-edit-box {
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: saturate(180%) blur(30px);
@@ -849,14 +1078,17 @@
     max-width: 420px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 0.33px rgba(0,0,0,0.05), inset 0 0.5px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 0 0 0.33px rgba(0, 0, 0, 0.05), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
 }
+
 .st-regex-form {
     padding: 16px 20px;
 }
+
 .st-form-group {
     margin-bottom: 14px;
 }
+
 .st-form-group label {
     display: block;
     font-size: 13px;
@@ -864,6 +1096,7 @@
     color: #8e8e93;
     margin-bottom: 6px;
 }
+
 .st-form-input {
     width: 100%;
     padding: 10px 12px;
@@ -875,16 +1108,19 @@
     color: #1c1c1e;
     box-sizing: border-box;
 }
+
 .st-form-input:focus {
     outline: none;
     background: rgba(120, 120, 128, 0.08);
     border-color: rgba(0, 0, 0, 0.12);
 }
+
 .st-form-row {
     display: flex;
     align-items: center;
     padding: 10px 0;
 }
+
 .st-checkbox-label {
     display: flex;
     align-items: center;
@@ -893,6 +1129,7 @@
     color: #1c1c1e;
     cursor: pointer;
 }
+
 .st-checkbox-label input[type="checkbox"] {
     width: 20px;
     height: 20px;
@@ -901,24 +1138,67 @@
 
 /* 移动端适配 */
 @media (max-width: 480px) {
-    .st-preset-selector { flex-wrap: nowrap; flex-direction: row; overflow-x: auto; margin: 12px; padding: 12px; }
-    .st-preset-select { min-width: 70px; max-width: 90px; font-size: 13px; padding: 8px 10px; }
-    .st-preset-name-input { min-width: 60px; max-width: 80px; font-size: 13px; padding: 8px 10px; }
-    .st-preset-btn { font-size: 13px; padding: 8px 12px; white-space: nowrap; }
-    .st-preset-nav { height: 50px; }
-    .st-preset-title { font-size: 17px; }
-    .st-edit-box { max-height: 85vh; padding: 16px; border-radius: 16px; }
-    .st-edit-row { flex-wrap: wrap; }
-    .st-edit-select { min-width: calc(50% - 5px); }
-    .st-edit-content { min-height: 180px; }
-    .st-prompt-header { padding: 12px 14px; flex-wrap: nowrap; }
+    .st-preset-selector {
+        flex-wrap: nowrap;
+        flex-direction: row;
+        overflow-x: auto;
+        margin: 12px;
+        padding: 12px;
+    }
+
+    .st-preset-select {
+        min-width: 70px;
+        max-width: 90px;
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+
+    .st-preset-name-input {
+        min-width: 60px;
+        max-width: 80px;
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+
+    .st-preset-btn {
+        font-size: 13px;
+        padding: 8px 12px;
+        white-space: nowrap;
+    }
+
+    .st-preset-nav {
+        height: 50px;
+    }
+
+    .st-preset-title {
+        font-size: 17px;
+    }
+
+    .st-edit-box {
+        max-height: 85vh;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .st-edit-row {
+        flex-wrap: wrap;
+    }
+
+    .st-edit-select {
+        min-width: calc(50% - 5px);
+    }
+
+    .st-edit-content {
+        min-height: 180px;
+    }
+
+    .st-prompt-header {
+        padding: 12px 14px;
+        flex-wrap: nowrap;
+    }
 }
 
-/* ========================================
-   线下预设页面重设计（参考世界书 + 我的人设）
-   浅粉白主题，统一弹窗风格
-   ======================================== */
-
+/* ========================================   线下预设页面重设计（参考世界书 + 我的人设）   浅粉白主题，统一弹窗风格   ======================================== */
 #st-preset-page {
     background: linear-gradient(180deg, #fff8fc 0%, #fff2f8 58%, #fffdfd 100%);
     padding-top: 0;
@@ -1235,7 +1515,7 @@
 #st-preset-page .st-preset-footer {
     gap: 8px;
     padding: 10px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-bottom: max(10px, var(--safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 243, 249, 0.97) 100%);
     border-top: 1px solid #ffd4e0;
     backdrop-filter: none;
@@ -1385,10 +1665,7 @@
     }
 }
 
-/* ========================================
-   线下预设布局精修（移动端优先）
-   ======================================== */
-
+/* ========================================   线下预设布局精修（移动端优先）   ======================================== */
 #st-preset-page {
     --st-page-max-width: 960px;
     --st-page-gap: 10px;
@@ -1658,10 +1935,7 @@
     }
 }
 
-/* ========================================
-   线下预设终版优化（移动端优先）
-   ======================================== */
-
+/* ========================================   线下预设终版优化（移动端优先）   ======================================== */
 #st-preset-page .st-preset-select,
 #st-preset-page .st-preset-name-input {
     max-width: none;
@@ -1752,6 +2026,7 @@
 }
 
 @media (max-width: 760px) {
+
     #st-preset-page .st-preset-selector,
     #st-preset-page .st-prompt-list,
     #st-preset-page .st-regex-section {
@@ -1926,10 +2201,7 @@
     }
 }
 
-/* ========================================
-   Tab 化布局（预设提示词 / 正则替换）
-   ======================================== */
-
+/* ========================================   Tab 化布局（预设提示词 / 正则替换）   ======================================== */
 #st-preset-page .st-preset-action-controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -2034,6 +2306,7 @@
 }
 
 @media (max-width: 760px) {
+
     #st-preset-page .st-preset-tabbar,
     #st-preset-page .st-tab-panels {
         width: calc(100% - 14px);
@@ -2067,6 +2340,7 @@
 }
 
 @media (max-width: 420px) {
+
     #st-preset-page .st-preset-tabbar,
     #st-preset-page .st-tab-panels {
         width: calc(100% - 12px);
@@ -2079,10 +2353,7 @@
     }
 }
 
-/* ========================================
-   提示词操作行：Token / 编辑 / 删除（3等分同一行）
-   ======================================== */
-
+/* ========================================   提示词操作行：Token / 编辑 / 删除（3等分同一行）   ======================================== */
 #st-preset-page .st-prompt-header {
     flex-direction: column;
     align-items: stretch;
@@ -2144,22 +2415,16 @@
     border-radius: 8px;
 }
 
-/* ========================================
-   提示词编辑弹窗重设计 + 底部可见性修复
-   ======================================== */
-
+/* ========================================   提示词编辑弹窗重设计 + 底部可见性修复   ======================================== */
 #st-preset-page #st-edit-modal {
     align-items: center;
     justify-content: center;
-    padding:
-        max(12px, env(safe-area-inset-top))
-        12px
-        max(12px, env(safe-area-inset-bottom));
+    padding: max(12px, var(--safe-area-inset-top)) 12px max(12px, var(--safe-area-inset-bottom));
 }
 
 #st-preset-page .st-edit-box {
     width: min(94vw, 760px);
-    max-height: calc(100dvh - max(14px, env(safe-area-inset-top)) - max(14px, env(safe-area-inset-bottom)));
+    max-height: calc(100dvh - max(14px, var(--safe-area-inset-top)) - max(14px, var(--safe-area-inset-bottom)));
     border-radius: 18px;
     display: flex;
     flex-direction: column;
@@ -2231,7 +2496,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 14px calc(10px + var(--safe-area-inset-bottom));
     border-top: 1px solid #ffe4ef;
     background: linear-gradient(180deg, #fffefe 0%, #fff7fc 100%);
 }
@@ -2290,7 +2555,7 @@
 
     #st-preset-page .st-edit-footer {
         grid-template-columns: 1fr;
-        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        padding: 10px 12px calc(10px + var(--safe-area-inset-bottom));
     }
 
     #st-preset-page .st-edit-tokens {
@@ -2305,10 +2570,7 @@
     }
 }
 
-/* ========================================
-   提示词弹窗终版重构（新增/编辑统一）
-   ======================================== */
-
+/* ========================================   提示词弹窗终版重构（新增/编辑统一）   ======================================== */
 #st-preset-page .st-edit-modal {
     z-index: 32000;
     padding: 0;
@@ -2459,7 +2721,7 @@
 
 #st-preset-page .st-edit-footer {
     margin-top: 0;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 12px calc(10px + var(--safe-area-inset-bottom));
     border-top: 1px solid #ffe4ef;
     background: linear-gradient(180deg, #fffefe 0%, #fff7fc 100%);
     display: flex;
@@ -2545,7 +2807,7 @@
     #st-preset-page .st-edit-footer {
         flex-direction: column;
         align-items: stretch;
-        padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+        padding: 10px 10px calc(10px + var(--safe-area-inset-bottom));
     }
 
     #st-preset-page .st-edit-tokens {
@@ -2566,10 +2828,7 @@
     }
 }
 
-/* ========================================
-   最终版：简约精致布局（强覆盖）
-   ======================================== */
-
+/* ========================================   最终版：简约精致布局（强覆盖）   ======================================== */
 #st-preset-page {
     --mp-bg: #fff8fc;
     --mp-card: #ffffff;
@@ -2910,7 +3169,7 @@
 #st-preset-page .st-edit-footer {
     border-top: 1px solid #f5e0eb;
     background: #fff;
-    padding: 10px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+    padding: 10px calc(10px + var(--safe-area-inset-right)) calc(10px + var(--safe-area-inset-bottom)) calc(10px + var(--safe-area-inset-left));
 }
 
 #st-preset-page .st-edit-tokens {
@@ -2933,6 +3192,7 @@
 }
 
 @media (max-width: 760px) {
+
     #st-preset-page .st-preset-selector,
     #st-preset-page .st-preset-tabbar,
     #st-preset-page .st-tab-panels,
@@ -3151,7 +3411,7 @@
     align-items: center;
     gap: 8px;
     margin-top: 0;
-    padding: 10px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    padding: 10px calc(12px + var(--safe-area-inset-right)) calc(10px + var(--safe-area-inset-bottom)) calc(12px + var(--safe-area-inset-left));
     border-top: 1px solid #f0f0f2;
     background: #fff;
     flex-shrink: 0;
@@ -3204,7 +3464,7 @@
 
     #st-preset-page #st-edit-modal .st-edit-footer {
         gap: 6px;
-        padding: 8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+        padding: 8px calc(8px + var(--safe-area-inset-right)) calc(8px + var(--safe-area-inset-bottom)) calc(8px + var(--safe-area-inset-left));
     }
 
     #st-preset-page #st-edit-modal .st-edit-tokens {

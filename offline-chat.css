@@ -1,9 +1,4 @@
-﻿/**
- * 线下功能页面 - SillyTavern风格 (增强版)
- * 新增样式: 多选模式、右键菜单、Token统计、插入模态框等
- * 新增主题: 支持夜间、日间、少女三种主题
- */
-
+/** * 线下功能页面 - SillyTavern风格 (增强版) * 新增样式: 多选模式、右键菜单、Token统计、插入模态框等 * 新增主题: 支持夜间、日间、少女三种主题 */
 /* ==================== 主题变量 ==================== */
 :root {
     /* 夜间主题 (默认) */
@@ -48,7 +43,11 @@
     transition: opacity 0.3s, visibility 0.3s;
     font-family: 'Noto Sans', sans-serif;
 }
-.st-chat-page.show { opacity: 1; visibility: visible; }
+
+.st-chat-page.show {
+    opacity: 1;
+    visibility: visible;
+}
 
 /* ==================== 日间(白色)主题 ==================== */
 .st-chat-page.theme-light {
@@ -390,28 +389,56 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    padding-top: max(8px, env(safe-area-inset-top));
+    padding-top: max(8px, var(--safe-area-inset-top));
     background: var(--st-bg-secondary);
     border-bottom: 1px solid var(--st-border-color);
-    min-height: calc(48px + env(safe-area-inset-top));
+    min-height: calc(48px + var(--safe-area-inset-top));
     gap: 12px;
 }
 
 /* PWA全屏模式适配 - 顶部安全区域 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
+@media (display-mode: fullscreen),
+(display-mode: standalone) {
     .st-nav {
-        padding-top: max(8px, env(safe-area-inset-top));
-        min-height: calc(48px + env(safe-area-inset-top));
+        padding-top: max(8px, var(--safe-area-inset-top));
+        min-height: calc(48px + var(--safe-area-inset-top));
     }
 }
-.st-char-info { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }
-.st-char-avatar-small {
-    width: 36px; height: 36px; border-radius: 50%;
-    overflow: hidden; background: var(--st-bg-quaternary);
+
+.st-char-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
 }
-.st-char-avatar-small img { width: 100%; height: 100%; object-fit: cover; }
-.st-char-info-text { display: flex; flex-direction: column; gap: 2px; }
-.st-char-name { font-size: 15px; font-weight: 600; color: var(--st-text-primary); }
+
+.st-char-avatar-small {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--st-bg-quaternary);
+}
+
+.st-char-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.st-char-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.st-char-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--st-text-primary);
+}
+
 .st-token-stats {
     font-size: 11px;
     color: var(--st-text-tertiary);
@@ -419,15 +446,29 @@
 }
 
 /* 导航按钮 */
-.st-nav-actions { display: flex; gap: 8px; }
+.st-nav-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .st-nav-btn {
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    background: transparent; border: none;
-    cursor: pointer; border-radius: 6px; color: var(--st-text-secondary);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    color: var(--st-text-secondary);
     flex-shrink: 0;
 }
-.st-nav-btn:hover { background: var(--st-bg-quaternary); color: var(--st-text-primary); }
+
+.st-nav-btn:hover {
+    background: var(--st-bg-quaternary);
+    color: var(--st-text-primary);
+}
 
 /* 移动端导航优化 */
 @media (max-width: 768px) {
@@ -437,31 +478,37 @@
         padding: 6px 8px;
         gap: 8px;
     }
+
     .st-char-avatar-small {
         width: 32px;
         height: 32px;
         flex-shrink: 0;
     }
+
     .st-char-info-text {
         min-width: 0;
         flex: 1;
     }
+
     .st-char-name {
         font-size: 14px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
     .st-token-stats {
         font-size: 10px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
     .st-nav-btn {
         width: 32px;
         height: 32px;
     }
+
     .st-nav-btn svg {
         width: 18px;
         height: 18px;
@@ -477,8 +524,16 @@
     background: var(--st-context-bar-bg);
     border-bottom: 1px solid var(--st-border-color);
 }
-.st-context-info { font-size: 13px; color: var(--st-text-primary); }
-.st-context-info strong { color: var(--st-accent-color); }
+
+.st-context-info {
+    font-size: 13px;
+    color: var(--st-text-primary);
+}
+
+.st-context-info strong {
+    color: var(--st-accent-color);
+}
+
 .st-context-btn {
     padding: 6px 14px;
     border: none;
@@ -489,7 +544,10 @@
     color: var(--st-text-primary);
     margin-left: 8px;
 }
-.st-context-btn:hover { background: var(--st-bg-quaternary); }
+
+.st-context-btn:hover {
+    background: var(--st-bg-quaternary);
+}
 
 /* 右键菜单 */
 .st-context-menu {
@@ -504,10 +562,19 @@
     overflow: hidden;
     animation: contextFadeIn 0.15s ease;
 }
+
 @keyframes contextFadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
+
 .st-context-item {
     padding: 8px 14px;
     font-size: 13px;
@@ -516,9 +583,18 @@
     transition: background 0.15s;
     white-space: nowrap;
 }
-.st-context-item:hover { background: var(--st-bg-tertiary); }
-.st-context-item:first-child { border-radius: 8px 8px 0 0; }
-.st-context-item:last-child { border-radius: 0 0 8px 8px; }
+
+.st-context-item:hover {
+    background: var(--st-bg-tertiary);
+}
+
+.st-context-item:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.st-context-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
 
 /* 消息列表 */
 .st-messages {
@@ -537,17 +613,27 @@
     border-radius: 8px;
     margin: 4px 8px;
 }
-.st-message:hover { background: var(--st-bg-message-hover); }
+
+.st-message:hover {
+    background: var(--st-bg-message-hover);
+}
 
 /* 多选模式 */
-.st-message.select-mode { padding-left: 50px; }
-.st-message.selected { background: var(--st-bg-message-selected); }
+.st-message.select-mode {
+    padding-left: 50px;
+}
+
+.st-message.selected {
+    background: var(--st-bg-message-selected);
+}
+
 .st-message-checkbox {
     position: absolute;
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
 }
+
 .st-message-checkbox input[type="checkbox"] {
     width: 18px;
     height: 18px;
@@ -561,20 +647,53 @@
     gap: 10px;
     margin-bottom: 8px;
 }
+
 .st-message-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    overflow: hidden; background: var(--st-message-avatar-bg); flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--st-message-avatar-bg);
+    flex-shrink: 0;
 }
-.st-message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.st-message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .st-message-avatar-text {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 600; color: var(--st-text-secondary); background: var(--st-bg-tertiary);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--st-text-secondary);
+    background: var(--st-bg-tertiary);
 }
-.st-message-name { font-size: 14px; font-weight: 600; }
-.st-message.user .st-message-name { color: var(--st-user-name-color); }
-.st-message.char .st-message-name { color: var(--st-char-name-color); }
-.st-message-time { font-size: 11px; color: var(--st-text-tertiary); margin-left: auto; display: none; }
+
+.st-message-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.st-message.user .st-message-name {
+    color: var(--st-user-name-color);
+}
+
+.st-message.char .st-message-name {
+    color: var(--st-char-name-color);
+}
+
+.st-message-time {
+    font-size: 11px;
+    color: var(--st-text-tertiary);
+    margin-left: auto;
+    display: none;
+}
 
 .st-message-content {
     font-size: 15px;
@@ -587,7 +706,6 @@
 }
 
 /* ==================== 思维链 - 主题化特殊样式 ==================== */
-
 /* === 思考按钮基础样式（夜间主题默认：水晶球） === */
 .st-thinking-toggle {
     display: inline-flex;
@@ -608,6 +726,7 @@
     height: 44px;
     box-shadow: none;
 }
+
 .st-thinking-toggle::before {
     content: '';
     position: absolute;
@@ -616,15 +735,18 @@
     border-radius: 50%;
     transition: all 0.3s;
 }
+
 .st-thinking-toggle:hover {
     transform: scale(1.15);
     background: transparent;
     border: none;
     box-shadow: none;
 }
+
 .st-thinking-toggle:hover::before {
     background: radial-gradient(circle, rgba(138, 100, 255, 0.22) 0%, transparent 70%);
 }
+
 .st-thinking-toggle:active {
     transform: scale(0.92);
 }
@@ -637,31 +759,51 @@
     position: relative;
     animation: crystalFloat 3s ease-in-out infinite;
 }
+
 .st-thinking-icon::before {
     content: '';
     display: none;
 }
+
 .st-thinking-icon::after {
     content: '';
     display: none;
 }
+
 @keyframes crystalFloat {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-3px) scale(1.05); }
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-3px) scale(1.05);
+    }
 }
 
 /* 展开时 */
 .st-thinking-toggle.expanded::before {
     background: radial-gradient(circle, rgba(138, 100, 255, 0.18) 0%, transparent 70%);
 }
+
 .st-thinking-toggle.expanded .st-thinking-icon {
     animation: crystalPulse 0.5s ease-out;
     filter: drop-shadow(0 3px 10px rgba(138, 100, 255, 0.6));
 }
+
 @keyframes crystalPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.25); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.25);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* 时长文字 - 夜间 */
@@ -696,28 +838,31 @@
     line-height: 1.7;
     color: #8899bb;
     white-space: pre-wrap;
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.4),
-        inset 0 0 30px rgba(74, 158, 255, 0.03);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(74, 158, 255, 0.03);
     position: relative;
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 240px;
 }
+
 /* 思维链滚动条 - 夜间 */
 .st-thinking-content::-webkit-scrollbar {
     width: 4px;
 }
+
 .st-thinking-content::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .st-thinking-content::-webkit-scrollbar-thumb {
     background: rgba(74, 158, 255, 0.3);
     border-radius: 4px;
 }
+
 .st-thinking-content::-webkit-scrollbar-thumb:hover {
     background: rgba(74, 158, 255, 0.5);
 }
+
 /* 底部渐隐遮罩（提示可滚动） */
 .st-thinking-content::after {
     content: '';
@@ -732,6 +877,7 @@
     margin: 0 -18px -14px -18px;
     flex-shrink: 0;
 }
+
 /* 顶部扫描线 */
 .st-thinking-content::before {
     content: '';
@@ -740,28 +886,40 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg,
-        rgba(74, 158, 255, 0.6) 0%,
-        rgba(90, 173, 255, 0.3) 50%,
-        transparent 100%
-    );
+    background: linear-gradient(90deg, rgba(74, 158, 255, 0.6) 0%, rgba(90, 173, 255, 0.3) 50%, transparent 100%);
     animation: scanLine 3s linear infinite;
 }
+
 @keyframes scanLine {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
 }
-.st-thinking-toggle.expanded + .st-thinking-content { 
-    display: block; 
+
+.st-thinking-toggle.expanded+.st-thinking-content {
+    display: block;
     animation: thinkingSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .st-thinking-content.show {
     display: block;
     animation: thinkingSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 @keyframes thinkingSlideIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ==================== 日间主题 - 思考按钮：水晶棱镜 ==================== */
@@ -775,22 +933,27 @@
     box-shadow: none;
     color: #007aff;
 }
+
 .st-chat-page.theme-light .st-thinking-toggle::before {
     background: radial-gradient(circle, rgba(0, 122, 255, 0.06) 0%, transparent 70%);
 }
+
 .st-chat-page.theme-light .st-thinking-toggle:hover {
     background: transparent;
     border: none;
     box-shadow: none;
     transform: scale(1.15) rotate(15deg);
 }
+
 .st-chat-page.theme-light .st-thinking-toggle:hover::before {
     background: radial-gradient(circle, rgba(0, 122, 255, 0.12) 0%, transparent 70%);
 }
+
 .st-chat-page.theme-light .st-thinking-toggle.expanded {
     background: transparent;
     border: none;
 }
+
 .st-chat-page.theme-light .st-thinking-toggle.expanded::before {
     background: radial-gradient(circle, rgba(0, 122, 255, 0.1) 0%, transparent 70%);
 }
@@ -801,6 +964,7 @@
     height: 32px;
     position: relative;
 }
+
 /* 棱镜三角形 */
 .st-chat-page.theme-light .st-thinking-icon::before {
     content: '';
@@ -819,6 +983,7 @@
     border-radius: 0;
     box-shadow: none;
 }
+
 /* 棱镜内的彩虹折射光 */
 .st-chat-page.theme-light .st-thinking-icon::after {
     content: '';
@@ -828,22 +993,39 @@
     transform: translate(-50%, -50%) rotate(-20deg);
     width: 22px;
     height: 3px;
-    background: linear-gradient(90deg, 
-        #ff4444 0%, #ff8800 17%, #ffdd00 33%, 
-        #44cc44 50%, #007aff 67%, #6644ff 83%, #cc44cc 100%
-    );
+    background: linear-gradient(90deg, #ff4444 0%, #ff8800 17%, #ffdd00 33%, #44cc44 50%, #007aff 67%, #6644ff 83%, #cc44cc 100%);
     border-radius: 2px;
     opacity: 0.7;
     animation: rainbowShimmer 2s ease-in-out infinite;
     box-shadow: none;
 }
+
 @keyframes prismFloat {
-    0%, 100% { transform: translate(-50%, -52%) rotate(0deg); filter: drop-shadow(0 2px 6px rgba(0, 122, 255, 0.2)); }
-    50% { transform: translate(-50%, -55%) rotate(3deg); filter: drop-shadow(0 4px 12px rgba(0, 122, 255, 0.35)); }
+
+    0%,
+    100% {
+        transform: translate(-50%, -52%) rotate(0deg);
+        filter: drop-shadow(0 2px 6px rgba(0, 122, 255, 0.2));
+    }
+
+    50% {
+        transform: translate(-50%, -55%) rotate(3deg);
+        filter: drop-shadow(0 4px 12px rgba(0, 122, 255, 0.35));
+    }
 }
+
 @keyframes rainbowShimmer {
-    0%, 100% { opacity: 0.5; width: 18px; }
-    50% { opacity: 0.9; width: 24px; }
+
+    0%,
+    100% {
+        opacity: 0.5;
+        width: 18px;
+    }
+
+    50% {
+        opacity: 0.9;
+        width: 24px;
+    }
 }
 
 /* 展开时棱镜发光 */
@@ -852,6 +1034,7 @@
     filter: drop-shadow(0 4px 14px rgba(0, 122, 255, 0.4));
     animation: none;
 }
+
 .st-chat-page.theme-light .st-thinking-toggle.expanded .st-thinking-icon::after {
     opacity: 1;
     width: 26px;
@@ -874,26 +1057,26 @@
     border-image-slice: 0 0 0 1;
     border-radius: 0 14px 14px 14px;
     color: #4a5a7a;
-    box-shadow: 
-        0 2px 16px rgba(0, 122, 255, 0.06),
-        0 1px 4px rgba(102, 68, 255, 0.04);
+    box-shadow: 0 2px 16px rgba(0, 122, 255, 0.06), 0 1px 4px rgba(102, 68, 255, 0.04);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
+
 .st-chat-page.theme-light .st-thinking-content::before {
-    background: linear-gradient(90deg,
-        #ff4444, #ff8800, #ffdd00, #44cc44, #007aff, #6644ff, #cc44cc
-    );
+    background: linear-gradient(90deg, #ff4444, #ff8800, #ffdd00, #44cc44, #007aff, #6644ff, #cc44cc);
     height: 2px;
     opacity: 0.3;
     animation: none;
 }
+
 .st-chat-page.theme-light .st-thinking-content::after {
     background: linear-gradient(to bottom, transparent, #f0f6ff);
 }
+
 .st-chat-page.theme-light .st-thinking-content::-webkit-scrollbar-thumb {
     background: rgba(0, 122, 255, 0.2);
 }
+
 .st-chat-page.theme-light .st-thinking-content::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 122, 255, 0.4);
 }
@@ -913,6 +1096,7 @@
     align-items: center;
     justify-content: center;
 }
+
 .st-chat-page.theme-girly .st-thinking-toggle::before {
     content: '';
     position: absolute;
@@ -921,19 +1105,23 @@
     border-radius: 50%;
     transition: all 0.3s;
 }
+
 .st-chat-page.theme-girly .st-thinking-toggle:hover {
     background: transparent;
     border: none;
     box-shadow: none;
     transform: scale(1.15) rotate(5deg);
 }
+
 .st-chat-page.theme-girly .st-thinking-toggle:hover::before {
     background: radial-gradient(circle, rgba(255, 157, 184, 0.25) 0%, transparent 70%);
 }
+
 .st-chat-page.theme-girly .st-thinking-toggle.expanded {
     background: transparent;
     border: none;
 }
+
 .st-chat-page.theme-girly .st-thinking-toggle.expanded::before {
     background: radial-gradient(circle, rgba(255, 107, 138, 0.18) 0%, transparent 70%);
 }
@@ -947,6 +1135,7 @@
     filter: drop-shadow(0 2px 4px rgba(255, 71, 133, 0.3));
     background: none;
 }
+
 .st-chat-page.theme-girly .st-thinking-icon::before {
     content: '🎀';
     position: absolute;
@@ -966,6 +1155,7 @@
     border-radius: 0;
     box-shadow: none;
 }
+
 .st-chat-page.theme-girly .st-thinking-icon::after {
     content: none;
     display: none;
@@ -978,14 +1168,33 @@
 }
 
 @keyframes bowFloat {
-    0%, 100% { transform: rotate(-3deg) scale(1); }
-    33% { transform: rotate(3deg) scale(1.04); }
-    66% { transform: rotate(-2deg) scale(0.98); }
+
+    0%,
+    100% {
+        transform: rotate(-3deg) scale(1);
+    }
+
+    33% {
+        transform: rotate(3deg) scale(1.04);
+    }
+
+    66% {
+        transform: rotate(-2deg) scale(0.98);
+    }
 }
+
 @keyframes bowSpin {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.2); }
-    100% { transform: rotate(360deg) scale(1); }
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    50% {
+        transform: rotate(180deg) scale(1.2);
+    }
+
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
 }
 
 /* 少女主题时长文字 */
@@ -1014,26 +1223,28 @@
     -webkit-backdrop-filter: none;
     position: relative;
 }
+
 .st-chat-page.theme-girly .st-thinking-content::before {
-    background: linear-gradient(90deg,
-        rgba(255, 157, 184, 0.4) 0%,
-        rgba(255, 182, 193, 0.2) 50%,
-        transparent 100%
-    );
+    background: linear-gradient(90deg, rgba(255, 157, 184, 0.4) 0%, rgba(255, 182, 193, 0.2) 50%, transparent 100%);
 }
+
 .st-chat-page.theme-girly .st-thinking-content::after {
     background: linear-gradient(to bottom, transparent, #fff0f5);
 }
+
 .st-chat-page.theme-girly .st-thinking-content::-webkit-scrollbar-thumb {
     background: rgba(255, 157, 184, 0.3);
 }
+
 .st-chat-page.theme-girly .st-thinking-content::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 157, 184, 0.5);
 }
+
 /* 少女主题思维链内的文字装饰 */
 .st-chat-page.theme-girly .st-thinking-content strong {
     color: #ff4785;
 }
+
 .st-chat-page.theme-girly .st-thinking-content em {
     color: #ff6b8a;
     font-style: italic;
@@ -1043,12 +1254,14 @@
 .st-message-actions {
     display: none;
     position: absolute;
-    top: 8px; right: 12px;
+    top: 8px;
+    right: 12px;
     gap: 4px;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
 }
+
 /* 桌面端：悬停显示 */
 @media (min-width: 769px) {
     .st-message:hover .st-message-actions {
@@ -1057,6 +1270,7 @@
         pointer-events: auto;
     }
 }
+
 /* 移动端：长按显示 */
 .st-message.long-press .st-message-actions {
     display: flex;
@@ -1064,24 +1278,30 @@
     pointer-events: auto;
     animation: actionsSlideIn 0.2s ease;
 }
+
 @keyframes actionsSlideIn {
     from {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
     }
 }
+
 /* 长按时的视觉反馈 */
 .st-message.long-pressing {
-    background: rgba(255,255,255,0.05) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
 }
+
 .st-action-btn {
     width: 32px;
     height: 32px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: #3a3a3a;
     border: 1px solid #4a4a4a;
     border-radius: 6px;
@@ -1089,15 +1309,27 @@
     color: #ccc;
     transition: all 0.2s;
 }
-.st-action-btn:hover { background: #4a4a4a; color: #fff; }
-.st-action-btn svg { width: 16px; height: 16px; }
-.st-action-btn svg { fill: currentColor; }
+
+.st-action-btn:hover {
+    background: #4a4a4a;
+    color: #fff;
+}
+
+.st-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.st-action-btn svg {
+    fill: currentColor;
+}
 
 /* 移动端优化 - 操作按钮移到消息下方 */
 @media (max-width: 768px) {
     .st-message {
         padding: 12px 12px 8px;
     }
+
     .st-message-actions {
         position: static;
         justify-content: flex-end;
@@ -1107,18 +1339,36 @@
         opacity: 0;
         pointer-events: none;
     }
+
     .st-message.long-press .st-message-actions {
         opacity: 1;
         pointer-events: auto;
     }
+
     .st-action-btn {
         width: 36px;
         height: 36px;
     }
-    .st-message-content, .st-thinking-toggle, .st-thinking-content,
-        .st-edit-textarea, .st-edit-actions, .st-swipe-nav { margin-left: 0; padding-left: 0; width: 100%; }
-    .st-message-avatar { width: 32px; height: 32px; }
-    .st-swipe-nav { justify-content: center; }
+
+    .st-message-content,
+    .st-thinking-toggle,
+    .st-thinking-content,
+    .st-edit-textarea,
+    .st-edit-actions,
+    .st-swipe-nav {
+        margin-left: 0;
+        padding-left: 0;
+        width: 100%;
+    }
+
+    .st-message-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .st-swipe-nav {
+        justify-content: center;
+    }
 }
 
 /* 输入区域 */
@@ -1128,8 +1378,9 @@
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 1px solid var(--st-border-color);
     padding: 8px 16px 12px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-bottom: max(12px, var(--safe-area-inset-bottom));
 }
+
 .st-input-actions {
     display: flex;
     gap: 3px;
@@ -1141,9 +1392,11 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
+
 .st-input-actions::-webkit-scrollbar {
     display: none;
 }
+
 .st-input-action-btn {
     padding: 3px 6px;
     background: var(--st-btn-action-bg);
@@ -1157,34 +1410,40 @@
     white-space: nowrap;
     min-width: 0;
 }
+
 .st-input-action-btn:hover {
     background: var(--st-btn-action-hover);
     color: var(--st-text-primary);
     border-color: var(--st-border-color);
 }
+
 .st-input-action-btn:active {
     background: var(--st-btn-action-hover);
     transform: scale(0.97);
 }
+
 .st-input-action-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
+
 /* 多选按钮激活状态 */
 #st-select-btn.active {
     background: rgba(0, 122, 255, 0.3);
     border-color: rgba(0, 122, 255, 0.5);
     color: #5ac8fa;
 }
+
 .st-input-wrapper {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(118,118,128,0.12);
+    background: rgba(118, 118, 128, 0.12);
     border: none;
     border-radius: 18px;
     padding: 6px 6px 6px 14px;
 }
+
 .st-input-field {
     flex: 1;
     border: none;
@@ -1197,8 +1456,14 @@
     min-height: 20px;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
-.st-input-field:focus { outline: none; }
-.st-input-field::placeholder { color: rgba(255,255,255,0.35); }
+
+.st-input-field:focus {
+    outline: none;
+}
+
+.st-input-field::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
 
 /* 日间主题的输入框占位符 */
 .st-chat-page.theme-light .st-input-field::placeholder {
@@ -1221,35 +1486,82 @@
 }
 
 .st-send-btn {
-    width: 28px; height: 28px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%);
     border: none;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
     transition: transform 0.15s, opacity 0.15s;
 }
-.st-send-btn:active { transform: scale(0.92); opacity: 0.8; }
-.st-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.st-send-btn:active {
+    transform: scale(0.92);
+    opacity: 0.8;
+}
+
+.st-send-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
 
 /* 正在输入 */
-.st-typing { display: none; padding: 8px 16px; color: var(--st-text-secondary); font-size: 13px; }
-.st-typing.show { display: flex; align-items: center; justify-content: center; }
-.st-typing-dots { display: flex; gap: 4px; }
+.st-typing {
+    display: none;
+    padding: 8px 16px;
+    color: var(--st-text-secondary);
+    font-size: 13px;
+}
+
+.st-typing.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.st-typing-dots {
+    display: flex;
+    gap: 4px;
+}
+
 .st-typing-dots span {
-    width: 6px; height: 6px; background: var(--st-text-tertiary); border-radius: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--st-text-tertiary);
+    border-radius: 50%;
     animation: st-dot 1.4s infinite;
 }
-.st-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.st-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+.st-typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.st-typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
 @keyframes st-dot {
-    0%, 60%, 100% { opacity: 0.3; }
-    30% { opacity: 1; }
+
+    0%,
+    60%,
+    100% {
+        opacity: 0.3;
+    }
+
+    30% {
+        opacity: 1;
+    }
 }
 
 /* 编辑模式 */
-.st-message.editing .st-message-content { display: none; }
+.st-message.editing .st-message-content {
+    display: none;
+}
+
 .st-edit-textarea {
     width: calc(100% - 50px);
     margin-left: 50px;
@@ -1263,7 +1575,14 @@
     resize: vertical;
     min-height: 60px;
 }
-.st-edit-actions { display: flex; gap: 8px; margin-top: 8px; margin-left: 50px; }
+
+.st-edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    margin-left: 50px;
+}
+
 .st-edit-btn {
     padding: 6px 14px;
     border: none;
@@ -1271,18 +1590,39 @@
     font-size: 13px;
     cursor: pointer;
 }
-.st-edit-btn.save { background: var(--st-accent-color); color: #fff; }
-.st-edit-btn.cancel { background: var(--st-bg-quaternary); color: var(--st-text-secondary); }
+
+.st-edit-btn.save {
+    background: var(--st-accent-color);
+    color: #fff;
+}
+
+.st-edit-btn.cancel {
+    background: var(--st-bg-quaternary);
+    color: var(--st-text-secondary);
+}
 
 /* 流式光标 */
 .st-cursor {
     display: inline-block;
-    width: 2px; height: 1em;
+    width: 2px;
+    height: 1em;
     background: var(--st-accent-color);
     margin-left: 2px;
     animation: st-blink 1s infinite;
 }
-@keyframes st-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+@keyframes st-blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
 
 /* Swipe导航 */
 .st-swipe-nav {
@@ -1293,15 +1633,37 @@
     margin: 8px auto;
     user-select: none;
 }
+
 .st-swipe-btn {
-    width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    background: transparent; border: none; border-radius: 4px;
-    cursor: pointer; color: var(--st-text-secondary); font-size: 18px; font-weight: bold;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--st-text-secondary);
+    font-size: 18px;
+    font-weight: bold;
 }
-.st-swipe-btn:hover { background: transparent; color: var(--st-text-primary); }
-.st-swipe-btn:active { background: transparent; }
-.st-swipe-info { font-size: 12px; color: var(--st-text-secondary); min-width: 40px; text-align: center; }
+
+.st-swipe-btn:hover {
+    background: transparent;
+    color: var(--st-text-primary);
+}
+
+.st-swipe-btn:active {
+    background: transparent;
+}
+
+.st-swipe-info {
+    font-size: 12px;
+    color: var(--st-text-secondary);
+    min-width: 40px;
+    text-align: center;
+}
 
 /* 空消息提示 */
 .st-empty-hint {
@@ -1316,11 +1678,13 @@
 .st-message {
     animation: messageSlideIn 0.3s ease;
 }
+
 @keyframes messageSlideIn {
     from {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1470,6 +1834,7 @@
     color: #dc143c;
     font-weight: 500;
 }
+
 .st-message-content code {
     background: var(--st-code-bg);
     padding: 2px 6px;
@@ -1477,6 +1842,7 @@
     font-family: 'SF Mono', 'Consolas', monospace;
     font-size: 0.9em;
 }
+
 .st-message-content pre {
     background: var(--st-code-bg);
     padding: 12px;
@@ -1484,55 +1850,88 @@
     overflow-x: auto;
     margin: 8px 0;
 }
+
 .st-message-content pre code {
     background: transparent;
     padding: 0;
 }
+
 .st-message-content blockquote {
     border-left: 3px solid var(--st-quote-border);
     padding-left: 12px;
     margin: 8px 0;
     color: var(--st-quote-color);
 }
-.st-message-content ul, .st-message-content ol {
+
+.st-message-content ul,
+.st-message-content ol {
     margin: 8px 0;
     padding-left: 24px;
 }
-.st-message-content li { margin: 4px 0; }
-.st-message-content h1, .st-message-content h2,
-.st-message-content h3, .st-message-content h4,
-.st-message-content h5, .st-message-content h6 {
+
+.st-message-content li {
+    margin: 4px 0;
+}
+
+.st-message-content h1,
+.st-message-content h2,
+.st-message-content h3,
+.st-message-content h4,
+.st-message-content h5,
+.st-message-content h6 {
     margin: 12px 0 8px;
     font-weight: 600;
 }
-.st-message-content h1 { font-size: 1.4em; }
-.st-message-content h2 { font-size: 1.3em; }
-.st-message-content h3 { font-size: 1.2em; }
-.st-message-content h4 { font-size: 1.1em; }
-.st-message-content h5 { font-size: 1.05em; }
-.st-message-content h6 { font-size: 1em; }
+
+.st-message-content h1 {
+    font-size: 1.4em;
+}
+
+.st-message-content h2 {
+    font-size: 1.3em;
+}
+
+.st-message-content h3 {
+    font-size: 1.2em;
+}
+
+.st-message-content h4 {
+    font-size: 1.1em;
+}
+
+.st-message-content h5 {
+    font-size: 1.05em;
+}
+
+.st-message-content h6 {
+    font-size: 1em;
+}
+
 .st-message-content hr {
     border: none;
     border-top: 1px solid var(--st-border-color);
     margin: 12px 0;
 }
+
 .st-message-content a {
     color: var(--st-accent-color);
     text-decoration: none;
 }
+
 .st-message-content a:hover {
     text-decoration: underline;
 }
+
 .st-message-content img {
     max-width: 100%;
     border-radius: 8px;
     margin: 8px 0;
 }
+
 .st-message-content del {
     text-decoration: line-through;
     color: var(--st-text-tertiary);
 }
-
 
 /* 模态框遮罩层 */
 .st-modal-overlay {
@@ -1547,9 +1946,15 @@
     -webkit-backdrop-filter: blur(8px);
     animation: stModalFadeIn 0.2s ease;
 }
+
 @keyframes stModalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* 模态框 */
@@ -1566,11 +1971,13 @@
     display: flex;
     flex-direction: column;
 }
+
 @keyframes stModalSlideUp {
     from {
         opacity: 0;
         transform: translateY(30px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -1585,12 +1992,14 @@
     padding: 20px 24px 16px;
     border-bottom: 1px solid var(--st-border-color);
 }
+
 .st-modal-header h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
     color: var(--st-text-primary);
 }
+
 .st-modal-close {
     width: 32px;
     height: 32px;
@@ -1605,6 +2014,7 @@
     justify-content: center;
     transition: all 0.2s;
 }
+
 .st-modal-close:hover {
     background: var(--st-bg-quaternary);
     color: var(--st-text-primary);
@@ -1629,6 +2039,7 @@
     font-size: 13px;
     color: var(--st-text-secondary);
 }
+
 .st-summary-info strong {
     color: var(--st-accent-color);
     font-size: 16px;
@@ -1638,6 +2049,7 @@
 .st-form-group {
     margin-bottom: 16px;
 }
+
 .st-form-label {
     display: block;
     font-size: 13px;
@@ -1645,11 +2057,13 @@
     color: var(--st-text-primary);
     margin-bottom: 6px;
 }
+
 .st-form-hint {
     font-size: 12px;
     color: var(--st-text-secondary);
     margin-bottom: 8px;
 }
+
 .st-form-input {
     width: 100%;
     padding: 12px 16px;
@@ -1660,11 +2074,13 @@
     font-size: 14px;
     transition: all 0.2s;
 }
+
 .st-form-input:focus {
     outline: none;
     border-color: var(--st-accent-color);
     background: var(--st-bg-tertiary);
 }
+
 .st-form-input:hover {
     border-color: var(--st-border-color);
 }
@@ -1677,12 +2093,14 @@
     cursor: pointer;
     user-select: none;
 }
+
 .st-form-checkbox input[type="checkbox"] {
     width: 18px;
     height: 18px;
     cursor: pointer;
     accent-color: var(--st-accent-color);
 }
+
 .st-form-checkbox span {
     font-size: 14px;
     color: var(--st-text-primary);
@@ -1699,15 +2117,18 @@
     cursor: pointer;
     transition: all 0.2s;
 }
+
 .st-btn.primary {
     background: linear-gradient(135deg, var(--st-accent-color) 0%, var(--st-accent-hover) 100%);
     color: #fff;
 }
+
 .st-btn.primary:hover {
     background: linear-gradient(135deg, var(--st-accent-hover) 0%, var(--st-accent-color) 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
 }
+
 .st-btn.primary:active {
     transform: translateY(0);
 }
@@ -1723,6 +2144,7 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
+
 #st-theme-close-btn:hover,
 #st-summary-generate:hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.1) 100%);
@@ -1731,6 +2153,7 @@
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
     color: #ffffff;
 }
+
 #st-theme-close-btn:active,
 #st-summary-generate:active {
     transform: translateY(0);
@@ -1746,6 +2169,7 @@
     border: 1px solid rgba(100, 100, 100, 0.3);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
+
 .st-theme-light #st-theme-close-btn:hover,
 .st-theme-light #st-summary-generate:hover {
     background: linear-gradient(135deg, rgba(50, 50, 50, 0.85) 0%, rgba(70, 70, 70, 0.75) 100%);
@@ -1763,6 +2187,7 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
+
 .st-theme-pink #st-theme-close-btn:hover,
 .st-theme-pink #st-summary-generate:hover {
     background: linear-gradient(135deg, rgba(70, 60, 65, 0.8) 0%, rgba(50, 45, 48, 0.7) 100%);
@@ -1776,6 +2201,7 @@
     background: var(--st-bg-tertiary);
     color: var(--st-text-primary);
 }
+
 .st-btn.secondary:hover {
     background: var(--st-bg-quaternary);
 }
@@ -1784,33 +2210,40 @@
 .st-confirm-dialog {
     text-align: center;
 }
+
 .st-confirm-dialog .st-confirm-icon {
     font-size: 48px;
     margin-bottom: 16px;
 }
+
 .st-confirm-dialog .st-confirm-title {
     font-size: 16px;
     font-weight: 600;
     color: var(--st-text-primary);
     margin-bottom: 8px;
 }
+
 .st-confirm-dialog .st-confirm-message {
     font-size: 13px;
     color: var(--st-text-secondary);
     margin-bottom: 20px;
     line-height: 1.6;
 }
+
 .st-confirm-actions {
     display: flex;
     gap: 10px;
 }
+
 .st-confirm-actions .st-btn {
     flex: 1;
 }
+
 .st-confirm-actions .st-btn.danger {
     background: linear-gradient(135deg, #ff453a 0%, #ff6961 100%);
     color: #fff;
 }
+
 .st-confirm-actions .st-btn.danger:hover {
     background: linear-gradient(135deg, #ff5c51 0%, #ff7a73 100%);
 }
@@ -1852,6 +2285,7 @@
 .st-chat-page.theme-girly .st-toast {
     color: #8f4b67;
 }
+
 .st-toast.show {
     opacity: 1;
     visibility: visible;
@@ -1862,7 +2296,7 @@
 .st-insert-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1870,20 +2304,23 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
+
 .st-insert-box {
     background: var(--st-bg-secondary);
     border-radius: 16px;
     padding: 24px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
+
 .st-insert-box h3 {
     margin: 0 0 16px 0;
     font-size: 18px;
     font-weight: 600;
     color: var(--st-text-primary);
 }
+
 .st-insert-box select {
     width: 100%;
     padding: 12px;
@@ -1894,6 +2331,7 @@
     color: var(--st-text-primary);
     font-size: 14px;
 }
+
 .st-insert-box textarea {
     width: 100%;
     min-height: 120px;
@@ -1906,16 +2344,19 @@
     resize: vertical;
     font-family: inherit;
 }
+
 .st-insert-box textarea:focus {
     outline: none;
     border-color: var(--st-accent-color);
 }
+
 .st-insert-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     margin-top: 16px;
 }
+
 .st-insert-btn {
     padding: 8px 16px;
     border: none;
@@ -1924,23 +2365,47 @@
     cursor: pointer;
     font-weight: 500;
 }
+
 .st-insert-btn.cancel {
     background: var(--st-bg-tertiary);
     color: var(--st-text-secondary);
 }
-.st-insert-btn.cancel:hover { background: var(--st-bg-quaternary); }
+
+.st-insert-btn.cancel:hover {
+    background: var(--st-bg-quaternary);
+}
+
 .st-insert-btn.confirm {
     background: var(--st-accent-color);
     color: #fff;
 }
-.st-insert-btn.confirm:hover { background: var(--st-accent-hover); }
+
+.st-insert-btn.confirm:hover {
+    background: var(--st-accent-hover);
+}
 
 /* 移动端 */
 @media (max-width: 768px) {
-    .st-message-content, .st-thinking-toggle, .st-thinking-content,
-    .st-edit-textarea, .st-edit-actions, .st-swipe-nav { margin-left: 0; padding-left: 0; width: 100%; }
-    .st-message-avatar { width: 32px; height: 32px; }
-    .st-swipe-nav { justify-content: center; }
+
+    .st-message-content,
+    .st-thinking-toggle,
+    .st-thinking-content,
+    .st-edit-textarea,
+    .st-edit-actions,
+    .st-swipe-nav {
+        margin-left: 0;
+        padding-left: 0;
+        width: 100%;
+    }
+
+    .st-message-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .st-swipe-nav {
+        justify-content: center;
+    }
 }
 
 /* ==================== 主题选择器样式 ==================== */
@@ -2191,7 +2656,7 @@
     width: 60px;
     height: 40px;
     border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .st-theme-dark {

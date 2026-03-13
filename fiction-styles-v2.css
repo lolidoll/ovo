@@ -28,14 +28,14 @@
   padding: 0 16px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   z-index: 1001;
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-area-inset-top);
 }
 
 /* PWA模式下的安全区域处理 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
   .fiction-header {
-    height: calc(50px + env(safe-area-inset-top));
-    padding-top: env(safe-area-inset-top);
+    height: calc(50px + var(--safe-area-inset-top));
+    padding-top: var(--safe-area-inset-top);
     display: flex;
     align-items: flex-end;
     background: #fff;
@@ -45,34 +45,36 @@
   }
   
   .fiction-container {
-    top: calc(50px + env(safe-area-inset-top));
-    height: calc(100vh - 50px - env(safe-area-inset-top) - 60px - env(safe-area-inset-bottom));
+    top: calc(50px + var(--safe-area-inset-top));
+    height: calc(100vh - 50px - var(--safe-area-inset-top) - 60px - var(--safe-area-inset-bottom));
+    height: calc(var(--app-height, 100dvh) - 50px - var(--safe-area-inset-top) - 60px - var(--safe-area-inset-bottom));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
   
   .fiction-tabbar {
-    height: calc(60px + env(safe-area-inset-bottom));
+    height: calc(60px + var(--safe-area-inset-bottom));
   }
 }
 
 .is-pwa .fiction-header,
 .is-standalone .fiction-header {
-  height: calc(50px + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
+  height: calc(50px + var(--safe-area-inset-top));
+  padding-top: var(--safe-area-inset-top);
 }
 
 .is-pwa .fiction-container,
 .is-standalone .fiction-container {
-  top: calc(50px + env(safe-area-inset-top));
-  height: calc(100vh - 50px - env(safe-area-inset-top) - 60px - env(safe-area-inset-bottom));
+  top: calc(50px + var(--safe-area-inset-top));
+  height: calc(100vh - 50px - var(--safe-area-inset-top) - 60px - var(--safe-area-inset-bottom));
+  height: calc(var(--app-height, 100dvh) - 50px - var(--safe-area-inset-top) - 60px - var(--safe-area-inset-bottom));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .is-pwa .fiction-tabbar,
 .is-standalone .fiction-tabbar {
-  height: calc(60px + env(safe-area-inset-bottom));
+  height: calc(60px + var(--safe-area-inset-bottom));
 }
 
 /* 当显示详情页时隐藏顶部导航 */
@@ -763,9 +765,9 @@
   justify-content: space-around;
   box-shadow: 0 -1px 4px rgba(0,0,0,0.06);
   z-index: 1001;
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: max(0px, env(safe-area-inset-left));
-  padding-right: max(0px, env(safe-area-inset-right));
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: max(0px, var(--safe-area-inset-left));
+  padding-right: max(0px, var(--safe-area-inset-right));
   /* 确保不会有额外的margin或padding导致空白 */
   margin: 0;
   box-sizing: border-box;

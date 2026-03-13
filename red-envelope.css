@@ -54,14 +54,14 @@
 /* PWA全屏模式适配 - 所有设备统一处理 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     .red-envelope-header {
-        padding-top: calc(30px + env(safe-area-inset-top));
+        padding-top: calc(30px + var(--safe-area-inset-top));
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa .red-envelope-header,
 .is-standalone .red-envelope-header {
-    padding-top: calc(30px + env(safe-area-inset-top));
+    padding-top: calc(30px + var(--safe-area-inset-top));
 }
 
 .red-envelope-title {
@@ -698,12 +698,12 @@
 @supports (padding: max(0px)) {
     .red-envelope-modal,
     .red-envelope-detail-modal {
-        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        padding-bottom: max(20px, var(--safe-area-inset-bottom));
     }
     
     .red-envelope-content,
     .red-envelope-detail-content {
-        margin-bottom: env(safe-area-inset-bottom);
+        margin-bottom: var(--safe-area-inset-bottom);
     }
 }
 

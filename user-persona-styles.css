@@ -1,8 +1,4 @@
-/**
- * 我的 人设页面样式
- * 参考个性装扮页面：浅粉白主题 + 同款卡片与弹窗质感
- */
-
+/** * 我的 人设页面样式 * 参考个性装扮页面：浅粉白主题 + 同款卡片与弹窗质感 */
 #persona-manager-page,
 #persona-editor-page {
     background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 58%, #fffdfd 100%);
@@ -10,7 +6,7 @@
 
 #persona-manager-page .persona-main-content,
 #persona-editor-page .persona-editor-content {
-    padding: 10px 10px calc(88px + env(safe-area-inset-bottom));
+    padding: 10px 10px calc(88px + var(--safe-area-inset-bottom));
     overflow-y: auto;
     background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 58%, #fffdfd 100%);
 }
@@ -312,9 +308,10 @@
 }
 
 @media (max-width: 480px) {
+
     #persona-manager-page .persona-main-content,
     #persona-editor-page .persona-editor-content {
-        padding: 8px 8px calc(82px + env(safe-area-inset-bottom));
+        padding: 8px 8px calc(82px + var(--safe-area-inset-bottom));
     }
 
     #persona-manager-page .persona-card,

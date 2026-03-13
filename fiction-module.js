@@ -402,7 +402,7 @@
                 const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
                 const safeAreaBottom = isIOS ? 20 : 16;
                 
-                container.style.bottom = `calc(${tabbar.offsetHeight + safeAreaBottom}px + env(safe-area-inset-bottom))`;
+                container.style.bottom = `calc(${tabbar.offsetHeight + safeAreaBottom}px + var(--safe-area-inset-bottom))`;
                 
                 // 确保内容不被遮挡
                 contents.forEach(content => {

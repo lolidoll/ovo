@@ -1,11 +1,5 @@
-/**
- * 粉白公主风语音通话样式
- * 完整的通话界面、悬浮窗、来电弹窗样式
- */
-
-/* ========================================
-   通话主界面 - 粉白公主风
-======================================== */
+/** * 粉白公主风语音通话样式 * 完整的通话界面、悬浮窗、来电弹窗样式 */
+/* ========================================   通话主界面 - 粉白公主风======================================== */
 .voice-call-interface {
     position: fixed;
     top: 0;
@@ -33,13 +27,11 @@
     flex-direction: column;
 }
 
-/* ========================================
-   顶部栏
-======================================== */
+/* ========================================   顶部栏======================================== */
 .call-header {
-    height: calc(48px + env(safe-area-inset-top));
-    min-height: calc(48px + env(safe-area-inset-top));
-    padding: calc(env(safe-area-inset-top) + 4px) 16px 8px 16px;
+    height: calc(48px + var(--safe-area-inset-top));
+    min-height: calc(48px + var(--safe-area-inset-top));
+    padding: calc(var(--safe-area-inset-top) + 4px) 16px 8px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -49,20 +41,21 @@
 }
 
 /* PWA全屏模式适配 - 所有设备统一处理 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
+@media (display-mode: fullscreen),
+(display-mode: standalone) {
     .call-header {
-        height: calc(48px + env(safe-area-inset-top));
-        min-height: calc(48px + env(safe-area-inset-top));
-        padding: calc(env(safe-area-inset-top) + 4px) 16px 8px 16px;
+        height: calc(48px + var(--safe-area-inset-top));
+        min-height: calc(48px + var(--safe-area-inset-top));
+        padding: calc(var(--safe-area-inset-top) + 4px) 16px 8px 16px;
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa .call-header,
 .is-standalone .call-header {
-    height: calc(48px + env(safe-area-inset-top));
-    min-height: calc(48px + env(safe-area-inset-top));
-    padding: calc(env(safe-area-inset-top) + 4px) 16px 8px 16px;
+    height: calc(48px + var(--safe-area-inset-top));
+    min-height: calc(48px + var(--safe-area-inset-top));
+    padding: calc(var(--safe-area-inset-top) + 4px) 16px 8px 16px;
 }
 
 .call-minimize-btn,
@@ -93,9 +86,7 @@
     font-weight: 600;
 }
 
-/* ========================================
-   中间内容区
-======================================== */
+/* ========================================   中间内容区======================================== */
 .call-content {
     flex: 1;
     display: flex;
@@ -137,10 +128,13 @@
 }
 
 @keyframes pulse-ring {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         opacity: 1;
     }
+
     50% {
         transform: scale(1.1);
         opacity: 0.5;
@@ -199,11 +193,7 @@
     backdrop-filter: blur(40px) saturate(180%);
     -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.08),
-        0 2px 8px rgba(0, 0, 0, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.02);
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -212,6 +202,7 @@
         opacity: 0;
         transform: translateY(15px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -228,6 +219,7 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+
     to {
         opacity: 0;
         transform: translateY(-15px) scale(0.95);
@@ -236,18 +228,10 @@
 
 .call-chat-message-user {
     align-self: flex-end;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.85) 0%,
-        rgba(255, 255, 255, 0.75) 100%
-    );
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%);
     color: #1a1a1a;
     border-bottom-right-radius: 6px;
-    box-shadow:
-        0 8px 32px rgba(255, 105, 180, 0.12),
-        0 2px 8px rgba(255, 105, 180, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+    box-shadow: 0 8px 32px rgba(255, 105, 180, 0.12), 0 2px 8px rgba(255, 105, 180, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 }
 
 .call-chat-message-user::before {
@@ -257,11 +241,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 182, 193, 0.15) 0%,
-        rgba(255, 218, 225, 0.1) 100%
-    );
+    background: linear-gradient(135deg, rgba(255, 182, 193, 0.15) 0%, rgba(255, 218, 225, 0.1) 100%);
     border-radius: 14px;
     border-bottom-right-radius: 4px;
     pointer-events: none;
@@ -270,18 +250,10 @@
 
 .call-chat-message-ai {
     align-self: flex-start;
-    background: linear-gradient(
-        135deg,
-        rgba(250, 250, 250, 0.8) 0%,
-        rgba(245, 245, 245, 0.7) 100%
-    );
+    background: linear-gradient(135deg, rgba(250, 250, 250, 0.8) 0%, rgba(245, 245, 245, 0.7) 100%);
     color: #2a2a2a;
     border-bottom-left-radius: 6px;
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.06),
-        0 2px 8px rgba(0, 0, 0, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.02);
 }
 
 .call-chat-message-ai::before {
@@ -291,11 +263,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-        135deg,
-        rgba(200, 200, 200, 0.08) 0%,
-        rgba(180, 180, 180, 0.05) 100%
-    );
+    background: linear-gradient(135deg, rgba(200, 200, 200, 0.08) 0%, rgba(180, 180, 180, 0.05) 100%);
     border-radius: 14px;
     border-bottom-left-radius: 4px;
     pointer-events: none;
@@ -383,9 +351,7 @@
     transform: scale(0.95);
 }
 
-/* ========================================
-   AI回复中 - 三点加载动画（输入框上方）
-======================================== */
+/* ========================================   AI回复中 - 三点加载动画（输入框上方）======================================== */
 .call-typing-indicator {
     display: none;
     align-items: center;
@@ -408,17 +374,30 @@
     animation: callTypingDot 1.4s infinite;
 }
 
-.call-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.call-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes callTypingDot {
-    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
-    30% { opacity: 1; transform: scale(1); }
+.call-typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
 }
 
-/* ========================================
-   底部控制栏
-======================================== */
+.call-typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes callTypingDot {
+
+    0%,
+    60%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+
+    30% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ========================================   底部控制栏======================================== */
 .call-controls {
     padding: 20px 16px 32px 16px;
     display: flex;
@@ -431,16 +410,17 @@
 }
 
 /* PWA全屏模式适配 - 底部安全区域 */
-@media (display-mode: fullscreen), (display-mode: standalone) {
+@media (display-mode: fullscreen),
+(display-mode: standalone) {
     .call-controls {
-        padding-bottom: calc(32px + env(safe-area-inset-bottom)) !important;
+        padding-bottom: calc(32px + var(--safe-area-inset-bottom)) !important;
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa .call-controls,
 .is-standalone .call-controls {
-    padding-bottom: calc(32px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(32px + var(--safe-area-inset-bottom)) !important;
 }
 
 .call-duration {
@@ -500,9 +480,7 @@
     font-weight: 600;
 }
 
-/* ========================================
-   最小化悬浮窗 - 极简圆形模式
-======================================== */
+/* ========================================   最小化悬浮窗 - 极简圆形模式======================================== */
 .call-floating-window {
     position: fixed !important;
     top: 80px;
@@ -581,10 +559,13 @@
 }
 
 @keyframes pulse-float {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         opacity: 0.7;
     }
+
     50% {
         transform: scale(1.15);
         opacity: 0.2;
@@ -596,8 +577,7 @@
     display: none !important;
 }
 
-/* ========================================
-/* 移动端适配 */
+/* ========================================/* 移动端适配 */
 @media (max-width: 768px) {
     .call-floating-window {
         width: 56px !important;
@@ -605,18 +585,18 @@
         top: 60px;
         right: 12px;
     }
-    
+
     .floating-avatar-wrapper {
         width: 42px;
         height: 42px;
     }
-    
+
     .floating-avatar {
         width: 42px;
         height: 42px;
         border-width: 2.5px;
     }
-    
+
     .floating-pulse {
         top: -5px;
         left: -5px;
@@ -625,9 +605,7 @@
     }
 }
 
-/* ========================================
-   来电弹窗
-======================================== */
+/* ========================================   来电弹窗======================================== */
 .incoming-call-modal {
     position: fixed;
     top: 0;
@@ -652,6 +630,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -674,6 +653,7 @@
         opacity: 0;
         transform: translateY(50px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -760,9 +740,7 @@
     color: #333;
 }
 
-/* ========================================
-   拨通确认弹窗
-======================================== */
+/* ========================================   拨通确认弹窗======================================== */
 .call-confirm-modal {
     position: fixed;
     top: 0;
@@ -803,6 +781,7 @@
         transform: translateY(20px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -871,9 +850,7 @@
     transform: scale(0.98);
 }
 
-/* ========================================
-   拨通中界面
-======================================== */
+/* ========================================   拨通中界面======================================== */
 .calling-interface {
     position: fixed;
     top: 0;
@@ -937,6 +914,7 @@
         transform: scale(1);
         opacity: 1;
     }
+
     100% {
         transform: scale(1.3);
         opacity: 0;
@@ -989,9 +967,7 @@
     height: 28px;
 }
 
-/* ========================================
-   聊天页面通话状态
-======================================== */
+/* ========================================   聊天页面通话状态======================================== */
 .chat-call-status {
     display: flex;
     align-items: center;
@@ -1018,10 +994,13 @@
 }
 
 @keyframes statusPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.5;
         transform: scale(0.8);
@@ -1032,9 +1011,7 @@
     font-weight: 600;
 }
 
-/* ========================================
-   通话记录样式
-======================================== */
+/* ========================================   通话记录样式======================================== */
 .call-record-message {
     display: flex;
     align-items: center;
@@ -1073,34 +1050,32 @@
     color: #666;
 }
 
-/* ========================================
-   移动端适配
-======================================== */
+/* ========================================   移动端适配======================================== */
 @media screen and (max-width: 375px) {
     .call-avatar {
         width: 80px;
         height: 80px;
     }
-    
+
     .call-username {
         font-size: 18px;
     }
-    
+
     .call-buttons {
         gap: 16px;
     }
-    
+
     .call-control-btn svg {
         width: 44px;
         height: 44px;
         padding: 10px;
     }
-    
+
     .incoming-call-avatar {
         width: 80px;
         height: 80px;
     }
-    
+
     .incoming-btn svg {
         width: 56px;
         height: 56px;
@@ -1122,9 +1097,7 @@
     background: transparent;
 }
 
-/* ========================================
-   铃声设置弹窗 - 粉白公主风
-======================================== */
+/* ========================================   铃声设置弹窗 - 粉白公主风======================================== */
 .ringtone-settings-modal {
     position: fixed;
     top: 0;
@@ -1141,8 +1114,13 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .ringtone-settings-content {
@@ -1159,6 +1137,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1335,15 +1314,13 @@
     .ringtone-settings-modal {
         padding: 16px;
     }
-    
+
     .ringtone-settings-content {
         max-width: 100%;
     }
 }
 
-/* ========================================
-   聊天中的通话状态卡片样式
-======================================== */
+/* ========================================   聊天中的通话状态卡片样式======================================== */
 .voicecall-message {
     margin: 8px 0;
 }
@@ -1388,10 +1365,13 @@
 }
 
 @keyframes callPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         opacity: 1;
     }
+
     50% {
         transform: scale(1.1);
         opacity: 0.8;
@@ -1441,16 +1421,16 @@
         max-width: 240px;
         padding: 10px 14px;
     }
-    
+
     .voicecall-icon {
         width: 32px;
         height: 32px;
     }
-    
+
     .voicecall-title {
         font-size: 13px;
     }
-    
+
     .voicecall-status {
         font-size: 11px;
     }

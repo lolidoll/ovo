@@ -11,24 +11,25 @@
 #shopping-page .sub-content {
     padding: 0;
     height: 100vh;
+    height: var(--app-height, 100dvh);
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: calc(60px + var(--safe-area-inset-bottom));
     position: relative;
 }
 
 /* PWA模式下调整内容区域padding，避免被fixed header遮挡 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     #shopping-page .sub-content {
-        padding-top: calc(44px + env(safe-area-inset-top));
+        padding-top: calc(44px + var(--safe-area-inset-top));
     }
 }
 
 .is-pwa #shopping-page .sub-content,
 .is-standalone #shopping-page .sub-content {
-    padding-top: calc(44px + env(safe-area-inset-top));
+    padding-top: calc(44px + var(--safe-area-inset-top));
 }
 
 /* 主页面容器 */
@@ -61,20 +62,20 @@
 /* PWA全屏模式适配 - 所有设备统一处理 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     #shopping-page .shopping-header {
-        top: env(safe-area-inset-top);
-        height: calc(44px + env(safe-area-inset-top));
-        min-height: calc(44px + env(safe-area-inset-top));
-        padding-top: env(safe-area-inset-top);
+        top: var(--safe-area-inset-top);
+        height: calc(44px + var(--safe-area-inset-top));
+        min-height: calc(44px + var(--safe-area-inset-top));
+        padding-top: var(--safe-area-inset-top);
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa #shopping-page .shopping-header,
 .is-standalone #shopping-page .shopping-header {
-    top: env(safe-area-inset-top);
-    height: calc(44px + env(safe-area-inset-top));
-    min-height: calc(44px + env(safe-area-inset-top));
-    padding-top: env(safe-area-inset-top);
+    top: var(--safe-area-inset-top);
+    height: calc(44px + var(--safe-area-inset-top));
+    min-height: calc(44px + var(--safe-area-inset-top));
+    padding-top: var(--safe-area-inset-top);
 }
 
 /* 为sub-content添加顶部padding，避免被fixed header遮挡 */
@@ -383,7 +384,7 @@
     height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(50px + env(safe-area-inset-bottom));
+    padding-bottom: calc(50px + var(--safe-area-inset-bottom));
 }
 
 #shopping-page .cart-page.active {
@@ -395,7 +396,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: calc(100vh - 44px - 50px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100vh - 44px - 50px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
+    height: calc(var(--app-height, 100dvh) - 44px - 50px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
     text-align: center;
     padding: 20px;
     color: #999;
@@ -538,7 +540,7 @@
     padding: 0 8px;
     border-top: 1px solid #eee;
     z-index: 90;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--safe-area-inset-bottom);
 }
 
 #shopping-page .cart-footer.active {
@@ -608,7 +610,7 @@
     right: 0;
     bottom: 0;
     height: 100%;
-    padding-bottom: calc(50px + env(safe-area-inset-bottom));
+    padding-bottom: calc(50px + var(--safe-area-inset-bottom));
 }
 
 #shopping-page .category-page.active {
@@ -794,7 +796,7 @@
     height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(50px + env(safe-area-inset-bottom));
+    padding-bottom: calc(50px + var(--safe-area-inset-bottom));
 }
 
 #shopping-page .mine-page.active {
@@ -981,9 +983,9 @@
     justify-content: space-around;
     border-top: 1px solid #eee;
     z-index: 95;
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: max(0px, env(safe-area-inset-left));
-    padding-right: max(0px, env(safe-area-inset-right));
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: max(0px, var(--safe-area-inset-left));
+    padding-right: max(0px, var(--safe-area-inset-right));
 }
 
 #shopping-page .shopping-footer-item {
@@ -1095,22 +1097,23 @@
     }
     
     #shopping-page .shopping-page-container {
-        height: calc(100vh - 40px - 45px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        height: calc(100vh - 40px - 45px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
+        height: calc(var(--app-height, 100dvh) - 40px - 45px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
     }
 }
 
 /* 6. 安全区域增强 */
 @supports (padding: env(safe-area-inset-top)) {
     #shopping-page .header {
-        padding-top: calc(env(safe-area-inset-top) + 0px);
+        padding-top: calc(var(--safe-area-inset-top) + 0px);
     }
     
     #shopping-page .shopping-footer {
-        padding-bottom: calc(env(safe-area-inset-bottom) + 0px);
+        padding-bottom: calc(var(--safe-area-inset-bottom) + 0px);
     }
     
     #shopping-page .cart-footer {
-        padding-bottom: calc(env(safe-area-inset-bottom) + 0px);
+        padding-bottom: calc(var(--safe-area-inset-bottom) + 0px);
     }
 }
 
@@ -1331,7 +1334,7 @@
     gap: 10px;
     border-top: 1px solid #eee;
     box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    padding-bottom: calc(8px + var(--safe-area-inset-bottom));
 }
 
 .goods-detail-btn {
@@ -1412,7 +1415,7 @@
     display: flex;
     flex-direction: column;
     animation: slideUp 0.3s ease;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--safe-area-inset-bottom);
 }
 
 .forward-modal-header {
@@ -1721,7 +1724,7 @@
     padding: 10px 15px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     z-index: 99;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+    padding-bottom: calc(var(--safe-area-inset-bottom) + 10px);
 }
 
 #shopping-page .cart-footer.active {

@@ -38,7 +38,7 @@
 /* PWA全屏模式适配 - 顶部安全区域 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     .mine-edit-header {
-        padding-top: calc(16px + env(safe-area-inset-top));
+        padding-top: calc(16px + var(--safe-area-inset-top));
     }
 }
 

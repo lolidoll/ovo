@@ -1,8 +1,4 @@
-/* ========================================
-   API设置页面 - 现代高级白灰黑设�?
-   参考现实App设计风格，移动端全屏优化
-   ======================================== */
-
+/* ========================================   API设置页面 - 现代高级白灰黑设�?   参考现实App设计风格，移动端全屏优化   ======================================== */
 #api-settings-page {
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -63,15 +59,14 @@
     background: #ffffff;
     border-radius: 20px;
     border: 1px solid #e8e8e8;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04),
-                0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
 /* 卡片内容区域间距优化 */
-#api-settings-page .settings-card > div {
+#api-settings-page .settings-card>div {
     margin-top: 24px !important;
 }
 
@@ -88,8 +83,7 @@
 }
 
 #api-settings-page .settings-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08),
-                0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
     transform: translateY(-2px);
     border-color: #d8d8d8;
 }
@@ -143,8 +137,7 @@
 #api-settings-page .modern-input:focus {
     border-color: #999;
     background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08),
-                0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
     transform: translateY(-1px);
     /* iOS Safari粘贴修复 - 聚焦时保持选择能力 */
     -webkit-user-select: text !important;
@@ -240,8 +233,7 @@
     border-radius: 50%;
     background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
-                0 0 0 4px rgba(255, 255, 255, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(255, 255, 255, 1);
     transition: all 0.2s ease;
     margin-top: -7px;
 }
@@ -249,8 +241,7 @@
 #api-settings-page .modern-range::-webkit-slider-thumb:hover,
 #api-settings-page input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.15);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25),
-                0 0 0 6px rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 6px rgba(255, 255, 255, 1);
 }
 
 #api-settings-page .modern-range::-webkit-slider-runnable-track,
@@ -314,8 +305,7 @@
 #api-settings-page .modern-select:focus {
     border-color: #999;
     background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08),
-                0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
     /* iOS Safari粘贴修复 - 聚焦时保持选择能力 */
     -webkit-user-select: text !important;
     user-select: text !important;
@@ -334,8 +324,7 @@
     letter-spacing: 0.5px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
-                0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
 }
@@ -354,8 +343,7 @@
 #api-settings-page .primary-btn-modern:hover {
     background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2),
-                0 3px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.15);
 }
 
 #api-settings-page .primary-btn-modern:hover::before {
@@ -396,7 +384,7 @@
 }
 
 /* 处理内联样式中的第一个 setting-row */
-#api-settings-page > div > div[style*="margin-bottom:20px"] .setting-row:first-of-type {
+#api-settings-page>div>div[style*="margin-bottom:20px"] .setting-row:first-of-type {
     margin-top: 24px !important;
 }
 
@@ -495,24 +483,24 @@
     #api-settings-page .api-settings-container {
         padding: 16px 12px 24px;
     }
-    
+
     #api-settings-page .settings-card {
         padding: 20px;
         border-radius: 16px;
     }
-    
+
     #api-settings-page .modern-input,
     #api-settings-page .modern-select,
     #api-settings-page .modern-btn {
         height: 46px;
         font-size: 14px;
     }
-    
+
     #api-settings-page .primary-btn-modern {
         height: 50px;
         font-size: 15px;
     }
-    
+
     #api-settings-page .card-title {
         font-size: 15px;
     }
@@ -523,7 +511,7 @@
     #api-settings-page .settings-card:active {
         transform: scale(0.99);
     }
-    
+
     #api-settings-page .modern-btn:active,
     #api-settings-page .primary-btn-modern:active {
         transform: scale(0.98);
@@ -541,6 +529,7 @@
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -551,17 +540,31 @@
     animation: cardFadeIn 0.4s ease-out;
 }
 
-#api-settings-page .settings-card:nth-child(1) { animation-delay: 0.05s; }
-#api-settings-page .settings-card:nth-child(2) { animation-delay: 0.1s; }
-#api-settings-page .settings-card:nth-child(3) { animation-delay: 0.15s; }
-#api-settings-page .settings-card:nth-child(4) { animation-delay: 0.2s; }
-#api-settings-page .settings-card:nth-child(5) { animation-delay: 0.25s; }
-#api-settings-page .settings-card:nth-child(6) { animation-delay: 0.3s; }
+#api-settings-page .settings-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
 
-/* ========================================
-   API设置页面弹窗样式 - 白灰黑高级设�?
-   ======================================== */
+#api-settings-page .settings-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
 
+#api-settings-page .settings-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+#api-settings-page .settings-card:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+#api-settings-page .settings-card:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+#api-settings-page .settings-card:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+/* ========================================   API设置页面弹窗样式 - 白灰黑高级设�?   ======================================== */
 #api-settings-page {
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -590,16 +593,17 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
 }
 
 /* 弹窗内容容器 */
-.emoji-mgmt-modal > div,
+.emoji-mgmt-modal>div,
 .emoji-mgmt-content,
-#api-preset-modal > div > div > div,
-#api-preset-edit-modal > div {
+#api-preset-modal>div>div>div,
+#api-preset-edit-modal>div {
     background: #ffffff !important;
     border-radius: 20px !important;
     padding: 28px !important;
@@ -607,8 +611,7 @@
     width: 100% !important;
     max-height: 85vh !important;
     overflow-y: auto !important;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15),
-                0 4px 16px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1) !important;
     animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
@@ -618,6 +621,7 @@
         opacity: 0;
         transform: translateY(30px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -720,8 +724,7 @@
 #api-preset-edit-modal textarea:focus {
     border-color: #999 !important;
     background: #ffffff !important;
-    box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08),
-                0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    box-shadow: 0 0 0 4px rgba(153, 153, 153, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
     transform: translateY(-1px);
 }
 
@@ -797,8 +800,7 @@
     background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%) !important;
     color: #ffffff !important;
     border: none !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
-                0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .emoji-mgmt-btn[style*="background:#000"]:hover,
@@ -810,13 +812,12 @@
 #api-preset-edit-modal button[style*="background:#000"]:hover,
 #api-preset-edit-modal button[style*="background:#4CAF50"]:hover {
     background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2),
-                0 3px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* 按钮�?*/
-.emoji-mgmt-modal > div > div[style*="display:flex"],
-.emoji-mgmt-content > div[style*="display:flex"] {
+.emoji-mgmt-modal>div>div[style*="display:flex"],
+.emoji-mgmt-content>div[style*="display:flex"] {
     display: flex !important;
     gap: 12px !important;
     justify-content: flex-end !important;
@@ -824,7 +825,7 @@
 }
 
 /* 预设列表�?*/
-.emoji-mgmt-modal > div > div > div[style*="border-bottom"],
+.emoji-mgmt-modal>div>div>div[style*="border-bottom"],
 .emoji-mgmt-content .preset-item {
     padding: 16px !important;
     border-bottom: 1px solid #e8e8e8 !important;
@@ -834,7 +835,7 @@
     transition: all 0.3s ease;
 }
 
-.emoji-mgmt-modal > div > div > div[style*="border-bottom"]:hover,
+.emoji-mgmt-modal>div>div>div[style*="border-bottom"]:hover,
 .emoji-mgmt-content .preset-item:hover {
     background: #fafafa;
     border-radius: 10px;
@@ -844,7 +845,7 @@
 }
 
 /* 预设名称 */
-.emoji-mgmt-modal > div > div > div > div > strong,
+.emoji-mgmt-modal>div>div>div>div>strong,
 .emoji-mgmt-content .preset-name {
     color: #1a1a1a !important;
     font-weight: 600 !important;
@@ -853,7 +854,7 @@
 }
 
 /* 预设描述 */
-.emoji-mgmt-modal > div > div > div > div > div,
+.emoji-mgmt-modal>div>div>div>div>div,
 .emoji-mgmt-content .preset-desc {
     color: #888 !important;
     font-size: 13px !important;
@@ -861,7 +862,7 @@
 }
 
 /* 预设操作按钮 */
-.emoji-mgmt-modal > div > div > div > button,
+.emoji-mgmt-modal>div>div>div>button,
 .emoji-mgmt-content .preset-actions button {
     padding: 8px 16px !important;
     background: linear-gradient(135deg, #f5f5f5 0%, #ebebeb 100%) !important;
@@ -874,7 +875,7 @@
     margin-left: 8px;
 }
 
-.emoji-mgmt-modal > div > div > div > button:hover,
+.emoji-mgmt-modal>div>div>div>button:hover,
 .emoji-mgmt-content .preset-actions button:hover {
     background: linear-gradient(135deg, #ebebeb 0%, #e0e0e0 100%) !important;
     border-color: #d0d0d0 !important;
@@ -882,62 +883,63 @@
 }
 
 /* 删除按钮 */
-.emoji-mgmt-modal > div > div > div > button[onclick*="delete"],
+.emoji-mgmt-modal>div>div>div>button[onclick*="delete"],
 .emoji-mgmt-content button[onclick*="delete"] {
     background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%) !important;
     border-color: #ffcccc !important;
     color: #cc0000 !important;
 }
 
-.emoji-mgmt-modal > div > div > div > button[onclick*="delete"]:hover,
+.emoji-mgmt-modal>div>div>div>button[onclick*="delete"]:hover,
 .emoji-mgmt-content button[onclick*="delete"]:hover {
     background: linear-gradient(135deg, #ffe8e8 0%, #ffd0d0 100%) !important;
     border-color: #ffaaaa !important;
 }
 
 /* 滚动条美�?*/
-.emoji-mgmt-modal > div::-webkit-scrollbar,
+.emoji-mgmt-modal>div::-webkit-scrollbar,
 .emoji-mgmt-content::-webkit-scrollbar,
-#api-preset-modal > div::-webkit-scrollbar > div::-webkit-scrollbar > div::-webkit-scrollbar,
-#api-preset-edit-modal > div::-webkit-scrollbar {
+#api-preset-modal>div::-webkit-scrollbar>div::-webkit-scrollbar>div::-webkit-scrollbar,
+#api-preset-edit-modal>div::-webkit-scrollbar {
     width: 6px;
 }
 
-.emoji-mgmt-modal > div::-webkit-scrollbar-track,
+.emoji-mgmt-modal>div::-webkit-scrollbar-track,
 .emoji-mgmt-content::-webkit-scrollbar-track,
-#api-preset-modal > div::-webkit-scrollbar-track > div::-webkit-scrollbar-track > div::-webkit-scrollbar-track,
-#api-preset-edit-modal > div::-webkit-scrollbar-track {
+#api-preset-modal>div::-webkit-scrollbar-track>div::-webkit-scrollbar-track>div::-webkit-scrollbar-track,
+#api-preset-edit-modal>div::-webkit-scrollbar-track {
     background: #f0f0f0;
     border-radius: 3px;
 }
 
-.emoji-mgmt-modal > div::-webkit-scrollbar-thumb,
+.emoji-mgmt-modal>div::-webkit-scrollbar-thumb,
 .emoji-mgmt-content::-webkit-scrollbar-thumb,
-#api-preset-modal > div::-webkit-scrollbar-thumb > div::-webkit-scrollbar-thumb > div::-webkit-scrollbar-thumb,
-#api-preset-edit-modal > div::-webkit-scrollbar-thumb {
+#api-preset-modal>div::-webkit-scrollbar-thumb>div::-webkit-scrollbar-thumb>div::-webkit-scrollbar-thumb,
+#api-preset-edit-modal>div::-webkit-scrollbar-thumb {
     background: #ccc;
     border-radius: 3px;
 }
 
-.emoji-mgmt-modal > div::-webkit-scrollbar-thumb:hover,
+.emoji-mgmt-modal>div::-webkit-scrollbar-thumb:hover,
 .emoji-mgmt-content::-webkit-scrollbar-thumb:hover,
-#api-preset-modal > div::-webkit-scrollbar-thumb:hover > div::-webkit-scrollbar-thumb:hover > div::-webkit-scrollbar-thumb:hover,
-#api-preset-edit-modal > div::-webkit-scrollbar-thumb:hover {
+#api-preset-modal>div::-webkit-scrollbar-thumb:hover>div::-webkit-scrollbar-thumb:hover>div::-webkit-scrollbar-thumb:hover,
+#api-preset-edit-modal>div::-webkit-scrollbar-thumb:hover {
     background: #bbb;
 }
 
 /* 响应式优�?*/
 @media (max-width: 768px) {
+
     .emoji-mgmt-modal,
     #api-preset-modal,
     #api-preset-edit-modal {
         padding: 16px;
     }
 
-    .emoji-mgmt-modal > div,
+    .emoji-mgmt-modal>div,
     .emoji-mgmt-content,
-    #api-preset-modal > div > div > div,
-    #api-preset-edit-modal > div {
+    #api-preset-modal>div>div>div,
+    #api-preset-edit-modal>div {
         padding: 24px !important;
         border-radius: 16px !important;
         max-height: 90vh !important;
@@ -962,6 +964,7 @@
 
 /* 触摸反馈优化 */
 @media (hover: none) and (pointer: coarse) {
+
     .emoji-mgmt-btn:active,
     .emoji-mgmt-content button:active,
     #api-preset-modal button:active button:active button:active,
@@ -970,10 +973,7 @@
     }
 }
 
-/* ========================================
-   Token统计样式 - 粉色公主风格
-   ======================================== */
-
+/* ========================================   Token统计样式 - 粉色公主风格   ======================================== */
 #api-settings-page {
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -1030,11 +1030,7 @@
     gap: 8px;
 }
 
-/* ========================================
-   设置与配置页面主题覆盖（参考添加好友页面）
-   追加在文件末尾，确保覆盖前置重复规则
-   ======================================== */
-
+/* ========================================   设置与配置页面主题覆盖（参考添加好友页面）   追加在文件末尾，确保覆盖前置重复规则   ======================================== */
 #api-settings-page {
     background: linear-gradient(180deg, #fff5f9 0%, #f8f0f4 100%) !important;
 }
@@ -1132,14 +1128,8 @@
 }
 
 #api-settings-page .modern-select {
-    background-image:
-        linear-gradient(45deg, transparent 50%, #ffb6c8 50%),
-        linear-gradient(135deg, #ffb6c8 50%, transparent 50%),
-        linear-gradient(180deg, #fff9fc 0%, #ffffff 100%) !important;
-    background-position:
-        calc(100% - 18px) calc(50% - 2px),
-        calc(100% - 12px) calc(50% - 2px),
-        0 0 !important;
+    background-image: linear-gradient(45deg, transparent 50%, #ffb6c8 50%), linear-gradient(135deg, #ffb6c8 50%, transparent 50%), linear-gradient(180deg, #fff9fc 0%, #ffffff 100%) !important;
+    background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px), 0 0 !important;
     background-size: 6px 6px, 6px 6px, 100% 100% !important;
     background-repeat: no-repeat !important;
     padding-right: 42px !important;
@@ -1286,8 +1276,8 @@
     box-shadow: 0 2px 8px rgba(255, 148, 182, 0.45);
 }
 
-#api-settings-page #api-params-container input[type="range"] + div,
-#api-settings-page #secondary-api-params-container input[type="range"] + div {
+#api-settings-page #api-params-container input[type="range"]+div,
+#api-settings-page #secondary-api-params-container input[type="range"]+div {
     color: #c596ab !important;
     font-size: 12px !important;
     margin-top: 8px !important;
@@ -1544,7 +1534,7 @@
     display: none !important;
 }
 
-#api-settings-page .settings-card.af-collapsed > :not(.card-title) {
+#api-settings-page .settings-card.af-collapsed> :not(.card-title) {
     display: none;
 }
 
@@ -1650,8 +1640,8 @@
     background: linear-gradient(90deg, #ffe3ef, #ffcde0);
 }
 
-#api-settings-page #minimax-speed-input + div,
-#api-settings-page #minimax-volume-input + div {
+#api-settings-page #minimax-speed-input+div,
+#api-settings-page #minimax-volume-input+div {
     color: #c596ab !important;
     font-size: 12px !important;
     margin-top: 8px !important;
@@ -1669,7 +1659,7 @@
     background: #fff9fc;
 }
 
-#api-settings-page .time-aware-option > div {
+#api-settings-page .time-aware-option>div {
     color: #b7849a !important;
     font-size: 13px !important;
     line-height: 1.4;
@@ -1705,10 +1695,11 @@
 
 /* 手机端卡片底部显示修复（防止底边看不完整） */
 @media (max-width: 768px) {
+
     #api-settings-page .sub-content,
     #api-settings-page .api-settings-container {
         overflow: visible !important;
-        padding-bottom: max(120px, calc(96px + env(safe-area-inset-bottom))) !important;
+        padding-bottom: max(120px, calc(96px + var(--safe-area-inset-bottom))) !important;
     }
 
     #api-settings-page .settings-card,
@@ -1719,7 +1710,7 @@
         transform: none !important;
     }
 
-    #api-settings-page .settings-card > div,
+    #api-settings-page .settings-card>div,
     #api-settings-page #api-params-container,
     #api-settings-page #secondary-api-params-container {
         margin-bottom: 2px !important;

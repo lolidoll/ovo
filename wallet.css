@@ -10,7 +10,7 @@
 @media (display-mode: fullscreen), (display-mode: standalone) {
     #wallet-page {
         bottom: 0 !important;
-        height: calc(100dvh - env(safe-area-inset-top)) !important;
+        height: calc(100dvh - var(--safe-area-inset-top)) !important;
     }
 }
 
@@ -18,18 +18,18 @@
 .is-pwa #wallet-page,
 .is-standalone #wallet-page {
     bottom: 0 !important;
-    height: calc(100dvh - env(safe-area-inset-top)) !important;
+    height: calc(100dvh - var(--safe-area-inset-top)) !important;
 }
 
 /* ==================== 顶部导航栏 ==================== */
 #wallet-page .wallet-header {
-    height: calc(56px + env(safe-area-inset-top)) !important;
+    height: calc(56px + var(--safe-area-inset-top)) !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #fff;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: env(safe-area-inset-top) 16px 0 16px !important;
+    padding: var(--safe-area-inset-top) 16px 0 16px !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -43,31 +43,31 @@
 /* PWA全屏模式适配 - 所有设备统一处理 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     #wallet-page .wallet-header {
-        height: calc(56px + env(safe-area-inset-top)) !important;
-        padding: env(safe-area-inset-top) 16px 0 16px !important;
+        height: calc(56px + var(--safe-area-inset-top)) !important;
+        padding: var(--safe-area-inset-top) 16px 0 16px !important;
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa #wallet-page .wallet-header,
 .is-standalone #wallet-page .wallet-header {
-    height: calc(56px + env(safe-area-inset-top)) !important;
-    padding: env(safe-area-inset-top) 16px 0 16px !important;
+    height: calc(56px + var(--safe-area-inset-top)) !important;
+    padding: var(--safe-area-inset-top) 16px 0 16px !important;
 }
 
 /* PWA全屏模式适配 - 所有设备统一处理 */
 @media (display-mode: fullscreen), (display-mode: standalone) {
     #wallet-page .wallet-header {
-        height: calc(56px + env(safe-area-inset-top)) !important;
-        padding: env(safe-area-inset-top) 16px 0 16px !important;
+        height: calc(56px + var(--safe-area-inset-top)) !important;
+        padding: var(--safe-area-inset-top) 16px 0 16px !important;
     }
 }
 
 /* 通过class添加的额外适配 */
 .is-pwa #wallet-page .wallet-header,
 .is-standalone #wallet-page .wallet-header {
-    height: calc(56px + env(safe-area-inset-top)) !important;
-    padding: env(safe-area-inset-top) 16px 0 16px !important;
+    height: calc(56px + var(--safe-area-inset-top)) !important;
+    padding: var(--safe-area-inset-top) 16px 0 16px !important;
 }
 
 #wallet-page .header-left {
@@ -149,7 +149,7 @@
 /* ==================== 内容容器 ==================== */
 #wallet-page .content-container {
     position: fixed;
-    top: calc(56px + env(safe-area-inset-top));
+    top: calc(56px + var(--safe-area-inset-top));
     left: 0;
     right: 0;
     bottom: 0;

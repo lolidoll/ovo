@@ -55,7 +55,7 @@
     padding: 0 15px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     position: relative;
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-area-inset-top);
 }
 
 .order-back-btn {
@@ -256,7 +256,7 @@
     justify-content: space-between;
     padding: 0 15px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--safe-area-inset-bottom);
     align-items: center;
 }
 
@@ -301,7 +301,7 @@
     padding: 0 15px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     position: relative;
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-area-inset-top);
 }
 
 .payment-back-btn {
@@ -412,7 +412,7 @@
     padding: 15px;
     background-color: #fff;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    padding-bottom: calc(15px + var(--safe-area-inset-bottom));
 }
 
 .payment-footer-btn {
@@ -453,7 +453,7 @@
     padding: 0 15px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     position: relative;
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-area-inset-top);
 }
 
 .order-list-back-btn {
@@ -681,7 +681,7 @@
     padding: 0 15px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     position: relative;
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-area-inset-top);
 }
 
 .order-detail-back-btn {
@@ -789,7 +789,7 @@
     gap: 10px;
     padding: 0 15px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--safe-area-inset-bottom);
     align-items: center;
 }
 
