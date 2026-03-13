@@ -9,6 +9,8 @@
 
     let currentMapsData = null;
     let currentCharacter = null;
+    let activeConvId = null;
+    const STORAGE_KEY_PREFIX = 'iphoneMapsData_';
 
     // 创建地图页面HTML
     function createMapsPage() {
@@ -123,7 +125,13 @@
 
     // 获取最近对话（与备忘录完全一致）
     function getRecentMessages() {
-        const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        const currentChatId = window.AppState?.currentChat?.id;
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，无法获取消息');
+            return [];
+        }
+
+        const messages = window.AppState?.messages?.[currentChatId] || [];
         return messages.slice(-50); // 最近50条
     }
 
@@ -146,6 +154,7 @@
         
         try {
             currentCharacter = getCurrentCharacter();
+            activeConvId = currentCharacter?.id || null;
             const recentMessages = getRecentMessages();
             
             console.log('===== 地图 - 调试提示词构建 =====');
@@ -166,7 +175,8 @@
             if (recentMessages.length > 0) {
                 messagesText = '\n最近对话（最近50条）：\n' +
                     recentMessages.slice(-20).map(m => {
-                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        const isUserMessage = m.role === 'user' || m.type === 'sent' || m.sender === 'sent';
+                        const role = isUserMessage ? currentCharacter.userName : currentCharacter.name;
                         return `${role}: ${m.content}`;
                     }).join('\n');
             }
@@ -230,7 +240,7 @@ ${messagesText}
             currentMapsData = parseMapsResponse(response);
             
             // 保存到localStorage
-            saveMapsToStorage();
+            saveMapsToStorage(activeConvId);
             
             // 渲染地图
             renderMaps();
@@ -250,9 +260,14 @@ ${messagesText}
     }
 
     // 保存地图数据到localStorage
-    function saveMapsToStorage() {
+    function saveMapsToStorage(convId) {
+        if (!convId) {
+            console.warn('⚠️ 未找到对话ID，跳过地图保存');
+            return;
+        }
+
         try {
-            localStorage.setItem('iphoneMapsData', JSON.stringify({
+            localStorage.setItem(STORAGE_KEY_PREFIX + convId, JSON.stringify({
                 mapsData: currentMapsData,
                 character: currentCharacter,
                 savedAt: Date.now()
@@ -263,17 +278,16 @@ ${messagesText}
     }
     
     // 从localStorage加载地图数据
-    function loadMapsFromStorage() {
+    function loadMapsFromStorage(convId) {
+        if (!convId) return false;
+
         try {
-            const saved = localStorage.getItem('iphoneMapsData');
+            const saved = localStorage.getItem(STORAGE_KEY_PREFIX + convId);
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色
-                if (data.character && data.character.name === getCurrentCharacter().name) {
-                    currentMapsData = data.mapsData || null;
-                    currentCharacter = data.character;
-                    return true;
-                }
+                currentMapsData = data.mapsData || null;
+                currentCharacter = data.character || currentCharacter;
+                return true;
             }
         } catch (e) {
             console.error('加载地图数据失败:', e);
@@ -607,17 +621,40 @@ ${messagesText}
         return markers;
     }
 
+    function renderMapsEmptyState() {
+        const content = document.getElementById('maps-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="maps-empty">
+                <div class="maps-empty-icon">🗺️</div>
+                <div class="maps-empty-text">暂无行程数据</div>
+                <div class="maps-empty-hint">点击右上角"生成"按钮<br>查看今日行程轨迹</div>
+            </div>
+        `;
+    }
+
     // 显示地图页面
     function showMaps() {
         const mapsPage = document.getElementById('iphone-maps-page');
         if (mapsPage) {
             mapsPage.classList.add('show');
-            
-            // 尝试加载已保存的地图数据
-            if (!currentMapsData) {
-                if (loadMapsFromStorage() && currentMapsData) {
-                    renderMaps();
-                }
+
+            const character = getCurrentCharacter();
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentMapsData = null;
+            }
+
+            if (convId && loadMapsFromStorage(convId) && currentMapsData) {
+                renderMaps();
+            } else if (currentMapsData) {
+                renderMaps();
+            } else {
+                renderMapsEmptyState();
             }
         }
     }

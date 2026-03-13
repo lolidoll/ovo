@@ -8,6 +8,8 @@
 
     let currentPhotos = [];
     let currentCharacter = null;
+    let activeConvId = null;
+    const STORAGE_KEY_PREFIX = 'iphonePhotosData_';
 
     // 创建相册页面HTML
     function createPhotosPage() {
@@ -468,6 +470,7 @@
         
         try {
             currentCharacter = getCurrentCharacter();
+            activeConvId = currentCharacter?.id || null;
             const recentMessages = getRecentMessages();
             
             console.log('===== 相册调试提示词构建 =====');
@@ -620,7 +623,7 @@ ${messagesText}
             currentPhotos.sort((a, b) => b.timestamp - a.timestamp);
             
             // 保存到localStorage
-            savePhotosToStorage();
+            savePhotosToStorage(activeConvId);
             
             renderPhotosGrid();
             
@@ -639,9 +642,14 @@ ${messagesText}
     }
 
     // 保存照片到localStorage
-    function savePhotosToStorage() {
+    function savePhotosToStorage(convId) {
+        if (!convId) {
+            console.warn('⚠️ 未找到对话ID，跳过照片保存');
+            return;
+        }
+
         try {
-            localStorage.setItem('iphonePhotosData', JSON.stringify({
+            localStorage.setItem(STORAGE_KEY_PREFIX + convId, JSON.stringify({
                 photos: currentPhotos,
                 character: currentCharacter,
                 savedAt: Date.now()
@@ -652,23 +660,26 @@ ${messagesText}
     }
     
     // 从localStorage加载照片
-    function loadPhotosFromStorage() {
+    function loadPhotosFromStorage(convId) {
+        if (!convId) return false;
+
         try {
-            const saved = localStorage.getItem('iphonePhotosData');
+            const saved = localStorage.getItem(STORAGE_KEY_PREFIX + convId);
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色，并且数据包含imageUrl
-                if (data.character && data.character.name === getCurrentCharacter().name) {
-                    const photos = data.photos || [];
-                    // 检查照片是否有imageUrl字段，如果没有则不加载（旧数据）
-                    if (photos.length > 0 && photos[0].imageUrl) {
-                        currentPhotos = photos;
-                        currentCharacter = data.character;
-                        console.log('✅ 从localStorage加载了包含图片URL的照片数据');
-                        return true;
-                    } else {
-                        console.log('⚠️ localStorage中的数据不包含图片URL，将重新生成');
-                    }
+                const photos = data.photos || [];
+                // 检查照片是否有imageUrl字段，如果没有则不加载（旧数据）
+                if (photos.length > 0 && photos[0].imageUrl) {
+                    currentPhotos = photos;
+                    currentCharacter = data.character || currentCharacter;
+                    console.log('✅ 从localStorage加载了包含图片URL的照片数据');
+                    return true;
+                } else if (photos.length === 0) {
+                    currentPhotos = [];
+                    currentCharacter = data.character || currentCharacter;
+                    return true;
+                } else {
+                    console.log('⚠️ localStorage中的数据不包含图片URL，将重新生成');
                 }
             }
         } catch (e) {
@@ -1026,16 +1037,20 @@ ${messagesText}
         const photosPage = document.getElementById('iphone-photos-page');
         if (photosPage) {
             photosPage.classList.add('show');
-            
-            // 尝试从localStorage加载已保存的照片
-            if (currentPhotos.length === 0) {
-                const loaded = loadPhotosFromStorage();
-                if (loaded && currentPhotos.length > 0) {
-                    console.log('✅ 从localStorage加载了已保存的照片');
-                    renderPhotosGrid();
-                }
+
+            const character = getCurrentCharacter();
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentPhotos = [];
+            }
+
+            if (convId && loadPhotosFromStorage(convId)) {
+                console.log('✅ 从localStorage加载了已保存的照片');
+                renderPhotosGrid();
             } else {
-                // 如果已有数据，直接渲染
                 renderPhotosGrid();
             }
         }

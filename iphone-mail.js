@@ -9,6 +9,8 @@
 
     let currentMailData = null;
     let currentCharacter = null;
+    let activeConvId = null;
+    const STORAGE_KEY_PREFIX = 'iphoneMailData_';
 
     // 创建邮件页面HTML
     function createMailPage() {
@@ -79,6 +81,21 @@
         const page = document.getElementById('iphone-mail-page');
         if (page) {
             page.classList.add('show');
+
+            const character = getCurrentCharacter();
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentMailData = null;
+            }
+
+            if (convId && loadMailFromStorage(convId)) {
+                renderMailList();
+            } else {
+                renderMailList();
+            }
         }
         
         // 隐藏主屏幕
@@ -87,12 +104,6 @@
             homeScreen.style.display = 'none';
         }
         
-        // 尝试加载已保存的邮件
-        if (currentMailData === null) {
-            if (loadMailFromStorage()) {
-                renderMailList();
-            }
-        }
     }
 
     // 隐藏邮件页面
@@ -232,7 +243,13 @@
 
     // 获取最近对话
     function getRecentMessages() {
-        const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        const currentChatId = window.AppState?.currentChat?.id;
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，无法获取消息');
+            return [];
+        }
+
+        const messages = window.AppState?.messages?.[currentChatId] || [];
         return messages.slice(-50); // 最近50条
     }
 
@@ -255,6 +272,7 @@
         
         try {
             currentCharacter = getCurrentCharacter();
+            activeConvId = currentCharacter?.id || null;
             const recentMessages = getRecentMessages();
             
             console.log('===== 调试提示词构建 =====');
@@ -275,7 +293,8 @@
             if (recentMessages.length > 0) {
                 messagesText = '\n最近对话（最近50条）：\n' +
                     recentMessages.slice(-20).map(m => {
-                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        const isUserMessage = m.role === 'user' || m.type === 'sent' || m.sender === 'sent';
+                        const role = isUserMessage ? currentCharacter.userName : currentCharacter.name;
                         return `${role}: ${m.content}`;
                     }).join('\n');
             }
@@ -357,7 +376,7 @@ ${messagesText}
             currentMailData.sort((a, b) => b.timestamp - a.timestamp);
             
             // 保存到localStorage
-            saveMailToStorage();
+            saveMailToStorage(activeConvId);
             
             // 渲染邮件列表
             renderMailList();
@@ -377,9 +396,14 @@ ${messagesText}
     }
     
     // 保存邮件到localStorage
-    function saveMailToStorage() {
+    function saveMailToStorage(convId) {
+        if (!convId) {
+            console.warn('⚠️ 未找到对话ID，跳过邮件保存');
+            return;
+        }
+
         try {
-            localStorage.setItem('iphoneMailData', JSON.stringify({
+            localStorage.setItem(STORAGE_KEY_PREFIX + convId, JSON.stringify({
                 mails: currentMailData,
                 character: currentCharacter,
                 savedAt: Date.now()
@@ -390,17 +414,16 @@ ${messagesText}
     }
     
     // 从localStorage加载邮件
-    function loadMailFromStorage() {
+    function loadMailFromStorage(convId) {
+        if (!convId) return false;
+
         try {
-            const saved = localStorage.getItem('iphoneMailData');
+            const saved = localStorage.getItem(STORAGE_KEY_PREFIX + convId);
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色
-                if (data.character && data.character.name === getCurrentCharacter().name) {
-                    currentMailData = data.mails || [];
-                    currentCharacter = data.character;
-                    return true;
-                }
+                currentMailData = data.mails || [];
+                currentCharacter = data.character || currentCharacter;
+                return true;
             }
         } catch (e) {
             console.error('加载邮件失败:', e);
@@ -483,7 +506,7 @@ ${messagesText}
         
         // 标记为已读
         mail.unread = false;
-        saveMailToStorage();
+        saveMailToStorage(activeConvId || currentCharacter?.id);
         renderMailList();
         
         // 获取头像URL

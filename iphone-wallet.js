@@ -8,6 +8,8 @@
 
     let currentWalletData = null;
     let currentCharacter = null;
+    let activeConvId = null;
+    const STORAGE_KEY_PREFIX = 'iphoneWalletData_';
 
     // 创建钱包页面HTML
     function createWalletPage() {
@@ -63,11 +65,30 @@
         const page = document.getElementById('iphone-wallet-page');
         if (page) {
             page.classList.add('show');
-            
-            // 尝试加载已保存的钱包数据
-            if (!currentWalletData) {
-                if (loadWalletFromStorage()) {
-                    renderWalletData(currentWalletData);
+
+            const character = getCurrentCharacter();
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentWalletData = null;
+            }
+
+            if (convId && loadWalletFromStorage(convId) && currentWalletData) {
+                renderWalletData(currentWalletData);
+            } else if (currentWalletData) {
+                renderWalletData(currentWalletData);
+            } else {
+                const content = document.getElementById('wallet-content');
+                if (content) {
+                    content.innerHTML = `
+                        <div class="wallet-empty">
+                            <div class="wallet-empty-icon">💳</div>
+                            <div class="wallet-empty-text">暂无钱包数据</div>
+                            <div class="wallet-empty-hint">点击右上角"生成"按钮创建钱包记录</div>
+                        </div>
+                    `;
                 }
             }
         }
@@ -112,6 +133,7 @@
         
         try {
             currentCharacter = getCurrentCharacter();
+            activeConvId = currentCharacter?.id || null;
             const recentMessages = getRecentMessages();
             
             console.log('===== 调试提示词构建 =====');
@@ -132,7 +154,8 @@
             if (recentMessages.length > 0) {
                 messagesText = '\n最近对话（最近50条）：\n' +
                     recentMessages.slice(-20).map(m => {
-                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        const isUserMessage = m.role === 'user' || m.type === 'sent' || m.sender === 'sent';
+                        const role = isUserMessage ? currentCharacter.userName : currentCharacter.name;
                         return `${role}: ${m.content}`;
                     }).join('\n');
             }
@@ -177,7 +200,7 @@ ${messagesText}
             const walletData = parseWalletResponse(response);
             
             // 保存到localStorage
-            saveWalletToStorage(walletData);
+            saveWalletToStorage(walletData, activeConvId);
             
             // 渲染钱包数据
             renderWalletData(walletData);
@@ -197,9 +220,14 @@ ${messagesText}
     }
     
     // 保存钱包到localStorage
-    function saveWalletToStorage(walletData) {
+    function saveWalletToStorage(walletData, convId) {
+        if (!convId) {
+            console.warn('⚠️ 未找到对话ID，跳过钱包数据保存');
+            return;
+        }
+
         try {
-            localStorage.setItem('iphoneWalletData', JSON.stringify({
+            localStorage.setItem(STORAGE_KEY_PREFIX + convId, JSON.stringify({
                 data: walletData,
                 character: currentCharacter,
                 savedAt: Date.now()
@@ -210,17 +238,16 @@ ${messagesText}
     }
     
     // 从localStorage加载钱包
-    function loadWalletFromStorage() {
+    function loadWalletFromStorage(convId) {
+        if (!convId) return false;
+
         try {
-            const saved = localStorage.getItem('iphoneWalletData');
+            const saved = localStorage.getItem(STORAGE_KEY_PREFIX + convId);
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色
-                if (data.character && data.character.name === getCurrentCharacter().name) {
-                    currentWalletData = data.data;
-                    currentCharacter = data.character;
-                    return true;
-                }
+                currentWalletData = data.data;
+                currentCharacter = data.character || currentCharacter;
+                return true;
             }
         } catch (e) {
             console.error('加载钱包数据失败:', e);
@@ -299,7 +326,13 @@ ${messagesText}
 
     // 获取最近对话
     function getRecentMessages() {
-        const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        const currentChatId = window.AppState?.currentChat?.id;
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，无法获取消息');
+            return [];
+        }
+
+        const messages = window.AppState?.messages?.[currentChatId] || [];
         return messages.slice(-50); // 最近50条
     }
 

@@ -8,6 +8,7 @@
 
     let currentPhoneData = null;
     let currentCharacter = null;
+    let activeConvId = null;
     let isGenerating = false;
 
     // 创建电话页面HTML
@@ -71,14 +72,37 @@
             homeScreen.style.display = 'none';
         }
 
-        // 尝试加载已保存的数据
         const characterInfo = getCurrentCharacterInfo();
-        if (characterInfo) {
-            const savedData = loadPhoneData(characterInfo.convId);
+        const convId = characterInfo?.convId || null;
+
+        if (convId !== activeConvId) {
+            activeConvId = convId;
+            currentCharacter = characterInfo;
+            currentPhoneData = null;
+        }
+
+        if (convId) {
+            const savedData = loadPhoneData(convId);
             if (savedData) {
                 currentPhoneData = savedData;
                 currentCharacter = characterInfo;
                 renderPhoneData(savedData);
+                return;
+            }
+        }
+
+        if (currentPhoneData) {
+            renderPhoneData(currentPhoneData);
+        } else {
+            const content = document.getElementById('phone-content');
+            if (content) {
+                content.innerHTML = `
+                    <div class="phone-empty">
+                        <div class="phone-empty-icon">📱</div>
+                        <div class="phone-empty-text">暂无电话记录</div>
+                        <div class="phone-empty-hint">点击右上角"生成"按钮<br>创建角色的电话联系人</div>
+                    </div>
+                `;
             }
         }
     }

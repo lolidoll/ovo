@@ -22,6 +22,22 @@
         callerAvatar: null,
         callingTimeout: null // 拨通等待的定时器
     };
+
+    function getBoundConversationId() {
+        return callState.callerId || window.AppState?.currentChat?.id || null;
+    }
+
+    function getConversationById(convId) {
+        if (!convId || !window.AppState?.conversations) return null;
+        return window.AppState.conversations.find(c => c.id === convId) || null;
+    }
+
+    function renderCurrentChatIfMatched(convId) {
+        if (!convId) return;
+        if (typeof window.renderChatMessages === 'function' && window.AppState?.currentChat?.id === convId) {
+            window.renderChatMessages();
+        }
+    }
     
     // 通话历史记录
     const callHistory = [];
@@ -640,7 +656,7 @@
     /**
      * 接收来电（AI主动呼叫）
      */
-    function receiveIncomingCall(characterName, characterAvatar) {
+    function receiveIncomingCall(characterName, characterAvatar, conversationId) {
         if (callState.isInCall) {
             console.log('⚠️ 当前正在通话中，拒绝新来电');
             return;
@@ -649,6 +665,7 @@
         console.log('[VoiceCall] 收到来电:', characterName);
         
         callState.callType = 'incoming';
+        callState.callerId = conversationId || window.AppState?.currentChat?.id || null;
         callState.callerName = characterName;
         callState.callerAvatar = characterAvatar;
         
@@ -1319,7 +1336,7 @@ ${initiatorInfo}
      * 获取用户设定
      */
     function getUserSettings() {
-        const currentChat = window.AppState?.currentChat;
+        const currentChat = getConversationById(getBoundConversationId()) || window.AppState?.currentChat;
         const userName = currentChat?.userNameForChar || window.AppState?.user?.name || '用户';
         const userPersonality = window.AppState?.user?.personality || '';
         
@@ -1334,7 +1351,7 @@ ${initiatorInfo}
      */
     function getCharacterAvatar() {
         // 优先从AppState获取
-        const currentConv = window.AppState?.currentChat;
+        const currentConv = getConversationById(getBoundConversationId()) || window.AppState?.currentChat;
         if (currentConv?.avatar) {
             return currentConv.avatar;
         }
@@ -1353,13 +1370,12 @@ ${initiatorInfo}
      * 添加通话记录到聊天
      */
     function addCallRecordToChat(status, duration) {
-        const currentConv = window.AppState?.currentChat;
+        const convId = getBoundConversationId();
+        const currentConv = getConversationById(convId) || window.AppState?.currentChat;
         if (!currentConv) {
             console.warn('[VoiceCall] 无法添加通话记录：未找到当前对话');
             return;
         }
-        
-        const convId = currentConv.id;
         
         // 创建通话消息对象
         const callMessage = {
@@ -1385,9 +1401,7 @@ ${initiatorInfo}
         }
         
         // 重新渲染聊天消息
-        if (typeof window.renderChatMessages === 'function') {
-            window.renderChatMessages();
-        }
+        renderCurrentChatIfMatched(convId);
         
         // 添加到历史记录
         callHistory.push({
@@ -1410,10 +1424,8 @@ ${initiatorInfo}
      * 更新最后一条通话记录
      */
     function updateLastCallRecord(newStatus, newDuration) {
-        const currentConv = window.AppState?.currentChat;
-        if (!currentConv) return;
-        
-        const convId = currentConv.id;
+        const convId = getBoundConversationId();
+        if (!convId) return;
         const messages = window.AppState.messages[convId];
         
         if (!messages || messages.length === 0) return;
@@ -1429,9 +1441,7 @@ ${initiatorInfo}
                 if (typeof window.saveToStorage === 'function') {
                     window.saveToStorage();
                 }
-                if (typeof window.renderChatMessages === 'function') {
-                    window.renderChatMessages();
-                }
+                renderCurrentChatIfMatched(convId);
                 break;
             }
         }

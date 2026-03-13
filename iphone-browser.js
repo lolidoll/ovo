@@ -8,6 +8,7 @@
 
     let currentBrowserData = null;
     let currentCharacter = null;
+    let activeConvId = null;
     let isGenerating = false;
     
     // 数据持久化存储key前缀
@@ -73,16 +74,39 @@
         if (homeScreen) {
             homeScreen.style.display = 'none';
         }
-        
-        // 尝试加载已保存的数据
+
         const characterInfo = getCurrentCharacterInfo();
-        if (characterInfo && characterInfo.convId) {
-            const savedData = loadBrowserData(characterInfo.convId);
+        const convId = characterInfo?.convId || null;
+
+        if (convId !== activeConvId) {
+            activeConvId = convId;
+            currentCharacter = characterInfo;
+            currentBrowserData = null;
+        }
+
+        if (convId) {
+            const savedData = loadBrowserData(convId);
             if (savedData) {
                 console.log('✅ 加载已保存的浏览器数据');
                 currentBrowserData = savedData;
                 currentCharacter = characterInfo;
                 renderBrowserData(savedData);
+                return;
+            }
+        }
+
+        if (currentBrowserData) {
+            renderBrowserData(currentBrowserData);
+        } else {
+            const content = document.getElementById('browser-content');
+            if (content) {
+                content.innerHTML = `
+                    <div class="browser-empty">
+                        <div class="browser-empty-icon">🧭</div>
+                        <div class="browser-empty-text">暂无浏览记录</div>
+                        <div class="browser-empty-hint">点击右上角"生成"按钮<br>创建角色的浏览器记录</div>
+                    </div>
+                `;
             }
         }
     }

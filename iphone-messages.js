@@ -8,6 +8,7 @@
 
     let currentMessagesData = null;
     let currentCharacter = null;
+    let activeConvId = null;
     let isGenerating = false;
     const STORAGE_KEY_PREFIX = 'messages_data_';
 
@@ -72,14 +73,37 @@
             homeScreen.style.display = 'none';
         }
 
-        // 尝试加载已保存的短信数据
         const characterInfo = getCurrentCharacterInfo();
-        if (characterInfo && characterInfo.convId) {
-            const savedData = loadMessagesData(characterInfo.convId);
+        const convId = characterInfo?.convId || null;
+
+        if (convId !== activeConvId) {
+            activeConvId = convId;
+            currentCharacter = characterInfo;
+            currentMessagesData = null;
+        }
+
+        if (convId) {
+            const savedData = loadMessagesData(convId);
             if (savedData) {
                 currentMessagesData = savedData;
                 currentCharacter = characterInfo;
                 renderMessagesData(savedData);
+                return;
+            }
+        }
+
+        if (currentMessagesData) {
+            renderMessagesData(currentMessagesData);
+        } else {
+            const content = document.getElementById('messages-content');
+            if (content) {
+                content.innerHTML = `
+                    <div class="messages-empty">
+                        <div class="messages-empty-icon">💬</div>
+                        <div class="messages-empty-text">暂无短信记录</div>
+                        <div class="messages-empty-hint">点击右上角"生成"按钮<br>创建角色的短信来往记录</div>
+                    </div>
+                `;
             }
         }
     }

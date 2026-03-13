@@ -8,6 +8,7 @@
 
     let currentCalendarData = null;
     let currentCharacter = null;
+    let activeConvId = null;
     let currentDate = new Date();
     let selectedDate = null;
     const STORAGE_KEY_PREFIX = 'calendar_data_';
@@ -592,21 +593,48 @@ ${messagesText}
         return `${month}月${day}日 ${weekday}`;
     }
 
+    function renderCalendarEmptyState() {
+        const content = document.getElementById('calendar-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="calendar-empty">
+                <div class="calendar-empty-icon">📅</div>
+                <div class="calendar-empty-text">暂无日历数据</div>
+                <div class="calendar-empty-hint">点击右上角按钮<br>创建日历事件</div>
+            </div>
+        `;
+    }
+
     // 显示日历页面（尝试加载已保存的数据）
     function showCalendar() {
         const calendarPage = document.getElementById('iphone-calendar-page');
         if (calendarPage) {
             calendarPage.classList.add('show');
             
-            // 尝试加载已保存的数据
             const character = getCurrentCharacter();
-            if (character.id) {
-                const savedData = loadCalendarData(character.id);
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentCalendarData = null;
+            }
+
+            if (convId) {
+                const savedData = loadCalendarData(convId);
                 if (savedData) {
                     currentCharacter = character;
                     currentCalendarData = savedData;
                     renderCalendar();
+                    return;
                 }
+            }
+
+            if (currentCalendarData) {
+                renderCalendar();
+            } else {
+                renderCalendarEmptyState();
             }
         }
     }

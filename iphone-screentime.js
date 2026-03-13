@@ -8,6 +8,7 @@
 
     let currentScreenTimeData = null;
     let currentCharacter = null;
+    let activeConvId = null;
     const STORAGE_KEY_PREFIX = 'screentime_data_';
 
     // 创建屏幕使用时间页面HTML
@@ -654,22 +655,48 @@ ${messagesText}
         return map[category] || 'other';
     }
 
+    function renderScreenTimeEmptyState() {
+        const content = document.getElementById('screentime-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="screentime-empty">
+                <div class="screentime-empty-icon">📊</div>
+                <div class="screentime-empty-text">暂无数据</div>
+                <div class="screentime-empty-hint">数据将自动生成<br>请稍候</div>
+            </div>
+        `;
+    }
+
     // 显示屏幕使用时间页面
     function showScreenTime() {
         const screenTimePage = document.getElementById('iphone-screentime-page');
         if (screenTimePage) {
             screenTimePage.classList.add('show');
             
-            // 尝试加载之前保存的数据
             const character = getCurrentCharacter();
-            if (character) {
-                const savedData = loadScreenTimeData(character.id);
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentScreenTimeData = null;
+            }
+
+            if (convId) {
+                const savedData = loadScreenTimeData(convId);
                 if (savedData) {
                     currentScreenTimeData = savedData;
                     renderScreenTime();
                     console.log('已加载保存的屏幕使用时间数据');
+                    return;
                 }
-                // 不自动生成，等待用户点击生成按钮
+            }
+
+            if (currentScreenTimeData) {
+                renderScreenTime();
+            } else {
+                renderScreenTimeEmptyState();
             }
         }
     }

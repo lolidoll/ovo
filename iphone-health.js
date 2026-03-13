@@ -9,6 +9,8 @@
 
     let currentHealthData = null;
     let currentCharacter = null;
+    let activeConvId = null;
+    const STORAGE_KEY_PREFIX = 'iphoneHealthData_';
 
     // 创建健康页面HTML
     function createHealthPage() {
@@ -152,6 +154,7 @@
         
         try {
             currentCharacter = getCurrentCharacter();
+            activeConvId = currentCharacter?.id || null;
             const recentMessages = getRecentMessages();
             
             console.log('===== 调试提示词构建 =====');
@@ -172,7 +175,8 @@
             if (recentMessages.length > 0) {
                 messagesText = '\n最近对话（最近50条）：\n' +
                     recentMessages.slice(-20).map(m => {
-                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        const isUserMessage = m.role === 'user' || m.type === 'sent' || m.sender === 'sent';
+                        const role = isUserMessage ? currentCharacter.userName : currentCharacter.name;
                         return `${role}: ${m.content}`;
                     }).join('\n');
             }
@@ -226,7 +230,7 @@ ${messagesText}
             currentHealthData = parseHealthResponse(response);
             
             // 保存到localStorage
-            saveHealthToStorage();
+            saveHealthToStorage(activeConvId);
             
             renderHealth();
             
@@ -245,9 +249,14 @@ ${messagesText}
     }
 
     // 保存健康数据到localStorage
-    function saveHealthToStorage() {
+    function saveHealthToStorage(convId) {
+        if (!convId) {
+            console.warn('⚠️ 未找到对话ID，跳过健康数据保存');
+            return;
+        }
+
         try {
-            localStorage.setItem('iphoneHealthData', JSON.stringify({
+            localStorage.setItem(STORAGE_KEY_PREFIX + convId, JSON.stringify({
                 healthData: currentHealthData,
                 character: currentCharacter,
                 savedAt: Date.now()
@@ -258,17 +267,16 @@ ${messagesText}
     }
 
     // 从localStorage加载健康数据
-    function loadHealthFromStorage() {
+    function loadHealthFromStorage(convId) {
+        if (!convId) return false;
+
         try {
-            const saved = localStorage.getItem('iphoneHealthData');
+            const saved = localStorage.getItem(STORAGE_KEY_PREFIX + convId);
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色
-                if (data.character && data.character.name === getCurrentCharacter().name) {
-                    currentHealthData = data.healthData;
-                    currentCharacter = data.character;
-                    return true;
-                }
+                currentHealthData = data.healthData;
+                currentCharacter = data.character || currentCharacter;
+                return true;
             }
         } catch (e) {
             console.error('加载健康数据失败:', e);
@@ -506,17 +514,40 @@ ${messagesText}
         `;
     }
 
+    function renderHealthEmptyState() {
+        const content = document.getElementById('health-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="health-empty">
+                <div class="health-empty-icon">❤️</div>
+                <div class="health-empty-text">暂无健康数据</div>
+                <div class="health-empty-hint">点击右上角"生成"按钮<br>查看健康数据</div>
+            </div>
+        `;
+    }
+
     // 显示健康页面
     function showHealth() {
         const healthPage = document.getElementById('iphone-health-page');
         if (healthPage) {
             healthPage.classList.add('show');
-            
-            // 尝试加载已保存的健康数据
-            if (!currentHealthData) {
-                if (loadHealthFromStorage()) {
-                    renderHealth();
-                }
+
+            const character = getCurrentCharacter();
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentHealthData = null;
+            }
+
+            if (convId && loadHealthFromStorage(convId) && currentHealthData) {
+                renderHealth();
+            } else if (currentHealthData) {
+                renderHealth();
+            } else {
+                renderHealthEmptyState();
             }
         }
     }

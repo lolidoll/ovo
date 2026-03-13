@@ -360,6 +360,15 @@
 
     // 显示iPhone模拟器
     function showiPhoneSimulator() {
+        const currentChatId = window.AppState?.currentChat?.id;
+        if (!currentChatId) {
+            if (typeof window.showToast === 'function') {
+                window.showToast('请先进入对应角色聊天，再打开查手机');
+            }
+            console.warn('⚠️ 未检测到当前角色聊天，已阻止打开查手机');
+            return;
+        }
+
         let overlay = document.getElementById('iphone-simulator-overlay');
         
         if (!overlay) {

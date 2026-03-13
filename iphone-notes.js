@@ -8,6 +8,8 @@
 
     let currentNotes = [];
     let currentCharacter = null;
+    let activeConvId = null;
+    const STORAGE_KEY_PREFIX = 'iphoneNotesData_';
 
     // 创建备忘录页面HTML
     function createNotesPage() {
@@ -139,7 +141,13 @@
 
     // 获取最近对话
     function getRecentMessages() {
-        const messages = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        const currentChatId = window.AppState?.currentChat?.id;
+        if (!currentChatId) {
+            console.warn('⚠️ 未找到当前聊天ID，无法获取消息');
+            return [];
+        }
+
+        const messages = window.AppState?.messages?.[currentChatId] || [];
         return messages.slice(-50); // 最近50条
     }
 
@@ -162,6 +170,7 @@
         
         try {
             currentCharacter = getCurrentCharacter();
+            activeConvId = currentCharacter?.id || null;
             const recentMessages = getRecentMessages();
             
             console.log('===== 调试提示词构建 =====');
@@ -182,7 +191,8 @@
             if (recentMessages.length > 0) {
                 messagesText = '\n最近聊天记录（最近50条）：\n' +
                     recentMessages.slice(-20).map(m => {
-                        const role = m.role === 'user' ? currentCharacter.userName : currentCharacter.name;
+                        const isUserMessage = m.role === 'user' || m.type === 'sent' || m.sender === 'sent';
+                        const role = isUserMessage ? currentCharacter.userName : currentCharacter.name;
                         return `${role}: ${m.content}`;
                     }).join('\n');
             }
@@ -275,7 +285,7 @@ ${messagesText}
             currentNotes.sort((a, b) => b.timestamp - a.timestamp);
             
             // 保存到localStorage
-            saveNotesToStorage();
+            saveNotesToStorage(activeConvId);
             
             // 渲染备忘录列表
             renderNotesList();
@@ -295,9 +305,14 @@ ${messagesText}
     }
     
     // 保存备忘录到localStorage
-    function saveNotesToStorage() {
+    function saveNotesToStorage(convId) {
+        if (!convId) {
+            console.warn('⚠️ 未找到对话ID，跳过备忘录保存');
+            return;
+        }
+
         try {
-            localStorage.setItem('iphoneNotesData', JSON.stringify({
+            localStorage.setItem(STORAGE_KEY_PREFIX + convId, JSON.stringify({
                 notes: currentNotes,
                 character: currentCharacter,
                 savedAt: Date.now()
@@ -308,17 +323,16 @@ ${messagesText}
     }
     
     // 从localStorage加载备忘录
-    function loadNotesFromStorage() {
+    function loadNotesFromStorage(convId) {
+        if (!convId) return false;
+
         try {
-            const saved = localStorage.getItem('iphoneNotesData');
+            const saved = localStorage.getItem(STORAGE_KEY_PREFIX + convId);
             if (saved) {
                 const data = JSON.parse(saved);
-                // 检查是否是同一角色
-                if (data.character && data.character.name === getCurrentCharacter().name) {
-                    currentNotes = data.notes || [];
-                    currentCharacter = data.character;
-                    return true;
-                }
+                currentNotes = data.notes || [];
+                currentCharacter = data.character || currentCharacter;
+                return true;
             }
         } catch (e) {
             console.error('加载备忘录失败:', e);
@@ -675,12 +689,20 @@ ${messagesText}
         const notesPage = document.getElementById('iphone-notes-page');
         if (notesPage) {
             notesPage.classList.add('show');
-            
-            // 尝试加载已保存的备忘录
-            if (currentNotes.length === 0) {
-                if (loadNotesFromStorage()) {
-                    renderNotesList();
-                }
+
+            const character = getCurrentCharacter();
+            const convId = character?.id || null;
+
+            if (convId !== activeConvId) {
+                activeConvId = convId;
+                currentCharacter = character;
+                currentNotes = [];
+            }
+
+            if (convId && loadNotesFromStorage(convId)) {
+                renderNotesList();
+            } else {
+                renderNotesList();
             }
         }
     }
