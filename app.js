@@ -49,7 +49,7 @@
                 prompts: [],
                 selectedPromptId: '',
                 defaultPrompt: 'null',
-                summaryEnabled: false, // 是否启用自动总结
+                summaryEnabled: true, // 是否启用自动总结
                 summaryInterval: 50, // 每多少条消息后自动总结
                 summaryKeepLatest: 10, // 总结后保留最新的消息数
                 // 副API设置
@@ -520,6 +520,15 @@
                 }
                 if (!AppState.apiSettings.secondaryPrompts) {
                     AppState.apiSettings.secondaryPrompts = {};
+                }
+                if (typeof AppState.apiSettings.summaryEnabled !== 'boolean') {
+                    AppState.apiSettings.summaryEnabled = true;
+                }
+                if (!Number.isFinite(AppState.apiSettings.summaryInterval)) {
+                    AppState.apiSettings.summaryInterval = 50;
+                }
+                if (!Number.isFinite(AppState.apiSettings.summaryKeepLatest)) {
+                    AppState.apiSettings.summaryKeepLatest = 10;
                 }
                 const currentSummaryPrompt = AppState.apiSettings.secondaryPrompts.summarize;
                 if (!currentSummaryPrompt || currentSummaryPrompt === legacySummaryPromptA || currentSummaryPrompt === legacySummaryPromptB || currentSummaryPrompt === legacySummaryPromptC || currentSummaryPrompt === legacySummaryPromptD) {
@@ -2243,7 +2252,7 @@
                     tabBar.style.pointerEvents = 'none';
                 }
                 
-                // 打开API设置页面时重新初始化UI
+                // 打开设置与配置页面时重新初始化UI
                 if (pageId === 'api-settings-page') {
                     setTimeout(function() {
                         initApiSettingsUI();
@@ -7864,7 +7873,7 @@
         }
         
         function initApiSettingsUI() {
-            // 初始化API设置页面内的折叠卡片（样式和交互与添加好友页一致）
+            // 初始化设置与配置页面内的折叠卡片（样式和交互与添加好友页一致）
             const apiSettingsPage = document.getElementById('api-settings-page');
             if (!apiSettingsPage) return;
 
@@ -8680,7 +8689,8 @@
             if (!text || typeof text !== 'string') return null;
             
             // 检查是否包含思考过程标记或多消息标记
-            if (!text.includes('[THINK]') && !text.includes('[REPLY') && !text.includes('[MSG')) {
+            const hasFormatTags = text.includes('[THINK]') || text.includes('[REPLY') || text.includes('[MSG');
+            if (!hasFormatTags) {
                 return null;  // 没有思考过程或多消息标记，返回null表示普通消息
             }
             
@@ -8816,6 +8826,26 @@
             // 这样可以避免在消息气泡中显示"（思考中...）"
             // 思考过程应该是完全隐藏的内部过程
             
+            // 如果没有解析到消息，尝试提取残留文本作为兜底
+            if (messages.length === 0 && hasFormatTags) {
+                const fallbackText = text
+                    .replace(/\[THINK\][\s\S]*?\[\/THINK\]/g, '')
+                    .replace(/\[REPLY\d+\]|\[\/REPLY\d+\]/g, '')
+                    .replace(/\[MSG\d+\]|\[\/MSG\d+\]/g, '')
+                    .replace(/\[WAIT(?::[\d.]+)?\]/g, '')
+                    .replace(/<thinking>[\s\S]*?(<\/thinking>|$)/gi, '')
+                    .replace(/<reasoning>[\s\S]*?(<\/reasoning>|$)/gi, '')
+                    .trim();
+
+                if (fallbackText) {
+                    messages.push({
+                        type: 'message',
+                        content: fallbackText,
+                        delay: 0
+                    });
+                }
+            }
+
             // 如果找到了消息，返回结构化数据；否则返回null表示普通消息
             return messages.length > 0 ? {
                 thinking: thinkingContent,
@@ -8849,6 +8879,9 @@
             // 第一层：移除思考过程标记（如果有残留）
             // 这可能在已提取的消息内容中出现
             text = text.replace(/\[THINK\][\s\S]*?\[\/THINK\]/g, '');
+            text = text.replace(/<thinking>[\s\S]*?(<\/thinking>|$)/gi, '');
+            text = text.replace(/<reasoning>[\s\S]*?(<\/reasoning>|$)/gi, '');
+            text = text.replace(/<analysis>[\s\S]*?(<\/analysis>|$)/gi, '');
             text = text.replace(/\[REPLY\d+\]|\[\/REPLY\d+\]/g, '');
             text = text.replace(/\[MSG\d+\]|\[\/MSG\d+\]/g, '');  // 清理新格式的MSG标签
             text = text.replace(/\[WAIT(?::[\d.]+)?\]/g, '');
@@ -10050,6 +10083,7 @@
                     
                     // 只在最后一条消息后触发通知
                     if (index === messages.length - 1) {
+                        checkAndAutoSummarize(convId);
                         triggerNotificationIfLeftChat(convId);
                     }
                 }, currentDelay);
@@ -14714,6 +14748,7 @@
         function checkAndAutoSummarize(convId) {
             // 检查是否启用了自动总结
             if (!AppState.apiSettings.summaryEnabled) return;
+            if (window.CharacterSettingsManager && window.CharacterSettingsManager.summaryInProgress) return;
             
             const messages = AppState.messages[convId] || [];
             const conv = AppState.conversations.find(c => c.id === convId);

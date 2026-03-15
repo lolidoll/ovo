@@ -131,22 +131,42 @@
                 return !blockedTypes.includes(inputType);
             }
 
+            function getScreenViewportHeight() {
+                const screenObj = window.screen || {};
+                const screenHeight = screenObj.height || 0;
+                const screenWidth = screenObj.width || 0;
+
+                if (!screenHeight || !screenWidth || !window.matchMedia) {
+                    return 0;
+                }
+
+                const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+                return isPortrait ? Math.max(screenHeight, screenWidth) : Math.min(screenHeight, screenWidth);
+            }
+
             function setViewportHeight() {
                 // 获取真实的视口高度
                 let viewportHeight = window.innerHeight;
+                const screenViewportHeight = getScreenViewportHeight();
+                let keyboardOpen = false;
                 
                 if (window.visualViewport) {
                     const visualHeight = window.visualViewport.height || viewportHeight;
                     const visualTop = window.visualViewport.offsetTop || 0;
                     const keyboardHeight = Math.max(0, Math.round(window.innerHeight - visualHeight - visualTop));
-                    const keyboardOpen = isEditableElement(document.activeElement) && keyboardHeight > 90;
+                    keyboardOpen = isEditableElement(document.activeElement) && keyboardHeight > 90;
                     
                     // iOS PWA 全屏下，visualViewport 可能已扣除底部安全区；仅键盘弹出时才使用它
                     if (isIOS && isPWA && !keyboardOpen) {
-                        viewportHeight = window.innerHeight;
+                        const stableHeight = screenViewportHeight
+                            ? Math.max(window.innerHeight, screenViewportHeight)
+                            : window.innerHeight;
+                        viewportHeight = stableHeight;
                     } else {
                         viewportHeight = visualHeight;
                     }
+                } else if (isIOS && isPWA && screenViewportHeight) {
+                    viewportHeight = Math.max(viewportHeight, screenViewportHeight);
                 }
 
                 viewportHeight = Math.max(320, Math.round(viewportHeight));

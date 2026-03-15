@@ -16,25 +16,71 @@
         isSelectMode: false, // 多选模式
         retryCount: 0, // 最大重试次数
         maxRetries: 3, // 最大重试次数
-        theme: 'dark', // 主题: dark, light, girly
+        theme: 'girly', // 主题: dark, light, girly
         customBackground: null, // 自定义背景图
-        messageLayout: 'default', // 消息布局: default (默认), centered (居中)
-        stickToBottom: true // 是否跟随到底部（用户上滑查看历史后会关闭）
+        messageLayout: 'centered', // 消息布局: default (默认), centered (居中)
+        stickToBottom: true, // 是否跟随到底部（用户上滑查看历史后会关闭）
+        summaryInProgress: false // 防止线下总结重复触发
     };
 
     function getActiveChatId() {
         return State.chatId || window.AppState?.currentChat?.id || null;
     }
 
-    function getActiveChat() {
-        const chatId = getActiveChatId();
+    function getConversationById(chatId) {
         if (!chatId) return null;
         const conversations = window.AppState?.conversations || [];
         const conv = conversations.find(c => String(c?.id) === String(chatId));
         if (conv) return conv;
         const current = window.AppState?.currentChat;
-        if (current && String(current.id) === String(chatId)) return current;
+        if (current && String(current?.id) === String(chatId)) return current;
         return null;
+    }
+
+    function getUserPersonaForChat(chatId) {
+        try {
+            return window.UserPersonaManager?.getPersonaForConversation?.(chatId) || null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function resolveNamePlaceholders(text, userName, charName) {
+        if (!text || typeof text !== 'string') return text || '';
+        if (window.MainAPIManager?.replaceNamePlaceholders) {
+            return window.MainAPIManager.replaceNamePlaceholders(text, userName, charName);
+        }
+        if (window.replaceNamePlaceholders) {
+            return window.replaceNamePlaceholders(text, userName, charName);
+        }
+        return text
+            .replace(/\{\{user\}\}/g, userName || '')
+            .replace(/\{\{char\}\}/g, charName || '');
+    }
+
+    function getConversationContext(chatId = getActiveChatId()) {
+        const conv = getConversationById(chatId);
+        const persona = getUserPersonaForChat(chatId);
+        const userNameForChar = persona?.userName || conv?.userNameForChar || window.AppState?.user?.name || '用户';
+        const userPersonalityRaw = persona?.personality || conv?.userPersonality || window.AppState?.user?.personality || '';
+        const charName = conv?.name || '角色';
+        return {
+            chatId,
+            conv,
+            persona,
+            charName,
+            charRemark: conv?.remark || charName,
+            charDescription: conv?.description || '',
+            charNickname: (conv?.charNickname || '').trim(),
+            userNameForChar,
+            userPersonality: resolveNamePlaceholders(userPersonalityRaw, userNameForChar, charName),
+            userNicknameForChar: (conv?.userNicknameForChar || window.AppState?.user?.nickname || '').trim(),
+        };
+    }
+
+    function getActiveChat() {
+        const chatId = getActiveChatId();
+        return getConversationById(chatId);
     }
     
     // 加载/保存数据
@@ -44,9 +90,9 @@
             if (d) {
                 const data = JSON.parse(d);
                 State.messages = data.messages || {};
-                State.theme = data.theme || 'dark';
+                State.theme = data.theme || 'girly';
                 State.customBackground = data.customBackground || null;
-                State.messageLayout = data.messageLayout || 'default';
+                State.messageLayout = data.messageLayout || 'centered';
             }
         } catch(e) {}
     }
@@ -71,7 +117,7 @@
         if (!State.messages[State.chatId]) State.messages[State.chatId] = [];
         
         createPage();
-        updateNav(chat);
+        updateNav(getConversationContext(State.chatId));
         applyTheme(); // 应用主题
         applyMessageLayout(); // 应用消息布局
         render();
@@ -158,9 +204,6 @@
                     <button class="st-nav-btn" id="st-theme-btn" title="主题设置">
                         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2.69l5.74 5.88-5.74 5.88-5.74-5.88L12 2.69zM12 21.31l-5.74-5.88 5.74-5.88 5.74 5.88-5.74 5.88zM2.69 12l5.88-5.74 5.88 5.74-5.88 5.74L2.69 12zM21.31 12l-5.88 5.74-5.88-5.74 5.88-5.74 5.88 5.74z" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
                     </button>
-                    <button class="st-nav-btn" id="st-export-btn" title="导出对话">
-                        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
-                    </button>
                     <button class="st-nav-btn" id="st-summary-btn" title="对话总结">
                         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
@@ -181,10 +224,10 @@
             </div>
             <div class="st-input-area">
                 <div class="st-input-actions">
-                    <button class="st-input-action-btn" id="st-continue-btn" title="继续生成">继续</button>
                     <button class="st-input-action-btn" id="st-retry-btn" title="重试最后一条">重试</button>
-                    <button class="st-input-action-btn" id="st-firstmsg-btn" title="生成开场白">开场</button>
-                    <button class="st-input-action-btn" id="st-impersonate-btn" title="帮回">帮回</button>
+                    <button class="st-input-action-btn" id="st-scroll-top-btn" title="回到顶部">回顶</button>
+                    <button class="st-input-action-btn" id="st-scroll-bottom-btn" title="回到最新楼层顶部">回底</button>
+                    <button class="st-input-action-btn" id="st-jump-floor-btn" title="回到任意楼层">回到任意楼层</button>
                     <button class="st-input-action-btn" id="st-select-btn" title="多选模式">多选</button>
                     <button class="st-input-action-btn" id="st-clear-btn" title="清空聊天">清空</button>
                     <button class="st-input-action-btn" id="st-stop-btn" title="停止生成" style="display:none">停止</button>
@@ -199,11 +242,12 @@
         bindEvents();
     }
     
-    function updateNav(chat) {
+    function updateNav(context) {
+        const conv = context?.conv || context;
         const avatar = document.getElementById('st-nav-avatar');
         const name = document.getElementById('st-nav-name');
-        if (avatar) avatar.innerHTML = chat.avatar ? `<img src="${chat.avatar}">` : '';
-        if (name) name.textContent = chat.remark || chat.name || '线下聊天';
+        if (avatar) avatar.innerHTML = conv?.avatar ? `<img src="${conv.avatar}">` : '';
+        if (name) name.textContent = context?.charRemark || conv?.remark || conv?.name || '线下聊天';
     }
     
     // 渲染消息
@@ -212,12 +256,12 @@
         if (!container || !State.chatId) return;
 
         const msgs = State.messages[State.chatId] || [];
-        const chat = getActiveChat();
-        if (!chat) return;
-        const charAvatar = chat?.avatar || '';
-        const userAvatar = chat?.userAvatar || window.AppState?.user?.avatar || '';
-        const charName = chat?.remark || chat?.name || '角色';
-        const userName = window.AppState?.user?.name || '我';
+        const context = getConversationContext(State.chatId);
+        if (!context?.conv) return;
+        const charAvatar = context.conv?.avatar || '';
+        const userAvatar = context.conv?.userAvatar || window.AppState?.user?.avatar || '';
+        const charName = context.charRemark || context.charName || '角色';
+        const userName = context.userNameForChar || window.AppState?.user?.name || '我';
         const isCentered = State.messageLayout === 'centered';
 
         // 更新token统计
@@ -388,22 +432,105 @@
         
         setTimeout(() => callAI(), 300);
     }
+
+    function getOfflineMessageContent(msg) {
+        if (!msg) return '';
+        if (msg.swipes && msg.swipes.length) {
+            const idx = msg.swipeIndex ?? 0;
+            return msg.swipes[idx] || msg.content || '';
+        }
+        return msg.content || '';
+    }
+
+    function buildOfflineConversationText(msgs, conv) {
+        const context = getConversationContext(conv?.id || State.chatId);
+        const charName = context?.charName || conv?.name || '角色';
+        const userName = context?.userNameForChar || window.AppState?.user?.name || '用户';
+        return (msgs || []).map(m => {
+            const content = getOfflineMessageContent(m);
+            if (!content) return '';
+            return m.role === 'user' ? `${userName}: ${content}` : `${charName}: ${content}`;
+        }).filter(Boolean).join('\n');
+    }
+
+    function buildMemoryShardsPrompt(conv) {
+        if (!conv?.summaries || conv.summaries.length === 0) return '';
+        const summariesContent = conv.summaries.map((s, idx) => {
+            const type = s.isAutomatic ? '自动总结' : '手动总结';
+            const time = s.timestamp ? new Date(s.timestamp).toLocaleString('zh-CN') : '未知时间';
+            const count = s.messageCount || '?';
+            return `【${type} #${idx + 1}】(${time}, 基于${count}条消息)\n${s.content}`;
+        }).join('\n\n');
+        return `【对话历史总结】\n以下是之前对话的总结，帮助你了解上下文背景：\n\n${summariesContent}`;
+    }
+
+    function insertMemoryShardsPrompt(apiMsgs, conv) {
+        const memoryPrompt = buildMemoryShardsPrompt(conv);
+        if (!memoryPrompt) return;
+        const insertIndex = apiMsgs.findIndex(m => m.role === 'system');
+        const targetIndex = insertIndex >= 0 ? insertIndex + 1 : 0;
+        apiMsgs.splice(targetIndex, 0, { role: 'system', content: memoryPrompt });
+    }
+
+    function buildCharacterContextPrompt(context) {
+        if (!context?.conv) return '';
+        const lines = [];
+        if (context.charName) lines.push(`角色名称：${context.charName}`);
+        if (context.charDescription) {
+            const desc = resolveNamePlaceholders(context.charDescription, context.userNameForChar, context.charName);
+            if (desc.trim()) lines.push(`角色设定：${desc}`);
+        }
+        if (context.userNameForChar) lines.push(`用户名称：${context.userNameForChar}`);
+        if (context.userPersonality) lines.push(`用户设定：${context.userPersonality}`);
+        if (!lines.length) return '';
+        return `【角色与用户设定】\n${lines.join('\n')}`;
+    }
+
+    function insertCharacterContextPrompt(apiMsgs, context) {
+        const prompt = buildCharacterContextPrompt(context);
+        if (!prompt) return;
+        const insertIndex = apiMsgs.findIndex(m => m.role === 'system');
+        const targetIndex = insertIndex >= 0 ? insertIndex + 1 : 0;
+        apiMsgs.splice(targetIndex, 0, { role: 'system', content: prompt });
+    }
+
+    function markOfflineMessagesSummarized(msgs) {
+        const keepLatest = window.AppState?.apiSettings?.summaryKeepLatest || 10;
+        if (!Array.isArray(msgs) || msgs.length <= keepLatest) return 0;
+        const oldMessages = msgs.slice(0, msgs.length - keepLatest);
+        let marked = 0;
+        oldMessages.forEach(m => {
+            if (!m.isSummarized) {
+                m.isSummarized = true;
+                marked += 1;
+            }
+        });
+        return marked;
+    }
+
+    function checkAndAutoSummarizeOffline() {
+        if (State.summaryInProgress) return;
+        if (!window.AppState?.apiSettings?.summaryEnabled) return;
+        const msgs = State.messages[State.chatId] || [];
+        if (!msgs.length) return;
+        const summaryInterval = window.AppState.apiSettings.summaryInterval || 50;
+        const unsummarizedCount = msgs.filter(m => !m.isSummarized).length;
+        if (unsummarizedCount >= summaryInterval) {
+            setTimeout(() => generateSummary(true), 300);
+        }
+    }
     
     // 调用AI
-    async function callAI(swipeIdx = null, isContinue = false, isImpersonate = false, isFirstMsg = false) {
+    async function callAI(swipeIdx = null) {
         const input = document.getElementById('st-input');
         const sendBtn = document.getElementById('st-send');
         const typing = document.getElementById('st-typing');
         const stopBtn = document.getElementById('st-stop-btn');
-        const continueBtn = document.getElementById('st-continue-btn');
-        
-        State.isContinuing = isContinue;
         
         if (input) { input.disabled = true; input.placeholder = ''; }
         if (sendBtn) sendBtn.disabled = true;
         if (typing) typing.classList.add('show');
         if (stopBtn) stopBtn.style.display = 'inline-block';
-        if (continueBtn) continueBtn.style.display = 'none';
         
         State.abortController = new AbortController();
         
@@ -411,17 +538,20 @@
             const api = window.AppState?.apiSettings;
             if (!api?.endpoint || !api?.selectedModel) throw new Error('请先配置API');
             
-            const chat = getActiveChat();
-            if (!chat) throw new Error('请先打开一个聊天');
-            const conv = window.AppState?.conversations?.find(c => c.id === chat.id) || chat;
-            const charName = conv?.name || 'Assistant';
-            const userName = conv?.userNameForChar || window.AppState?.user?.name || 'User';
+            const context = getConversationContext(State.chatId);
+            const conv = context?.conv;
+            if (!conv) throw new Error('请先打开一个聊天');
+            const charName = context.charName || 'Assistant';
+            const userName = context.userNameForChar || 'User';
             
+            const summaryEnabled = !!window.AppState?.apiSettings?.summaryEnabled;
+
             // 收集聊天历史
             const chatHistory = [];
             
             // 线上消息历史
-            const online = window.AppState?.messages?.[State.chatId] || [];
+            const convId = conv.id ?? State.chatId;
+            const online = window.AppState?.messages?.[convId] || [];
             online.slice(-50).forEach(m => {
                 if (m.type === 'sent') chatHistory.push({ role: 'user', content: m.content || '' });
                 else if (m.type === 'received') chatHistory.push({ role: 'assistant', content: m.content || '' });
@@ -431,7 +561,8 @@
             const msgs = State.messages[State.chatId] || [];
             const limit = swipeIdx !== null ? swipeIdx : msgs.length;
             msgs.slice(0, limit).forEach(m => {
-                const c = m.swipes ? m.swipes[m.swipeIndex ?? 0] : m.content;
+                if (summaryEnabled && m.isSummarized) return;
+                const c = getOfflineMessageContent(m);
                 chatHistory.push({ role: m.role === 'user' ? 'user' : 'assistant', content: c || '' });
             });
             
@@ -447,6 +578,12 @@
                     ...chatHistory
                 ];
             }
+
+            // 添加记忆区总结内容（角色隔离）
+            insertMemoryShardsPrompt(apiMsgs, conv);
+
+            // 添加角色与人设信息（确保读取当前角色设置）
+            insertCharacterContextPrompt(apiMsgs, context);
             
             // 添加线下世界书内容
             if (window.WorldbookManager?.getOfflineWorldbooksContent) {
@@ -463,54 +600,21 @@
                 apiMsgs.push({ role: 'system', content: timeStr });
             }
             
-            // 继续生成：将最后一条AI消息改为assistant角色，让模型直接续写
-            if (isContinue) {
-                const lastAiMsg = apiMsgs[apiMsgs.length - 1];
-                if (lastAiMsg && lastAiMsg.role === 'assistant') {
-                    // 保持原内容，模型会自动续写
-                    apiMsgs.push({ role: 'system', content: '[Continue directly from where you left off. Do not include thinking or reasoning. Just continue the text naturally.]' });
-                }
-            }
-            
-            // 代入角色：让AI以用户身份回复
-            if (isImpersonate) {
-                apiMsgs.push({ role: 'system', content: `[Write the next message as ${userName}, staying in character.]` });
-            }
-            
-            // 开场白：让AI生成角色的第一条消息
-            if (isFirstMsg) {
-                apiMsgs.push({ role: 'system', content: `[Write ${charName}'s first message to start the conversation. Be creative and engaging.]` });
-            }
-            
             // 创建或更新AI消息
             let aiMsg;
-            let originalContent = '';
-            if (isContinue) {
-                // 继续生成：追加到最后一条AI消息
-                aiMsg = msgs[msgs.length - 1];
-                originalContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex ?? 0] : aiMsg.content;
-            } else if (swipeIdx !== null) {
+            if (swipeIdx !== null) {
                 aiMsg = msgs[swipeIdx];
                 aiMsg.swipes.push('');
                 aiMsg.swipeIndex = aiMsg.swipes.length - 1;
-            } else if (isImpersonate) {
-                // 代入：创建用户消息
-                aiMsg = { id: 'msg_' + Date.now(), role: 'user', content: '', timestamp: new Date().toISOString() };
-                State.messages[State.chatId].push(aiMsg);
-            } else if (isFirstMsg) {
-                // 开场白：创建角色消息
-                aiMsg = { id: 'msg_' + Date.now(), role: 'char', content: '', timestamp: new Date().toISOString() };
-                State.messages[State.chatId].push(aiMsg);
             } else {
                 aiMsg = { id: 'msg_' + Date.now(), role: 'char', content: '', timestamp: new Date().toISOString() };
                 State.messages[State.chatId].push(aiMsg);
             }
             State.streaming = aiMsg;
-            State.originalContent = originalContent;
             render();
             scrollBottom();
             
-            // 流式请求（规范化endpoint，确保包含/v1）
+            // 请求（规范化endpoint，确保包含/v1）
             const normalized = api.endpoint.replace(/\/$/, '');
             const baseEndpoint = normalized.endsWith('/v1') ? normalized : normalized + '/v1';
             const endpoint = baseEndpoint + '/chat/completions';
@@ -518,14 +622,8 @@
                 model: api.selectedModel,
                 messages: apiMsgs.filter(m => m.content?.trim()),
                 temperature: api.temperature ?? 0.8,
-                max_tokens: isContinue ? 2000 : 4000,
-                stream: true
+                max_tokens: 4000
             };
-            
-            // 继续模式：禁用思维链
-            if (isContinue) {
-                requestBody.thinking = { type: 'disabled' };
-            }
             
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -543,206 +641,81 @@
                 throw new Error(errDetail);
             }
             
-            // 流式状态
             let reasoningBuffer = '';
             let contentBuffer = '';
-            let isInReasoning = false;
-            
-            const contentType = res.headers.get('content-type') || '';
-            const isSSE = contentType.includes('text/event-stream');
-            
-            // ========== 非流式响应（API返回JSON而非SSE） ==========
-            if (!isSSE) {
-                let fullText = '';
-                let fullReasoning = '';
-                try {
-                    const json = await res.json();
-                    const choice = json?.choices?.[0];
-                    
-                    // 继续模式：忽略所有思维链
-                    if (isContinue) {
-                        if (choice?.message?.content) {
-                            fullText = choice.message.content;
-                        } else {
-                            fullText = json?.choices?.[0]?.text || JSON.stringify(json);
+            let fullText = '';
+            let fullReasoning = '';
+            try {
+                const json = await res.json();
+                const choice = json?.choices?.[0];
+                // === 严格对齐ST的 extractReasoningFromData ===
+
+                // 1. Ollama格式 (ST: textgen_types.OLLAMA -> data?.thinking)
+                if (json?.thinking !== undefined) {
+                    fullReasoning = json.thinking || '';
+                    fullText = json.response || '';
+                }
+                // 2. Gemini格式 (ST: MAKERSUITE/VERTEXAI -> responseContent.parts)
+                else if (Array.isArray(json?.responseContent?.parts)) {
+                    fullReasoning = json.responseContent.parts
+                        .filter(part => part.thought)
+                        .map(part => part.text)
+                        .join('\n\n') || '';
+                    fullText = json.responseContent.parts
+                        .filter(part => !part.thought && part.text)
+                        .map(part => part.text)
+                        .join('') || '';
+                }
+                // 3. Claude原生格式 (ST: CLAUDE -> content.find(type==='thinking'))
+                else if (Array.isArray(json?.content)) {
+                    const thinkingPart = json.content.find(part => part.type === 'thinking');
+                    fullReasoning = thinkingPart?.thinking || '';
+                    const textParts = json.content.filter(part => part.type === 'text');
+                    fullText = textParts.map(part => part.text).join('') || '';
+                }
+                // 4. OpenAI-likes choices格式
+                else if (choice?.message) {
+                    const m = choice.message;
+                    // DeepSeek/XAI: reasoning_content (ST: DEEPSEEK/XAI)
+                    fullReasoning = m.reasoning_content || '';
+                    // OpenRouter: reasoning (ST: OPENROUTER)
+                    if (!fullReasoning) fullReasoning = m.reasoning || choice.reasoning || '';
+
+                    // Mistral格式: content是数组含thinking (ST: MISTRALAI)
+                    if (Array.isArray(m.content)) {
+                        const thinkParts = m.content.filter(x => x?.thinking);
+                        if (thinkParts.length > 0) {
+                            fullReasoning = thinkParts.map(x => {
+                                if (Array.isArray(x.thinking)) {
+                                    return x.thinking.map(t => t.text || '').filter(Boolean).join('\n\n');
+                                }
+                                return '';
+                            }).join('') || fullReasoning;
                         }
+                        fullText = m.content.filter(x => typeof x?.text === 'string' && !x?.thinking).map(x => x.text).join('');
                     } else {
-                        // === 严格对齐ST的 extractReasoningFromData ===
-                        
-                        // 1. Ollama格式 (ST: textgen_types.OLLAMA -> data?.thinking)
-                        if (json?.thinking !== undefined) {
-                            fullReasoning = json.thinking || '';
-                            fullText = json.response || '';
-                        }
-                        // 2. Gemini格式 (ST: MAKERSUITE/VERTEXAI -> responseContent.parts)
-                        else if (Array.isArray(json?.responseContent?.parts)) {
-                            fullReasoning = json.responseContent.parts
-                                .filter(part => part.thought)
-                                .map(part => part.text)
-                                .join('\n\n') || '';
-                            fullText = json.responseContent.parts
-                                .filter(part => !part.thought && part.text)
-                                .map(part => part.text)
-                                .join('') || '';
-                        }
-                        // 3. Claude原生格式 (ST: CLAUDE -> content.find(type==='thinking'))
-                        else if (Array.isArray(json?.content)) {
-                            const thinkingPart = json.content.find(part => part.type === 'thinking');
-                            fullReasoning = thinkingPart?.thinking || '';
-                            const textParts = json.content.filter(part => part.type === 'text');
-                            fullText = textParts.map(part => part.text).join('') || '';
-                        }
-                        // 4. OpenAI-likes choices格式
-                        else if (choice?.message) {
-                            const m = choice.message;
-                            // DeepSeek/XAI: reasoning_content (ST: DEEPSEEK/XAI)
-                            fullReasoning = m.reasoning_content || '';
-                            // OpenRouter: reasoning (ST: OPENROUTER)
-                            if (!fullReasoning) fullReasoning = m.reasoning || choice.reasoning || '';
-                            
-                            // Mistral格式: content是数组含thinking (ST: MISTRALAI)
-                            if (Array.isArray(m.content)) {
-                                const thinkParts = m.content.filter(x => x?.thinking);
-                                if (thinkParts.length > 0) {
-                                    fullReasoning = thinkParts.map(x => {
-                                        if (Array.isArray(x.thinking)) {
-                                            return x.thinking.map(t => t.text || '').filter(Boolean).join('\n\n');
-                                        }
-                                        return '';
-                                    }).join('') || fullReasoning;
-                                }
-                                fullText = m.content.filter(x => typeof x?.text === 'string' && !x?.thinking).map(x => x.text).join('');
-                            } else {
-                                fullText = m.content || '';
-                            }
-                            
-                            // 通用 fallback: reasoning_content 或 reasoning (ST: CUSTOM/AIMLAPI等)
-                            if (!fullReasoning) {
-                                fullReasoning = m.reasoning_content || m.reasoning || '';
-                            }
-                        } else {
-                            fullText = json?.choices?.[0]?.text || JSON.stringify(json);
-                        }
+                        fullText = m.content || '';
                     }
-                } catch(e) {
-                    try {
-                        const raw = await res.text();
-                        fullText = raw;
-                    } catch(e2) {
-                        fullText = '解析响应失败';
+
+                    // 通用 fallback: reasoning_content 或 reasoning (ST: CUSTOM/AIMLAPI等)
+                    if (!fullReasoning) {
+                        fullReasoning = m.reasoning_content || m.reasoning || '';
                     }
+                } else {
+                    fullText = json?.choices?.[0]?.text || JSON.stringify(json);
                 }
-                
-                reasoningBuffer = isContinue ? '' : fullReasoning;
-                contentBuffer = fullText;
-                
-                // 平滑打字机效果 (模拟ST的SmoothEventSourceStream)
-                await smoothTypewriter(aiMsg, fullReasoning, fullText);
+            } catch(e) {
+                try {
+                    const raw = await res.text();
+                    fullText = raw;
+                } catch(e2) {
+                    fullText = '解析响应失败';
+                }
             }
-            // ========== 真流式响应（SSE） ==========
-            else {
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                let sseBuffer = '';
-                
-                // 平滑输出队列 (模拟ST的SmoothEventSourceStream)
-                let smoothQueue = [];
-                let smoothRunning = false;
-                let lastChar = '';
-                
-                // 启动平滑输出消费者
-                const smoothConsumer = async () => {
-                    if (smoothRunning) return;
-                    smoothRunning = true;
-                    while (smoothQueue.length > 0) {
-                        if (State.abortController?.signal?.aborted) break;
-                        const item = smoothQueue.shift();
-                        if (item.type === 'reasoning') {
-                            reasoningBuffer += item.char;
-                            isInReasoning = true;
-                            // 对齐ST: 记录reasoning开始时间
-                            if (!aiMsg._reasoningStartTime) {
-                                aiMsg._reasoningStartTime = Date.now();
-                            }
-                        } else {
-                            contentBuffer += item.char;
-                            isInReasoning = false;
-                        }
-                        // 组合并更新显示
-                        const display = composeContent(reasoningBuffer, contentBuffer, isInReasoning);
-                        writeToMsg(aiMsg, display);
-                        updateStreamingMsg(aiMsg);
-                        // ST风格延迟: 基于字符类型的动态延迟
-                        await sleep(getSmoothDelay(lastChar));
-                        lastChar = item.char;
-                    }
-                    smoothRunning = false;
-                };
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    sseBuffer += decoder.decode(value, { stream: true });
-                    
-                    // 按SSE规范用双换行分割事件 (ST: EventSourceStream)
-                    const events = sseBuffer.split(/\r\n\r\n|\r\r|\n\n/);
-                    sseBuffer = events.pop() || '';
-                    
-                    for (const eventChunk of events) {
-                        if (!eventChunk.trim()) continue;
-                        
-                        // 解析SSE事件的data字段
-                        let eventData = '';
-                        const lines = eventChunk.split(/\r\n|\r|\n/);
-                        for (const line of lines) {
-                            if (line.startsWith('data:')) {
-                                eventData += (eventData ? '\n' : '') + line.slice(5).trimStart();
-                            }
-                        }
-                        
-                        if (!eventData || eventData.trim() === '[DONE]') continue;
-                        
-                        try {
-                            const json = JSON.parse(eventData);
-                            // 解析流式数据 (ST: parseStreamData + getStreamingReply)
-                            const parsed = parseSSEChunk(json);
-                            if (!parsed) continue;
-                            
-                            // 继续模式：忽略思维链
-                            if (isContinue && parsed.reasoning) {
-                                parsed.reasoning = '';
-                            }
-                            
-                            // 将每个chunk拆成单字符推入平滑队列 (ST: SmoothEventSourceStream)
-                            if (parsed.reasoning) {
-                                for (const ch of parsed.reasoning) {
-                                    smoothQueue.push({ type: 'reasoning', char: ch });
-                                }
-                            }
-                            if (parsed.content) {
-                                for (const ch of parsed.content) {
-                                    smoothQueue.push({ type: 'content', char: ch });
-                                }
-                            }
-                            
-                            // 启动消费者
-                            smoothConsumer();
-                        } catch(e) {
-                            console.log('[SSE Parse Error]', e.message);
-                        }
-                    }
-                }
-                
-                // 等待平滑队列消费完毕
-                while (smoothQueue.length > 0) {
-                    await sleep(10);
-                }
-                // 等待最后一次消费者完成
-                await sleep(50);
-            }
-            
-            // 流结束后确保reasoning标签闭合
+
+            reasoningBuffer = fullReasoning;
+            contentBuffer = fullText;
+
             const finalContent = composeContent(reasoningBuffer, contentBuffer, false);
             writeToMsg(aiMsg, finalContent);
             
@@ -750,59 +723,57 @@
             State.abortController = null;
             
             // === 对齐ST: 流结束后自动解析reasoning并分离存储 ===
-            // 继续模式：跳过reasoning处理
-            if (!isContinue) {
-                // ST在 registerReasoningAppEvents -> MESSAGE_RECEIVED 事件中做 parseReasoningFromString
-                const aiContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex] : aiMsg.content;
-                
-                // 优先使用流式过程中已收集的reasoningBuffer
-                let finalReasoning = reasoningBuffer;
-                
-                // 如果流式没有收集到reasoning，尝试从文本中解析（对齐ST的auto_parse）
-                // ST: strict=true（默认），reasoning必须在字符串开头
-                if (!finalReasoning && reasoningSettings.auto_parse) {
-                    const parsed = parseReasoningFromString(aiContent);
-                    if (parsed?.reasoning) {
-                        finalReasoning = parsed.reasoning;
-                        // 从消息内容中移除reasoning部分（对齐ST: message.mes = parsedReasoning.content）
-                        writeToMsg(aiMsg, parsed.content);
-                    } else if (parsed && parsed.content !== aiContent) {
-                        // ST: 即使reasoning为空，如果content变了也要更新
-                        writeToMsg(aiMsg, parsed.content);
-                    }
+            // ST在 registerReasoningAppEvents -> MESSAGE_RECEIVED 事件中做 parseReasoningFromString
+            const aiContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex] : aiMsg.content;
+            
+            // 优先使用本次响应已收集的reasoningBuffer
+            let finalReasoning = reasoningBuffer;
+            
+            // 如果响应没有收集到reasoning，尝试从文本中解析（对齐ST的auto_parse）
+            // ST: strict=true（默认），reasoning必须在字符串开头
+            if (!finalReasoning && reasoningSettings.auto_parse) {
+                const parsed = parseReasoningFromString(aiContent);
+                if (parsed?.reasoning) {
+                    finalReasoning = parsed.reasoning;
+                    // 从消息内容中移除reasoning部分（对齐ST: message.mes = parsedReasoning.content）
+                    writeToMsg(aiMsg, parsed.content);
+                } else if (parsed && parsed.content !== aiContent) {
+                    // ST: 即使reasoning为空，如果content变了也要更新
+                    writeToMsg(aiMsg, parsed.content);
+                }
+            }
+            
+            // 存储reasoning到消息的extra字段（对齐ST: message.extra.reasoning）
+            if (finalReasoning) {
+                if (!aiMsg.extra) aiMsg.extra = {};
+                aiMsg.extra.reasoning = finalReasoning;
+                aiMsg.extra.reasoning_type = reasoningBuffer ? 'model' : 'parsed';
+                // 对齐ST: 存储reasoning持续时间
+                if (aiMsg._reasoningStartTime) {
+                    aiMsg.extra.reasoning_duration = Date.now() - aiMsg._reasoningStartTime;
+                    delete aiMsg._reasoningStartTime;
                 }
                 
-                // 存储reasoning到消息的extra字段（对齐ST: message.extra.reasoning）
-                if (finalReasoning) {
-                    if (!aiMsg.extra) aiMsg.extra = {};
-                    aiMsg.extra.reasoning = finalReasoning;
-                    aiMsg.extra.reasoning_type = reasoningBuffer ? 'model' : 'parsed';
-                    // 对齐ST: 存储reasoning持续时间
-                    if (aiMsg._reasoningStartTime) {
-                        aiMsg.extra.reasoning_duration = Date.now() - aiMsg._reasoningStartTime;
-                        delete aiMsg._reasoningStartTime;
-                    }
-                    
-                    // 存储到cot变量
-                    window.STPresetManager?.VariableStore?.setCOT?.(finalReasoning);
-                    console.log('[COT] 已存储思考内容到cot变量');
-                }
+                // 存储到cot变量
+                window.STPresetManager?.VariableStore?.setCOT?.(finalReasoning);
+                console.log('[COT] 已存储思考内容到cot变量');
+            }
 
-                // 对齐ST: add_to_prompts - 如果启用，将reasoning添加回消息内容供下次prompt使用
-                if (reasoningSettings.add_to_prompts && finalReasoning) {
-                    const prefix = reasoningSettings.prefix || '';
-                    const suffix = reasoningSettings.suffix || '';
-                    const separator = reasoningSettings.separator || '';
-                    const aiContent = aiMsg.swipes ? aiMsg.swipes[aiMsg.swipeIndex] : aiMsg.content;
-                    const formattedReasoning = `${prefix}${finalReasoning}${suffix}${separator}`;
-                    // 不修改显示内容，但在extra中标记以便buildMessages时使用
-                    if (!aiMsg.extra) aiMsg.extra = {};
-                    aiMsg.extra.reasoning_formatted = formattedReasoning;
-                }
+            // 对齐ST: add_to_prompts - 如果启用，将reasoning添加回消息内容供下次prompt使用
+            if (reasoningSettings.add_to_prompts && finalReasoning) {
+                const prefix = reasoningSettings.prefix || '';
+                const suffix = reasoningSettings.suffix || '';
+                const separator = reasoningSettings.separator || '';
+                const formattedReasoning = `${prefix}${finalReasoning}${suffix}${separator}`;
+                // 不修改显示内容，但在extra中标记以便buildMessages时使用
+                if (!aiMsg.extra) aiMsg.extra = {};
+                aiMsg.extra.reasoning_formatted = formattedReasoning;
             }
             
             save();
             render();
+            scrollBottom();
+            checkAndAutoSummarizeOffline();
             
         } catch(e) {
             if (e.name !== 'AbortError') {
@@ -811,13 +782,13 @@
                 showToast(errorMsg);
 
                 // 自动重试逻辑
-                if (State.retryCount < State.maxRetries && !isContinue && !isImpersonate && !isFirstMsg && swipeIdx === null) {
+                if (State.retryCount < State.maxRetries && swipeIdx === null) {
                     State.retryCount++;
                     showToast(`正在重试 (${State.retryCount}/${State.maxRetries})...`);
 
                     // 延迟后重试
                     await new Promise(resolve => setTimeout(resolve, 1000 * State.retryCount));
-                    return callAI(swipeIdx, isContinue, isImpersonate, isFirstMsg);
+                    return callAI(swipeIdx);
                 }
             } else {
                 showToast('已停止生成');
@@ -827,14 +798,10 @@
             if (sendBtn) sendBtn.disabled = false;
             if (typing) typing.classList.remove('show');
             const stopBtn = document.getElementById('st-stop-btn');
-            const continueBtn = document.getElementById('st-continue-btn');
             if (stopBtn) stopBtn.style.display = 'none';
-            if (continueBtn) continueBtn.style.display = 'inline-block';
             State.streaming = null;
             State.abortController = null;
             State.retryCount = 0;
-            State.isContinuing = false;
-            State.originalContent = '';
         }
     }
     
@@ -871,7 +838,7 @@
             showConfirm('确定删除此消息？', () => {
                 msgs.splice(idx, 1);
                 save();
-                render();
+                renderWithScrollPreserved(render);
                 showToast('已删除');
             });
         } else if (action === 'edit') {
@@ -991,6 +958,47 @@
         };
     }
 
+    // 浅粉白确认弹窗
+    function showPinkConfirm(message, onConfirm, onCancel, title = '确认操作') {
+        const overlay = document.createElement('div');
+        overlay.className = 'st-modal-overlay st-pink-white-modal';
+        overlay.innerHTML = `
+            <div class="st-modal-box st-pink-white-modal st-confirm-dialog">
+                <div class="st-modal-header">
+                    <h3>${title}</h3>
+                    <button class="st-modal-close" id="st-confirm-close">×</button>
+                </div>
+                <div class="st-modal-body">
+                    <div class="st-confirm-message">${message}</div>
+                    <div class="st-confirm-actions">
+                        <button class="st-btn secondary" id="st-confirm-cancel">取消</button>
+                        <button class="st-btn primary" id="st-confirm-ok">确认</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const closeModal = (triggerCancel = true) => {
+            overlay.remove();
+            if (triggerCancel && onCancel) onCancel();
+        };
+
+        overlay.querySelector('#st-confirm-close').onclick = () => closeModal(true);
+        overlay.querySelector('#st-confirm-cancel').onclick = () => closeModal(true);
+        overlay.querySelector('#st-confirm-ok').onclick = () => {
+            overlay.remove();
+            if (onConfirm) onConfirm();
+        };
+
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                closeModal(true);
+            }
+        };
+    }
+
     // 显示总结对话框
     function showSummaryDialog() {
         const chat = getActiveChat();
@@ -1003,16 +1011,35 @@
         const msgs = State.messages[State.chatId] || [];
 
         const modal = document.createElement('div');
-        modal.className = 'st-modal-overlay';
+        modal.className = 'st-modal-overlay st-pink-white-modal';
         modal.innerHTML = `
-            <div class="st-modal-box">
+            <div class="st-modal-box st-pink-white-modal">
                 <div class="st-modal-header">
                     <h3>对话总结</h3>
                     <button class="st-modal-close" id="st-modal-close">×</button>
                 </div>
                 <div class="st-modal-body">
                     <div class="st-summary-info">
-                        <span>当前消息数: <strong>${msgs.length}</strong> 条</span>
+                        <span>当前消息数: <strong id="st-summary-message-total">${msgs.length}</strong> 条</span>
+                    </div>
+                    <div class="token-stats-container st-summary-token-stats">
+                        <div class="token-stat-item">
+                            <div class="token-stat-label">当前对话Token数</div>
+                            <div class="token-stat-value" id="st-summary-token-count">计算中...</div>
+                            <div class="form-hint">基于线下消息内容估算</div>
+                        </div>
+                        <div class="token-stat-item">
+                            <div class="token-stat-label">消息数量</div>
+                            <div class="token-stat-value" id="st-summary-message-count">-</div>
+                        </div>
+                        <button class="st-btn secondary" id="st-summary-refresh-tokens">
+                            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>刷新统计</span>
+                        </button>
                     </div>
                     <div class="st-form-group">
                         <label class="st-form-label">总结间隔</label>
@@ -1033,11 +1060,31 @@
                             <span>启用自动总结</span>
                         </label>
                     </div>
+                    <div class="memory-shards-callout st-summary-memory-callout">
+                        <div class="memory-shards-callout-title">记忆区</div>
+                        <div class="memory-shards-callout-desc">总结内容已集中收纳，支持统一编辑与删除</div>
+                        <button class="st-btn secondary" id="st-summary-open-memory">查看记忆区</button>
+                    </div>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
+
+        const updateSummaryTokenStats = () => {
+            const latestMsgs = State.messages[State.chatId] || [];
+            const tokenMessages = latestMsgs.map(m => ({ content: getOfflineMessageContent(m) }));
+            const totalTokens = calculateMessagesTokenCount(tokenMessages);
+            const tokenCountEl = document.getElementById('st-summary-token-count');
+            const messageCountEl = document.getElementById('st-summary-message-count');
+            const messageTotalEl = document.getElementById('st-summary-message-total');
+
+            if (tokenCountEl) tokenCountEl.textContent = `${totalTokens.toLocaleString()} tokens`;
+            if (messageCountEl) messageCountEl.textContent = latestMsgs.length.toLocaleString();
+            if (messageTotalEl) messageTotalEl.textContent = latestMsgs.length.toLocaleString();
+        };
+
+        updateSummaryTokenStats();
 
         // 关闭
         document.getElementById('st-modal-close').onclick = () => modal.remove();
@@ -1049,6 +1096,19 @@
         document.getElementById('st-summary-generate').onclick = () => {
             modal.remove();
             generateSummary();
+        };
+
+        // 刷新Token统计
+        document.getElementById('st-summary-refresh-tokens').onclick = updateSummaryTokenStats;
+
+        // 打开记忆区
+        document.getElementById('st-summary-open-memory').onclick = () => {
+            modal.remove();
+            if (typeof window.openMemoryShardsPage === 'function') {
+                window.openMemoryShardsPage(chat.id);
+            } else {
+                showToast('记忆区页面加载中');
+            }
         };
 
         // 保存设置
@@ -1073,117 +1133,100 @@
     }
 
     // 生成总结
-    async function generateSummary() {
+    async function generateSummary(isAutomatic = false) {
+        if (State.summaryInProgress) {
+            showToast('总结生成中，请稍候');
+            return;
+        }
         const chat = getActiveChat();
         if (!chat) {
             showToast('请先打开一个聊天');
             return;
         }
 
+        const conv = window.AppState?.conversations?.find(c => c.id === chat.id) || chat;
         const msgs = State.messages[State.chatId] || [];
         if (msgs.length < 3) {
             showToast('消息过少，无需总结');
             return;
         }
 
-        // 收集线上+线下消息
-        const allMessages = [];
-
-        // 线上消息
-        const online = window.AppState?.messages?.[State.chatId] || [];
-        online.forEach(m => {
-            if (m.type === 'sent' && !m.isRetracted) {
-                allMessages.push({ role: 'user', content: m.content || '' });
-            } else if (m.type === 'received' && !m.isRetracted) {
-                allMessages.push({ role: 'assistant', content: m.content || '' });
-            }
-        });
-
-        // 线下消息
-        msgs.forEach(m => {
-            const content = m.swipes ? m.swipes[m.swipeIndex ?? 0] : m.content;
-            allMessages.push({ role: m.role === 'user' ? 'user' : 'assistant', content: content || '' });
-        });
-
-        if (allMessages.length === 0) {
+        const conversationText = buildOfflineConversationText(msgs, conv);
+        if (!conversationText) {
             showToast('没有消息可以总结');
             return;
         }
 
-        // 构建对话文本
-        const conv = window.AppState?.conversations?.find(c => c.id === chat.id) || chat;
-        const charName = conv?.name || '角色';
-        const userName = conv?.userNameForChar || window.AppState?.user?.name || '用户';
+        const hasSecondaryApi = window.AppState.apiSettings.secondaryEndpoint &&
+                               window.AppState.apiSettings.secondaryApiKey &&
+                               window.AppState.apiSettings.secondarySelectedModel;
+        const hasMainApi = window.AppState.apiSettings.endpoint && window.AppState.apiSettings.selectedModel;
 
-        let conversationText = allMessages.map(m => {
-            return m.role === 'user' ? `${userName}: ${m.content}` : `${charName}: ${m.content}`;
-        }).join('\n');
-
-        showToast('正在生成总结...');
-
-        // 使用CharacterSettingsManager的总结功能
-        if (window.CharacterSettingsManager) {
-            window.__OFFLINE_SUMMARY_CONTEXT__ = true;
-            await window.CharacterSettingsManager.summarizeConversation(chat.id, false);
-            showToast('总结已生成');
-        } else {
-            const hasSecondaryApi = window.AppState.apiSettings.secondaryEndpoint &&
-                                   window.AppState.apiSettings.secondaryApiKey &&
-                                   window.AppState.apiSettings.secondarySelectedModel;
-            const hasMainApi = window.AppState.apiSettings.endpoint && window.AppState.apiSettings.selectedModel;
-
-            if (!hasSecondaryApi && !hasMainApi) {
-                showToast('请先配置主API或副API设置');
-                return;
-            }
-
-            const summaryInput = typeof window.buildSummaryInput === 'function'
-                ? window.buildSummaryInput(conversationText, {
-                    conv: conv,
-                    modeLabel: '线下功能'
-                })
-                : conversationText;
-
-            const summarizeFn = (!hasSecondaryApi && hasMainApi && window.summarizeTextViaMainAPI)
-                ? window.summarizeTextViaMainAPI
-                : window.summarizeTextViaSecondaryAPI;
-
-            if (summarizeFn) {
-                summarizeFn(
-                    summaryInput,
-                    (result) => {
-                        const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
-                            ? window.normalizeSummaryContent(result)
-                            : result;
-
-                        if (!conv.summaries) {
-                            conv.summaries = [];
-                        }
-                        conv.summaries.push({
-                            content: normalizedSummary,
-                            isAutomatic: false,
-                            isOffline: true,
-                            timestamp: new Date().toISOString(),
-                            messageCount: allMessages.length
-                        });
-
-                        if (window.saveToStorage) {
-                            window.saveToStorage();
-                        }
-                        showToast('总结已生成');
-
-                        if (typeof window.renderMemoryShardsPage === 'function') {
-                            window.renderMemoryShardsPage();
-                        }
-                    },
-                    (error) => {
-                        showToast('总结失败: ' + error);
-                    }
-                );
-            } else {
-                showToast('总结功能未加载');
-            }
+        if (!hasSecondaryApi && !hasMainApi) {
+            showToast('请先配置主API或副API设置');
+            return;
         }
+
+        const summaryInput = typeof window.buildSummaryInput === 'function'
+            ? window.buildSummaryInput(conversationText, {
+                conv: conv,
+                modeLabel: '线下功能'
+            })
+            : conversationText;
+
+        const summarizeFn = (!hasSecondaryApi && hasMainApi && window.summarizeTextViaMainAPI)
+            ? window.summarizeTextViaMainAPI
+            : window.summarizeTextViaSecondaryAPI;
+
+        if (!summarizeFn) {
+            showToast('总结功能未加载');
+            return;
+        }
+
+        State.summaryInProgress = true;
+        showToast(isAutomatic ? '正在自动总结...' : '正在生成总结...');
+
+        summarizeFn(
+            summaryInput,
+            (result) => {
+                const normalizedSummary = typeof window.normalizeSummaryContent === 'function'
+                    ? window.normalizeSummaryContent(result)
+                    : result;
+
+                if (!conv.summaries) {
+                    conv.summaries = [];
+                }
+                conv.summaries.push({
+                    content: normalizedSummary,
+                    isAutomatic: isAutomatic,
+                    isOffline: true,
+                    timestamp: new Date().toISOString(),
+                    messageCount: msgs.length
+                });
+
+                if (isAutomatic) {
+                    const marked = markOfflineMessagesSummarized(msgs);
+                    if (marked > 0) {
+                        save();
+                    }
+                }
+
+                if (window.saveToStorage) {
+                    window.saveToStorage();
+                }
+
+                State.summaryInProgress = false;
+                showToast(isAutomatic ? '自动总结已生成' : '总结已生成');
+
+                if (typeof window.renderMemoryShardsPage === 'function') {
+                    window.renderMemoryShardsPage(chat.id);
+                }
+            },
+            (error) => {
+                State.summaryInProgress = false;
+                showToast('总结失败: ' + error);
+            }
+        );
     }
 
     // 编辑消息
@@ -1270,7 +1313,7 @@
                 State.messages[State.chatId] = msgs.filter(m => !selectedIds.includes(m.id));
                 State.selectedMessages.clear();
                 save();
-                render();
+                renderWithScrollPreserved(render);
                 showToast(`已删除 ${selectedIds.length} 条消息`);
             });
         } else if (action === 'cancel') {
@@ -1278,88 +1321,41 @@
         }
     }
 
-    // 导出对话
-    function exportChat() {
-        const msgs = State.messages[State.chatId] || [];
-        if (!msgs.length) {
-            showToast('没有可导出的消息');
-            return;
-        }
-
-        const chat = getActiveChat();
-        const charName = chat?.remark || chat?.name || '角色';
-        const userName = window.AppState?.user?.name || '我';
-
-        // 构建导出数据
-        const exportData = {
-            version: '1.0',
-            exportDate: new Date().toISOString(),
-            character: charName,
-            user: userName,
-            messages: msgs.map(m => ({
-                role: m.role,
-                content: m.content,
-                swipes: m.swipes,
-                swipeIndex: m.swipeIndex,
-                timestamp: m.timestamp
-            }))
-        };
-
-        // JSON格式
-        const jsonStr = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `offline_chat_${State.chatId}_${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        showToast('已导出对话');
-    }
-
-    // 导入对话
-    function importChat() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            try {
-                const text = await file.text();
-                const data = JSON.parse(text);
-
-                if (data.messages && Array.isArray(data.messages)) {
-                    // 追加导入的消息
-                    const msgs = State.messages[State.chatId] || [];
-                    const newMessages = data.messages.map(m => ({
-                        ...m,
-                        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-                    }));
-
-                    State.messages[State.chatId] = [...msgs, ...newMessages];
-                    save();
-                    render();
-                    showToast(`已导入 ${newMessages.length} 条消息`);
-                } else {
-                    showToast('无效的导入文件格式');
-                }
-            } catch (err) {
-                console.error('Import error:', err);
-                showToast('导入失败: ' + err.message);
-            }
-        };
-        input.click();
-    }
-
     // Token估算
     function estimateTokens(text) {
         if (!text) return 0;
-        const cn = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-        const other = text.length - cn;
-        return Math.ceil(cn / 1.5 + other / 4);
+        if (window.MainAPIManager?.estimateTokenCount) {
+            return window.MainAPIManager.estimateTokenCount(text);
+        }
+        const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+        const englishWords = text.replace(/[\u4e00-\u9fa5]/g, '').trim().split(/\s+/).filter(w => w.length > 0).length;
+        return Math.ceil(chineseChars * 1.5 + englishWords * 1.3);
+    }
+
+    function calculateMessagesTokenCount(messages) {
+        if (!Array.isArray(messages) || messages.length === 0) return 0;
+        if (window.MainAPIManager?.calculateMessagesTokenCount) {
+            return window.MainAPIManager.calculateMessagesTokenCount(messages);
+        }
+
+        let totalTokens = 3;
+        messages.forEach(msg => {
+            totalTokens += 4;
+            if (typeof msg.content === 'string') {
+                totalTokens += estimateTokens(msg.content);
+            } else if (Array.isArray(msg.content)) {
+                msg.content.forEach(item => {
+                    if (item?.type === 'text') {
+                        totalTokens += estimateTokens(item.text || '');
+                    } else if (item?.type === 'image_url') {
+                        totalTokens += 128;
+                    }
+                });
+            } else {
+                totalTokens += 20;
+            }
+        });
+        return totalTokens;
     }
 
     // 更新Token统计
@@ -1367,13 +1363,10 @@
         const statsEl = document.getElementById('st-token-stats');
         if (!statsEl) return;
 
-        let totalTokens = 0;
-        msgs.forEach(m => {
-            const content = m.swipes ? m.swipes[m.swipeIndex ?? 0] : m.content;
-            totalTokens += estimateTokens(content);
-        });
+        const tokenMessages = msgs.map(m => ({ content: getOfflineMessageContent(m) }));
+        const totalTokens = calculateMessagesTokenCount(tokenMessages);
 
-        statsEl.textContent = `${totalTokens.toLocaleString()} tokens · ${msgs.length} 条消息`;
+        statsEl.textContent = ` ${msgs.length} 条消息`;
     }
     
     // 事件绑定
@@ -1389,57 +1382,12 @@
         document.getElementById('st-summary-btn').onclick = showSummaryDialog;
         document.getElementById('st-theme-btn').onclick = showThemeModal; // 主题按钮
 
-        // 导出按钮 - 显示菜单
-        document.getElementById('st-export-btn').onclick = (e) => {
-            const menu = document.createElement('div');
-            menu.className = 'st-context-menu';
-            menu.innerHTML = `
-                <div class="st-context-item" data-action="export">导出对话 (JSON)</div>
-                <div class="st-context-item" data-action="import">导入对话 (JSON)</div>
-            `;
-            document.body.appendChild(menu);
-            const rect = e.target.getBoundingClientRect();
-            const menuWidth = menu.offsetWidth || 120;
-            let left = rect.left;
-            // 防止菜单超出屏幕右侧
-            if (left + menuWidth > window.innerWidth - 10) {
-                left = window.innerWidth - menuWidth - 10;
-            }
-            // 防止菜单超出屏幕左侧
-            if (left < 10) left = 10;
-            menu.style.left = left + 'px';
-            menu.style.top = (rect.bottom + 4) + 'px';
-
-            menu.onclick = (me) => {
-                const action = me.target.dataset.action;
-                if (action === 'export') {
-                    exportChat();
-                } else if (action === 'import') {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = '.json';
-                    input.onchange = (ie) => {
-                        if (ie.target.files[0]) importChatFile(ie.target.files[0]);
-                    };
-                    input.click();
-                }
-                menu.remove();
-            };
-
-            setTimeout(() => {
-                document.addEventListener('click', function removeMenu() {
-                    menu.remove();
-                    document.removeEventListener('click', removeMenu);
-                });
-            }, 10);
-        };
-
         // 功能按钮
-        document.getElementById('st-continue-btn').onclick = continueGen;
         document.getElementById('st-stop-btn').onclick = stopGen;
-        document.getElementById('st-impersonate-btn').onclick = impersonate;
-        document.getElementById('st-firstmsg-btn').onclick = generateFirstMsg;
         document.getElementById('st-retry-btn').onclick = retryLast;
+        document.getElementById('st-scroll-top-btn').onclick = confirmScrollToTop;
+        document.getElementById('st-scroll-bottom-btn').onclick = confirmScrollToLatest;
+        document.getElementById('st-jump-floor-btn').onclick = showJumpToFloorDialog;
 
         // 多选操作
         document.getElementById('st-select-copy').onclick = () => handleSelectAction('copy');
@@ -1648,32 +1596,6 @@
         }, { passive: true });
     }
 
-    // 导入对话文件
-    async function importChatFile(file) {
-        try {
-            const text = await file.text();
-            const data = JSON.parse(text);
-
-            if (data.messages && Array.isArray(data.messages)) {
-                const msgs = State.messages[State.chatId] || [];
-                const newMessages = data.messages.map(m => ({
-                    ...m,
-                    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-                }));
-
-                State.messages[State.chatId] = [...msgs, ...newMessages];
-                save();
-                render();
-                showToast(`已导入 ${newMessages.length} 条消息`);
-            } else {
-                showToast('无效的导入文件格式');
-            }
-        } catch (err) {
-            console.error('Import error:', err);
-            showToast('导入失败: ' + err.message);
-        }
-    }
-    
     // 清空聊天
     function clearChat() {
         if (State.streaming) return;
@@ -1685,15 +1607,98 @@
             showToast('已清空');
         });
     }
-    
-    // 继续生成
-    function continueGen() {
-        if (State.streaming) return;
-        const msgs = State.messages[State.chatId];
-        if (!msgs?.length) return;
-        const last = msgs[msgs.length - 1];
-        if (last.role !== 'char') return;
-        callAI(null, true);
+
+    // 回到顶部
+    function confirmScrollToTop() {
+        const container = document.getElementById('st-messages');
+        if (!container) return;
+        showPinkConfirm('确认回到页面顶部？', () => {
+            container.scrollTop = 0;
+            State.stickToBottom = false;
+            showToast('已回到顶部');
+        }, null, '回到顶部');
+    }
+
+    // 回到最新楼层顶部
+    function confirmScrollToLatest() {
+        const msgs = State.messages[State.chatId] || [];
+        if (!msgs.length) {
+            showToast('暂无消息');
+            return;
+        }
+        showPinkConfirm('确认回到最新楼层顶部？', () => {
+            scrollToMessageTopByIndex(msgs.length - 1);
+            showToast('已回到最新楼层');
+        }, null, '回到底部');
+    }
+
+    // 回到任意楼层
+    function showJumpToFloorDialog() {
+        const msgs = State.messages[State.chatId] || [];
+        if (!msgs.length) {
+            showToast('暂无消息');
+            return;
+        }
+
+        const maxFloor = msgs.length;
+        const modal = document.createElement('div');
+        modal.className = 'st-modal-overlay st-pink-white-modal';
+        modal.innerHTML = `
+            <div class="st-modal-box st-pink-white-modal">
+                <div class="st-modal-header">
+                    <h3>回到任意楼层</h3>
+                    <button class="st-modal-close" id="st-jump-floor-close">×</button>
+                </div>
+                <div class="st-modal-body">
+                    <div class="st-summary-info">
+                        <span>当前共有 <strong>${maxFloor}</strong> 楼</span>
+                    </div>
+                    <div class="st-form-group">
+                        <label class="st-form-label">楼层号</label>
+                        <div class="st-form-hint">范围 1 - ${maxFloor}</div>
+                        <input type="number" id="st-jump-floor-input" class="st-form-input" min="1" max="${maxFloor}" value="${maxFloor}">
+                    </div>
+                    <div class="st-confirm-actions">
+                        <button class="st-btn secondary" id="st-jump-floor-cancel">取消</button>
+                        <button class="st-btn primary" id="st-jump-floor-confirm">确认</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const closeModal = () => modal.remove();
+        const input = modal.querySelector('#st-jump-floor-input');
+
+        modal.querySelector('#st-jump-floor-close').onclick = closeModal;
+        modal.querySelector('#st-jump-floor-cancel').onclick = closeModal;
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+
+        const confirmJump = () => {
+            const value = parseInt(input.value, 10);
+            if (!value || value < 1 || value > maxFloor) {
+                showToast(`请输入 1 - ${maxFloor} 的楼层号`);
+                input.focus();
+                return;
+            }
+            closeModal();
+            scrollToMessageTopByIndex(value - 1);
+            showToast(`已跳转到第 ${value} 楼`);
+        };
+
+        modal.querySelector('#st-jump-floor-confirm').onclick = confirmJump;
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmJump();
+            }
+        });
+
+        input.focus();
+        input.select();
     }
     
     // 停止生成
@@ -1702,22 +1707,6 @@
             State.abortController.abort();
             State.abortController = null;
         }
-    }
-    
-    // 代入角色
-    function impersonate() {
-        if (State.streaming) return;
-        callAI(null, false, true);
-    }
-    
-    // 生成开场白
-    function generateFirstMsg() {
-        if (State.streaming) return;
-        if (State.messages[State.chatId]?.length) {
-            showToast('请先清空聊天');
-            return;
-        }
-        callAI(null, false, false, true);
     }
     
     // swipe切换
@@ -1750,158 +1739,64 @@
         el.scrollTop = el.scrollHeight;
         State.stickToBottom = true;
     }
+
+    function scrollToMessageTopByIndex(idx) {
+        const container = document.getElementById('st-messages');
+        if (!container) return;
+        const msgEl = container.querySelector(`.st-message[data-idx="${idx}"]`);
+        if (!msgEl) return;
+        container.scrollTop = msgEl.offsetTop;
+        const total = State.messages[State.chatId]?.length || 0;
+        State.stickToBottom = idx >= total - 1;
+    }
+
+    function renderWithScrollPreserved(renderFn) {
+        const container = document.getElementById('st-messages');
+        if (!container) {
+            renderFn();
+            return;
+        }
+
+        const wasNearBottom = isNearBottom(container);
+        const prevScrollTop = container.scrollTop;
+        let anchorId = null;
+        let anchorOffset = 0;
+
+        if (!wasNearBottom) {
+            const items = Array.from(container.querySelectorAll('.st-message'));
+            const anchor = items.find(el => (el.offsetTop + el.offsetHeight) >= prevScrollTop);
+            if (anchor?.dataset?.id) {
+                anchorId = anchor.dataset.id;
+                anchorOffset = prevScrollTop - anchor.offsetTop;
+            }
+        }
+
+        renderFn();
+
+        const nextContainer = document.getElementById('st-messages');
+        if (!nextContainer) return;
+
+        if (wasNearBottom) {
+            scrollBottom(true);
+            return;
+        }
+
+        if (anchorId) {
+            const newAnchor = nextContainer.querySelector(`.st-message[data-id="${anchorId}"]`);
+            if (newAnchor) {
+                nextContainer.scrollTop = Math.max(0, newAnchor.offsetTop + anchorOffset);
+                return;
+            }
+        }
+
+        nextContainer.scrollTop = Math.max(0, prevScrollTop);
+    }
     
     // 提取思维链 - 严格对齐SillyTavern的处理方式
     // 支持模板: <think>, <thinking>, <reasoning>, ```thinking, 【思考】, [思考]
     // 参考: ST reasoning.js -> parseReasoningFromString, extractReasoningFromData
-    //       ST sse-stream.js -> parseStreamData
-    //       ST openai.js -> getStreamingReply
 
-    // ========== SillyTavern风格流式处理工具函数 ==========
-    
-    // 解析SSE chunk数据 (严格对齐ST的 getStreamingReply + parseStreamData)
-    // 支持: Claude, Gemini, Cohere, DeepSeek, XAI, OpenRouter, Mistral, Ollama, NovelAI/KoboldCpp, llama.cpp等
-    function parseSSEChunk(json) {
-        let reasoning = '';
-        let content = '';
-        
-        // === Claude格式 (ST: getStreamingReply -> chat_completion_sources.CLAUDE) ===
-        // Claude SSE: delta.text (正文) / delta.thinking (思考)
-        if (json?.delta?.text !== undefined || json?.delta?.thinking !== undefined) {
-            reasoning = json.delta?.thinking || '';
-            content = json.delta?.text || '';
-            return (reasoning || content) ? { reasoning, content } : null;
-        }
-        
-        // === Cohere格式 (ST: getStreamingReply -> chat_completion_sources.COHERE) ===
-        if (typeof json?.delta === 'object' && typeof json?.delta?.message === 'object' 
-            && ['tool-plan-delta', 'content-delta'].includes(json?.type)) {
-            content = json.delta?.message?.content?.text || json.delta?.message?.tool_plan || '';
-            return content ? { reasoning: '', content } : null;
-        }
-        
-        // === Gemini格式 (ST: getStreamingReply -> MAKERSUITE/VERTEXAI) ===
-        // candidates[].content.parts[] 中 thought=true 的是 reasoning
-        if (Array.isArray(json?.candidates)) {
-            const parts = json.candidates?.[0]?.content?.parts || [];
-            for (const part of parts) {
-                if (part?.thought && part?.text) {
-                    reasoning += part.text;
-                } else if (part?.text) {
-                    content += part.text;
-                }
-            }
-            return (reasoning || content) ? { reasoning, content } : null;
-        }
-        
-        // === NovelAI/KoboldCpp格式 (ST: parseStreamData -> json.token) ===
-        if (typeof json?.token === 'string') {
-            return json.token ? { reasoning: '', content: json.token } : null;
-        }
-        
-        // === llama.cpp格式: content (非chat.completion.chunk) ===
-        if (typeof json?.content === 'string' && json?.object !== 'chat.completion.chunk') {
-            return json.content ? { reasoning: '', content: json.content } : null;
-        }
-        
-        // === Ollama格式 (ST: textgen_settings -> thinking + response) ===
-        if (json?.thinking !== undefined || json?.response !== undefined) {
-            reasoning = json.thinking || '';
-            content = json.response || '';
-            return (reasoning || content) ? { reasoning, content } : null;
-        }
-        
-        // === OpenAI-likes格式: choices[] ===
-        if (Array.isArray(json?.choices) && json.choices.length > 0) {
-            const choice = json.choices[0];
-            
-            // --- 流式delta格式 ---
-            if (choice?.delta) {
-                const d = choice.delta;
-                
-                // DeepSeek/XAI: delta.reasoning_content (ST: getStreamingReply)
-                reasoning = d.reasoning_content || '';
-                
-                // OpenRouter: delta.reasoning (ST: getStreamingReply -> OPENROUTER)
-                if (!reasoning && typeof d.reasoning === 'string') {
-                    reasoning = d.reasoning;
-                }
-                
-                // Ollama via choices: choice.thinking (ST: textgen_settings)
-                if (!reasoning && typeof choice.thinking === 'string') {
-                    reasoning = choice.thinking;
-                }
-                
-                // Mistral格式 (ST: getStreamingReply -> MISTRALAI): delta.content是数组，含thinking
-                if (Array.isArray(d.content)) {
-                    const thinkParts = d.content.filter(x => x?.thinking);
-                    const textParts = d.content.filter(x => typeof x?.text === 'string' && !x?.thinking);
-                    if (thinkParts.length > 0) {
-                        reasoning += thinkParts.map(x => {
-                            if (Array.isArray(x.thinking)) {
-                                return x.thinking.map(t => t.text || '').join('');
-                            }
-                            return '';
-                        }).join('');
-                    }
-                    content = textParts.map(x => x.text).join('');
-                } else {
-                    content = d.content || '';
-                }
-                
-                // Custom/通用: reasoning_content 或 reasoning (ST: CUSTOM/POLLINATIONS/AIMLAPI等)
-                if (!reasoning) {
-                    reasoning = d.reasoning_content || d.reasoning || '';
-                }
-                
-                return (reasoning || content) ? { reasoning, content } : null;
-            }
-            
-            // --- 非流式message格式 (某些API在SSE中也会发送完整message) ---
-            if (choice?.message) {
-                const m = choice.message;
-                
-                // DeepSeek: message.reasoning_content
-                reasoning = m.reasoning_content || '';
-                // OpenRouter: message.reasoning
-                if (!reasoning) reasoning = m.reasoning || '';
-                
-                // Claude非流式 (ST: extractReasoningFromData -> CLAUDE)
-                // content数组中 type==='thinking' 的部分
-                if (!reasoning && Array.isArray(m.content)) {
-                    const thinkingPart = m.content.find(x => x?.type === 'thinking');
-                    if (thinkingPart?.thinking) {
-                        reasoning = thinkingPart.thinking;
-                    }
-                }
-                
-                // Mistral非流式: content数组含thinking
-                if (Array.isArray(m.content)) {
-                    const thinkParts = m.content.filter(x => x?.thinking);
-                    const textParts = m.content.filter(x => typeof x?.text === 'string' && !x?.thinking);
-                    if (thinkParts.length > 0) {
-                        reasoning += thinkParts.map(x => {
-                            if (Array.isArray(x.thinking)) {
-                                return x.thinking.map(t => t.text || '').filter(Boolean).join('\n\n');
-                            }
-                            return '';
-                        }).join('');
-                    }
-                    content = textParts.map(x => x.text).join('');
-                } else {
-                    content = m.content || '';
-                }
-                return (reasoning || content) ? { reasoning, content } : null;
-            }
-            
-            // text completion格式
-            if (typeof choice?.text === 'string') {
-                return choice.text ? { reasoning: '', content: choice.text } : null;
-            }
-        }
-        
-        return null;
-    }
+    // ========== SillyTavern风格工具函数 ==========
     
     // 组合reasoning和content为最终显示内容（使用当前模板的prefix/suffix）
     function composeContent(reasoning, content, isThinking) {
@@ -1914,74 +1809,14 @@
         return result;
     }
     
-    // ST风格平滑延迟: 基于前一个字符类型计算延迟 (对应ST的getDelay)
-    function getSmoothDelay(lastChar) {
-        if (!lastChar) return 0;
-        // 标点符号延迟更长，模拟自然阅读节奏
-        if (/[.。!！?？]/.test(lastChar)) return 30;
-        if (/[,，;；:：、]/.test(lastChar)) return 20;
-        if (/[\n\r]/.test(lastChar)) return 25;
-        if (/\s/.test(lastChar)) return 8;
-        return 5; // 普通字符
-    }
-    
-    // 非流式响应的平滑打字机 (模拟ST的SmoothEventSourceStream对非流式的处理)
-    async function smoothTypewriter(aiMsg, reasoning, content) {
-        const isAborted = () => !State.streaming || State.abortController?.signal?.aborted;
-        let currentReasoning = '';
-        let currentContent = '';
-        let lastChar = '';
-        
-        // 阶段1: reasoning
-        if (reasoning) {
-            for (let i = 0; i < reasoning.length; i++) {
-                if (isAborted()) {
-                    writeToMsg(aiMsg, composeContent(reasoning, content, false));
-                    updateStreamingMsg(aiMsg);
-                    return;
-                }
-                currentReasoning += reasoning[i];
-                writeToMsg(aiMsg, composeContent(currentReasoning, currentContent, true));
-                updateStreamingMsg(aiMsg);
-                await sleep(getSmoothDelay(lastChar));
-                lastChar = reasoning[i];
-            }
-        }
-        
-        // 阶段2: content
-        if (content) {
-            for (let i = 0; i < content.length; i++) {
-                if (isAborted()) {
-                    writeToMsg(aiMsg, composeContent(reasoning, content, false));
-                    updateStreamingMsg(aiMsg);
-                    return;
-                }
-                currentContent += content[i];
-                writeToMsg(aiMsg, composeContent(reasoning || currentReasoning, currentContent, false));
-                updateStreamingMsg(aiMsg);
-                await sleep(getSmoothDelay(lastChar));
-                lastChar = content[i];
-            }
-        }
-        
-        // 确保最终完整
-        writeToMsg(aiMsg, composeContent(reasoning, content, false));
-        updateStreamingMsg(aiMsg);
-    }
-    
     function writeToMsg(aiMsg, text) {
-        const finalText = State.isContinuing && State.originalContent ? State.originalContent + text : text;
         if (aiMsg.swipes) {
-            aiMsg.swipes[aiMsg.swipeIndex] = finalText;
+            aiMsg.swipes[aiMsg.swipeIndex] = text;
         } else {
-            aiMsg.content = finalText;
+            aiMsg.content = text;
         }
     }
     
-    function sleep(ms) {
-        return new Promise(r => setTimeout(r, ms));
-    }
-
     // === ST风格: 基于模板的思维链解析 (对齐 reasoning.js -> parseReasoningFromString) ===
     // 对齐ST reasoning.js: reasoning_templates 从预设管理器加载
     // === 对齐ST: ReasoningTemplate = {name, prefix, suffix, separator} ===
@@ -2119,7 +1954,7 @@
 
     /**
      * 对齐ST: extractThinking 只使用当前模板解析，不遍历所有模板
-     * 流式中间状态(allowOpen)时使用当前模板的prefix匹配未闭合标签
+     * 中间状态(allowOpen)时使用当前模板的prefix匹配未闭合标签
      */
     function extractThinking(text, allowOpen = false) {
         if (!text) return '';
@@ -2130,7 +1965,7 @@
             return parsed.reasoning;
         }
         
-        // 允许未闭合时（流式中间状态），匹配当前模板的未闭合标签
+        // 允许未闭合时（中间状态），匹配当前模板的未闭合标签
         if (allowOpen) {
             const tmpl = getCurrentReasoningTemplate();
             if (tmpl.prefix) {
@@ -2165,57 +2000,6 @@
             text = text.replace(new RegExp(`${escPrefix}[\\s\\S]*$`, 'i'), '');
         }
         return text.trim();
-    }
-
-    // 流式更新消息DOM
-    function updateStreamingMsg(msg) {
-        let el = document.querySelector(`[data-id="${msg.id}"] .st-message-content`);
-
-        // 如果元素不存在，先渲染
-        if (!el) {
-            render();
-            el = document.querySelector(`[data-id="${msg.id}"] .st-message-content`);
-            if (!el) return;
-        }
-
-        // 读取当前内容（支持swipe）
-        let content = msg.swipes ? (msg.swipes[msg.swipeIndex ?? 0] || '') : (msg.content || '');
-        // 应用正则替换（仅AI消息）
-        if (msg.role !== 'user' && content) {
-            content = window.STPresetManager?.applyRegexReplacements?.(content) || content;
-        }
-        const thinking = extractThinking(content, true);
-        if (thinking) content = removeThinking(content);
-
-        // 更新思维链区域
-        const msgEl = el.closest('.st-message');
-        let toggleEl = msgEl.querySelector('.st-thinking-toggle');
-        let thinkEl = msgEl.querySelector('.st-thinking-content');
-
-        if (thinking && !toggleEl) {
-            const header = msgEl.querySelector('.st-message-header');
-            toggleEl = document.createElement('div');
-            toggleEl.className = 'st-thinking-toggle';
-            toggleEl.innerHTML = `
-                <span class="st-thinking-icon"></span>
-            `;
-
-            thinkEl = document.createElement('div');
-            thinkEl.className = 'st-thinking-content';
-
-            toggleEl.onclick = function() {
-                this.classList.toggle('expanded');
-                thinkEl.classList.toggle('show');
-            };
-
-            header.after(toggleEl, thinkEl);
-        }
-
-        if (thinkEl) thinkEl.innerHTML = renderMarkdown(thinking) || '';
-        el.innerHTML = renderMarkdown(content) + '<span class="st-cursor"></span>';
-
-        console.log('[Stream]', { thinking: thinking?.slice(0,50), content: content?.slice(0,50) });
-        scrollBottom();
     }
 
     function formatTime(iso) {
@@ -2389,9 +2173,9 @@
     // 显示主题模态框
     function showThemeModal() {
         const modal = document.createElement('div');
-        modal.className = 'st-modal-overlay';
+        modal.className = 'st-modal-overlay st-pink-white-modal';
         modal.innerHTML = `
-            <div class="st-modal-box">
+            <div class="st-modal-box st-pink-white-modal">
                 <div class="st-modal-header">
                     <h3>主题设置</h3>
                     <button class="st-modal-close" id="st-modal-close">×</button>

@@ -136,6 +136,17 @@ const MobileResponsiveAdapter = {
         const visualHeight = visualViewport ? visualViewport.height : innerHeight;
         const visualTop = visualViewport ? (visualViewport.offsetTop || 0) : 0;
         const viewportWidth = Math.max(320, Math.round(innerWidth || 0));
+        const screenObj = window.screen || {};
+        const screenHeight = screenObj.height || 0;
+        const screenWidth = screenObj.width || 0;
+        let screenViewportHeight = 0;
+
+        if (screenHeight && screenWidth && window.matchMedia) {
+            const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+            screenViewportHeight = isPortrait
+                ? Math.max(screenHeight, screenWidth)
+                : Math.min(screenHeight, screenWidth);
+        }
 
         this.state.baseInnerHeight = Math.max(this.state.baseInnerHeight, innerHeight);
 
@@ -149,8 +160,11 @@ const MobileResponsiveAdapter = {
         }
 
         const keyboardOpen = this.isEditableElement(document.activeElement) && keyboardDelta > 90;
+        const stableHeight = screenViewportHeight
+            ? Math.max(innerHeight, Math.round(screenViewportHeight))
+            : innerHeight;
         const viewportHeight = (this.browsers.isIOS && isPWA && !keyboardOpen)
-            ? Math.max(320, Math.round(innerHeight || visualHeight || 0))
+            ? Math.max(320, Math.round(stableHeight || innerHeight || visualHeight || 0))
             : Math.max(320, Math.round(visualHeight || innerHeight || 0));
 
         const vh = viewportHeight * 0.01;

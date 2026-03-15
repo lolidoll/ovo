@@ -8,6 +8,7 @@
 
     window.CharacterSettingsManager = {
         defaultChatBgImage: 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg',
+        summaryInProgress: false,
 
         getEffectiveChatBgImage: function(chatBgImage) {
             return chatBgImage || this.defaultChatBgImage;
@@ -1739,6 +1740,10 @@
          * 手动总结对话
          */
         manualSummarize: function(chatId) {
+            if (this.summaryInProgress) {
+                showToast('总结生成中，请稍候');
+                return;
+            }
             const messages = window.AppState.messages[chatId] || [];
             if (messages.length < 3) {
                 showToast('消息过少，无需总结');
@@ -1759,6 +1764,11 @@
                 if (window.__OFFLINE_SUMMARY_CONTEXT__) {
                     window.__OFFLINE_SUMMARY_CONTEXT__ = false;
                 }
+                return;
+            }
+
+            if (this.summaryInProgress) {
+                showToast('总结生成中，请稍候');
                 return;
             }
 
@@ -1812,6 +1822,8 @@
                 }
                 return;
             }
+
+            this.summaryInProgress = true;
 
             summarizeFn(
                 summaryInput,
@@ -1868,6 +1880,8 @@
                     if (summariesContainer) {
                         summariesContainer.innerHTML = this.renderSummariesList(conv.summaries, convId);
                     }
+
+                    this.summaryInProgress = false;
                 },
                 (error) => {
                     console.error('总结生成出错:', error);
@@ -1876,6 +1890,8 @@
                     if (window.__OFFLINE_SUMMARY_CONTEXT__) {
                         window.__OFFLINE_SUMMARY_CONTEXT__ = false;
                     }
+
+                    this.summaryInProgress = false;
                 }
             );
         },

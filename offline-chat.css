@@ -2206,6 +2206,169 @@
     background: var(--st-bg-quaternary);
 }
 
+/* Soft pink-white modal theme */
+.st-modal-overlay.st-pink-white-modal {
+    background: rgba(255, 214, 228, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.st-modal-box.st-pink-white-modal {
+    background: linear-gradient(180deg, #fff9fb 0%, #fff1f6 100%);
+    border: 1px solid #ffd4e3;
+    box-shadow: 0 18px 50px rgba(255, 148, 182, 0.3);
+}
+
+.st-modal-box.st-pink-white-modal .st-modal-header {
+    border-bottom: 1px solid #ffe0ec;
+}
+
+.st-modal-box.st-pink-white-modal .st-modal-header h3 {
+    color: #c46287;
+    letter-spacing: 0.4px;
+}
+
+.st-modal-box.st-pink-white-modal .st-modal-close {
+    background: #fff;
+    border: 1px solid #ffd4e3;
+    color: #cc7b99;
+}
+
+.st-modal-box.st-pink-white-modal .st-modal-close:hover {
+    background: #fff5f9;
+    color: #b85f80;
+}
+
+.st-modal-box.st-pink-white-modal .st-summary-info {
+    background: linear-gradient(135deg, #fffefe 0%, #fff5f9 100%);
+    border: 1px solid #ffe4ed;
+    color: #b67b96;
+}
+
+.st-modal-box.st-pink-white-modal .st-summary-info strong {
+    color: #ff8fb1;
+}
+
+.st-modal-box.st-pink-white-modal .st-form-label {
+    color: #c46287;
+}
+
+.st-modal-box.st-pink-white-modal .st-form-hint {
+    color: #c39ab0;
+}
+
+.st-modal-box.st-pink-white-modal .st-form-input {
+    background: #fff;
+    border: 1px solid #ffd4e3;
+    color: #8a4f6b;
+}
+
+.st-modal-box.st-pink-white-modal .st-form-input:focus {
+    border-color: #ffb6c8;
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(255, 182, 200, 0.2);
+}
+
+.st-modal-box.st-pink-white-modal .st-form-checkbox span {
+    color: #c46287;
+}
+
+.st-modal-box.st-pink-white-modal .st-form-checkbox input[type="checkbox"] {
+    accent-color: #ffb6c8;
+}
+
+.st-modal-box.st-pink-white-modal .st-btn.primary {
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(255, 157, 184, 0.35);
+}
+
+.st-modal-box.st-pink-white-modal .st-btn.primary:hover {
+    box-shadow: 0 8px 20px rgba(255, 157, 184, 0.45);
+}
+
+.st-modal-box.st-pink-white-modal .st-btn.secondary {
+    background: #fff;
+    border: 1px solid #ffd4e3;
+    color: #c46287;
+}
+
+.st-modal-box.st-pink-white-modal .st-btn.secondary:hover {
+    background: #fff5f9;
+    border-color: #ffb6c8;
+}
+
+.st-modal-box.st-pink-white-modal #st-theme-close-btn,
+.st-modal-box.st-pink-white-modal #st-summary-generate {
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
+    color: #fff;
+    border: 1px solid rgba(255, 157, 184, 0.45);
+    box-shadow: 0 6px 18px rgba(255, 157, 184, 0.35);
+    text-shadow: none;
+}
+
+.st-modal-box.st-pink-white-modal #st-theme-close-btn:hover,
+.st-modal-box.st-pink-white-modal #st-summary-generate:hover {
+    background: linear-gradient(135deg, #ff9db8 0%, #ff85a8 100%);
+    box-shadow: 0 8px 22px rgba(255, 157, 184, 0.45);
+}
+
+.st-modal-box.st-pink-white-modal #st-theme-close-btn:active,
+.st-modal-box.st-pink-white-modal #st-summary-generate:active {
+    background: linear-gradient(135deg, #ffb6c8 0%, #ff9db8 100%);
+    box-shadow: 0 4px 12px rgba(255, 157, 184, 0.3);
+}
+
+.st-modal-box.st-pink-white-modal .st-theme-option,
+.st-modal-box.st-pink-white-modal .st-layout-option {
+    background: #fff;
+    border-color: #ffd4e3;
+}
+
+.st-modal-box.st-pink-white-modal .st-theme-option:hover,
+.st-modal-box.st-pink-white-modal .st-layout-option:hover {
+    border-color: #ffb6c8;
+}
+
+.st-modal-box.st-pink-white-modal .st-theme-option.active,
+.st-modal-box.st-pink-white-modal .st-layout-option.active {
+    background: #fff5f9;
+    border-color: #ffb6c8;
+    box-shadow: 0 0 0 2px rgba(255, 182, 200, 0.2);
+}
+
+.st-modal-box.st-pink-white-modal .st-theme-option span,
+.st-modal-box.st-pink-white-modal .st-layout-option span {
+    color: #b96a8a;
+}
+
+.st-modal-box.st-pink-white-modal .token-stats-container {
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.st-modal-box.st-pink-white-modal .token-stat-item {
+    background: linear-gradient(135deg, #fff9fb 0%, #fff1f7 100%);
+    border: 1px solid #ffe0ec;
+}
+
+.st-modal-box.st-pink-white-modal .token-stat-label {
+    color: #c46287;
+}
+
+.st-modal-box.st-pink-white-modal .token-stat-value {
+    color: #ff8fb1;
+    font-size: 22px;
+}
+
+.st-modal-box.st-pink-white-modal .token-stats-container .form-hint {
+    color: #c39ab0;
+}
+
+.st-modal-box.st-pink-white-modal #st-summary-refresh-tokens {
+    margin-top: 4px;
+}
+
 /* 确认对话框 */
 .st-confirm-dialog {
     text-align: center;

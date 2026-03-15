@@ -1,7 +1,7 @@
 /**
  * iOS Safari粘贴修复模块
  * 
- * 问题：iOS Safari浏览器中API设置页面的输入框无法粘贴内容
+ * 问题：iOS Safari浏览器中设置与配置页面的输入框无法粘贴内容
  * 原因：全局CSS设置了-webkit-user-select: none和-webkit-touch-callout: none
  * 解决：为输入框添加专门的CSS修复和JavaScript事件处理
  */
@@ -40,7 +40,7 @@
         
         console.log('🔧 检测到iOS设备，应用粘贴修复...');
         
-        // API设置页面的输入框选择器
+        // 设置与配置页面的输入框选择器
         const apiSettingsInputSelectors = [
             '#api-settings-page input[type="text"]',
             '#api-settings-page input[type="password"]',
@@ -173,13 +173,13 @@
         setTimeout(fixIOSPasteIssue, 300);
     }
     
-    // 监听API设置页面的显示
+    // 监听设置与配置页面的显示
     const apiSettingsObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                 const apiSettingsPage = document.getElementById('api-settings-page');
                 if (apiSettingsPage && apiSettingsPage.classList.contains('active')) {
-                    console.log('🔄 API设置页面已显示，应用粘贴修复');
+                    console.log('🔄 设置与配置页面已显示，应用粘贴修复');
                     // 使用新的函数应用修复
                     setTimeout(function() {
                         const apiSettingsInputSelectors = [
@@ -192,7 +192,7 @@
                         ];
                         const inputs = document.querySelectorAll(apiSettingsInputSelectors.join(', '));
                         inputs.forEach(applyInputFix);
-                        console.log('✅ API设置页面输入框修复完成，共', inputs.length, '个');
+                        console.log('✅ 设置与配置页面输入框修复完成，共', inputs.length, '个');
                     }, 100);
                 }
             }

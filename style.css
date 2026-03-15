@@ -2137,7 +2137,7 @@
             color: #333;
         }
 
-        /* API设置页面滑块样式 */
+        /* 设置与配置页面滑块样式 */
         #api-settings-page input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -2198,7 +2198,7 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
         }
 
-        /* API设置页面复选框样式 */
+        /* 设置与配置页面复选框样式 */
         #api-settings-page input[type="checkbox"] {
             width: 18px;
             height: 18px;
