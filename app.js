@@ -51,7 +51,7 @@
                 defaultPrompt: 'null',
                 summaryEnabled: true, // 是否启用自动总结
                 summaryInterval: 50, // 每多少条消息后自动总结
-                summaryKeepLatest: 10, // 总结后保留最新的消息数
+                summaryKeepLatest: 20, // 总结后保留最新的消息数
                 // 副API设置
                 secondaryEndpoint: '', // 副API端点
                 secondaryApiKey: '', // 副API密钥
@@ -99,6 +99,9 @@
 },
             collections: [], // 收藏的消息 [{ id, convId, messageId, messageContent, senderName, senderAvatar, senderType, isGroup, groupSenderName, collectedAt, originalMessageTime }]
             walletHistory: [], // 钱包充值记录
+            fontStore: {
+                owned: []
+            },
             importedCards: [],
             conversationStates: {},  // 运行时状态：{ convId: { isApiCalling, isTyping, isVoiceCallApiCalling } }
             notification: {
@@ -506,6 +509,12 @@
                     }
                     
                     AppState.conversationStates = {};
+                    if (!AppState.fontStore || typeof AppState.fontStore !== 'object') {
+                        AppState.fontStore = { owned: [] };
+                    }
+                    if (!Array.isArray(AppState.fontStore.owned)) {
+                        AppState.fontStore.owned = [];
+                    }
                     console.log('加载数据成功，用户背景图:', AppState.user.bgImage);
                 } else {
                     console.log('没有保存的数据');
@@ -528,7 +537,7 @@
                     AppState.apiSettings.summaryInterval = 50;
                 }
                 if (!Number.isFinite(AppState.apiSettings.summaryKeepLatest)) {
-                    AppState.apiSettings.summaryKeepLatest = 10;
+                    AppState.apiSettings.summaryKeepLatest = 20;
                 }
                 const currentSummaryPrompt = AppState.apiSettings.secondaryPrompts.summarize;
                 if (!currentSummaryPrompt || currentSummaryPrompt === legacySummaryPromptA || currentSummaryPrompt === legacySummaryPromptB || currentSummaryPrompt === legacySummaryPromptC || currentSummaryPrompt === legacySummaryPromptD) {
@@ -2981,6 +2990,7 @@
                         apiSettings: AppState.apiSettings || {},
                         collections: AppState.collections || [],
                         walletHistory: AppState.walletHistory || [],
+                        fontStore: AppState.fontStore || {},
                         dynamicFuncs: AppState.dynamicFuncs || {}
                     }
                 };
@@ -3045,6 +3055,12 @@
                         AppState.worldbooks = Array.isArray(appState.worldbooks) ? appState.worldbooks : [];
                         AppState.collections = Array.isArray(appState.collections) ? appState.collections : [];
                         AppState.walletHistory = Array.isArray(appState.walletHistory) ? appState.walletHistory : [];
+                        AppState.fontStore = appState.fontStore && typeof appState.fontStore === 'object'
+                            ? appState.fontStore
+                            : { owned: [] };
+                        if (!Array.isArray(AppState.fontStore.owned)) {
+                            AppState.fontStore.owned = [];
+                        }
                         
                         if (appState.user && typeof appState.user === 'object') {
                             AppState.user = Object.assign(AppState.user, appState.user);
@@ -6779,11 +6795,16 @@
         }
 
         function buildSummaryInput(rawText, options = {}) {
+            const includeHeader = options.includeHeader !== false;
+            if (!includeHeader) {
+                return String(rawText || '');
+            }
+
             const conv = options.conv || AppState.currentChat || {};
             const partnerName = options.partnerName || conv.userNameForChar || AppState.user?.name || '你';
             const chapterLabel = options.chapterLabel || getSummaryChapterLabel(conv);
             const modeLabel = options.modeLabel || '线上聊天';
-            const header = `【章节名】${chapterLabel}\n【对话对象】${partnerName}\n【场景】${modeLabel}`;
+            const header = options.header || `【章节名】${chapterLabel}\n【对话对象】${partnerName}\n【场景】${modeLabel}`;
             return `${header}\n\n${rawText}`;
         }
 
@@ -6902,12 +6923,14 @@
             }
             
             // 收集对话内容
+            const userLabel = conv?.userNameForChar || AppState.user?.name || '用户';
+            const charLabel = conv?.name || '角色';
             let conversationText = '';
             msgs.forEach(m => {
                 if (m.type === 'sent') {
-                    conversationText += `用户: ${m.content}\n`;
+                    conversationText += `${userLabel}: ${m.content}\n`;
                 } else if (m.type === 'received') {
-                    conversationText += `角色: ${m.content}\n`;
+                    conversationText += `${charLabel}: ${m.content}\n`;
                 }
             });
             
@@ -6915,7 +6938,8 @@
 
             const summaryInput = buildSummaryInput(conversationText, {
                 conv: conv,
-                modeLabel: '线上聊天'
+                modeLabel: '线上聊天',
+                partnerName: userLabel
             });
             summarizeTextViaSecondaryAPI(summaryInput, onSuccess, onError);
         }
@@ -6939,12 +6963,14 @@
             }
 
             // 收集对话内容
+            const userLabel = conv?.userNameForChar || AppState.user?.name || '用户';
+            const charLabel = conv?.name || '角色';
             let conversationText = '';
             msgs.forEach(m => {
                 if (m.type === 'sent' && !m.isRetracted) {
-                    conversationText += `用户: ${m.content}\n`;
+                    conversationText += `${userLabel}: ${m.content}\n`;
                 } else if (m.type === 'received' && !m.isRetracted) {
-                    conversationText += `角色: ${m.content}\n`;
+                    conversationText += `${charLabel}: ${m.content}\n`;
                 }
             });
 
@@ -6952,7 +6978,8 @@
 
             const summaryInput = buildSummaryInput(conversationText, {
                 conv: conv,
-                modeLabel: '线上聊天'
+                modeLabel: '线上聊天',
+                partnerName: userLabel
             });
             summarizeTextViaSecondaryAPI(
                 summaryInput,
@@ -8576,7 +8603,7 @@
             const emojiList = allEmojis.map(e => `"${e.text}"`).join('、');
             const groupNameStr = groupNames.length > 1 ? groupNames.join('、') : groupNames[0];
             
-            return `【表情包系统】你可以在回复中发送表情包，但不是每次都要发。根据上下文内容判断是否合适发送表情包，发送的概率应该是有选择性的。
+            return `【表情包系统】真实社交聊天中表情包使用频率较高。语境轻松、情绪明显或需要强调语气时，优先考虑发送表情包。建议平均每3-5条回复包含1次表情包；若一句话即可表达情绪，也可以只发送表情包。不要每次都发，但也不要长期完全不发。
 你有权访问以下表情包分组【${groupNameStr}】中的表情：${emojiList}
 
 发送表情包的方法：在你的回复中任何位置，使用以下格式包含表情包：
@@ -8585,7 +8612,7 @@
 格式说明：
 - 【表情包】和【/表情包】必须成对出现
 - 中间填写你选择的表情描述（必须是上面列出的表情之一）
-- 不强制每回都发，而是根据对话内容和角色性格判断是否合适
+- 不必每次都发，但也不要长期完全不发，保持自然且常见的使用频率
 - 同一条回复中最多可以包含1个表情包
 - 表情包应该与你的文字回复语境相符，表达相同或相近的情绪/意图
 
@@ -9196,6 +9223,41 @@
             // 返回默认头像
             return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23ff9a9e"/></svg>';
         }
+
+        function normalizeEmojiKey(value) {
+            return String(value || '').toLowerCase().replace(/[^0-9a-z\u4e00-\u9fa5]+/g, '');
+        }
+
+        function resolveEmojiFromTag(emojiName, convId) {
+            const cleanedName = String(emojiName || '').trim().replace(/^["'“”]+|["'“”]+$/g, '').trim();
+            if (!cleanedName) return null;
+
+            const conv = AppState.conversations.find(c => c.id === convId) || {};
+            const boundGroups = conv.boundEmojiGroups || (conv.boundEmojiGroup ? [conv.boundEmojiGroup] : []);
+            const emojiPool = boundGroups && boundGroups.length > 0
+                ? AppState.emojis.filter(e => boundGroups.includes(e.groupId))
+                : AppState.emojis;
+
+            if (!emojiPool || emojiPool.length === 0) return null;
+
+            let emoji = emojiPool.find(e => e.text === cleanedName);
+            const normalizedName = normalizeEmojiKey(cleanedName);
+
+            if (!emoji && normalizedName) {
+                emoji = emojiPool.find(e => normalizeEmojiKey(e.text) === normalizedName);
+            }
+
+            if (!emoji && normalizedName) {
+                emoji = emojiPool.find(e => {
+                    const normalizedText = normalizeEmojiKey(e.text);
+                    return normalizedText && (normalizedText.includes(normalizedName) || normalizedName.includes(normalizedText));
+                });
+            }
+
+            if (!emoji) return null;
+
+            return { url: emoji.url, text: emoji.text };
+        }
         
         function appendSingleAssistantMessage(convId, text, skipMindStateExtraction = false) {
             // ========== 第-1步：清理所有一起听指令标记（仅删除标记，保留文本内容） ==========
@@ -9405,11 +9467,11 @@
                 console.log('🎭 检测到表情包指令:', emojiName);
                 console.log('📚 表情包库总量:', AppState.emojis.length);
                 
-                // 在表情包库中查找对应的表情
-                const emoji = AppState.emojis.find(e => e.text === emojiName);
-                if (emoji) {
-                    emojiUrl = emoji.url;
-                    emojiText = emoji.text;
+                // 在表情包库中查找对应的表情（支持轻微格式差异）
+                const resolvedEmoji = resolveEmojiFromTag(emojiName, convId);
+                if (resolvedEmoji) {
+                    emojiUrl = resolvedEmoji.url;
+                    emojiText = resolvedEmoji.text;
                     console.log('✅ 找到匹配的表情包:', emojiText, emojiUrl);
                 } else {
                     console.log('❌ 未找到匹配的表情包，检查表情包描述是否匹配');
@@ -9877,9 +9939,9 @@
                     
                     if (emojiMatch && emojiMatch[1]) {
                         const emojiName = emojiMatch[1].trim();
-                        const emoji = AppState.emojis.find(e => e.text === emojiName);
-                        if (emoji) {
-                            emojiUrl = emoji.url;
+                        const resolvedEmoji = resolveEmojiFromTag(emojiName, convId);
+                        if (resolvedEmoji) {
+                            emojiUrl = resolvedEmoji.url;
                         }
                         content = content.replace(emojiRegex, '').trim();
                     }
@@ -10092,6 +10154,73 @@
                 currentDelay += msgData.delay || 0;
             });
         }
+
+        function parseLocationDistanceKm(rawValue, fallbackKm = 1) {
+            const fallback = fallbackKm === undefined ? 1 : fallbackKm;
+            const fallbackReturn = fallbackKm === null ? null : fallback;
+
+            if (rawValue === null || rawValue === undefined) return fallbackReturn;
+
+            const rawText = String(rawValue).trim();
+            if (!rawText) return fallbackReturn;
+
+            const cleaned = rawText.replace(/[，,]/g, '').replace(/\s+/g, '');
+            const match = cleaned.match(/^([0-9]+(?:\.[0-9]+)?)(.*)$/);
+            if (!match) return fallbackReturn;
+
+            const numeric = Number(match[1]);
+            if (!Number.isFinite(numeric) || numeric <= 0) return fallbackReturn;
+
+            const unit = String(match[2] || '').toLowerCase();
+            let km = numeric;
+
+            if (unit) {
+                if (unit.includes('km') || unit.includes('公里') || unit.includes('千米')) {
+                    km = numeric;
+                } else if ((unit === 'm' || unit.includes('米')) && !unit.includes('km')) {
+                    km = numeric / 1000;
+                } else if (unit.includes('m') && !unit.includes('km')) {
+                    km = numeric / 1000;
+                }
+            }
+
+            if (!Number.isFinite(km) || km <= 0) return fallbackReturn;
+            return Math.min(Math.max(km, 0.01), 9999);
+        }
+
+        function normalizeMessageDistanceKm(distance, unit, fallbackKm = 1) {
+            const numeric = Number(distance);
+            if (!Number.isFinite(numeric) || numeric <= 0) return fallbackKm;
+
+            const normalizedUnit = String(unit || '').toLowerCase();
+            let km = numeric;
+
+            if (normalizedUnit === 'km' || normalizedUnit.includes('公里') || normalizedUnit.includes('千米')) {
+                km = numeric;
+            } else if (!normalizedUnit || normalizedUnit === 'm' || (normalizedUnit.includes('米') && !normalizedUnit.includes('公里'))) {
+                km = numeric / 1000;
+            }
+
+            if (!Number.isFinite(km) || km <= 0) return fallbackKm;
+            return Math.min(Math.max(km, 0.01), 9999);
+        }
+
+        function formatLocationDistanceKm(distanceKm) {
+            const numeric = Number(distanceKm);
+            if (!Number.isFinite(numeric) || numeric <= 0) return '1';
+
+            let formatted = '';
+            if (numeric < 1) {
+                formatted = numeric.toFixed(2);
+            } else if (numeric < 10) {
+                formatted = numeric.toFixed(1);
+            } else {
+                formatted = String(Math.round(numeric));
+            }
+
+            return formatted.replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+        }
+
         function formatTime(date) {
             const now = new Date();
             const d = new Date(date);
@@ -10174,9 +10303,9 @@
                     
                     if (emojiMatch && emojiMatch[1]) {
                         const emojiName = emojiMatch[1].trim();
-                        const emoji = AppState.emojis.find(e => e.text === emojiName);
-                        if (emoji) {
-                            emojiUrl = emoji.url;
+                        const resolvedEmoji = resolveEmojiFromTag(emojiName, convId);
+                        if (resolvedEmoji) {
+                            emojiUrl = resolvedEmoji.url;
                         }
                         content = content.replace(emojiRegex, '').trim();
                     }
@@ -12228,17 +12357,29 @@
                 return;
             }
 
-            const mergedText = selectedSummaries.map((summary, index) => {
-                const content = String(summary.content || '').trim();
-                return `【总结${index + 1}】\n${content}`;
-            }).join('\n\n');
+            const mergedText = selectedSummaries
+                .map((summary) => String(summary.content || '').trim())
+                .filter(Boolean)
+                .join('\n\n');
+
+            const mergeInstruction = [
+                '以下是多条已生成的记忆卡片内容，请将它们合并为一条新的记忆卡片。',
+                '要求：',
+                '- 仅基于输入内容，去重合并同义信息，避免重复。',
+                '- 不要出现“总结1/总结2”等标签或任何分隔符。',
+                '- 不要新增未出现的事实或无关内容。',
+                '- 只输出规定栏目。'
+            ].join('\n');
+
+            const summaryPayload = `${mergeInstruction}\n\n${mergedText}`;
 
             const summaryInput = typeof window.buildSummaryInput === 'function'
-                ? window.buildSummaryInput(mergedText, {
+                ? window.buildSummaryInput(summaryPayload, {
                     conv: conv,
-                    modeLabel: '记忆区大总结'
+                    modeLabel: '记忆区大总结',
+                    includeHeader: false
                 })
-                : mergedText;
+                : summaryPayload;
 
             const summarizeFn = window.summarizeTextViaSecondaryAPI || window.summarizeTextViaMainAPI;
             if (!summarizeFn) {
@@ -13533,7 +13674,7 @@
 
 
         // 打开个性装扮页面
-        function openDecorationPage(defaultTab = 'font') {
+        function openDecorationPage(defaultTab = 'font-store') {
             let page = document.getElementById('decoration-main-page');
             if (!page) {
                 page = document.createElement('div');
@@ -13542,12 +13683,320 @@
                 document.getElementById('app-container').appendChild(page);
             }
 
-            const allowedTabs = ['font', 'msg', 'friend'];
-            const initialTab = allowedTabs.includes(defaultTab) ? defaultTab : 'font';
+            const allowedTabs = ['font', 'font-store', 'msg', 'friend'];
+            const initialTab = allowedTabs.includes(defaultTab) ? defaultTab : 'font-store';
 
             const state = {
-                activeTab: initialTab
+                activeTab: initialTab,
+                storeDetailId: null
             };
+            const baseFontStoreItems = [
+                {
+                    id: 'zoean-dawn-pixel',
+                    name: '破晓像素',
+                    author: 'zoean',
+                    url: 'https://image.uglycat.cc/h3h5tw.otf',
+                    price: 36,
+                    quote: '像素也可以很温柔，把清晨的光留在字里。',
+                    badge: '新品',
+                    accent: '#ff8f7a'
+                },
+                {
+                    id: 'envya-jiangcheng-300',
+                    name: '江城圆体 300W',
+                    author: 'EnvyA',
+                    url: 'https://image.uglycat.cc/qlmhjm.TTF',
+                    price: 24,
+                    quote: '轻一点的笔画，留出呼吸感给长句。',
+                    badge: '轻盈',
+                    accent: '#7fc7ff'
+                },
+                {
+                    id: 'envya-jiangcheng-400',
+                    name: '江城圆体 400W',
+                    author: 'EnvyA',
+                    url: 'https://image.uglycat.cc/steeac.ttf',
+                    price: 26,
+                    quote: '厚度刚好，聊天更清晰不费眼。',
+                    badge: '清晰',
+                    accent: '#7fe3c0'
+                },
+                {
+                    id: 'envya-jiangcheng-500',
+                    name: '江城圆体 500W',
+                    author: 'EnvyA',
+                    url: 'https://image.uglycat.cc/rza7ue.ttf',
+                    price: 28,
+                    quote: '日常阅读的主力款，耐看又稳。',
+                    badge: '日常',
+                    accent: '#8cb4ff'
+                },
+                {
+                    id: 'envya-jiangcheng-600',
+                    name: '江城圆体 600W',
+                    author: 'EnvyA',
+                    url: 'https://image.uglycat.cc/a83ri2.ttf',
+                    price: 30,
+                    quote: '标题更有分量，重点一眼抓住。',
+                    badge: '标题',
+                    accent: '#ffb05c'
+                },
+                {
+                    id: 'envya-jiangcheng-700',
+                    name: '江城圆体 700W',
+                    author: 'EnvyA',
+                    url: 'https://image.uglycat.cc/r3236q.ttf',
+                    price: 32,
+                    quote: '最厚的力量感，用来做强调刚好。',
+                    badge: '强调',
+                    accent: '#ff7b7b'
+                },
+                {
+                    id: 'xuxu-taiwan-bold',
+                    name: '台湾字体',
+                    author: 'xuxu',
+                    url: 'https://img.heliar.top/file/1773205572550_%E6%9C%80%E7%B2%97%E7%9A%84.otf',
+                    price: 34,
+                    quote: '带一点岛屿的轻松感，把句子放慢一点。',
+                    badge: '手写',
+                    accent: '#ffd166'
+                }
+            ];
+
+            const mintFontsRaw = [
+                { name: 'qbytrq', url: 'https://nos.netease.com/ysf/929e02030f44016358e7f3da403ef0a8.ttf' },
+                { name: 'AZhuPaoPaoTi-2', url: 'https://nos.netease.com/ysf/3ebf95928a515b5b5e223d4f0490374d.ttf' },
+                { name: 'BaoTuXiaoBaiTi-2', url: 'https://nos.netease.com/ysf/f03c237b7d9a5a2834c7fd7236851de6.ttf' },
+                { name: 'Cubic-11-1.000-R-2', url: 'https://nos.netease.com/ysf/8d33e17429ec97adfdc4d893e5892dde.ttf' },
+                { name: 'dingliesongtypeface20241217-2', url: 'https://nos.netease.com/ysf/fafb990aba2ad9434f66241172d53c43.ttf' },
+                { name: 'FangZhengFangSongJianTi-1', url: 'https://nos.netease.com/ysf/6243ab9ef2b62586e7a37b92c5636a15.ttf' },
+                { name: 'FangZhengKaiTiJianTi-1', url: 'https://nos.netease.com/ysf/7ac5e2fe192072c9ba0b2910360cdd18.ttf' },
+                { name: 'JinNianYeYaoJiaYouYa-2', url: 'https://nos.netease.com/ysf/53bf5f004d1de24c55784b9794158ffb.ttf' },
+                { name: 'PingFangJiangNanTi-2', url: 'https://nos.netease.com/ysf/5f4276913bc8f5049eab7f49cbde40d6.ttf' },
+                { name: 'Tanugo-Round-Regular-2', url: 'https://nos.netease.com/ysf/fd79fa9ecf388151eff313e97892d33f.otf' },
+                { name: 'uzura-2', url: 'https://nos.netease.com/ysf/85b0ff28de3d21c7b1893b3ebbc24982.ttf' },
+                { name: 'WuXinShouXieTi-2', url: 'https://nos.netease.com/ysf/dfe54fdffd1d723d237fee2cf0bcbfed.otf' },
+                { name: 'YeZiGongChangXiaoShiTou-2', url: 'https://nos.netease.com/ysf/3055adcd3488a17a434bebc1997850b2.ttf' },
+                { name: '851ShouShu-2', url: 'https://nos.netease.com/ysf/d3409d7cc8c78a21d05f94000700a794.ttf' },
+                { name: 'AaXiaoGouGuaiGuaiXiangSuTi-2', url: 'https://nos.netease.com/ysf/41c59a5bfd6c546a2dd60ffb1241c3e2.ttf' },
+                { name: 'cjkFonts-allseto-v1.11-2', url: 'https://nos.netease.com/ysf/70df60271996724d684ff223d3f2c672.ttf' },
+                { name: 'KeMingChao-2', url: 'https://nos.netease.com/ysf/3bbf9a905a3d5c7cf61db70b38f72001.ttf' },
+                { name: 'LingDongQiCheChunTang-2', url: 'https://nos.netease.com/ysf/7456c3b7946ba6b5d8fbf701330cb76d.ttf' },
+                { name: 'NaikaiFont-Light-2', url: 'https://nos.netease.com/ysf/4812993f74cbb7ebe670379802a33ca6.ttf' },
+                { name: 'SetoFont-1', url: 'https://nos.netease.com/ysf/127b24164cc10aff532b8dfc9c1f9b9e.ttf' },
+                { name: 'SourceHanSerifCN-Regular-1', url: 'https://nos.netease.com/ysf/d4c07c91ceda27e386f4ded1091b4de4.otf' },
+                { name: 'TaiWanQuanZiKuZhengKaiTi-2', url: 'https://nos.netease.com/ysf/7b9edf1aaf26d77db4ea95dabc89970c.ttf' },
+                { name: '汇文明朝体', url: 'https://nos.netease.com/ysf/095535340aeac5afcc6749f182dc19fe.otf' },
+                { name: 'StarPandaKids', url: 'https://nos.netease.com/ysf/c694061d726fe0b78330050b6c181cd2.otf' },
+                { name: '小灰灰', url: 'https://nos.netease.com/ysf/8f8aa5322afd68c1eb57f28bacd514da.ttf' },
+                { name: '元气桃桃', url: 'https://nos.netease.com/ysf/aa5ebeecfda32a4344abf84cd76db70d.ttf' },
+                { name: '你呢也在想我吗', url: 'https://nos.netease.com/ysf/fab4fa13c97c3d9bac316f921a5d590f.ttf' },
+                { name: '烤肉拌饭', url: 'https://nos.netease.com/ysf/b836dbf9b7e35be360e42716042a0994.ttf' },
+                { name: '弯弯月', url: 'https://nos.netease.com/ysf/bd513cbd401a0d12d7e048c1b60c39f0.ttf' },
+                { name: '小熊小鱼', url: 'https://nos.netease.com/ysf/ae3e90f917ec7c37b2961c67a037ca57.ttf' },
+                { name: '小圆', url: 'https://nos.netease.com/ysf/16251a33f0e7754a71251ba5b7f87db8.ttf' },
+                { name: '蘑菇头', url: 'https://nos.netease.com/ysf/6bb44d723fdbfbd26d24620c077fb04b.ttf' },
+                { name: '考拉卷', url: 'https://nos.netease.com/ysf/45d89b02d2202f68cac36aeb8314d2c0.ttf' },
+                { name: '猫的鱼', url: 'https://nos.netease.com/ysf/e3626bd2b4f105376faac9fc805f25bc.ttf' },
+                { name: '卡哇伊手写', url: 'https://nos.netease.com/ysf/c1f67cfa415d564b07bb3dbdd66c3bfc.ttf' },
+                { name: '喵喵喵', url: 'https://nos.netease.com/ysf/e6e94c334834416a223ea43da706ab31.ttf' },
+                { name: '小面包', url: 'https://nos.netease.com/ysf/413efd4616a069e5b387785a2cdd48dc.ttf' },
+                { name: '小森林', url: 'https://nos.netease.com/ysf/d0a77ed2bc75113956c933d2829574d1.ttf' },
+                { name: '山海情', url: 'https://nos.netease.com/ysf/ad711ffd9f2d6db7024424921aeec415.ttf' },
+                { name: 'Traveler', url: 'https://nos.netease.com/ysf/a42d035e0e07e27485b1e6b06295824f.ttf' },
+                { name: '春日玫瑰', url: 'https://nos.netease.com/ysf/a1e145dbac1ec712fa68d7fecee16216.ttf' },
+                { name: '多丸体', url: 'https://nos.netease.com/ysf/8dc9e3ffd954d3e4c1315328ac2b8f13.ttf' },
+                { name: '贩梦奶酪体', url: 'https://nos.netease.com/ysf/88076b021f2157caea5bcad9ab665832.ttf' },
+                { name: '孤岛', url: 'https://nos.netease.com/ysf/35b3034411632014ae4bfbcc3faa73e7.ttf' },
+                { name: '故梦', url: 'https://nos.netease.com/ysf/4d0deda4845e9e8657e324ade64b9218.ttf' },
+                { name: '诀爱', url: 'https://nos.netease.com/ysf/b7a4e983b18dedf08063532c00575aeb.ttf' },
+                { name: '玫瑰', url: 'https://nos.netease.com/ysf/21c4facac6277a860ac0e8fc80589672.ttf' },
+                { name: '派小星', url: 'https://nos.netease.com/ysf/66befa5307c1a47d7cfa11ef94504653.ttf' },
+                { name: '旁白', url: 'https://nos.netease.com/ysf/c123fc5df16186fb710032bc2a4b2e0e.ttf' },
+                { name: '晴空体', url: 'https://nos.netease.com/ysf/f0a6df2cc467bb5039e9e47c1974cd3f.ttf' },
+                { name: '圈圈', url: 'https://nos.netease.com/ysf/c797dcf1a83779144ae70cc25158d4ae.ttf' },
+                { name: '素笺体', url: 'https://nos.netease.com/ysf/f6ee97395dba0526d19690b7f52a32b7.ttf' },
+                { name: '向风', url: 'https://nos.netease.com/ysf/f7080b5c349080d2cb4ba043c85371ef.ttf' },
+                { name: '雨眠', url: 'https://nos.netease.com/ysf/4693a815e6259b7aa9f42e0fc330bcc9.ttf' },
+                { name: '新蒂下午茶体', url: 'https://nos.netease.com/ysf/ba90280f3623a19f888f54bb6d0a0817.ttf' },
+                { name: '白桃奶油泡芙', url: 'https://nos.netease.com/ysf/ec892d0da8afd8cfe550595f1cf955b6.ttf' },
+                { name: '第九頁無聲海', url: 'https://nos.netease.com/ysf/fe37e97b7ca08b9a3b7cbdf84e022da0.ttf' },
+                { name: '可爱小猫不说谎', url: 'https://nos.netease.com/ysf/59e90fcf2c241c9de668d17e4c58f0cb.ttf' },
+                { name: '裙带菜', url: 'https://nos.netease.com/ysf/cc890c58c088b0599b18ef014c2f8142.ttf' },
+                { name: '水母情书', url: 'https://nos.netease.com/ysf/1a742f4b20ea50bdc8d00c3d23e95dd7.ttf' },
+                { name: '我看见你 你独你', url: 'https://nos.netease.com/ysf/aedfccf91288c14dce6225e3548b83fe.ttf' },
+                { name: '幽兰拿铁', url: 'https://nos.netease.com/ysf/4451b59418265078869cc981b56d5674.ttf' },
+                { name: '自由', url: 'https://nos.netease.com/ysf/9ad1add4523e027754758dd95a2b6959.ttf' },
+                { name: '草莓卷', url: 'https://nos.netease.com/ysf/e6dfc20f3d1f24629717d805d5289788.ttf' },
+                { name: '春田花花', url: 'https://nos.netease.com/ysf/aba688d8d28b6b828c20550d332e60ec.ttf' },
+                { name: '粗圆体', url: 'https://nos.netease.com/ysf/4ff04cb60f7eb2483355fad7ac09b6e3.ttf' },
+                { name: '曲奇小绵芽', url: 'https://nos.netease.com/ysf/9ac8c4bba7f1ffd8f4967df0399e9ebd.ttf' },
+                { name: '然の', url: 'https://nos.netease.com/ysf/753a713e6a31ec55c016a9e3253f4350.ttf' },
+                { name: '小白兔只', url: 'https://nos.netease.com/ysf/aa82f02ae41eeb14c6e4abe0a8fddf39.ttf' },
+                { name: '小面包', url: 'https://nos.netease.com/ysf/4c904279e9d8ed84441a3cc229881336.ttf' },
+                { name: '小猪呼呼', url: 'https://nos.netease.com/ysf/5b7ba9d09de14fef27752381a45b8e65.ttf' },
+                { name: '一颗萌布丁', url: 'https://nos.netease.com/ysf/010535bedecb1311389aff770ef68203.ttf' }
+            ];
+
+            const mintQuoteHeads = [
+                '适合慢读',
+                '偏软萌',
+                '更耐看',
+                '更清爽',
+                '很稳',
+                '很轻',
+                '很甜',
+                '有点酷',
+                '更治愈'
+            ];
+            const mintQuoteTails = [
+                '但不腻。',
+                '刚刚好。',
+                '不抢戏。',
+                '适合长句。',
+                '适合短句。',
+                '适合标题。',
+                '很灵动。',
+                '很温柔。',
+                '很安心。'
+            ];
+            const mintBadges = ['人气', '轻柔', '灵动', '治愈', '元气', '清新', '温柔', '软萌', '舒缓'];
+            const mintAccents = ['#ffb677', '#ffd166', '#f7aef8', '#b8f2e6', '#a0c4ff', '#ffadad', '#caffbf', '#9bf6ff', '#ffc6ff'];
+            const mintPrices = [18, 20, 22, 24, 26, 28, 30, 32, 34];
+
+            const mintFonts = mintFontsRaw.map((item, index) => {
+                const head = mintQuoteHeads[index % mintQuoteHeads.length];
+                const tail = mintQuoteTails[Math.floor(index / mintQuoteHeads.length) % mintQuoteTails.length];
+                return {
+                    id: `mint-${index + 1}`,
+                    name: item.name,
+                    author: '薄荷猫',
+                    url: item.url,
+                    price: mintPrices[index % mintPrices.length],
+                    quote: `${item.name}，${head}${tail}`,
+                    badge: mintBadges[index % mintBadges.length],
+                    accent: mintAccents[index % mintAccents.length]
+                };
+            });
+
+            const fontStoreItems = baseFontStoreItems.concat(mintFonts);
+
+            const storeDetailMoods = [
+                '清晨棉雾',
+                '薄荷汽泡',
+                '杏桃暖风',
+                '奶油黄昏',
+                '星光夜航',
+                '海边微光',
+                '旧书房',
+                '玻璃花房',
+                '电台低语'
+            ];
+            const storeDetailTraits = [
+                '圆润字腔',
+                '骨架清晰',
+                '线条柔顺',
+                '字面紧凑',
+                '视觉温度高',
+                '重心稳定',
+                '留白友好',
+                '行距舒展',
+                '屏显清晰'
+            ];
+            const storeDetailScenes = [
+                '聊天气泡',
+                '标题横幅',
+                '手账日记',
+                '便签清单',
+                '弹窗提示',
+                '卡片标题',
+                '长文阅读',
+                '海报文案',
+                '角色设定'
+            ];
+            const storeDetailTips = [
+                '建议字号 14-16 更舒服',
+                '浅色背景更显清透',
+                '标题可加粗突出重点',
+                '正文行距 1.5 更好读',
+                '短句更有节奏感',
+                '适合日常聊天与记录'
+            ];
+            const storeDetailStories = [
+                '像把午后风折进字里，读起来松弛又轻快。',
+                '希望你在每一次输入时都能感到被柔光包裹。',
+                '把生活里的小确幸写成能长期阅读的温度。',
+                '用更清晰的笔画，把每句话留住一段呼吸。',
+                '愿它在屏幕上也保持纸感的温柔触感。',
+                '像一杯温热的奶茶，适合慢慢读完。',
+                '把沉稳藏在边角里，让内容更聚焦。',
+                '希望每一段对话都有一个安静的背景音。',
+                '让字形替你说一句“我在认真听”。'
+            ];
+            const storeDetailBenefits = [
+                '购买后永久可用，支持全局应用',
+                '可随时在字体库中切换',
+                '购买记录写入钱包明细'
+            ];
+
+            function pickFromList(list, startIndex, count) {
+                const result = [];
+                for (let i = 0; i < count; i += 1) {
+                    result.push(list[(startIndex + i) % list.length]);
+                }
+                return result;
+            }
+
+            function getFontFormatLabel(url) {
+                const cleanUrl = String(url || '').split('?')[0].split('#')[0].toLowerCase();
+                if (cleanUrl.endsWith('.otf')) {
+                    return 'OTF';
+                }
+                return 'TTF';
+            }
+
+            function getStoreDetailMeta(item, index) {
+                const mood = storeDetailMoods[index % storeDetailMoods.length];
+                const traits = pickFromList(storeDetailTraits, index, 3);
+                const scenes = pickFromList(storeDetailScenes, index + 2, 3);
+                const tips = pickFromList(storeDetailTips, index + 1, 2);
+                const story = storeDetailStories[index % storeDetailStories.length];
+                return { mood, traits, scenes, tips, story };
+            }
+
+            function getFontStoreState() {
+                if (!AppState.fontStore || typeof AppState.fontStore !== 'object') {
+                    AppState.fontStore = { owned: [] };
+                }
+                if (!Array.isArray(AppState.fontStore.owned)) {
+                    AppState.fontStore.owned = [];
+                }
+                return AppState.fontStore;
+            }
+
+            function getInstalledFontForItem(item, manager) {
+                if (!manager) {
+                    return null;
+                }
+                return manager.getAllFonts().find((font) => {
+                    if (font.storeId && font.storeId === item.id) {
+                        return true;
+                    }
+                    return String(font.name || '').trim() === item.name;
+                }) || null;
+            }
+
+            function isActiveFontForItem(item, activeFont) {
+                if (!activeFont) {
+                    return false;
+                }
+                if (activeFont.storeId && activeFont.storeId === item.id) {
+                    return true;
+                }
+                return String(activeFont.name || '').trim() === item.name;
+            }
+
+            
             
             page.innerHTML = `
                 <div class="sub-nav friend-nav settings-config-nav">
@@ -13556,13 +14005,15 @@
                 </div>
                 <div class="sub-content decoration-tab-main-content">
                     <div class="decoration-tab-nav" role="tablist" aria-label="个性装扮导航">
-                        <button class="decoration-tab-btn active" data-tab="font" role="tab" aria-selected="true">字体</button>
+                        <button class="decoration-tab-btn active" data-tab="font-store" role="tab" aria-selected="true">字体商店</button>
+                        <button class="decoration-tab-btn" data-tab="font" role="tab" aria-selected="false">我的字体</button>
                         <button class="decoration-tab-btn" data-tab="msg" role="tab" aria-selected="false">消息页面</button>
                         <button class="decoration-tab-btn" data-tab="friend" role="tab" aria-selected="false">好友页面</button>
                     </div>
 
                     <div class="decoration-tab-panels">
-                        <section class="decoration-tab-panel active" data-panel="font"></section>
+                        <section class="decoration-tab-panel active" data-panel="font-store"></section>
+                        <section class="decoration-tab-panel" data-panel="font"></section>
                         <section class="decoration-tab-panel" data-panel="msg"></section>
                         <section class="decoration-tab-panel" data-panel="friend"></section>
                     </div>
@@ -13581,9 +14032,16 @@
                 
                 <style>
                     #decoration-main-page .decoration-tab-main-content {
-                        padding: 10px 10px calc(88px + var(--safe-area-inset-bottom));
+                        padding: 0 10px calc(88px + var(--safe-area-inset-bottom));
                         overflow-y: auto;
                         background: linear-gradient(180deg, #fff8fc 0%, #fff1f7 58%, #fffdfd 100%);
+                    }
+
+                    #decoration-main-page .sub-nav {
+                        background: #fff8fc;
+                        border-bottom: 1px solid #ffe0ee;
+                        box-shadow: 0 4px 12px rgba(255, 190, 214, 0.16);
+                        z-index: 8;
                     }
 
                     #decoration-main-page .decoration-tab-nav {
@@ -13598,8 +14056,10 @@
                         white-space: nowrap;
                         -webkit-overflow-scrolling: touch;
                         margin-bottom: 10px;
-                        padding: 4px 0 10px;
-                        background: linear-gradient(180deg, rgba(255, 248, 252, 0.96) 0%, rgba(255, 248, 252, 0.78) 75%, rgba(255, 248, 252, 0) 100%);
+                        padding: 10px 0 10px;
+                        background: #fff8fc;
+                        box-shadow: 0 6px 14px rgba(255, 190, 214, 0.2);
+                        border-bottom: 1px solid #ffe0ee;
                         scrollbar-width: none;
                     }
 
@@ -14049,6 +14509,315 @@
                         color: #cc6f98;
                     }
 
+                    #decoration-main-page .decoration-btn:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                        transform: none;
+                    }
+
+                    #decoration-main-page .decoration-store-hero-head {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        margin-bottom: 10px;
+                    }
+
+                    #decoration-main-page .decoration-store-hero-title {
+                        font-size: 17px;
+                        font-weight: 700;
+                        color: #c85a85;
+                    }
+
+                    #decoration-main-page .decoration-store-hero-sub {
+                        font-size: 12px;
+                        color: #b9849f;
+                        line-height: 1.5;
+                    }
+
+                    #decoration-main-page .decoration-store-balance {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        padding: 10px;
+                        border-radius: 12px;
+                        border: 1px solid #ffd8e8;
+                        background: #fff;
+                    }
+
+                    #decoration-main-page .decoration-store-balance-label {
+                        font-size: 12px;
+                        color: #c08da2;
+                    }
+
+                    #decoration-main-page .decoration-store-balance-value {
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: #c85a85;
+                        margin-top: 4px;
+                    }
+
+                    #decoration-main-page .decoration-store-stats {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 10px;
+                        font-size: 12px;
+                        color: #bf89a1;
+                    }
+
+                    #decoration-main-page .decoration-store-grid {
+                        display: grid !important;
+                        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                        gap: 12px;
+                        width: 100%;
+                        justify-items: stretch;
+                    }
+
+                    #decoration-main-page .decoration-store-card {
+                        --store-accent: #ffb4cf;
+                        position: relative;
+                        border-radius: 16px;
+                        padding: 14px;
+                        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 248, 241, 0.96) 100%);
+                        border: 1px solid rgba(255, 212, 182, 0.7);
+                        box-shadow: 0 10px 24px rgba(255, 188, 154, 0.18);
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        overflow: hidden;
+                        cursor: pointer;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease;
+                        min-width: 0;
+                        align-items: center;
+                        text-align: center;
+                    }
+
+                    #decoration-main-page .decoration-store-card:hover {
+                        transform: translateY(-4px);
+                        box-shadow: 0 14px 28px rgba(255, 176, 150, 0.24);
+                    }
+
+                    #decoration-main-page .decoration-store-card::before {
+                        content: '';
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        height: 4px;
+                        width: 100%;
+                        background: var(--store-accent);
+                    }
+
+                    #decoration-main-page .decoration-store-card::after {
+                        content: '';
+                        position: absolute;
+                        right: -30px;
+                        top: -40px;
+                        width: 120px;
+                        height: 120px;
+                        background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+                        pointer-events: none;
+                    }
+
+                    #decoration-main-page .decoration-store-card-head {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        width: 100%;
+                    }
+
+                    #decoration-main-page .decoration-store-name {
+                        font-size: 12px;
+                        font-weight: 700;
+                        color: #b85c7e;
+                    }
+
+                    #decoration-main-page .decoration-store-author {
+                        font-size: 12px;
+                        color: #a67890;
+                        width: 100%;
+                    }
+
+
+                    #decoration-main-page .decoration-store-actions {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                        margin-top: auto;
+                        width: 100%;
+                    }
+
+                    #decoration-main-page .decoration-store-price {
+                        font-size: 12px;
+                        font-weight: 700;
+                        color: #c56783;
+                        padding: 4px 10px;
+                        border-radius: 999px;
+                        background: rgba(255, 246, 239, 0.9);
+                        border: 1px solid rgba(255, 206, 171, 0.7);
+                    }
+
+                    #decoration-main-page .decoration-store-detail {
+                        position: fixed;
+                        inset: 0;
+                        z-index: 99999;
+                        display: flex;
+                        align-items: flex-end;
+                        justify-content: center;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-overlay {
+                        position: absolute;
+                        inset: 0;
+                        background: rgba(77, 29, 49, 0.35);
+                        backdrop-filter: blur(6px);
+                        -webkit-backdrop-filter: blur(6px);
+                    }
+
+                    #decoration-main-page .decoration-store-detail-card {
+                        position: relative;
+                        width: min(94vw, 720px);
+                        max-height: 88vh;
+                        overflow-y: auto;
+                        background: #fff;
+                        border-radius: 24px 24px 0 0;
+                        padding: 16px 18px calc(20px + var(--safe-area-inset-bottom));
+                        box-shadow: 0 -12px 40px rgba(122, 61, 86, 0.25);
+                        border: 1px solid rgba(255, 211, 228, 0.8);
+                        animation: decorationStoreDetailUp 0.28s ease;
+                    }
+
+                    @keyframes decorationStoreDetailUp {
+                        from { transform: translateY(30px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+
+                    #decoration-main-page .decoration-store-detail-header {
+                        display: grid;
+                        grid-template-columns: auto 1fr auto;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 12px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-back {
+                        border: none;
+                        background: rgba(255, 236, 244, 0.9);
+                        color: #b86084;
+                        border-radius: 999px;
+                        padding: 6px 12px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-title {
+                        text-align: center;
+                        font-size: 15px;
+                        font-weight: 700;
+                        color: #b85c7e;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-spacer {
+                        width: 48px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-hero {
+                        border-radius: 16px;
+                        padding: 14px;
+                        background: linear-gradient(135deg, rgba(255, 243, 249, 0.9), rgba(255, 234, 241, 0.8));
+                        border: 1px solid rgba(255, 206, 226, 0.8);
+                        margin-bottom: 12px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-name {
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #b85c7e;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-author {
+                        margin-top: 6px;
+                        font-size: 12px;
+                        color: #a97992;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-tags {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 6px;
+                        margin-top: 10px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-tag {
+                        padding: 4px 10px;
+                        border-radius: 999px;
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #a86482;
+                        border: 1px solid var(--store-accent);
+                        background: rgba(255, 255, 255, 0.9);
+                    }
+
+                    #decoration-main-page .decoration-store-detail-section {
+                        margin-bottom: 12px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-label {
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: #b85c7e;
+                        margin-bottom: 6px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-text {
+                        font-size: 12px;
+                        line-height: 1.7;
+                        color: #9b6a82;
+                        background: #fff6ef;
+                        border: 1px dashed rgba(255, 192, 160, 0.6);
+                        border-radius: 12px;
+                        padding: 10px 12px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-list {
+                        margin: 0;
+                        padding-left: 16px;
+                        color: #9b6a82;
+                        font-size: 12px;
+                        line-height: 1.7;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-footer {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        padding-top: 6px;
+                        border-top: 1px solid rgba(255, 210, 228, 0.7);
+                    }
+
+                    #decoration-main-page .decoration-store-detail-price {
+                        font-size: 14px;
+                        font-weight: 700;
+                        color: #c56783;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+
+                    #decoration-main-page .decoration-store-detail-actions .decoration-btn {
+                        min-height: 36px;
+                        padding: 0 16px;
+                        border-radius: 12px;
+                    }
+
                     #decoration-main-page .decoration-modal-mask {
                         position: fixed;
                         inset: 0;
@@ -14093,7 +14862,7 @@
 
                     @media (max-width: 480px) {
                         #decoration-main-page .decoration-tab-main-content {
-                            padding: 8px 8px calc(82px + var(--safe-area-inset-bottom));
+                            padding: 0 8px calc(82px + var(--safe-area-inset-bottom));
                         }
 
                         #decoration-main-page .decoration-card {
@@ -14119,6 +14888,7 @@
                         #decoration-main-page .decoration-bg-item-actions {
                             grid-template-columns: 1fr;
                         }
+
                     }
                 </style>
             `;
@@ -14141,6 +14911,9 @@
 
             function switchTab(tabName) {
                 state.activeTab = tabName;
+                if (tabName !== 'font-store') {
+                    state.storeDetailId = null;
+                }
                 tabButtons.forEach((btn) => {
                     const active = btn.dataset.tab === tabName;
                     btn.classList.toggle('active', active);
@@ -14157,6 +14930,10 @@
             function renderActivePanel() {
                 if (state.activeTab === 'font') {
                     renderFontPanel();
+                    return;
+                }
+                if (state.activeTab === 'font-store') {
+                    renderFontStorePanel();
                     return;
                 }
                 if (state.activeTab === 'msg') {
@@ -14498,7 +15275,7 @@
                             </div>
                         `;
                     }).join('')
-                    : '<div class="decoration-list-empty">暂无字体，请导入 TTF 字体文件</div>';
+                    : '<div class="decoration-list-empty">暂无字体，请导入 TTF/OTF 字体文件</div>';
 
                 panel.innerHTML = `
                     <div class="decoration-card decoration-font-hero">
@@ -14520,16 +15297,16 @@
                         <div class="decoration-field">
                             <div class="decoration-label"><span>本地字体文件</span></div>
                             <div class="decoration-font-action-grid">
-                                <button class="decoration-btn primary decoration-font-btn" id="decoration-font-import-trigger">导入TTF</button>
+                                <button class="decoration-btn primary decoration-font-btn" id="decoration-font-import-trigger">导入TTF/OTF</button>
                                 <button class="decoration-btn decoration-font-btn" id="decoration-font-reset">恢复默认</button>
                             </div>
-                            <input type="file" id="decoration-font-file-input" accept=".ttf" multiple style="display:none;">
+                            <input type="file" id="decoration-font-file-input" accept=".ttf,.otf" multiple style="display:none;">
                         </div>
 
                         <div class="decoration-field">
                             <div class="decoration-label"><span>在线导入</span></div>
                             <div class="decoration-font-url-wrap">
-                                <input class="decoration-input" id="decoration-font-url" placeholder="字体URL（必填）">
+                                <input class="decoration-input" id="decoration-font-url" placeholder="字体URL（TTF/OTF）">
                                 <input class="decoration-input" id="decoration-font-url-name" placeholder="字体名称（必填）">
                                 <button class="decoration-btn decoration-font-url-btn" id="decoration-font-import-url">URL导入</button>
                             </div>
@@ -14664,6 +15441,329 @@
                         }
                     };
                 });
+            }
+
+            function renderFontStorePanel() {
+                const panel = page.querySelector('[data-panel="font-store"]');
+                if (!panel) {
+                    return;
+                }
+
+                const manager = window.FontManager;
+                const storeState = getFontStoreState();
+                const ownedSet = new Set((storeState.owned || []).map(String));
+                const activeFont = manager ? manager.getActiveFont() : null;
+                const currentCoins = Number(AppState.user && AppState.user.coins || 0);
+
+                const ownedCount = fontStoreItems.filter((item) => {
+                    const installedFont = getInstalledFontForItem(item, manager);
+                    return ownedSet.has(item.id) || !!installedFont;
+                }).length;
+
+                const cardsHTML = fontStoreItems.map((item, index) => {
+                    const installedFont = getInstalledFontForItem(item, manager);
+                    const isInstalled = !!installedFont;
+                    const isOwned = ownedSet.has(item.id);
+                    const isActive = isActiveFontForItem(item, activeFont);
+                    const priceText = (isOwned || isInstalled) ? '已拥有' : `${item.price} 喵币`;
+                    const accent = item.accent || '#ffb4cf';
+                    return `
+                        <div class="decoration-store-card" data-store-card="${item.id}" style="--store-accent: ${accent};" role="button" tabindex="0" aria-label="查看${escapeHtml(item.name)}详情">
+                            <div class="decoration-store-card-head">
+                                <div class="decoration-store-name">${escapeHtml(item.name)}</div>
+                            </div>
+                            <div class="decoration-store-author">作者：${escapeHtml(item.author)}</div>
+                            <div class="decoration-store-actions">
+                                <div class="decoration-store-price">${priceText}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                panel.innerHTML = `
+                    <div class="decoration-card decoration-store-hero">
+                        <div class="decoration-store-hero-head">
+                            <div>
+                                <div class="decoration-store-hero-title">字体商店</div>
+                                <div class="decoration-store-hero-sub">购买后会自动加入字体库，随时可应用</div>
+                            </div>
+                            <span class="decoration-inline-badge">喵币支付</span>
+                        </div>
+                        <div class="decoration-store-balance">
+                            <div>
+                                <div class="decoration-store-balance-label">当前余额</div>
+                                <div class="decoration-store-balance-value">${currentCoins}</div>
+                            </div>
+                            <button class="decoration-btn" id="decoration-font-store-recharge">去钱包</button>
+                        </div>
+                        <div class="decoration-store-stats">
+                            <span>已拥有 ${ownedCount} / ${fontStoreItems.length}</span>
+                            <span>字体库持续更新中</span>
+                        </div>
+                    </div>
+
+                    <div class="decoration-card">
+                        <div class="decoration-store-grid">
+                            ${cardsHTML}
+                        </div>
+                    </div>
+                `;
+
+                const openFontStoreDetail = (itemId) => {
+                    state.storeDetailId = itemId;
+                    renderFontStorePanel();
+                };
+
+                const closeFontStoreDetail = () => {
+                    state.storeDetailId = null;
+                    renderFontStorePanel();
+                };
+
+                if (state.storeDetailId) {
+                    const detailItem = fontStoreItems.find((item) => item.id === state.storeDetailId);
+                    if (detailItem) {
+                        const detailIndex = Math.max(0, fontStoreItems.indexOf(detailItem));
+                        const detailMeta = getStoreDetailMeta(detailItem, detailIndex);
+                        const detailFormat = getFontFormatLabel(detailItem.url);
+                        const detailAccent = detailItem.accent || '#ffb4cf';
+                        const detailInstalled = getInstalledFontForItem(detailItem, manager);
+                        const detailIsInstalled = !!detailInstalled;
+                        const detailIsOwned = ownedSet.has(detailItem.id);
+                        const detailIsActive = isActiveFontForItem(detailItem, activeFont);
+                        const detailAction = detailIsActive ? 'none' : (detailIsInstalled ? 'apply' : (detailIsOwned ? 'install' : 'buy'));
+                        const detailActionLabel = detailIsActive ? '使用中' : (detailIsInstalled ? '应用' : (detailIsOwned ? '下载' : '购买'));
+                        const detailStatus = detailIsActive ? '使用中' : (detailIsInstalled ? '已安装' : (detailIsOwned ? '已购' : '未购买'));
+                        const detailPrice = (detailIsOwned || detailIsInstalled) ? '已拥有' : `${detailItem.price} 喵币`;
+                        const detailBadge = detailItem.badge ? `<span class="decoration-store-detail-tag">${escapeHtml(detailItem.badge)}</span>` : '';
+                        const detailTraitTags = detailMeta.traits.map(trait => `<span class="decoration-store-detail-tag">${escapeHtml(trait)}</span>`).join('');
+                        const detailSceneTags = detailMeta.scenes.map(scene => `<span class="decoration-store-detail-tag">${escapeHtml(scene)}</span>`).join('');
+                        const detailTips = detailMeta.tips.map(tip => `<li>${escapeHtml(tip)}</li>`).join('');
+                        const detailBenefits = storeDetailBenefits.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+
+                        panel.insertAdjacentHTML('beforeend', `
+                            <div class="decoration-store-detail" id="decoration-font-store-detail">
+                                <div class="decoration-store-detail-overlay" data-store-detail-close="true"></div>
+                                <div class="decoration-store-detail-card" style="--store-accent: ${detailAccent};">
+                                    <div class="decoration-store-detail-header">
+                                        <button class="decoration-store-detail-back" data-store-detail-close="true">返回</button>
+                                        <div class="decoration-store-detail-title">字体详情</div>
+                                        <div class="decoration-store-detail-spacer"></div>
+                                    </div>
+
+                                    <div class="decoration-store-detail-hero">
+                                        <div class="decoration-store-detail-name">${escapeHtml(detailItem.name)}</div>
+                                        <div class="decoration-store-detail-author">作者：${escapeHtml(detailItem.author)}</div>
+                                        <div class="decoration-store-detail-tags">
+                                            ${detailBadge}
+                                            <span class="decoration-store-detail-tag">${detailFormat}</span>
+                                            <span class="decoration-store-detail-tag">${escapeHtml(detailMeta.mood)}</span>
+                                            <span class="decoration-inline-badge">${detailStatus}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="decoration-store-detail-section">
+                                        <div class="decoration-store-detail-label">作者有话说</div>
+                                        <div class="decoration-store-detail-text">${escapeHtml(detailItem.quote)}</div>
+                                    </div>
+
+                                    <div class="decoration-store-detail-section">
+                                        <div class="decoration-store-detail-label">字体气质</div>
+                                        <div class="decoration-store-detail-tags">
+                                            ${detailTraitTags}
+                                        </div>
+                                    </div>
+
+                                    <div class="decoration-store-detail-section">
+                                        <div class="decoration-store-detail-label">适用场景</div>
+                                        <div class="decoration-store-detail-tags">
+                                            ${detailSceneTags}
+                                        </div>
+                                    </div>
+
+                                    <div class="decoration-store-detail-section">
+                                        <div class="decoration-store-detail-label">设计故事</div>
+                                        <div class="decoration-store-detail-text">${escapeHtml(detailMeta.story)}</div>
+                                    </div>
+
+                                    <div class="decoration-store-detail-section">
+                                        <div class="decoration-store-detail-label">上手建议</div>
+                                        <ul class="decoration-store-detail-list">
+                                            ${detailTips}
+                                        </ul>
+                                    </div>
+
+                                    <div class="decoration-store-detail-section">
+                                        <div class="decoration-store-detail-label">购买权益</div>
+                                        <ul class="decoration-store-detail-list">
+                                            ${detailBenefits}
+                                        </ul>
+                                    </div>
+
+                                    <div class="decoration-store-detail-footer">
+                                        <div class="decoration-store-detail-price">${detailPrice}</div>
+                                        <div class="decoration-store-detail-actions">
+                                            <button class="decoration-btn primary" data-store-action="${detailAction}" data-store-id="${detailItem.id}" ${detailAction === 'none' ? 'disabled' : ''}>${detailActionLabel}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+
+                        const detailCloseEls = panel.querySelectorAll('[data-store-detail-close="true"]');
+                        detailCloseEls.forEach((el) => {
+                            el.onclick = (event) => {
+                                event.stopPropagation();
+                                closeFontStoreDetail();
+                            };
+                        });
+                    } else {
+                        state.storeDetailId = null;
+                    }
+                }
+
+                const walletBtn = panel.querySelector('#decoration-font-store-recharge');
+                if (walletBtn) {
+                    walletBtn.onclick = () => {
+                        if (typeof window.openWalletPage === 'function') {
+                            page.classList.remove('open');
+                            window.openWalletPage();
+                        } else {
+                            showToast('钱包模块未加载');
+                        }
+                    };
+                }
+
+                panel.querySelectorAll('[data-store-card]').forEach((card) => {
+                    card.onclick = (event) => {
+                        if (event.target.closest('[data-store-action]')) {
+                            return;
+                        }
+                        const itemId = card.dataset.storeCard;
+                        if (itemId) {
+                            openFontStoreDetail(itemId);
+                        }
+                    };
+                });
+
+                const installFont = async (item) => {
+                    if (!manager) {
+                        showToast('字体管理模块未加载');
+                        return null;
+                    }
+                    const existingFont = getInstalledFontForItem(item, manager);
+                    if (existingFont) {
+                        return existingFont;
+                    }
+                    if (typeof showLoadingOverlay === 'function') {
+                        showLoadingOverlay('正在下载字体...');
+                    }
+                    try {
+                        const fontData = await manager.importFontFromURL(item.url, item.name, {
+                            storeId: item.id,
+                            author: item.author,
+                            source: 'store'
+                        });
+                        showToast('字体已加入字体库');
+                        return fontData;
+                    } catch (error) {
+                        console.error('字体下载失败:', error);
+                        showToast('字体下载失败');
+                        return null;
+                    } finally {
+                        if (typeof hideLoadingOverlay === 'function') {
+                            hideLoadingOverlay();
+                        }
+                    }
+                };
+
+                const purchaseFont = async (item) => {
+                    const cost = Number(item.price || 0);
+                    const balance = Number(AppState.user && AppState.user.coins || 0);
+                    if (balance < cost) {
+                        showToast('喵币余额不足，请先充值');
+                        return;
+                    }
+
+                    const confirmed = await showDecorationDialog({
+                        title: '购买字体',
+                        message: `确认花费 ${cost} 喵币购买「${item.name}」吗？`,
+                        confirmText: '购买',
+                        cancelText: '取消'
+                    });
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    AppState.user.coins = balance - cost;
+                    AppState.walletHistory = Array.isArray(AppState.walletHistory) ? AppState.walletHistory : [];
+                    AppState.walletHistory.push({
+                        amount: -cost,
+                        type: `字体购买·${item.name}`,
+                        time: new Date().toISOString()
+                    });
+
+                    if (!storeState.owned.includes(item.id)) {
+                        storeState.owned.push(item.id);
+                    }
+                    saveToStorage();
+
+                    const installed = await installFont(item);
+                    if (installed) {
+                        showToast('购买成功，字体已加入库');
+                    } else {
+                        showToast('购买成功，可稍后下载字体');
+                    }
+                    renderFontStorePanel();
+                };
+
+                panel.querySelectorAll('[data-store-action]').forEach((button) => {
+                    button.onclick = async (event) => {
+                        event.stopPropagation();
+                        const action = button.dataset.storeAction;
+                        const itemId = button.dataset.storeId;
+                        const item = fontStoreItems.find(entry => entry.id === itemId);
+                        if (!item || action === 'none') {
+                            return;
+                        }
+
+                        if (action === 'buy') {
+                            await purchaseFont(item);
+                            return;
+                        }
+
+                        if (action === 'install') {
+                            const installed = await installFont(item);
+                            if (installed) {
+                                renderFontStorePanel();
+                            }
+                            return;
+                        }
+
+                        if (action === 'apply') {
+                            if (!manager) {
+                                showToast('字体管理模块未加载');
+                                return;
+                            }
+                            const installedFont = getInstalledFontForItem(item, manager);
+                            if (!installedFont) {
+                                showToast('请先下载字体');
+                                return;
+                            }
+                            try {
+                                await manager.applyFont(installedFont.id);
+                                showToast('字体已应用');
+                                renderFontStorePanel();
+                                if (state.activeTab !== 'font') {
+                                    renderFontPanel();
+                                }
+                            } catch (error) {
+                                console.error('应用字体失败:', error);
+                                showToast('字体应用失败');
+                            }
+                        }
+                    };
+                });
+
             }
 
             function handleBackgroundUpload(file, pageType = 'msg') {

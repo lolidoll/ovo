@@ -60,11 +60,23 @@ const fictionCommentsManager = {
      * 初始化评论区
      */
     async init(book) {
+        const incomingBookId = book ? `${book.title || ''}_${book.author || ''}` : '';
+        const currentBookId = this.state.currentBook
+            ? `${this.state.currentBook.title || ''}_${this.state.currentBook.author || ''}`
+            : '';
+
+        if (this.state.isLoading && incomingBookId && incomingBookId === currentBookId) {
+            this.showToast('正在生成中');
+            return;
+        }
+
         this.state.currentBook = book;
         this.state.isLoading = true;
 
         // 创建评论区DOM
-        this.createCommentsPanel();
+        if (!document.getElementById('fictionCommentsContainer')) {
+            this.createCommentsPanel();
+        }
 
         // 检查是否有缓存的评论
         const bookId = book.title + '_' + (book.author || '');

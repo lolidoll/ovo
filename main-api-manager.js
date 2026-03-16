@@ -511,7 +511,7 @@ const MainAPIManager = {
         const emojiList = allEmojis.map(e => `"${e.text}"`).join('、');
         const groupNameStr = groupNames.length > 1 ? groupNames.join('、') : groupNames[0];
         
-        return `【表情包系统】你可以在回复中自由地选择发送表情包，根据上下文内容判断是否合适发送表情包。
+        return `【表情包系统】真实社交聊天中表情包使用频率较高。语境轻松、情绪明显或需要强调语气时，优先考虑发送表情包。建议平均每3-5条回复包含1次表情包；若一句话即可表达情绪，也可以只发送表情包。不要每次都发，但也不要长期完全不发。
 你只能选择发送以下表情包分组【${groupNameStr}】中的表情：${emojiList}
 
 发送表情包的方法：在你的回复中任何位置，使用以下格式包含表情包：
@@ -520,6 +520,7 @@ const MainAPIManager = {
 格式说明：
 - 【表情包】和【/表情包】必须成对出现
 - 中间填写你选择的表情描述（必须是上面列出的表情之一）
+- 同一条回复中最多可以包含1个表情包
 - 表情包应该与你的文字回复语境相符，表达相同或相近的情绪/意图
 
 示例：
@@ -987,7 +988,7 @@ These guidelines help AI understand the logic of real-person interaction that is
 
 1. 【表情包消息】格式为：[用户发送了表情包: 表情描述文字]
    - 用户发送给你的是表情包,你需要识别并了解其情绪含义
-   - 例如："[用户发送了表情包: 开心]" 表示用户当前心情很开心
+   - 例如："[用户发送了表情包: 小狗扑腾]" 表示用户当前心情很开心
    - 对于表情包消息,分析其代表的情绪并在回复中予以回应
    - 不需要询问"你发送的表情是什么意思",直接按照表情含义理解
 
@@ -1061,7 +1062,7 @@ These guidelines help AI understand the logic of real-person interaction that is
     - 如果无法保证格式，请退回普通对话模式。`);
         
         // 添加表情包使用说明
-        const emojiInstructions = getEmojiInstructions(conv);
+        const emojiInstructions = this.getEmojiInstructions(conv);
         if (emojiInstructions) {
             systemPrompts.push(emojiInstructions);
         }
@@ -1459,10 +1460,12 @@ These guidelines help AI understand the logic of real-person interaction that is
         // 对话消息（过滤已总结的消息）
         let includedCount = 0;
         let skippedCount = 0;
+        const summaryRetentionEnabled = this.AppState.apiSettings.summaryEnabled
+            || (Number.isFinite(this.AppState.apiSettings.summaryKeepLatest) && this.AppState.apiSettings.summaryKeepLatest > 0);
         
         msgs.forEach((m, index) => {
-            // 跳过已总结的消息（如果启用了总结功能）
-            if (m.isSummarized && this.AppState.apiSettings.summaryEnabled) {
+            // 跳过已总结的消息（保留最新消息数启用时始终生效）
+            if (m.isSummarized && summaryRetentionEnabled) {
                 skippedCount++;
                 return;
             }

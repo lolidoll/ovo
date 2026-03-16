@@ -22,7 +22,8 @@
         currentBook: null, // 当前打开的书籍详情
         currentCharInfo: null, // 当前角色和用户信息
         currentCharacterId: '__global__',
-        currentCharacterName: '默认角色'
+        currentCharacterName: '默认角色',
+        chapterGenerationLocks: {}
     };
 
     function escapeHTML(value) {
@@ -861,13 +862,17 @@
         return modal;
     }
     
-    function showModal(modal, onSave = null) {
+    function showModal(modal, onSave = null, options = {}) {
         document.body.appendChild(modal);
         
         if (onSave) {
+            const settings = options && typeof options === 'object' ? options : {};
+            const saveText = typeof settings.saveText === 'string' && settings.saveText.trim()
+                ? settings.saveText.trim()
+                : '保存';
             const saveBtn = document.createElement('button');
             saveBtn.style.cssText = 'width:100%;padding:12px;background:#FF4A7E;color:white;border:none;font-size:14px;cursor:pointer;border-radius:0 0 12px 12px;';
-            saveBtn.textContent = '保存';
+            saveBtn.textContent = saveText;
             saveBtn.addEventListener('click', () => {
                 onSave();
                 modal.remove();
@@ -1633,12 +1638,19 @@ Skills:
         }
         
         const writeBtn = document.createElement('button');
+        const isGenerating = isChapterGenerating(categoryIndex, bookId);
         writeBtn.id = 'fiction-write-btn';
         writeBtn.className = 'fiction-write-btn';
-        writeBtn.textContent = '催更';
+        writeBtn.textContent = isGenerating ? '生成中...' : '催更';
+        writeBtn.dataset.generating = isGenerating ? 'true' : 'false';
+        writeBtn.setAttribute('aria-busy', isGenerating ? 'true' : 'false');
         writeBtn.style.flex = '1';
         writeBtn.addEventListener('click', function() {
-            continueWriteBook(categoryIndex, bookId);
+            if (isChapterGenerating(categoryIndex, bookId)) {
+                showToast('正在生成中');
+                return;
+            }
+            openChapterGenerateModal(categoryIndex, bookId);
         });
         
         // 评论按钮
@@ -1987,6 +1999,81 @@ Skills:
             window.fictionReaderManager.init(book, chapterIdx);
         }
     }
+
+    function getChapterGenerationKey(categoryIndex, bookId) {
+        return `${categoryIndex}:${bookId}`;
+    }
+
+    function isChapterGenerating(categoryIndex, bookId) {
+        const key = getChapterGenerationKey(categoryIndex, bookId);
+        return !!fictionState.chapterGenerationLocks[key];
+    }
+
+    function setChapterGenerating(categoryIndex, bookId, isGenerating) {
+        const key = getChapterGenerationKey(categoryIndex, bookId);
+        if (isGenerating) {
+            fictionState.chapterGenerationLocks[key] = true;
+        } else {
+            delete fictionState.chapterGenerationLocks[key];
+        }
+
+        const writeBtn = document.getElementById('fiction-write-btn');
+        if (!writeBtn) return;
+
+        const currentBook = fictionState.currentBook;
+        if (!currentBook || currentBook.categoryIndex !== categoryIndex || currentBook.bookId !== bookId) {
+            return;
+        }
+
+        writeBtn.dataset.generating = isGenerating ? 'true' : 'false';
+        writeBtn.setAttribute('aria-busy', isGenerating ? 'true' : 'false');
+        writeBtn.textContent = isGenerating ? '生成中...' : '催更';
+    }
+
+    function openChapterGenerateModal(categoryIndex, bookId) {
+        const book = fictionState.books[categoryIndex] && fictionState.books[categoryIndex][bookId];
+        if (!book) return;
+
+        if (isChapterGenerating(categoryIndex, bookId)) {
+            showToast('正在生成中');
+            return;
+        }
+
+        const modalId = 'fiction-chapter-generate-modal';
+        const existing = document.getElementById(modalId);
+        if (existing) existing.remove();
+
+        const content = `
+            <div style="padding:16px;">
+                <div style="font-size:13px;color:#666;margin-bottom:8px;">生成章节数量</div>
+                <select id="fiction-chapter-count" style="width:100%;padding:8px;border:1px solid #e0e0e0;border-radius:6px;">
+                    <option value="1">1章</option>
+                    <option value="2" selected>2章</option>
+                    <option value="3">3章</option>
+                </select>
+                <div style="font-size:13px;color:#666;margin:16px 0 8px;">建议/要求（可选）</div>
+                <textarea id="fiction-chapter-guidance" style="width:100%;min-height:90px;padding:8px;border:1px solid #e0e0e0;border-radius:6px;resize:vertical;" placeholder="例如：希望剧情更偏向成长、节奏慢热" maxlength="300"></textarea>
+                <div style="font-size:12px;color:#999;margin-top:6px;">这些建议会作为参考，影响剧情走向</div>
+            </div>
+        `;
+
+        const subtitle = book.title ? `《${book.title}》` : '';
+        const modal = createModal('催更设置', content, subtitle);
+        modal.id = modalId;
+
+        showModal(modal, () => {
+            const countValue = parseInt(document.getElementById('fiction-chapter-count')?.value || '2', 10);
+            const guidanceValue = document.getElementById('fiction-chapter-guidance')?.value || '';
+            continueWriteBook(categoryIndex, bookId, {
+                chapterCount: countValue,
+                userGuidance: guidanceValue
+            });
+        }, { saveText: '确认生成' });
+
+        setTimeout(() => {
+            modal.querySelector('#fiction-chapter-guidance')?.focus();
+        }, 0);
+    }
     
     /**
      * 生成章节内容总结（防止token爆炸）
@@ -2051,11 +2138,26 @@ ${summariesText}
     /**
      * 继续让AI写作
      */
-    async function continueWriteBook(categoryIndex, bookId) {
+    async function continueWriteBook(categoryIndex, bookId, options = {}) {
         const book = fictionState.books[categoryIndex][bookId];
         if (!book) return;
-        
-        showToast('正在生成新章节...');
+
+        if (isChapterGenerating(categoryIndex, bookId)) {
+            showToast('正在生成中');
+            return;
+        }
+
+        const rawCount = parseInt(options.chapterCount, 10);
+        const chapterCount = Number.isFinite(rawCount) ? rawCount : 2;
+        const finalChapterCount = Math.min(3, Math.max(1, chapterCount));
+        const userGuidanceRaw = typeof options.userGuidance === 'string' ? options.userGuidance.trim() : '';
+        const userGuidance = userGuidanceRaw ? userGuidanceRaw.slice(0, 300) : '';
+        const guidanceText = userGuidance
+            ? `\n\n【用户建议或要求】\n${userGuidance}\n请将这些建议作为参考，影响剧情走向，但不要直接复述建议文本。`
+            : '';
+
+        setChapterGenerating(categoryIndex, bookId, true);
+        showToast(`正在生成${finalChapterCount}个新章节...`);
         
         try {
             if (!fictionState.currentCharInfo) {
@@ -2245,7 +2347,7 @@ ${allChaptersText}
 - 文学腔和装深沉
 - 散文化的美文写法
 - 为了完成任务而写作
-现在请为小说《${book.title}》继续创作2-3个新章节。
+现在请为小说《${book.title}》继续创作${finalChapterCount}个新章节。
 
 【小说信息】
 书名：${book.title}
@@ -2256,7 +2358,7 @@ ${allChaptersText}
 主角名：${charName}，TA的角色设定：${charDescription || '暂无详细设定'}
 主角名：${userName}，TA的角色设定：${userDescription || '暂无详细设定'}
 
-${storyContext}
+${storyContext}${guidanceText}
 
 【同人文创作核心规则】
 - - 全文的主角名字必须为"${charName}"与"${userName}"，全文必须使用这两个名字
@@ -2281,6 +2383,7 @@ ${storyContext}
 8. 市场洞察力
 (1) 目标读者分析：了解和分析目标读者的喜好和需求，写出符合市场趋势的内容。
 (2) 潮流把握：紧跟言情小说的流行趋势，适时调整写作风格和主题。
+9. 必须生成恰好${finalChapterCount}章
 
 【输出格式】
 直接输出JSON格式，严禁添加任何其他文本：
@@ -2297,10 +2400,17 @@ ${storyContext}
             }
             
             // 清理章节标题：移除可能存在的"第X章"前缀
-            const cleanedChapters = chaptersData.map(ch => ({
-                ...ch,
-                title: (ch.title || '').replace(/^第[0-9零一二三四五六七八九十百千万]+章\s*/, '').replace(/^第[0-9]+章\s*/, '').trim()
-            }));
+            const cleanedChapters = chaptersData
+                .filter(ch => ch && ch.title && ch.content)
+                .map(ch => ({
+                    ...ch,
+                    title: (ch.title || '').replace(/^第[0-9零一二三四五六七八九十百千万]+章\s*/, '').replace(/^第[0-9]+章\s*/, '').trim()
+                }))
+                .slice(0, finalChapterCount);
+
+            if (cleanedChapters.length === 0) {
+                throw new Error('AI返回的章节数据无效');
+            }
             
             // 添加新章节
             if (!book.chapters) {
@@ -2319,6 +2429,8 @@ ${storyContext}
         } catch (error) {
             console.error('写作失败:', error);
             showToast('生成章节失败，请重试');
+        } finally {
+            setChapterGenerating(categoryIndex, bookId, false);
         }
     }
     

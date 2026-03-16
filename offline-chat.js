@@ -20,7 +20,10 @@
         customBackground: null, // 自定义背景图
         messageLayout: 'centered', // 消息布局: default (默认), centered (居中)
         stickToBottom: true, // 是否跟随到底部（用户上滑查看历史后会关闭）
-        summaryInProgress: false // 防止线下总结重复触发
+        summaryInProgress: false, // 防止线下总结重复触发
+        summaryEnabled: true,
+        summaryInterval: 50,
+        summaryKeepLatest: 10
     };
 
     function getActiveChatId() {
@@ -93,6 +96,9 @@
                 State.theme = data.theme || 'girly';
                 State.customBackground = data.customBackground || null;
                 State.messageLayout = data.messageLayout || 'centered';
+                State.summaryEnabled = data.summaryEnabled !== undefined ? !!data.summaryEnabled : State.summaryEnabled;
+                State.summaryInterval = Number.isFinite(data.summaryInterval) ? data.summaryInterval : State.summaryInterval;
+                State.summaryKeepLatest = Number.isFinite(data.summaryKeepLatest) ? data.summaryKeepLatest : State.summaryKeepLatest;
             }
         } catch(e) {}
     }
@@ -103,7 +109,10 @@
                 messages: State.messages,
                 theme: State.theme,
                 customBackground: State.customBackground,
-                messageLayout: State.messageLayout
+                messageLayout: State.messageLayout,
+                summaryEnabled: State.summaryEnabled,
+                summaryInterval: State.summaryInterval,
+                summaryKeepLatest: State.summaryKeepLatest
             }));
         } catch(e) {}
     }
@@ -495,8 +504,8 @@
     }
 
     function markOfflineMessagesSummarized(msgs) {
-        const keepLatest = window.AppState?.apiSettings?.summaryKeepLatest || 10;
-        if (!Array.isArray(msgs) || msgs.length <= keepLatest) return 0;
+        const keepLatest = Number.isFinite(State.summaryKeepLatest) ? State.summaryKeepLatest : 10;
+        if (!Array.isArray(msgs) || keepLatest <= 0 || msgs.length <= keepLatest) return 0;
         const oldMessages = msgs.slice(0, msgs.length - keepLatest);
         let marked = 0;
         oldMessages.forEach(m => {
@@ -510,10 +519,10 @@
 
     function checkAndAutoSummarizeOffline() {
         if (State.summaryInProgress) return;
-        if (!window.AppState?.apiSettings?.summaryEnabled) return;
+        if (!State.summaryEnabled) return;
         const msgs = State.messages[State.chatId] || [];
         if (!msgs.length) return;
-        const summaryInterval = window.AppState.apiSettings.summaryInterval || 50;
+        const summaryInterval = Number.isFinite(State.summaryInterval) ? State.summaryInterval : 50;
         const unsummarizedCount = msgs.filter(m => !m.isSummarized).length;
         if (unsummarizedCount >= summaryInterval) {
             setTimeout(() => generateSummary(true), 300);
@@ -544,7 +553,10 @@
             const charName = context.charName || 'Assistant';
             const userName = context.userNameForChar || 'User';
             
-            const summaryEnabled = !!window.AppState?.apiSettings?.summaryEnabled;
+            const summaryEnabled = !!State.summaryEnabled;
+            const summaryKeepLatest = State.summaryKeepLatest;
+            const summaryRetentionEnabled = summaryEnabled
+                || (Number.isFinite(summaryKeepLatest) && summaryKeepLatest > 0);
 
             // 收集聊天历史
             const chatHistory = [];
@@ -561,7 +573,7 @@
             const msgs = State.messages[State.chatId] || [];
             const limit = swipeIdx !== null ? swipeIdx : msgs.length;
             msgs.slice(0, limit).forEach(m => {
-                if (summaryEnabled && m.isSummarized) return;
+                if (summaryRetentionEnabled && m.isSummarized) return;
                 const c = getOfflineMessageContent(m);
                 chatHistory.push({ role: m.role === 'user' ? 'user' : 'assistant', content: c || '' });
             });
@@ -1044,19 +1056,19 @@
                     <div class="st-form-group">
                         <label class="st-form-label">总结间隔</label>
                         <div class="st-form-hint">每多少条消息后自动进行总结</div>
-                        <input type="number" class="st-form-input" id="st-summary-interval" value="${window.AppState?.apiSettings?.summaryInterval || 50}" min="10" max="500">
+                        <input type="number" class="st-form-input" id="st-summary-interval" value="${Number.isFinite(State.summaryInterval) ? State.summaryInterval : 50}" min="10" max="500">
                     </div>
                     <div class="st-form-group">
                         <label class="st-form-label">保留消息数</label>
                         <div class="st-form-hint">总结后保留最新的多少条消息</div>
-                        <input type="number" class="st-form-input" id="st-summary-keep" value="${window.AppState?.apiSettings?.summaryKeepLatest || 10}" min="5" max="100">
+                        <input type="number" class="st-form-input" id="st-summary-keep" value="${Number.isFinite(State.summaryKeepLatest) ? State.summaryKeepLatest : 10}" min="5" max="100">
                     </div>
                     <div class="st-form-group">
                         <button class="st-btn primary" id="st-summary-generate">立即生成总结</button>
                     </div>
                     <div class="st-form-group">
                         <label class="st-form-checkbox">
-                            <input type="checkbox" id="st-summary-auto" ${window.AppState?.apiSettings?.summaryEnabled ? 'checked' : ''}>
+                            <input type="checkbox" id="st-summary-auto" ${State.summaryEnabled ? 'checked' : ''}>
                             <span>启用自动总结</span>
                         </label>
                     </div>
@@ -1117,13 +1129,11 @@
             const keep = parseInt(document.getElementById('st-summary-keep').value) || 10;
             const auto = document.getElementById('st-summary-auto').checked;
 
-            window.AppState.apiSettings.summaryInterval = interval;
-            window.AppState.apiSettings.summaryKeepLatest = keep;
-            window.AppState.apiSettings.summaryEnabled = auto;
+            State.summaryInterval = interval;
+            State.summaryKeepLatest = keep;
+            State.summaryEnabled = auto;
 
-            if (window.saveToStorage) {
-                window.saveToStorage();
-            }
+            save();
             showToast('设置已保存');
         };
 
@@ -1151,6 +1161,7 @@
             return;
         }
 
+        const context = getConversationContext(conv?.id || State.chatId);
         const conversationText = buildOfflineConversationText(msgs, conv);
         if (!conversationText) {
             showToast('没有消息可以总结');
@@ -1170,7 +1181,8 @@
         const summaryInput = typeof window.buildSummaryInput === 'function'
             ? window.buildSummaryInput(conversationText, {
                 conv: conv,
-                modeLabel: '线下功能'
+                modeLabel: '线下功能',
+                partnerName: context?.userNameForChar
             })
             : conversationText;
 
@@ -1204,11 +1216,9 @@
                     messageCount: msgs.length
                 });
 
-                if (isAutomatic) {
-                    const marked = markOfflineMessagesSummarized(msgs);
-                    if (marked > 0) {
-                        save();
-                    }
+                const marked = markOfflineMessagesSummarized(msgs);
+                if (marked > 0) {
+                    save();
                 }
 
                 if (window.saveToStorage) {

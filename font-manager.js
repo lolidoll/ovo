@@ -4,6 +4,103 @@ const FontManager = {
     currentFontId: null,
     db: null,
     
+    // 字体格式处理
+    getFontMetaByExtension(extension) {
+        const ext = String(extension || '').toLowerCase();
+        if (ext === 'ttf') {
+            return { format: 'truetype', mime: 'font/ttf' };
+        }
+        if (ext === 'otf') {
+            return { format: 'opentype', mime: 'font/otf' };
+        }
+        return null;
+    },
+    
+    getFontMetaFromName(name) {
+        const fileName = String(name || '');
+        const cleanName = fileName.split('?')[0].split('#')[0];
+        const dotIndex = cleanName.lastIndexOf('.');
+        if (dotIndex === -1) {
+            return null;
+        }
+        const ext = cleanName.slice(dotIndex + 1);
+        return this.getFontMetaByExtension(ext);
+    },
+    
+    getFontMetaFromContentType(contentType) {
+        const type = String(contentType || '').toLowerCase();
+        if (!type) {
+            return null;
+        }
+        if (type.includes('font/ttf') || type.includes('application/x-font-ttf') || type.includes('application/font-sfnt')) {
+            return { format: 'truetype', mime: 'font/ttf' };
+        }
+        if (type.includes('font/otf') || type.includes('font/opentype') || type.includes('application/x-font-opentype')) {
+            return { format: 'opentype', mime: 'font/otf' };
+        }
+        return null;
+    },
+    
+    getUrlFileName(url) {
+        try {
+            const urlObj = new URL(url);
+            const parts = urlObj.pathname.split('/');
+            return parts[parts.length - 1] || '';
+        } catch (error) {
+            const cleanUrl = String(url || '').split('?')[0].split('#')[0];
+            const parts = cleanUrl.split('/');
+            return parts[parts.length - 1] || '';
+        }
+    },
+    
+    buildFontSource(font) {
+        const format = font && font.format === 'opentype' ? 'opentype' : 'truetype';
+        const mime = font && font.mime ? font.mime : (format === 'opentype' ? 'font/otf' : 'font/ttf');
+        return `url(data:${mime};base64,${font.data}) format("${format}")`;
+    },
+    
+    async fetchFontResponse(url) {
+        const encodedUrl = encodeURIComponent(url);
+        let origin = '';
+        try {
+            origin = new URL(url).origin;
+        } catch (error) {
+            origin = '';
+        }
+        const proxyParams = new URLSearchParams({
+            url: url,
+            method: 'GET',
+            'header_Accept': '*/*',
+            'header_User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36'
+        });
+        if (origin) {
+            proxyParams.set('header_Referer', `${origin}/`);
+            proxyParams.set('header_Origin', origin);
+        }
+        const localProxyUrl = `http://127.0.0.1:8888/proxy?${proxyParams.toString()}`;
+        const candidates = [
+            localProxyUrl,
+            url,
+            `https://corsproxy.io/?${encodedUrl}`
+        ];
+        let lastError = null;
+        for (const target of candidates) {
+            try {
+                const response = await fetch(target, {
+                    cache: 'no-store',
+                    referrerPolicy: 'no-referrer'
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response;
+            } catch (error) {
+                lastError = error;
+            }
+        }
+        throw lastError || new Error('字体下载失败，请启动本地CORS代理');
+    },
+    
     // 初始化
     async init() {
         console.log('字体管理器初始化...');
@@ -121,11 +218,12 @@ const FontManager = {
         });
     },
     
-    // 导入TTF字体文件
+    // 导入字体文件（TTF/OTF）
     async importFontFile(file) {
         return new Promise((resolve, reject) => {
-            if (!file.name.toLowerCase().endsWith('.ttf')) {
-                reject(new Error('仅支持TTF格式字体文件'));
+            const meta = this.getFontMetaFromName(file.name);
+            if (!meta) {
+                reject(new Error('仅支持TTF/OTF格式字体文件'));
                 return;
             }
             
@@ -138,13 +236,14 @@ const FontManager = {
                     
                     // 生成字体ID和名称
                     const fontId = 'font_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    const fontName = file.name.replace('.ttf', '').replace('.TTF', '');
+                    const fontName = file.name.replace(/\.(ttf|otf)$/i, '');
                     
                     const fontData = {
                         id: fontId,
                         name: fontName,
                         data: base64,
-                        format: 'truetype',
+                        format: meta.format,
+                        mime: meta.mime,
                         createdAt: new Date().toISOString(),
                         isActive: false
                     };
@@ -170,33 +269,56 @@ const FontManager = {
     },
     
     // 在线导入字体（通过URL）
-    async importFontFromURL(url, fontName) {
+    async importFontFromURL(url, fontName, options = {}) {
         try {
-            const response = await fetch(url);
+            const response = await this.fetchFontResponse(url);
             if (!response.ok) {
                 throw new Error('字体下载失败');
+            }
+            
+            const contentType = response.headers.get('content-type');
+            const urlFileName = this.getUrlFileName(url);
+            const meta = this.getFontMetaFromName(urlFileName) || this.getFontMetaFromContentType(contentType);
+            if (!meta) {
+                throw new Error('仅支持TTF/OTF格式字体文件');
             }
             
             const arrayBuffer = await response.arrayBuffer();
             const base64 = this.arrayBufferToBase64(arrayBuffer);
             
             const fontId = 'font_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const safeName = String(fontName || '').trim();
+            const fallbackName = urlFileName ? urlFileName.replace(/\.(ttf|otf)$/i, '') : 'Online Font';
             
             const fontData = {
                 id: fontId,
-                name: fontName || 'Online Font',
+                name: safeName || fallbackName,
                 data: base64,
-                format: 'truetype',
+                format: meta.format,
+                mime: meta.mime,
                 createdAt: new Date().toISOString(),
                 isActive: false
             };
+            
+            if (options && typeof options === 'object') {
+                if (options.storeId) {
+                    fontData.storeId = options.storeId;
+                }
+                if (options.author) {
+                    fontData.author = options.author;
+                }
+                if (options.source) {
+                    fontData.source = options.source;
+                }
+            }
             
             await this.saveFont(fontData);
             this.fonts.push(fontData);
             
             return fontData;
         } catch (error) {
-            throw new Error('在线导入失败: ' + error.message);
+            const baseMessage = error && error.message ? error.message : '字体下载失败';
+            throw new Error('在线导入失败: ' + baseMessage + '（可尝试启动本地CORS代理：运行 启动改进的CORS代理.bat）');
         }
     },
     
@@ -222,7 +344,7 @@ const FontManager = {
             // 创建@font-face规则
             const fontFace = new FontFace(
                 font.name,
-                `url(data:font/ttf;base64,${font.data})`,
+                this.buildFontSource(font),
                 { style: 'normal', weight: 'normal' }
             );
             
@@ -278,7 +400,7 @@ const FontManager = {
                     // 创建@font-face规则
                     const fontFace = new FontFace(
                         font.name,
-                        `url(data:font/ttf;base64,${font.data})`,
+                        this.buildFontSource(font),
                         { style: 'normal', weight: 'normal' }
                     );
                     
@@ -462,9 +584,9 @@ const FontManagerUI = {
                     <div class="font-import-field">
                         <label>选择字体文件</label>
                         <div class="font-file-input-wrapper">
-                            <input type="file" id="font-file-input" accept=".ttf" multiple>
+                            <input type="file" id="font-file-input" accept=".ttf,.otf" multiple>
                             <label for="font-file-input" class="font-file-label">
-                                <span>选择TTF文件</span>
+                                <span>选择TTF/OTF文件</span>
                             </label>
                         </div>
                         <div class="font-file-name" id="font-file-name"></div>
@@ -472,7 +594,7 @@ const FontManagerUI = {
                     
                     <div class="font-import-field">
                         <label>或从URL导入</label>
-                        <input type="text" id="font-url-input" class="font-input" placeholder="输入字体文件URL（TTF格式）">
+                        <input type="text" id="font-url-input" class="font-input" placeholder="输入字体文件URL（TTF/OTF格式）">
                     </div>
                     
                     <div class="font-import-field">
@@ -481,7 +603,7 @@ const FontManagerUI = {
                     </div>
                     
                     <div class="font-import-tips">
-                        <span>支持TTF格式字体文件，可同时选择多个文件批量导入</span>
+                        <span>支持TTF/OTF格式字体文件，可同时选择多个文件批量导入</span>
                     </div>
                 </div>
                 <div class="font-import-footer">
@@ -698,8 +820,7 @@ const FontManagerUI = {
                 styleEl.remove();
             }
             
-            // 重置body字体
-            document.body.style.fontFamily = '';
+            FontManager.removeGlobalFont();
             
             this.showToast('已重置为默认字体');
             this.refresh();

@@ -163,8 +163,9 @@ const MobileResponsiveAdapter = {
         const stableHeight = screenViewportHeight
             ? Math.max(innerHeight, Math.round(screenViewportHeight))
             : innerHeight;
+        const iosPwaHeight = visualHeight || innerHeight || stableHeight || 0;
         const viewportHeight = (this.browsers.isIOS && isPWA && !keyboardOpen)
-            ? Math.max(320, Math.round(stableHeight || innerHeight || visualHeight || 0))
+            ? Math.max(320, Math.round(iosPwaHeight))
             : Math.max(320, Math.round(visualHeight || innerHeight || 0));
 
         const vh = viewportHeight * 0.01;

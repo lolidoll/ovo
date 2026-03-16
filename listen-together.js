@@ -269,6 +269,8 @@
     let currentLyrics = [];
     let currentView = 'search'; // search, favorites
     let cachedComments = {};
+    let isCommentGenerating = false;
+    let commentGeneratingKey = null;
     let activeListenChatId = null;
     const listenRuntimeByChat = new Map();
 
@@ -1298,7 +1300,15 @@
     // 评论面板
     function toggleCommentPanel() {
         const cp = document.getElementById('listen-comment-panel');
+        const container = document.getElementById('listen-comments');
+        const key = getSongKey();
         if (cp.style.display !== 'none') {
+            if (isCommentGenerating && (!commentGeneratingKey || commentGeneratingKey === key)) {
+                if (container) {
+                    container.innerHTML = '<div class="listen-loading">正在生成中...</div>';
+                }
+                return;
+            }
             cp.style.display = 'none';
         } else {
             cp.style.display = '';
@@ -1313,7 +1323,14 @@
     }
     
     function showComments() {
+        const container = document.getElementById('listen-comments');
         const key = getSongKey();
+        if (isCommentGenerating && (!commentGeneratingKey || commentGeneratingKey === key)) {
+            if (container) {
+                container.innerHTML = '<div class="listen-loading">正在生成中...</div>';
+            }
+            return;
+        }
         if (key && cachedComments[key]) {
             const c = cachedComments[key];
             renderComments(c.comments, c.charName);
@@ -1328,6 +1345,18 @@
             container.innerHTML = '<div class="listen-empty">请先播放一首歌</div>';
             return;
         }
+
+        const requestKey = getSongKey();
+        if (isCommentGenerating && (!commentGeneratingKey || commentGeneratingKey === requestKey)) {
+            container.innerHTML = '<div class="listen-loading">正在生成中...</div>';
+            return;
+        }
+        if (!force && requestKey && cachedComments[requestKey]) {
+            const cached = cachedComments[requestKey];
+            renderComments(cached.comments, cached.charName);
+            return;
+        }
+
         container.innerHTML = '<div class="listen-loading">正在加载评论...</div>';
         
         const song = songs[currentIdx];
@@ -1376,6 +1405,8 @@ ${recentChat.substring(0, 1500)}
 请严格按以下JSON数组格式返回，不要有其他内容：
 [{"user":"昵称","likes":数字,"content":"评论内容","replies":[{"user":"回复者昵称","content":"回复内容"}]}]`;
 
+        isCommentGenerating = true;
+        commentGeneratingKey = requestKey || null;
         try {
             const res = await fetch(endpoint + '/chat/completions', {
                 method: 'POST',
@@ -1388,18 +1419,25 @@ ${recentChat.substring(0, 1500)}
             const jsonMatch = text.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
                 const comments = JSON.parse(jsonMatch[0]);
-                const key = getSongKey();
-                if (key) {
-                    cachedComments[key] = { comments, charName };
+                const cacheKey = requestKey || getSongKey();
+                if (cacheKey) {
+                    cachedComments[cacheKey] = { comments, charName };
                     saveCommentsCache();
                 }
-                renderComments(comments, charName);
+                if (!requestKey || getSongKey() === requestKey) {
+                    renderComments(comments, charName);
+                }
             } else {
                 container.innerHTML = '<div class="listen-empty">评论解析失败，请重试</div>';
             }
         } catch (e) {
             console.error('评论生成失败:', e);
             container.innerHTML = '<div class="listen-empty">评论加载失败</div>';
+        } finally {
+            if (!requestKey || commentGeneratingKey === requestKey) {
+                isCommentGenerating = false;
+                commentGeneratingKey = null;
+            }
         }
     }
     

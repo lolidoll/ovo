@@ -1794,12 +1794,14 @@
                 return;
             }
 
+            const userLabel = conv.userNameForChar || (window.AppState.user && window.AppState.user.name) || '用户';
+            const charLabel = conv.name || '角色';
             let conversationText = '';
             messages.forEach(m => {
                 if (m.type === 'sent' && !m.isRetracted) {
-                    conversationText += `用户: ${m.content}\n`;
+                    conversationText += `${userLabel}: ${m.content}\n`;
                 } else if (m.type === 'received' && !m.isRetracted) {
-                    conversationText += `${conv.name}: ${m.content}\n`;
+                    conversationText += `${charLabel}: ${m.content}\n`;
                 }
             });
 
@@ -1807,7 +1809,8 @@
             const summaryInput = typeof window.buildSummaryInput === 'function'
                 ? window.buildSummaryInput(conversationText, {
                     conv: conv,
-                    modeLabel: summaryModeLabel
+                    modeLabel: summaryModeLabel,
+                    partnerName: userLabel
                 })
                 : conversationText;
 
@@ -1857,21 +1860,28 @@
                         window.renderMemoryShardsPage(convId);
                     }
 
-                    // 如果是自动总结，清理旧消息，只保留最新的N条
-                    if (isAutomatic) {
-                        const keepLatest = window.AppState.apiSettings.summaryKeepLatest || 10;
-                        const allMessages = window.AppState.messages[convId] || [];
+                    // 总结完成后，按保留数量标记旧消息
+                    const keepLatest = Number.isFinite(window.AppState.apiSettings.summaryKeepLatest)
+                        ? window.AppState.apiSettings.summaryKeepLatest
+                        : 20;
+                    const allMessages = window.AppState.messages[convId] || [];
 
-                        if (allMessages.length > keepLatest) {
-                            // 标记旧消息为已总结
-                            const oldMessages = allMessages.slice(0, allMessages.length - keepLatest);
-                            oldMessages.forEach(m => {
+                    if (keepLatest > 0 && allMessages.length > keepLatest) {
+                        const oldMessages = allMessages.slice(0, allMessages.length - keepLatest);
+                        let markedCount = 0;
+                        oldMessages.forEach(m => {
+                            if (!m.isSummarized) {
                                 m.isSummarized = true;
-                            });
+                                markedCount += 1;
+                            }
+                        });
 
+                        if (markedCount > 0) {
                             saveToStorage();
-                            console.log(`✅ 自动总结完成，标记了 ${oldMessages.length} 条旧消息为已总结`);
-                            showToast(`已标记 ${oldMessages.length} 条旧消息，保留最新 ${keepLatest} 条`);
+                            console.log(`✅ 总结完成，标记了 ${markedCount} 条旧消息为已总结`);
+                            if (isAutomatic) {
+                                showToast(`已标记 ${markedCount} 条旧消息，保留最新 ${keepLatest} 条`);
+                            }
                         }
                     }
 
@@ -2035,7 +2045,7 @@
             // 保存总结设置
             window.AppState.apiSettings.summaryEnabled = document.getElementById('auto-summary-enabled').checked;
             window.AppState.apiSettings.summaryInterval = parseInt(document.getElementById('summary-interval').value) || 50;
-            window.AppState.apiSettings.summaryKeepLatest = parseInt(document.getElementById('summary-keep-latest').value) || 10;
+            window.AppState.apiSettings.summaryKeepLatest = parseInt(document.getElementById('summary-keep-latest').value) || 20;
 
             // 保存消息气泡颜色设置
             const charR = document.getElementById('char-bubble-r');

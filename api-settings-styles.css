@@ -1732,5 +1732,6 @@
         user-select: text !important;
         -webkit-touch-callout: default !important;
         touch-callout: default !important;
+        touch-action: auto !important;
     }
 }

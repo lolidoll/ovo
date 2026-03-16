@@ -156,17 +156,12 @@
                     const keyboardHeight = Math.max(0, Math.round(window.innerHeight - visualHeight - visualTop));
                     keyboardOpen = isEditableElement(document.activeElement) && keyboardHeight > 90;
                     
-                    // iOS PWA 全屏下，visualViewport 可能已扣除底部安全区；仅键盘弹出时才使用它
+                    // iOS PWA 全屏下优先使用 visualViewport 高度，避免过大导致底部空白
                     if (isIOS && isPWA && !keyboardOpen) {
-                        const stableHeight = screenViewportHeight
-                            ? Math.max(window.innerHeight, screenViewportHeight)
-                            : window.innerHeight;
-                        viewportHeight = stableHeight;
+                        viewportHeight = visualHeight || viewportHeight;
                     } else {
                         viewportHeight = visualHeight;
                     }
-                } else if (isIOS && isPWA && screenViewportHeight) {
-                    viewportHeight = Math.max(viewportHeight, screenViewportHeight);
                 }
 
                 viewportHeight = Math.max(320, Math.round(viewportHeight));
@@ -290,8 +285,8 @@
         })();
         
     </script>
-    <link rel="stylesheet" href="ios-pwa-fixes/ios-pwa-fullscreen.css?v=20260313-pwafix4">
-    <script src="ios-pwa-fixes/ios-pwa-fix.js?v=20260313-pwafix4" defer></script>
+    <link rel="stylesheet" href="ios-pwa-fixes/ios-pwa-fullscreen.css?v=20260316-pwafix5">
+    <script src="ios-pwa-fixes/ios-pwa-fix.js?v=20260316-pwafix5" defer></script>
     <script src="background-keep-alive.js"></script>
     <script src="key-auth.js"></script>
     <script src="auth-modal.js" defer></script>
@@ -354,7 +349,7 @@
     <script src="iphone-messages.js" defer></script>
     <script src="iphone-browser.js" defer></script>
     <script src="iphone-phone.js" defer></script>
-    <script src="mobile-responsive-adapter.js?v=20260313-pwafix4" defer></script>
+    <script src="mobile-responsive-adapter.js?v=20260316-pwafix5" defer></script>
     <script>
         window.REALTIME_CHAT_CONFIG = window.REALTIME_CHAT_CONFIG || {
             zones: [

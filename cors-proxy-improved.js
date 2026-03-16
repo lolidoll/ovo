@@ -187,7 +187,7 @@ async function proxyRequest(targetUrl, method, headers, requestBody, res, reques
                 headers: {
                     ...headers,
                     'User-Agent': 'Mozilla/5.0 (CORS-Proxy)',
-                    'Accept-Encoding': 'gzip, deflate'
+                    'Accept-Encoding': 'identity'
                 },
                 timeout: 60000
             };
@@ -210,26 +210,30 @@ async function proxyRequest(targetUrl, method, headers, requestBody, res, reques
             const startTime = Date.now();
             
             const proxyReq = client.request(options, (proxyRes) => {
-                let responseData = '';
                 const chunks = [];
                 
                 proxyRes.on('data', chunk => {
                     chunks.push(chunk);
-                    responseData += chunk.toString();
                 });
                 
                 proxyRes.on('end', () => {
                     const duration = Date.now() - startTime;
                     const statusCode = proxyRes.statusCode;
-                    
-                    res.writeHead(statusCode, {
-                        'Content-Type': proxyRes.headers['content-type'] || 'application/json; charset=utf-8',
+                    const buffer = Buffer.concat(chunks);
+                    const responseHeaders = {
+                        'Content-Type': proxyRes.headers['content-type'] || 'application/octet-stream',
+                        'Content-Length': buffer.length,
                         'Access-Control-Allow-Origin': '*',
                         'X-Proxy-Duration': duration,
                         'X-Proxy-Request-Id': requestId
-                    });
+                    };
+                    const contentEncoding = proxyRes.headers['content-encoding'];
+                    if (contentEncoding) {
+                        responseHeaders['Content-Encoding'] = contentEncoding;
+                    }
                     
-                    res.end(responseData);
+                    res.writeHead(statusCode, responseHeaders);
+                    res.end(buffer);
                     
                     if (statusCode >= 200 && statusCode < 300) {
                         log('success', `${statusCode} (${duration}ms) ${requestId}`);
