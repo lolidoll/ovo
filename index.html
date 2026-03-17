@@ -1082,6 +1082,13 @@
                             <div class="form-hint">设置备注后，优先显示备注而非角色名</div>
                         </div>
                         <div class="form-group">
+                            <label class="form-label">好友分组</label>
+                            <select id="af-friend-group-select" class="form-select">
+                                <option value="group_default">默认分组</option>
+                            </select>
+                            <div class="form-hint">选择好友所在分组，可在好友页管理</div>
+                        </div>
+                        <div class="form-group">
                             <div class="form-label-row">
                                 <label class="form-label" for="friend-desc-input">人设描述</label>
                                 <button type="button" class="textarea-expand-btn" id="friend-desc-expand-btn">放大编辑</button>
@@ -1181,6 +1188,13 @@
                         <div class="form-group">
                             <label class="form-label">群名称</label>
                             <input type="text" class="form-input" id="group-name-input" placeholder="输入群名...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">群聊分组</label>
+                            <select id="cg-group-chat-group-select" class="form-select">
+                                <option value="group_default">默认分组</option>
+                            </select>
+                            <div class="form-hint">用于群聊管理中的分类</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">群公告</label>
@@ -1759,18 +1773,33 @@
                         color: #333;
                     }
 
-                    #moments-page #groupSelect {
-                        width: 100%;
-                        padding: 8px;
+                    #moments-page .group-select-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
                         border: 1px solid #ddd;
-                        border-radius: 4px;
-                        font-family: var(--pixel-font);
-                        font-size: 14px;
+                        border-radius: 6px;
+                        padding: 10px;
+                        background: #fff;
                     }
 
-                    #moments-page #groupSelect:focus {
-                        outline: none;
-                        border-color: var(--main-pink);
+                    #moments-page .group-select-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 13px;
+                        color: #444;
+                        cursor: pointer;
+                    }
+
+                    #moments-page .group-select-item input {
+                        cursor: pointer;
+                    }
+
+                    #moments-page .group-select-hint {
+                        margin-top: 6px;
+                        font-size: 12px;
+                        color: #999;
                     }
 
                     #moments-page .modal-actions {
@@ -2086,9 +2115,10 @@
                             <!-- 好友分组选择 -->
                             <div class="group-select">
                                 <label>分组可见：</label>
-                                <select id="groupSelect">
+                                <div id="groupSelect" class="group-select-list">
                                     <!-- 选项将动态生成 -->
-                                </select>
+                                </div>
+                                <div class="group-select-hint">可多选，选择“所有好友”将覆盖其它分组</div>
                             </div>
                             
                             <!-- 按钮区 -->

@@ -491,7 +491,6 @@ const MainAPIManager = {
         if (!boundGroups || boundGroups.length === 0) {
             return null;  // 如果没有绑定表情包，不添加指令
         }
-        
         // 收集所有绑定分组中的表情包
         let allEmojis = [];
         let groupNames = [];
@@ -511,9 +510,8 @@ const MainAPIManager = {
         const emojiList = allEmojis.map(e => `"${e.text}"`).join('、');
         const groupNameStr = groupNames.length > 1 ? groupNames.join('、') : groupNames[0];
         
-        return `【表情包系统】真实社交聊天中表情包使用频率较高。语境轻松、情绪明显或需要强调语气时，优先考虑发送表情包。建议平均每3-5条回复包含1次表情包；若一句话即可表达情绪，也可以只发送表情包。不要每次都发，但也不要长期完全不发。
+        return `【表情包系统】真实社交聊天中表情包使用频率较高。语境轻松、情绪明显或需要强调语气时，优先考虑发送表情包。也可以只发送表情包来代替文字
 你只能选择发送以下表情包分组【${groupNameStr}】中的表情：${emojiList}
-
 发送表情包的方法：在你的回复中任何位置，使用以下格式包含表情包：
 【表情包】${allEmojis.length > 0 ? allEmojis[0].text : '表情'}【/表情包】
 
@@ -524,8 +522,8 @@ const MainAPIManager = {
 - 表情包应该与你的文字回复语境相符，表达相同或相近的情绪/意图
 
 示例：
-"这太棒了！【表情包】开心【/表情包】"
-"我不太同意...【表情包】困惑【/表情包】"`;
+"这太棒了！【表情包】小狗扑腾【/表情包】"
+"我不太同意...【表情包】直视你【/表情包】"`;
     },
 
     /**
@@ -988,9 +986,49 @@ These guidelines help AI understand the logic of real-person interaction that is
 
 1. 【表情包消息】格式为：[用户发送了表情包: 表情描述文字]
    - 用户发送给你的是表情包,你需要识别并了解其情绪含义
-   - 例如："[用户发送了表情包: 小狗扑腾]" 表示用户当前心情很开心
-   - 对于表情包消息,分析其代表的情绪并在回复中予以回应
-   - 不需要询问"你发送的表情是什么意思",直接按照表情含义理解
+   - Core Principle: Treat user-emitted emojis/memes as composite units blending text, emotion, context, and social intent — not mere images. Prioritize implicit understanding over literal translation. Aim for a natural, human-like “silent agreement” feel, avoiding mechanical “interpreter” behavior that breaks immersion.
+Execution Rules:
+1.Avoid “Definition Obsession,” Embrace “Context Flow.”
+Bad: User sends a “bite you” meme.
+→ AI: “You sent a ‘want to bite’ meme. Do you mean physical attack or metaphor?”
+Good:
+Scenario A (playful/clingy): User: “So tired today~ [bite meme].”
+→ AI: “Sounds rough. Rest up! That meme feels cute — like teasing for comfort.”
+Scenario B (real anger/emphasis): User: “This move is so annoying! [bite meme].”
+→ AI: “Totally get the rage — that meme screams it. What happened?”
+Scenario C (habitual/neutral use): User: “Got it! [bite meme].”
+→ AI: “Alright, received!” (Integrate meme into flow without explicit explanation.)
+2.Distinguish “Emphasis” from “Description.”
+Emojis often amplify tone, intensity, or attitude, not describe exact actions.
+For strong emotional memes, focus on the overall mood first, using it as a clue to user state.
+E.g., User: “Awesome! [spinning with confetti].”
+→ AI interprets as “very happy” and responds accordingly, not asking if they are spinning or throwing confetti.
+3.Allow “Fuzzy Interpretation” & “Silence.”
+Not every meme needs decoding. Preserving some ambiguity can feel more natural.
+If the meme’s meaning is clear in context, or the follow-up text already explains it, AI can skip direct mention and just respond to the whole message.
+E.g., User: “Good night~ [moon/sleep].”
+→ AI: “Good night, sleep well!” (No need to explain moon = night, sleep = rest.)
+4.Rely on Context & History.
+Interpret memes based on preceding sentences and conversation history.
+The same meme can have different meanings depending on context.
+E.g., In food talk, a “drool” meme = food looks good. In problem-solving talk, it = eagerness or difficulty.
+5.Mimic Human “Selective Ignoring” & “Natural Association.”
+Humans often ignore common, generic, or low-impact memes, or naturally absorb their meaning into replies.
+AI should do the same — only explicitly interpret when the meme materially helps understand intent or move the conversation forward.
+E.g., User: “OK [OK hand].”
+→ AI: “Got it.” (No need to explain OK hand = agreement.)
+6.Avoid Overinterpretation.
+Stay flexible but don’t invent extra layers beyond what’s implied.
+If meaning is obvious, don’t force deeper symbolism.
+E.g., User: “Thanks [rose].”
+→ AI: “You’re welcome!” (No need to say “Rose symbolizes love and gratitude…”)
+Expected Effect:
+More immersion — users feel heard, not processed.
+Fewer redundant exchanges — no constant “What does this meme mean?” loops.
+Stronger emotional connection — via accurate mood capture.
+Shows higher-level semantic awareness — not just keyword matching.
+Summary:
+With memes, be a seasoned chat partner who “gets the vibe,” not a rigid translator who spells out every detail. Key: use naturally, interpret precisely, don’t steal the spotlight, don’t overthink.
 
 2. 【图片消息】格式为：[用户发送了一张图片,图片内容：data:image/...]
    - 用户发送的是真实图片（如照片、截图、绘画等）
@@ -1088,7 +1126,7 @@ These guidelines help AI understand the logic of real-person interaction that is
 
 3. 【红包】使用格式：
    - 发送红包：【红包】金额|留言【/红包】
-     * 金额：红包金额（人民币/喵币）,金额范围为0.01-200元
+     * 金额：红包金额,金额范围为0.01-200元
      * 留言：红包留言（选填,默认"收下吧~"）
      * 示例：【红包】6.66|恭喜发财【/红包】
      * 示例：【红包】8.88|小小心意【/红包】
@@ -1104,12 +1142,11 @@ These guidelines help AI understand the logic of real-person interaction that is
      * 退还：不好意思收、觉得不合适、想要拒绝等
    - 注意：
      * 红包金额要合理,根据关系和场景设置，符合现实世界的逻辑
-     * 不要频繁发红包,要有真实的理由和情感
      * 收到红包时要用自然的语言回应,不要只是机械地领取或退还
 
 4. 【转账】使用格式：
    - 发送转账：【转账】金额|说明【/转账】
-     * 金额：转账金额（人民币/喵币）,金额范围为0.01-2000元
+     * 金额：转账金额,金额范围为0.01-2000元
      * 说明：转账说明（选填,默认"转账给你"）
      * 示例：【转账】100|生活费【/转账】
      * 示例：【转账】520|爱你【/转账】
@@ -1127,7 +1164,6 @@ These guidelines help AI understand the logic of real-person interaction that is
      * 转账比红包更正式,适合较大金额或正式的金钱往来
      * 转账金额上限2000元,红包上限200元
      * 转账要有明确的理由和说明
-     * 不要频繁转账,要符合实际情况
      * 收到转账时要用自然的语言回应,不要只是机械地确认或退还
 
 5. 【撤回消息】使用格式：【撤回】消息ID【/撤回】
@@ -1138,10 +1174,6 @@ These guidelines help AI understand the logic of real-person interaction that is
      * 后悔刚才说的话时（如太冲动、情绪失控）
      * 需要改口或纠正之前的说法时
      * 意识到信息不应该透露时
-   - 重要提示：
-     * 只在真正需要时使用,不要频繁撤回
-     * 撤回后用户会看到"角色名撤回了一条消息"的提示
-     * 通常在撤回后需要重新表达或解释
 
 6. 【图片描述卡片】使用格式：【图片描述】描述文字【/图片描述】
    - 描述文字：对该图片的详细文字描述

@@ -10,6 +10,9 @@
             friendGroups: [
                 { id: 'group_default', name: '默认分组', memberIds: [] }
             ], // 好友分组
+            groupChatGroups: [
+                { id: 'group_default', name: '默认分组', memberIds: [] }
+            ], // 群聊分组
             messages: {},
             conversations: [],
             emojis: [], // 表情包库
@@ -560,6 +563,25 @@
                     ];
                     console.log('已初始化示例好友分组');
                 }
+
+                if (!AppState.groupChatGroups || AppState.groupChatGroups.length === 0) {
+                    AppState.groupChatGroups = [
+                        { id: 'group_default', name: '默认分组', memberIds: [] }
+                    ];
+                    console.log('已初始化示例群聊分组');
+                }
+
+                if (Array.isArray(AppState.groups)) {
+                    const hasDefaultGroup = AppState.groupChatGroups.some(g => g.id === 'group_default');
+                    const fallbackGroupId = hasDefaultGroup
+                        ? 'group_default'
+                        : (AppState.groupChatGroups[0] ? AppState.groupChatGroups[0].id : 'group_default');
+                    AppState.groups.forEach(group => {
+                        if (!group.groupChatGroupId || !AppState.groupChatGroups.some(g => g.id === group.groupChatGroupId)) {
+                            group.groupChatGroupId = fallbackGroupId;
+                        }
+                    });
+                }
             } catch (e) {
                 console.error('加载数据失败:', e);
             }
@@ -1013,6 +1035,29 @@
                     list.classList.toggle('show');
                 });
             });
+
+            // 好友页面分组管理
+            const friendPage = document.getElementById('friend-page');
+            if (friendPage) {
+                friendPage.querySelectorAll('.group-header .group-edit').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const header = this.closest('.group-header');
+                        if (!header) return;
+                        if (header.dataset.group === 'common') {
+                            setFriendManageMode(!getFriendManageMode());
+                            renderFriends();
+                        } else if (header.dataset.group === 'groups') {
+                            setGroupManageMode(!getGroupManageMode());
+                            renderGroups();
+                        }
+                    });
+                });
+
+                updateFriendManageButton();
+                updateGroupManageButton();
+            }
 
             // 动态页面功能项
             document.querySelectorAll('.func-item').forEach(function(item) {
@@ -1858,6 +1903,235 @@
             msgList.appendChild(fragment);
         }
 
+        function getFriendManageMode() {
+            const friendPage = document.getElementById('friend-page');
+            return !!(friendPage && friendPage.classList.contains('friend-manage-mode'));
+        }
+
+        function setFriendManageMode(active) {
+            const friendPage = document.getElementById('friend-page');
+            if (!friendPage) return;
+            friendPage.classList.toggle('friend-manage-mode', !!active);
+            if (active) {
+                if (!AppState.groupCollapsedStates) {
+                    AppState.groupCollapsedStates = {};
+                }
+                if (Array.isArray(AppState.friendGroups)) {
+                    AppState.friendGroups.forEach(group => {
+                        AppState.groupCollapsedStates[group.id] = true;
+                    });
+                }
+            }
+            updateFriendManageButton();
+        }
+
+        function updateFriendManageButton() {
+            const btn = document.querySelector('#friend-page .group-header[data-group="common"] .group-edit');
+            if (btn) {
+                btn.textContent = getFriendManageMode() ? '完成' : '管理';
+            }
+        }
+
+        function getGroupManageMode() {
+            const friendPage = document.getElementById('friend-page');
+            return !!(friendPage && friendPage.classList.contains('group-manage-mode'));
+        }
+
+        function setGroupManageMode(active) {
+            const friendPage = document.getElementById('friend-page');
+            if (!friendPage) return;
+            friendPage.classList.toggle('group-manage-mode', !!active);
+            if (active) {
+                if (!AppState.groupChatCollapsedStates) {
+                    AppState.groupChatCollapsedStates = {};
+                }
+                if (Array.isArray(AppState.groupChatGroups)) {
+                    AppState.groupChatGroups.forEach(group => {
+                        AppState.groupChatCollapsedStates[group.id] = true;
+                    });
+                }
+            }
+            updateGroupManageButton();
+        }
+
+        function updateGroupManageButton() {
+            const btn = document.querySelector('#friend-page .group-header[data-group="groups"] .group-edit');
+            if (btn) {
+                btn.textContent = getGroupManageMode() ? '完成' : '管理';
+            }
+        }
+
+        let friendDragPayload = null;
+        let groupChatDragPayload = null;
+
+        function ensureFriendSortIndex() {
+            if (!Array.isArray(AppState.friends)) return;
+            const groups = {};
+            AppState.friends.forEach(friend => {
+                const groupId = friend.friendGroupId || 'group_default';
+                if (!groups[groupId]) groups[groupId] = [];
+                groups[groupId].push(friend);
+            });
+
+            Object.keys(groups).forEach(groupId => {
+                const groupFriends = groups[groupId];
+                const hasMissing = groupFriends.some(friend => !Number.isFinite(friend.friendSortIndex));
+                if (hasMissing) {
+                    groupFriends.forEach((friend, index) => {
+                        friend.friendSortIndex = index;
+                    });
+                } else {
+                    groupFriends.sort((a, b) => a.friendSortIndex - b.friendSortIndex);
+                    groupFriends.forEach((friend, index) => {
+                        friend.friendSortIndex = index;
+                    });
+                }
+            });
+        }
+
+        function getSortedFriendsInGroup(groupId) {
+            return AppState.friends
+                .filter(friend => (friend.friendGroupId || 'group_default') === groupId)
+                .sort((a, b) => {
+                    const aIndex = Number.isFinite(a.friendSortIndex) ? a.friendSortIndex : 0;
+                    const bIndex = Number.isFinite(b.friendSortIndex) ? b.friendSortIndex : 0;
+                    return aIndex - bIndex;
+                });
+        }
+
+        function getNextFriendSortIndex(groupId) {
+            let maxIndex = -1;
+            AppState.friends.forEach(friend => {
+                if ((friend.friendGroupId || 'group_default') !== groupId) return;
+                if (Number.isFinite(friend.friendSortIndex)) {
+                    maxIndex = Math.max(maxIndex, friend.friendSortIndex);
+                }
+            });
+            return maxIndex + 1;
+        }
+
+        function applyFriendOrder(groupId, orderedFriends) {
+            orderedFriends.forEach((friend, index) => {
+                friend.friendGroupId = groupId;
+                friend.friendSortIndex = index;
+            });
+        }
+
+        function reorderFriendInGroup(friendId, targetFriendId, groupId) {
+            const ordered = getSortedFriendsInGroup(groupId);
+            const fromIndex = ordered.findIndex(friend => friend.id === friendId);
+            const toIndex = ordered.findIndex(friend => friend.id === targetFriendId);
+            if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+            const moved = ordered.splice(fromIndex, 1)[0];
+            const insertIndex = fromIndex < toIndex ? Math.max(toIndex - 1, 0) : toIndex;
+            ordered.splice(insertIndex, 0, moved);
+            applyFriendOrder(groupId, ordered);
+        }
+
+        function ensureGroupChatSortIndex() {
+            if (!Array.isArray(AppState.groups)) return;
+            const groups = {};
+            AppState.groups.forEach(groupChat => {
+                const groupId = groupChat.groupChatGroupId || 'group_default';
+                if (!groups[groupId]) groups[groupId] = [];
+                groups[groupId].push(groupChat);
+            });
+
+            Object.keys(groups).forEach(groupId => {
+                const groupChats = groups[groupId];
+                const hasMissing = groupChats.some(groupChat => !Number.isFinite(groupChat.groupSortIndex));
+                if (hasMissing) {
+                    groupChats.forEach((groupChat, index) => {
+                        groupChat.groupSortIndex = index;
+                    });
+                } else {
+                    groupChats.sort((a, b) => a.groupSortIndex - b.groupSortIndex);
+                    groupChats.forEach((groupChat, index) => {
+                        groupChat.groupSortIndex = index;
+                    });
+                }
+            });
+        }
+
+        function getSortedGroupChats(groupId) {
+            return AppState.groups
+                .filter(groupChat => (groupChat.groupChatGroupId || 'group_default') === groupId)
+                .sort((a, b) => {
+                    const aIndex = Number.isFinite(a.groupSortIndex) ? a.groupSortIndex : 0;
+                    const bIndex = Number.isFinite(b.groupSortIndex) ? b.groupSortIndex : 0;
+                    return aIndex - bIndex;
+                });
+        }
+
+        function getNextGroupChatSortIndex(groupId) {
+            let maxIndex = -1;
+            AppState.groups.forEach(groupChat => {
+                if ((groupChat.groupChatGroupId || 'group_default') !== groupId) return;
+                if (Number.isFinite(groupChat.groupSortIndex)) {
+                    maxIndex = Math.max(maxIndex, groupChat.groupSortIndex);
+                }
+            });
+            return maxIndex + 1;
+        }
+
+        function applyGroupChatOrder(groupId, orderedGroups) {
+            orderedGroups.forEach((groupChat, index) => {
+                groupChat.groupChatGroupId = groupId;
+                groupChat.groupSortIndex = index;
+            });
+        }
+
+        function reorderGroupChatInGroup(groupChatId, targetGroupChatId, groupChatGroupId) {
+            const ordered = getSortedGroupChats(groupChatGroupId);
+            const fromIndex = ordered.findIndex(groupChat => groupChat.id === groupChatId);
+            const toIndex = ordered.findIndex(groupChat => groupChat.id === targetGroupChatId);
+            if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+            const moved = ordered.splice(fromIndex, 1)[0];
+            const insertIndex = fromIndex < toIndex ? Math.max(toIndex - 1, 0) : toIndex;
+            ordered.splice(insertIndex, 0, moved);
+            applyGroupChatOrder(groupChatGroupId, ordered);
+        }
+
+        function parseDragPayload(event) {
+            if (!event || !event.dataTransfer) return null;
+            const text = event.dataTransfer.getData('text/plain');
+            if (!text) return null;
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function bindLongPressDrag(handle, target) {
+            if (!handle || !target) return;
+            let pressTimer = null;
+            const clearPress = function() {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+                target.classList.remove('drag-arming');
+            };
+
+            handle.addEventListener('touchstart', function() {
+                clearPress();
+                pressTimer = setTimeout(() => {
+                    target.classList.add('drag-arming');
+                    if (navigator.vibrate) {
+                        navigator.vibrate(8);
+                    }
+                }, 160);
+            }, { passive: true });
+
+            handle.addEventListener('touchend', clearPress);
+            handle.addEventListener('touchcancel', clearPress);
+            handle.addEventListener('dragend', clearPress);
+            handle.addEventListener('dragstart', function() {
+                target.classList.add('drag-arming');
+            });
+        }
+
         // 渲染好友列表 - 移动端性能优化版
         function renderFriends() {
             // 防抖：防止频繁渲染
@@ -1873,8 +2147,19 @@
         function _renderFriendsImpl() {
             const friendList = document.querySelector('.friend-list[data-group="common"]');
             const count = document.querySelector('.group-header[data-group="common"] .group-count');
+            const isManageMode = getFriendManageMode();
+            updateFriendManageButton();
             
             if (!friendList) return;
+
+            if (!Array.isArray(AppState.friendGroups)) {
+                AppState.friendGroups = [];
+            }
+            if (!AppState.friendGroups.some(group => group.id === 'group_default')) {
+                AppState.friendGroups.unshift({ id: 'group_default', name: '默认分组', memberIds: [] });
+            }
+
+            ensureFriendSortIndex();
             
             // 将好友分配到分组中
             let groupedFriends = {};
@@ -1895,7 +2180,7 @@
             
             count.textContent = `(${AppState.friends.length}/${AppState.friends.length})`;
             
-            if (AppState.friends.length === 0) {
+            if (AppState.friends.length === 0 && !isManageMode) {
                 friendList.innerHTML = `
                     <div class="empty-state" style="padding: 30px 20px;">
                         <div class="empty-text">暂无好友</div>
@@ -1905,6 +2190,30 @@
             }
             
             friendList.innerHTML = '';
+
+            if (isManageMode) {
+                const toolbar = document.createElement('div');
+                toolbar.className = 'friend-manage-toolbar';
+                toolbar.innerHTML = `
+                    <div class="friend-manage-tip">拖动分组或好友即可排序/移动</div>
+                    <button class="friend-manage-add-group" type="button">+ 新增分组</button>
+                `;
+                const addBtn = toolbar.querySelector('.friend-manage-add-group');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        addFriendGroup();
+                    });
+                }
+                friendList.appendChild(toolbar);
+            }
+
+            const friendGroupOptions = AppState.friendGroups.map(group => {
+                return {
+                    id: group.id,
+                    name: escapeHtml(group.name || '')
+                };
+            });
             
             // 初始化折叠状态存储
             if (!AppState.groupCollapsedStates) {
@@ -1912,26 +2221,41 @@
             }
             
             // 按分组显示好友
-            AppState.friendGroups.forEach(group => {
-                const groupFriends = groupedFriends[group.id] || [];
-                if (groupFriends.length === 0) return;
+            AppState.friendGroups.forEach((group, groupIndex) => {
+                const groupFriends = (groupedFriends[group.id] || []).sort((a, b) => {
+                    const aIndex = Number.isFinite(a.friendSortIndex) ? a.friendSortIndex : 0;
+                    const bIndex = Number.isFinite(b.friendSortIndex) ? b.friendSortIndex : 0;
+                    return aIndex - bIndex;
+                });
+                if (groupFriends.length === 0 && !isManageMode) return;
                 
                 const isCollapsed = AppState.groupCollapsedStates[group.id] || false;
+                const canMoveUp = isManageMode && groupIndex > 0;
+                const canMoveDown = isManageMode && groupIndex < AppState.friendGroups.length - 1;
+                const safeGroupName = escapeHtml(group.name || '');
                 
                 // 添加分组头
                 const groupHeader = document.createElement('div');
-                groupHeader.style.cssText = 'padding:12px 15px;font-size:12px;color:#999;font-weight:600;background:#f9f9f9;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;min-height:44px;';
+                groupHeader.className = 'friend-subgroup-header';
                 groupHeader.dataset.groupId = group.id;
                 groupHeader.dataset.collapsed = isCollapsed;
+                groupHeader.setAttribute('aria-expanded', String(!isCollapsed));
+                if (isCollapsed) {
+                    groupHeader.classList.add('is-collapsed');
+                }
                 
                 groupHeader.innerHTML = `
-                    <div style="flex:1;display:flex;align-items:center;gap:4px;">
-                        <span>${group.name}</span>
-                        <span style="margin-left:0;">(${groupFriends.length})</span>
+                    <div class="friend-subgroup-left">
+                        <span class="friend-subgroup-caret"></span>
+                        ${isManageMode ? `<span class="friend-drag-handle" draggable="true" data-drag-type="friend-group" data-group-id="${group.id}" aria-label="拖动分组">≡</span>` : ''}
+                        <span class="friend-subgroup-name">${safeGroupName}</span>
+                        <span class="friend-subgroup-count">${groupFriends.length}</span>
                     </div>
-                    <div style="display:flex;gap:4px;align-items:center;justify-content:center;min-height:24px;line-height:1;">
-                        <button onclick="event.stopPropagation();editFriendGroup('${group.id}')" style="background:none;border:none;color:#666;cursor:pointer;padding:5px 10px;font-size:12px;">编辑</button>
-                        ${group.id !== 'group_default' ? `<button onclick="event.stopPropagation();deleteFriendGroup('${group.id}')" style="background:none;border:none;color:#f44;cursor:pointer;padding:5px 10px;font-size:12px;">删除</button>` : ''}
+                    <div class="friend-subgroup-actions">
+                        ${isManageMode ? `<button type="button" onclick="event.stopPropagation();moveFriendGroup('${group.id}', -1)" class="friend-subgroup-action" ${canMoveUp ? '' : 'disabled'}>上移</button>` : ''}
+                        ${isManageMode ? `<button type="button" onclick="event.stopPropagation();moveFriendGroup('${group.id}', 1)" class="friend-subgroup-action" ${canMoveDown ? '' : 'disabled'}>下移</button>` : ''}
+                        ${isManageMode ? `<button type="button" onclick="event.stopPropagation();editFriendGroup('${group.id}')" class="friend-subgroup-action">编辑</button>` : ''}
+                        ${isManageMode && group.id !== 'group_default' ? `<button type="button" onclick="event.stopPropagation();deleteFriendGroup('${group.id}')" class="friend-subgroup-action danger">删除</button>` : ''}
                     </div>
                 `;
                 
@@ -1948,50 +2272,98 @@
                 const friendsContainer = document.createElement('div');
                 friendsContainer.className = 'group-friends-container';
                 friendsContainer.dataset.groupId = group.id;
-                friendsContainer.style.cssText = `display:${isCollapsed ? 'none' : 'block'};`;
+                if (isCollapsed) {
+                    friendsContainer.classList.add('is-collapsed');
+                }
                 
                 // 添加分组中的好友
-                groupFriends.forEach(friend => {
-                    const item = document.createElement('div');
-                    item.className = 'friend-item';
-                    item.dataset.id = friend.id;
-                    item.style.position = 'relative';
-                    item.style.overflow = 'hidden';
-                    item.style.cursor = 'pointer';
-                    
-                    const avatarContent = friend.avatar
-                        ? `<img src="${friend.avatar}" alt="">`
-                        : friend.name.charAt(0);
-                    
-                    // 显示优先级：备注 > 网名 > 真名
-                    const displayName = getFriendDisplayName(friend);
-                    
-                    item.innerHTML = `
-                        <div class="friend-item-content" style="display:flex;align-items:center;gap:12px;padding:10px 15px;background:#fff;position:relative;z-index:2;">
-                            <div class="friend-avatar">${avatarContent}</div>
-                            <div class="friend-info" style="flex:1;">
-                                <div class="friend-name">${displayName}</div>
-                                <div class="friend-status">${friend.status || ''}</div>
+                if (groupFriends.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-state';
+                    empty.style.cssText = 'padding:12px 20px;background:#fff;';
+                    empty.innerHTML = '<div class="empty-text">暂无好友</div>';
+                    friendsContainer.appendChild(empty);
+                } else {
+                    groupFriends.forEach(friend => {
+                        const item = document.createElement('div');
+                        item.className = 'friend-item';
+                        item.dataset.id = friend.id;
+                        item.dataset.groupId = group.id;
+                        
+                        const avatarContent = friend.avatar
+                            ? `<img src="${friend.avatar}" alt="">`
+                            : friend.name.charAt(0);
+                        
+                        // 显示优先级：备注 > 网名 > 真名
+                        const displayName = getFriendDisplayName(friend);
+                        const activeGroupId = friend.friendGroupId && groupedFriends[friend.friendGroupId]
+                            ? friend.friendGroupId
+                            : 'group_default';
+                        const groupOptionsHtml = friendGroupOptions.map(option => {
+                            const selected = option.id === activeGroupId ? 'selected' : '';
+                            return `<option value="${option.id}" ${selected}>${option.name}</option>`;
+                        }).join('');
+                        const dragHandleHtml = isManageMode
+                            ? `<span class="friend-drag-handle" draggable="true" data-drag-type="friend-item" data-friend-id="${friend.id}" data-group-id="${group.id}" aria-label="拖动好友">≡</span>`
+                            : '';
+                        const manageSelectHtml = isManageMode
+                            ? `<select class="friend-group-select" data-friend-id="${friend.id}">${groupOptionsHtml}</select>`
+                            : '';
+                        
+                        item.innerHTML = `
+                            <div class="friend-item-content">
+                                ${dragHandleHtml}
+                                <div class="friend-avatar">${avatarContent}</div>
+                                <div class="friend-info" style="flex:1;">
+                                    <div class="friend-name">${displayName}</div>
+                                    <div class="friend-status">${friend.status || ''}</div>
+                                </div>
+                                ${manageSelectHtml}
                             </div>
-                        </div>
-                    `;
-                    
-                    item.addEventListener('click', function(e) {
-                        openChatWithFriend(friend);
+                        `;
+                        
+                        item.addEventListener('click', function(e) {
+                            if (getFriendManageMode()) return;
+                            openChatWithFriend(friend);
+                        });
+
+                        if (isManageMode) {
+                            const select = item.querySelector('.friend-group-select');
+                            if (select) {
+                                select.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                });
+                                select.addEventListener('change', function(e) {
+                                    e.stopPropagation();
+                                    moveFriendToGroup(friend.id, this.value);
+                                });
+                            }
+
+                            const handle = item.querySelector('.friend-drag-handle');
+                            if (handle) {
+                                bindLongPressDrag(handle, item);
+                            }
+                        }
+                        
+                        friendsContainer.appendChild(item);
                     });
-                    
-                    friendsContainer.appendChild(item);
-                });
+                }
                 
                 friendList.appendChild(friendsContainer);
             });
             
-            // 添加新增分组按钮
-            const addGroupBtn = document.createElement('div');
-            addGroupBtn.style.cssText = 'padding:12px 15px;text-align:center;cursor:pointer;color:#0066cc;font-size:13px;border-top:1px solid #f0f0f0;';
-            addGroupBtn.innerHTML = '+ 新增分组';
-            addGroupBtn.addEventListener('click', addFriendGroup);
-            friendList.appendChild(addGroupBtn);
+            if (!isManageMode) {
+                // 非管理模式下保留轻量入口
+                const addGroupBtn = document.createElement('div');
+                addGroupBtn.className = 'friend-add-group-btn';
+                addGroupBtn.textContent = '+ 新增分组';
+                addGroupBtn.addEventListener('click', addFriendGroup);
+                friendList.appendChild(addGroupBtn);
+            }
+
+            if (isManageMode) {
+                bindFriendManageDnD();
+            }
         }
 
         function addFriendGroup() {
@@ -2041,14 +2413,191 @@
             showToast('分组已删除');
         }
 
+        function moveFriendGroup(groupId, direction) {
+            const groups = AppState.friendGroups || [];
+            const index = groups.findIndex(group => group.id === groupId);
+            if (index === -1) return;
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= groups.length) return;
+            const moved = groups.splice(index, 1)[0];
+            groups.splice(targetIndex, 0, moved);
+            saveToStorage();
+            renderFriends();
+        }
+
+        function moveFriendToGroup(friendId, groupId, beforeFriendId) {
+            const group = AppState.friendGroups.find(g => g.id === groupId);
+            const friend = AppState.friends.find(f => f.id === friendId);
+            if (!group || !friend) return;
+            const isSameGroup = friend.friendGroupId === groupId;
+            if (isSameGroup && !beforeFriendId) return;
+
+            friend.friendGroupId = groupId;
+
+            if (beforeFriendId) {
+                reorderFriendInGroup(friendId, beforeFriendId, groupId);
+            } else {
+                friend.friendSortIndex = getNextFriendSortIndex(groupId);
+            }
+
+            if (AppState.groupCollapsedStates) {
+                AppState.groupCollapsedStates[groupId] = false;
+            }
+            saveToStorage();
+            renderFriends();
+            showToast(`已移动到 ${group.name}`);
+        }
+
+        function reorderFriendGroupByDrag(sourceGroupId, targetGroupId) {
+            if (!sourceGroupId || !targetGroupId || sourceGroupId === targetGroupId) return;
+            const groups = AppState.friendGroups || [];
+            const fromIndex = groups.findIndex(group => group.id === sourceGroupId);
+            const toIndex = groups.findIndex(group => group.id === targetGroupId);
+            if (fromIndex === -1 || toIndex === -1) return;
+            const moved = groups.splice(fromIndex, 1)[0];
+            groups.splice(toIndex, 0, moved);
+            saveToStorage();
+            renderFriends();
+        }
+
+        function bindFriendManageDnD() {
+            const list = document.querySelector('.friend-list[data-group="common"]');
+            if (!list) return;
+
+            const groupHandles = list.querySelectorAll('[data-drag-type="friend-group"]');
+            groupHandles.forEach(handle => {
+                handle.addEventListener('dragstart', function(e) {
+                    const groupId = this.dataset.groupId;
+                    friendDragPayload = { type: 'friend-group', groupId: groupId };
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify(friendDragPayload));
+                });
+                handle.addEventListener('dragend', function() {
+                    friendDragPayload = null;
+                });
+                bindLongPressDrag(handle, handle.closest('.friend-subgroup-header'));
+            });
+
+            const itemHandles = list.querySelectorAll('[data-drag-type="friend-item"]');
+            itemHandles.forEach(handle => {
+                handle.addEventListener('dragstart', function(e) {
+                    const friendId = this.dataset.friendId;
+                    const groupId = this.dataset.groupId;
+                    friendDragPayload = { type: 'friend-item', friendId: friendId, groupId: groupId };
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify(friendDragPayload));
+                });
+                handle.addEventListener('dragend', function() {
+                    friendDragPayload = null;
+                });
+                bindLongPressDrag(handle, handle.closest('.friend-item'));
+            });
+
+            const groupHeaders = list.querySelectorAll('.friend-subgroup-header');
+            groupHeaders.forEach(header => {
+                header.addEventListener('dragover', function(e) {
+                    const payload = friendDragPayload || parseDragPayload(e);
+                    if (!payload) return;
+                    if (payload.type === 'friend-group' || payload.type === 'friend-item') {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        header.classList.add('drag-over');
+                    }
+                });
+                header.addEventListener('dragleave', function() {
+                    header.classList.remove('drag-over');
+                });
+                header.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    header.classList.remove('drag-over');
+                    const payload = friendDragPayload || parseDragPayload(e);
+                    if (!payload) return;
+                    const targetGroupId = header.dataset.groupId;
+                    if (payload.type === 'friend-group') {
+                        reorderFriendGroupByDrag(payload.groupId, targetGroupId);
+                    } else if (payload.type === 'friend-item') {
+                        moveFriendToGroup(payload.friendId, targetGroupId);
+                    }
+                });
+            });
+
+            const friendItems = list.querySelectorAll('.friend-item');
+            friendItems.forEach(item => {
+                item.addEventListener('dragover', function(e) {
+                    const payload = friendDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'friend-item') return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    item.classList.add('drag-over');
+                });
+                item.addEventListener('dragleave', function() {
+                    item.classList.remove('drag-over');
+                });
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    item.classList.remove('drag-over');
+                    const payload = friendDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'friend-item') return;
+                    const targetFriendId = item.dataset.id;
+                    const targetGroupId = item.dataset.groupId;
+                    if (!targetFriendId || !targetGroupId) return;
+                    if (payload.friendId === targetFriendId) return;
+                    if (payload.groupId === targetGroupId) {
+                        reorderFriendInGroup(payload.friendId, targetFriendId, targetGroupId);
+                        saveToStorage();
+                        renderFriends();
+                    } else {
+                        moveFriendToGroup(payload.friendId, targetGroupId, targetFriendId);
+                    }
+                });
+            });
+
+            const groupContainers = list.querySelectorAll('.group-friends-container');
+            groupContainers.forEach(container => {
+                container.addEventListener('dragover', function(e) {
+                    const payload = friendDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'friend-item') return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    container.classList.add('drag-over');
+                });
+                container.addEventListener('dragleave', function() {
+                    container.classList.remove('drag-over');
+                });
+                container.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    container.classList.remove('drag-over');
+                    const payload = friendDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'friend-item') return;
+                    const targetGroupId = container.dataset.groupId;
+                    if (!targetGroupId) return;
+                    moveFriendToGroup(payload.friendId, targetGroupId);
+                });
+            });
+        }
+
         // 渲染群聊列表
         function renderGroups() {
             const groupList = document.querySelector('.friend-list[data-group="groups"]');
             const count = document.querySelector('.group-header[data-group="groups"] .group-count');
+            const isManageMode = getGroupManageMode();
+            updateGroupManageButton();
+
+            if (!groupList || !count) return;
+
+            if (!Array.isArray(AppState.groupChatGroups)) {
+                AppState.groupChatGroups = [];
+            }
+            if (!AppState.groupChatGroups.some(group => group.id === 'group_default')) {
+                AppState.groupChatGroups.unshift({ id: 'group_default', name: '默认分组', memberIds: [] });
+            }
+
+            ensureGroupChatSortIndex();
+
+            const groups = Array.isArray(AppState.groups) ? AppState.groups : [];
+            count.textContent = `(${groups.length}/${groups.length})`;
             
-            count.textContent = `(${AppState.groups.length}/${AppState.groups.length})`;
-            
-            if (AppState.groups.length === 0) {
+            if (groups.length === 0 && !isManageMode) {
                 groupList.innerHTML = `
                     <div class="empty-state" style="padding: 30px 20px;">
                         <div class="empty-text">暂无群聊</div>
@@ -2057,30 +2606,398 @@
                 return;
             }
             
-            groupList.innerHTML = '';
+            const groupedChats = {};
+            AppState.groupChatGroups.forEach(group => {
+                groupedChats[group.id] = [];
+            });
+
+            groups.forEach(group => {
+                const targetGroupId = group.groupChatGroupId && groupedChats[group.groupChatGroupId]
+                    ? group.groupChatGroupId
+                    : 'group_default';
+                group.groupChatGroupId = targetGroupId;
+                if (!groupedChats[targetGroupId]) groupedChats[targetGroupId] = [];
+                groupedChats[targetGroupId].push(group);
+            });
             
-            AppState.groups.forEach(function(group) {
-                const item = document.createElement('div');
-                item.className = 'friend-item';
-                item.dataset.id = group.id;
+            groupList.innerHTML = '';
+
+            if (isManageMode) {
+                const toolbar = document.createElement('div');
+                toolbar.className = 'friend-manage-toolbar group-manage-toolbar';
+                toolbar.innerHTML = `
+                    <div class="friend-manage-tip">拖动分组或群聊即可排序/移动</div>
+                    <button class="friend-manage-add-group" type="button">+ 新增分组</button>
+                `;
+                const addBtn = toolbar.querySelector('.friend-manage-add-group');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        addGroupChatGroup();
+                    });
+                }
+                groupList.appendChild(toolbar);
+            }
+
+            if (!AppState.groupChatCollapsedStates) {
+                AppState.groupChatCollapsedStates = {};
+            }
+
+            const groupChatOptions = AppState.groupChatGroups.map(group => {
+                return {
+                    id: group.id,
+                    name: escapeHtml(group.name || '')
+                };
+            });
+            
+            AppState.groupChatGroups.forEach((group, groupIndex) => {
+                const groupChats = (groupedChats[group.id] || []).sort((a, b) => {
+                    const aIndex = Number.isFinite(a.groupSortIndex) ? a.groupSortIndex : 0;
+                    const bIndex = Number.isFinite(b.groupSortIndex) ? b.groupSortIndex : 0;
+                    return aIndex - bIndex;
+                });
+                if (groupChats.length === 0 && !isManageMode) return;
                 
-                const avatarContent = group.avatar 
-                    ? `<img src="${group.avatar}" alt="">` 
-                    : group.name.charAt(0);
+                const isCollapsed = AppState.groupChatCollapsedStates[group.id] || false;
+                const canMoveUp = isManageMode && groupIndex > 0;
+                const canMoveDown = isManageMode && groupIndex < AppState.groupChatGroups.length - 1;
+                const safeGroupName = escapeHtml(group.name || '');
                 
-                item.innerHTML = `
-                    <div class="friend-avatar">${avatarContent}</div>
-                    <div class="friend-info">
-                        <div class="friend-name">${group.name}</div>
-                        <div class="friend-status">${group.memberCount || 0}人</div>
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'friend-subgroup-header groupchat-subgroup-header';
+                groupHeader.dataset.groupId = group.id;
+                groupHeader.dataset.collapsed = isCollapsed;
+                groupHeader.setAttribute('aria-expanded', String(!isCollapsed));
+                if (isCollapsed) {
+                    groupHeader.classList.add('is-collapsed');
+                }
+                
+                groupHeader.innerHTML = `
+                    <div class="friend-subgroup-left">
+                        <span class="friend-subgroup-caret"></span>
+                        ${isManageMode ? `<span class="friend-drag-handle" draggable="true" data-drag-type="group-chat-group" data-group-id="${group.id}" aria-label="拖动分组">≡</span>` : ''}
+                        <span class="friend-subgroup-name">${safeGroupName}</span>
+                        <span class="friend-subgroup-count">${groupChats.length}</span>
+                    </div>
+                    <div class="friend-subgroup-actions">
+                        ${isManageMode ? `<button type="button" onclick="event.stopPropagation();moveGroupChatGroup('${group.id}', -1)" class="friend-subgroup-action" ${canMoveUp ? '' : 'disabled'}>上移</button>` : ''}
+                        ${isManageMode ? `<button type="button" onclick="event.stopPropagation();moveGroupChatGroup('${group.id}', 1)" class="friend-subgroup-action" ${canMoveDown ? '' : 'disabled'}>下移</button>` : ''}
+                        ${isManageMode ? `<button type="button" onclick="event.stopPropagation();editGroupChatGroup('${group.id}')" class="friend-subgroup-action">编辑</button>` : ''}
+                        ${isManageMode && group.id !== 'group_default' ? `<button type="button" onclick="event.stopPropagation();deleteGroupChatGroup('${group.id}')" class="friend-subgroup-action danger">删除</button>` : ''}
                     </div>
                 `;
                 
-                item.addEventListener('click', function() {
-                    openChatWithGroup(group);
+                groupHeader.addEventListener('click', function() {
+                    AppState.groupChatCollapsedStates[group.id] = !AppState.groupChatCollapsedStates[group.id];
+                    saveToStorage();
+                    renderGroups();
                 });
                 
-                groupList.appendChild(item);
+                groupList.appendChild(groupHeader);
+                
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'group-friends-container';
+                groupContainer.dataset.groupId = group.id;
+                if (isCollapsed) {
+                    groupContainer.classList.add('is-collapsed');
+                }
+                
+                if (groupChats.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-state';
+                    empty.style.cssText = 'padding:12px 20px;background:#fff;';
+                    empty.innerHTML = '<div class="empty-text">暂无群聊</div>';
+                    groupContainer.appendChild(empty);
+                } else {
+                    groupChats.forEach(function(groupChat) {
+                        const item = document.createElement('div');
+                        item.className = 'friend-item';
+                        item.dataset.id = groupChat.id;
+                        item.dataset.groupId = group.id;
+                        
+                        const avatarContent = groupChat.avatar
+                            ? `<img src="${groupChat.avatar}" alt="">`
+                            : (groupChat.name ? groupChat.name.charAt(0) : '?');
+                        const memberCount = groupChat.memberCount || (Array.isArray(groupChat.members) ? groupChat.members.length : 0);
+                        const activeGroupId = groupChat.groupChatGroupId && groupedChats[groupChat.groupChatGroupId]
+                            ? groupChat.groupChatGroupId
+                            : 'group_default';
+                        const groupOptionsHtml = groupChatOptions.map(option => {
+                            const selected = option.id === activeGroupId ? 'selected' : '';
+                            return `<option value="${option.id}" ${selected}>${option.name}</option>`;
+                        }).join('');
+                        const dragHandleHtml = isManageMode
+                            ? `<span class="friend-drag-handle" draggable="true" data-drag-type="group-chat-item" data-group-id="${group.id}" data-groupchat-id="${groupChat.id}" aria-label="拖动群聊">≡</span>`
+                            : '';
+                        const manageSelectHtml = isManageMode
+                            ? `<select class="group-chat-group-select" data-group-id="${groupChat.id}">${groupOptionsHtml}</select>`
+                            : '';
+                        
+                        item.innerHTML = `
+                            <div class="friend-item-content">
+                                ${dragHandleHtml}
+                                <div class="friend-avatar">${avatarContent}</div>
+                                <div class="friend-info" style="flex:1;">
+                                    <div class="friend-name">${escapeHtml(groupChat.name || '')}</div>
+                                    <div class="friend-status">${memberCount}人</div>
+                                </div>
+                                ${manageSelectHtml}
+                            </div>
+                        `;
+                        
+                        item.addEventListener('click', function() {
+                            if (getGroupManageMode()) return;
+                            openChatWithGroup(groupChat);
+                        });
+
+                        if (isManageMode) {
+                            const select = item.querySelector('.group-chat-group-select');
+                            if (select) {
+                                select.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                });
+                                select.addEventListener('change', function(e) {
+                                    e.stopPropagation();
+                                    moveGroupChatToGroup(groupChat.id, this.value);
+                                });
+                            }
+
+                            const handle = item.querySelector('.friend-drag-handle');
+                            if (handle) {
+                                bindLongPressDrag(handle, item);
+                            }
+                        }
+                        
+                        groupContainer.appendChild(item);
+                    });
+                }
+                
+                groupList.appendChild(groupContainer);
+            });
+
+            if (!isManageMode) {
+                const addGroupBtn = document.createElement('div');
+                addGroupBtn.className = 'friend-add-group-btn';
+                addGroupBtn.textContent = '+ 新增分组';
+                addGroupBtn.addEventListener('click', addGroupChatGroup);
+                groupList.appendChild(addGroupBtn);
+            }
+
+            if (isManageMode) {
+                bindGroupChatManageDnD();
+            }
+        }
+
+        function addGroupChatGroup() {
+            const groupName = prompt('请输入分组名称：', '');
+            if (!groupName || !groupName.trim()) return;
+
+            if (!Array.isArray(AppState.groupChatGroups)) {
+                AppState.groupChatGroups = [];
+            }
+
+            AppState.groupChatGroups.push({
+                id: generateId(),
+                name: groupName.trim(),
+                memberIds: []
+            });
+
+            saveToStorage();
+            renderGroups();
+            showToast('分组已添加');
+        }
+
+        function editGroupChatGroup(groupId) {
+            const group = AppState.groupChatGroups.find(g => g.id === groupId);
+            if (!group) return;
+
+            const newName = prompt('编辑分组名称：', group.name);
+            if (!newName || !newName.trim()) return;
+
+            group.name = newName.trim();
+            saveToStorage();
+            renderGroups();
+            showToast('分组已更新');
+        }
+
+        function deleteGroupChatGroup(groupId) {
+            const group = AppState.groupChatGroups.find(g => g.id === groupId);
+            if (!group || group.id === 'group_default') return;
+
+            if (!confirm(`确定要删除分组 "${group.name}" 吗？该分组中的群聊将移到默认分组`)) return;
+
+            AppState.groups.forEach(groupChat => {
+                if (groupChat.groupChatGroupId === groupId) {
+                    groupChat.groupChatGroupId = 'group_default';
+                }
+            });
+
+            AppState.groupChatGroups = AppState.groupChatGroups.filter(g => g.id !== groupId);
+            saveToStorage();
+            renderGroups();
+            showToast('分组已删除');
+        }
+
+        function moveGroupChatGroup(groupId, direction) {
+            const groups = AppState.groupChatGroups || [];
+            const index = groups.findIndex(group => group.id === groupId);
+            if (index === -1) return;
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= groups.length) return;
+            const moved = groups.splice(index, 1)[0];
+            groups.splice(targetIndex, 0, moved);
+            saveToStorage();
+            renderGroups();
+        }
+
+        function moveGroupChatToGroup(groupId, targetGroupId, beforeGroupId) {
+            const targetGroup = AppState.groupChatGroups.find(g => g.id === targetGroupId);
+            const groupChat = AppState.groups.find(g => g.id === groupId);
+            if (!targetGroup || !groupChat) return;
+            const isSameGroup = groupChat.groupChatGroupId === targetGroupId;
+            if (isSameGroup && !beforeGroupId) return;
+
+            groupChat.groupChatGroupId = targetGroupId;
+
+            if (beforeGroupId) {
+                reorderGroupChatInGroup(groupId, beforeGroupId, targetGroupId);
+            } else {
+                groupChat.groupSortIndex = getNextGroupChatSortIndex(targetGroupId);
+            }
+
+            if (AppState.groupChatCollapsedStates) {
+                AppState.groupChatCollapsedStates[targetGroupId] = false;
+            }
+            saveToStorage();
+            renderGroups();
+            showToast(`已移动到 ${targetGroup.name}`);
+        }
+
+        function reorderGroupChatGroupByDrag(sourceGroupId, targetGroupId) {
+            if (!sourceGroupId || !targetGroupId || sourceGroupId === targetGroupId) return;
+            const groups = AppState.groupChatGroups || [];
+            const fromIndex = groups.findIndex(group => group.id === sourceGroupId);
+            const toIndex = groups.findIndex(group => group.id === targetGroupId);
+            if (fromIndex === -1 || toIndex === -1) return;
+            const moved = groups.splice(fromIndex, 1)[0];
+            groups.splice(toIndex, 0, moved);
+            saveToStorage();
+            renderGroups();
+        }
+
+        function bindGroupChatManageDnD() {
+            const list = document.querySelector('.friend-list[data-group="groups"]');
+            if (!list) return;
+
+            const groupHandles = list.querySelectorAll('[data-drag-type="group-chat-group"]');
+            groupHandles.forEach(handle => {
+                handle.addEventListener('dragstart', function(e) {
+                    const groupId = this.dataset.groupId;
+                    groupChatDragPayload = { type: 'group-chat-group', groupId: groupId };
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify(groupChatDragPayload));
+                });
+                handle.addEventListener('dragend', function() {
+                    groupChatDragPayload = null;
+                });
+                bindLongPressDrag(handle, handle.closest('.friend-subgroup-header'));
+            });
+
+            const itemHandles = list.querySelectorAll('[data-drag-type="group-chat-item"]');
+            itemHandles.forEach(handle => {
+                handle.addEventListener('dragstart', function(e) {
+                    const groupId = this.dataset.groupId;
+                    const groupChatId = this.dataset.groupchatId;
+                    groupChatDragPayload = { type: 'group-chat-item', groupId: groupId, groupChatId: groupChatId };
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify(groupChatDragPayload));
+                });
+                handle.addEventListener('dragend', function() {
+                    groupChatDragPayload = null;
+                });
+                bindLongPressDrag(handle, handle.closest('.friend-item'));
+            });
+
+            const groupHeaders = list.querySelectorAll('.friend-subgroup-header');
+            groupHeaders.forEach(header => {
+                header.addEventListener('dragover', function(e) {
+                    const payload = groupChatDragPayload || parseDragPayload(e);
+                    if (!payload) return;
+                    if (payload.type === 'group-chat-group' || payload.type === 'group-chat-item') {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        header.classList.add('drag-over');
+                    }
+                });
+                header.addEventListener('dragleave', function() {
+                    header.classList.remove('drag-over');
+                });
+                header.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    header.classList.remove('drag-over');
+                    const payload = groupChatDragPayload || parseDragPayload(e);
+                    if (!payload) return;
+                    const targetGroupId = header.dataset.groupId;
+                    if (payload.type === 'group-chat-group') {
+                        reorderGroupChatGroupByDrag(payload.groupId, targetGroupId);
+                    } else if (payload.type === 'group-chat-item') {
+                        moveGroupChatToGroup(payload.groupChatId, targetGroupId);
+                    }
+                });
+            });
+
+            const groupItems = list.querySelectorAll('.friend-item');
+            groupItems.forEach(item => {
+                item.addEventListener('dragover', function(e) {
+                    const payload = groupChatDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'group-chat-item') return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    item.classList.add('drag-over');
+                });
+                item.addEventListener('dragleave', function() {
+                    item.classList.remove('drag-over');
+                });
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    item.classList.remove('drag-over');
+                    const payload = groupChatDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'group-chat-item') return;
+                    const targetGroupChatId = item.dataset.id;
+                    const targetGroupId = item.dataset.groupId;
+                    if (!targetGroupChatId || !targetGroupId) return;
+                    if (payload.groupChatId === targetGroupChatId) return;
+                    if (payload.groupId === targetGroupId) {
+                        reorderGroupChatInGroup(payload.groupChatId, targetGroupChatId, targetGroupId);
+                        saveToStorage();
+                        renderGroups();
+                    } else {
+                        moveGroupChatToGroup(payload.groupChatId, targetGroupId, targetGroupChatId);
+                    }
+                });
+            });
+
+            const groupContainers = list.querySelectorAll('.group-friends-container');
+            groupContainers.forEach(container => {
+                container.addEventListener('dragover', function(e) {
+                    const payload = groupChatDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'group-chat-item') return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    container.classList.add('drag-over');
+                });
+                container.addEventListener('dragleave', function() {
+                    container.classList.remove('drag-over');
+                });
+                container.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    container.classList.remove('drag-over');
+                    const payload = groupChatDragPayload || parseDragPayload(e);
+                    if (!payload || payload.type !== 'group-chat-item') return;
+                    const targetGroupId = container.dataset.groupId;
+                    if (!targetGroupId) return;
+                    moveGroupChatToGroup(payload.groupChatId, targetGroupId);
+                });
             });
         }
 
@@ -2981,6 +3898,7 @@
                         friends: AppState.friends || [],
                         groups: AppState.groups || [],
                         friendGroups: AppState.friendGroups || [],
+                        groupChatGroups: AppState.groupChatGroups || [],
                         conversations: AppState.conversations || [],
                         messages: AppState.messages || {},
                         emojis: AppState.emojis || [],
@@ -3048,6 +3966,7 @@
                         AppState.friends = Array.isArray(appState.friends) ? appState.friends : [];
                         AppState.groups = Array.isArray(appState.groups) ? appState.groups : [];
                         AppState.friendGroups = Array.isArray(appState.friendGroups) ? appState.friendGroups : AppState.friendGroups;
+                        AppState.groupChatGroups = Array.isArray(appState.groupChatGroups) ? appState.groupChatGroups : AppState.groupChatGroups;
                         AppState.conversations = Array.isArray(appState.conversations) ? appState.conversations : [];
                         AppState.messages = typeof appState.messages === 'object' ? appState.messages : {};
                         AppState.emojis = Array.isArray(appState.emojis) ? appState.emojis : [];
@@ -3072,6 +3991,25 @@
                         
                         if (appState.dynamicFuncs && typeof appState.dynamicFuncs === 'object') {
                             AppState.dynamicFuncs = Object.assign(AppState.dynamicFuncs, appState.dynamicFuncs);
+                        }
+
+                        if (!Array.isArray(AppState.groupChatGroups) || AppState.groupChatGroups.length === 0) {
+                            AppState.groupChatGroups = [
+                                { id: 'group_default', name: '默认分组', memberIds: [] }
+                            ];
+                        } else if (!AppState.groupChatGroups.some(g => g.id === 'group_default')) {
+                            AppState.groupChatGroups.unshift({ id: 'group_default', name: '默认分组', memberIds: [] });
+                        }
+
+                        if (Array.isArray(AppState.groups)) {
+                            const defaultGroupId = AppState.groupChatGroups.some(g => g.id === 'group_default')
+                                ? 'group_default'
+                                : (AppState.groupChatGroups[0] ? AppState.groupChatGroups[0].id : 'group_default');
+                            AppState.groups.forEach(group => {
+                                if (!group.groupChatGroupId || !AppState.groupChatGroups.some(g => g.id === group.groupChatGroupId)) {
+                                    group.groupChatGroupId = defaultGroupId;
+                                }
+                            });
                         }
                         
                     } else if (data.shupianjAppState) {
@@ -3163,6 +4101,23 @@
                     applyAddFriendPersonaSelection();
                 };
             }
+        }
+
+        function initAddFriendGroupSelect() {
+            const groupSelect = document.getElementById('af-friend-group-select');
+            if (!groupSelect) return;
+
+            const sourceGroups = Array.isArray(AppState.friendGroups) ? AppState.friendGroups.slice() : [];
+            if (!sourceGroups.some(group => group.id === 'group_default')) {
+                sourceGroups.unshift({ id: 'group_default', name: '默认分组', memberIds: [] });
+            }
+
+            groupSelect.innerHTML = sourceGroups.map(group => {
+                const label = escapeHtml(group.name || '未命名分组');
+                return `<option value="${group.id}">${label}</option>`;
+            }).join('');
+
+            groupSelect.value = 'group_default';
         }
 
         function applyAddFriendPersonaSelection() {
@@ -3263,6 +4218,7 @@
             document.getElementById('add-friend-page').classList.add('open');
             resetAddFriendCardCollapseState();
             initAddFriendPersonaSection();
+            initAddFriendGroupSelect();
             
             // 初始化头像选择器
             setTimeout(() => {
@@ -3330,6 +4286,8 @@
             document.getElementById('af-user-desc-input').value = '';
             const afPersonaSelect = document.getElementById('af-user-persona-select');
             if (afPersonaSelect) afPersonaSelect.value = '';
+            const afGroupSelect = document.getElementById('af-friend-group-select');
+            if (afGroupSelect) afGroupSelect.value = 'group_default';
             document.getElementById('friend-greeting-input').value = '';
             
             // 重置头像预览
@@ -3363,6 +4321,8 @@
             const userPersonality = document.getElementById('af-user-desc-input').value.trim();
             const selectedPersonaId = document.getElementById('af-user-persona-select').value;
             const greeting = document.getElementById('friend-greeting-input').value.trim();
+            const groupSelect = document.getElementById('af-friend-group-select');
+            const selectedGroupId = groupSelect ? groupSelect.value : 'group_default';
             
             if (!name) {
                 showToast('未输入TA的名字');
@@ -3382,6 +4342,14 @@
                 status: desc ? desc.substring(0, 20) + (desc.length > 20 ? '...' : '') : '',
                 createdAt: new Date().toISOString()
             };
+
+            let friendGroupId = selectedGroupId;
+            if (!Array.isArray(AppState.friendGroups) || !AppState.friendGroups.some(group => group.id === friendGroupId)) {
+                friendGroupId = 'group_default';
+            }
+
+            friend.friendGroupId = friendGroupId;
+            friend.friendSortIndex = getNextFriendSortIndex(friendGroupId);
             
             AppState.friends.push(friend);
             
@@ -9410,7 +10378,7 @@
             
             // ========== 第二步：处理撤回标记 ==========
             // 匹配撤回标记：【撤回】消息ID【/撤回】
-            const retractRegex = /【撤回】([^【]+?)【\/撤回】/;
+            const retractRegex = /【\s*撤回\s*】\s*([^【】]+?)\s*【\s*[\/／]\s*撤回\s*】/;
             const retractMatch = text.match(retractRegex);
             
             if (retractMatch && retractMatch[1]) {
@@ -9420,7 +10388,7 @@
                     AppState.messages[convId] = [];
                 }
                 const messages = AppState.messages[convId];
-                const msgIndex = messages.findIndex(m => m.id === targetMsgId);
+                const msgIndex = messages.findIndex(m => String(m.id) === String(targetMsgId));
                 
                 if (msgIndex > -1) {
                     const originalMsg = messages[msgIndex];
@@ -9628,7 +10596,7 @@
             }
             
             // 最终清理：移除所有剩余的【】标记对
-            text = text.replace(/【[^】]*】[^【】]*【\/[^】]*】/g, '').trim();
+            text = text.replace(/【[^】]*】[^【】]*【[\/／][^】]*】/g, '').trim();
             text = text.replace(/\n{3,}/g, '\n\n').trim();
             
             // ========== 第六步：创建并添加AI消息 ==========
@@ -9863,7 +10831,7 @@
                     content = cleanAIResponse(content);
 
                     // 处理撤回标记
-                    const retractRegex = /【撤回】([^【]+?)【\/撤回】/;
+                    const retractRegex = /【\s*撤回\s*】\s*([^【】]+?)\s*【\s*[\/／]\s*撤回\s*】/;
                     const retractMatch = content.match(retractRegex);
                     if (retractMatch && retractMatch[1]) {
                         const targetMsgId = retractMatch[1].trim();
@@ -9871,7 +10839,7 @@
                             AppState.messages[convId] = [];
                         }
                         const messages = AppState.messages[convId];
-                        const msgIndex = messages.findIndex(m => m.id === targetMsgId);
+                        const msgIndex = messages.findIndex(m => String(m.id) === String(targetMsgId));
 
                         if (msgIndex > -1) {
                             const originalMsg = messages[msgIndex];
@@ -10020,7 +10988,7 @@
                     // 【新架构】心声已在 appendAssistantMessage 中从主API响应自动提取
                     
                     content = cleanAIResponse(content);
-                    content = content.replace(/【[^】]*】[^【】]*【\/[^】]*】/g, '').trim();
+                    content = content.replace(/【[^】]*】[^【】]*【[\/／][^】]*】/g, '').trim();
                     content = content.replace(/\n{3,}/g, '\n\n').trim();
                     
                     if (!AppState.messages[convId]) {
@@ -13688,7 +14656,8 @@
 
             const state = {
                 activeTab: initialTab,
-                storeDetailId: null
+                storeDetailId: null,
+                storePage: 1
             };
             const baseFontStoreItems = [
                 {
@@ -13838,48 +14807,142 @@
                 { name: '一颗萌布丁', url: 'https://nos.netease.com/ysf/010535bedecb1311389aff770ef68203.ttf' }
             ];
 
-            const mintQuoteHeads = [
-                '适合慢读',
-                '偏软萌',
-                '更耐看',
-                '更清爽',
-                '很稳',
-                '很轻',
-                '很甜',
-                '有点酷',
-                '更治愈'
-            ];
-            const mintQuoteTails = [
-                '但不腻。',
-                '刚刚好。',
-                '不抢戏。',
-                '适合长句。',
-                '适合短句。',
-                '适合标题。',
-                '很灵动。',
-                '很温柔。',
-                '很安心。'
-            ];
             const mintBadges = ['人气', '轻柔', '灵动', '治愈', '元气', '清新', '温柔', '软萌', '舒缓'];
             const mintAccents = ['#ffb677', '#ffd166', '#f7aef8', '#b8f2e6', '#a0c4ff', '#ffadad', '#caffbf', '#9bf6ff', '#ffc6ff'];
             const mintPrices = [18, 20, 22, 24, 26, 28, 30, 32, 34];
 
+            const storeNameOverrides = {
+                '江城圆体 300W': '江城圆体·轻细',
+                '江城圆体 400W': '江城圆体·清朗',
+                '江城圆体 500W': '江城圆体·稳正',
+                '江城圆体 600W': '江城圆体·标题',
+                '江城圆体 700W': '江城圆体·重墨',
+                'Traveler': '远行者'
+            };
+            const storeNameFronts = [
+                '春汐', '月白', '清岚', '松影', '雾绡', '星河', '竹语', '海潮',
+                '枕风', '晚灯', '雨眠', '南枝', '旧梦', '浅墨', '柳烟', '雪影',
+                '兰庭', '云栖'
+            ];
+            const storeNameBacks = [
+                '轻体', '柔体', '清体', '书体', '圆体', '细体', '简体', '逸体',
+                '雅体', '素体', '影体', '澄体'
+            ];
+            const storePoemSubjects = [
+                '春风', '秋水', '晓月', '夜雨', '远山', '归雁', '青灯', '落花',
+                '微雪', '松间', '海潮', '柳影', '星河', '薄雾', '炊烟', '暮云',
+                '清溪', '旧城'
+            ];
+            const storePoemActions = [
+                '拂', '照', '入', '落', '穿', '染', '洗', '摇', '映', '泊',
+                '扣', '随', '归', '绕', '轻点', '轻敲', '微起', '缓行'
+            ];
+            const storePoemObjects = [
+                '柳岸', '石桥', '旧城', '渔火', '平湖', '竹影', '青瓦', '小径',
+                '沙洲', '松窗', '溪口', '书页', '花径', '山寺', '苔阶', '檐下',
+                '船尾', '灯影'
+            ];
+            const storePoemEnds = [
+                '微凉', '如梦', '无声', '成诗', '初醒', '渐远', '轻响', '入怀',
+                '不语', '淡然', '清明', '柔软', '清浅', '未央', '照影', '成烟',
+                '相依', '自安'
+            ];
+            const storeStoryTones = [
+                '清润', '温柔', '轻缓', '通透', '笃定', '微凉', '清甜', '安静',
+                '柔和', '明朗', '沉稳', '灵动'
+            ];
+            const storeStoryScenes = [
+                '晨雾的巷口', '午后窗前', '雨后的石桥', '晚灯下的书桌',
+                '海边的长堤', '山寺的木阶', '旧城的拱门', '竹影摇动的庭院',
+                '风起的岸边', '薄雾里的河面', '夜色下的街角', '初晴的屋檐'
+            ];
+            const storeStoryGestures = [
+                '风掠过纸面', '水在石上回响', '光在玻璃上流动', '叶在窗前轻摆',
+                '潮在岸边轻拍', '影在墙上游走', '雾在栏杆上散开', '雨在瓦上敲击',
+                '星在屋脊上停驻', '烟在巷口缓升', '钟在远处慢响', '云在山背处缓移'
+            ];
+            const storeStoryTextures = [
+                '细密的留白', '柔软的边缘', '克制的起伏', '安稳的重心',
+                '松弛的线条', '轻轻的间距', '温热的笔触', '干净的轮廓',
+                '舒展的节奏', '静默的停顿', '轻盈的笔意', '细腻的转折'
+            ];
+            const storeStoryReturns = [
+                '更安静的节拍', '更清晰的呼吸', '更从容的步伐', '更柔和的目光',
+                '更稳妥的心绪', '更明净的视线', '更缓慢的时间', '更可靠的停顿',
+                '更温和的结尾', '更轻的回声', '更平稳的落点', '更柔软的落日'
+            ];
+            const storeStoryMemories = [
+                '一盏灯的温度', '一段旧信的纸香', '一场雨的余韵', '一页书的褶皱',
+                '一阵风的回响', '一片海的潮声', '一条街的脚步', '一座桥的轻响',
+                '一窗月的安宁', '一树花的静影', '一夜星的微光', '一缕烟的柔远'
+            ];
+
+            function buildStoreChineseName(name, index) {
+                const trimmedName = String(name || '').trim();
+                if (storeNameOverrides[trimmedName]) {
+                    return storeNameOverrides[trimmedName];
+                }
+                if (!/[A-Za-z]/.test(trimmedName)) {
+                    return trimmedName;
+                }
+                const front = storeNameFronts[index % storeNameFronts.length];
+                const back = storeNameBacks[Math.floor(index / storeNameFronts.length) % storeNameBacks.length];
+                return `${front}${back}`;
+            }
+
+            function generatePoemLine(index) {
+                const subjectA = storePoemSubjects[index % storePoemSubjects.length];
+                const actionA = storePoemActions[index % storePoemActions.length];
+                const objectA = storePoemObjects[Math.floor(index / storePoemSubjects.length) % storePoemObjects.length];
+                const endA = storePoemEnds[Math.floor(index / (storePoemSubjects.length * 2)) % storePoemEnds.length];
+                const subjectB = storePoemSubjects[(index + 5) % storePoemSubjects.length];
+                const actionB = storePoemActions[(index + 7) % storePoemActions.length];
+                const objectB = storePoemObjects[(index + 11) % storePoemObjects.length];
+                const endB = storePoemEnds[(index + 13) % storePoemEnds.length];
+                return `${subjectA}${actionA}${objectA}${endA}，${subjectB}${actionB}${objectB}${endB}`;
+            }
+
+            function buildStoreStory(item, index) {
+                const quoteText = String(item.quote || '').trim() || '风月入怀，星河自安';
+                const [lineA, lineB] = quoteText.split('，');
+                const mainLineA = lineA || quoteText;
+                const mainLineB = lineB || '余韵未央';
+                const toneA = storeStoryTones[index % storeStoryTones.length];
+                const toneB = storeStoryTones[(index + 5) % storeStoryTones.length];
+                const sceneA = storeStoryScenes[index % storeStoryScenes.length];
+                const sceneB = storeStoryScenes[(index + 7) % storeStoryScenes.length];
+                const gestureA = storeStoryGestures[index % storeStoryGestures.length];
+                const textureA = storeStoryTextures[index % storeStoryTextures.length];
+                const returnA = storeStoryReturns[index % storeStoryReturns.length];
+                const memoryA = storeStoryMemories[index % storeStoryMemories.length];
+                const safeName = String(item.name || '这款字体').trim() || '这款字体';
+                return `以“${quoteText}”为引，${safeName}把“${mainLineA}”的光色拆成${toneA}的骨架，又将“${mainLineB}”铺成缓慢的纹理，让字的停顿像${sceneA}里的一次呼吸。设计时先让笔画在${sceneB}间行走，再让转折学会${gestureA}的节奏，因此阅读时你会感到它在靠近，也会感到它在退后，始终保持${toneB}的温度。它不靠尖锐情绪抓住你，而是让字面留出${textureA}的空处，让视线在缝隙里看见${memoryA}，普通的句子也会被轻轻照亮。当你把它放进对话、标题或长段叙述时，字形会自动收束重心，把散开的思绪带回${returnA}，像在那句“${quoteText}”里再次落座。`;
+            }
+
             const mintFonts = mintFontsRaw.map((item, index) => {
-                const head = mintQuoteHeads[index % mintQuoteHeads.length];
-                const tail = mintQuoteTails[Math.floor(index / mintQuoteHeads.length) % mintQuoteTails.length];
                 return {
                     id: `mint-${index + 1}`,
                     name: item.name,
                     author: '薄荷猫',
                     url: item.url,
                     price: mintPrices[index % mintPrices.length],
-                    quote: `${item.name}，${head}${tail}`,
+                    quote: '',
                     badge: mintBadges[index % mintBadges.length],
                     accent: mintAccents[index % mintAccents.length]
                 };
             });
 
-            const fontStoreItems = baseFontStoreItems.concat(mintFonts);
+            const rawFontStoreItems = baseFontStoreItems.concat(mintFonts);
+            const fontStoreItems = rawFontStoreItems.map((item, index) => {
+                const normalizedName = buildStoreChineseName(item.name, index);
+                const legacyNames = normalizedName !== item.name ? [item.name] : [];
+                return {
+                    ...item,
+                    name: normalizedName,
+                    legacyNames,
+                    quote: generatePoemLine(index)
+                };
+            });
 
             const storeDetailMoods = [
                 '清晨棉雾',
@@ -13892,60 +14955,11 @@
                 '玻璃花房',
                 '电台低语'
             ];
-            const storeDetailTraits = [
-                '圆润字腔',
-                '骨架清晰',
-                '线条柔顺',
-                '字面紧凑',
-                '视觉温度高',
-                '重心稳定',
-                '留白友好',
-                '行距舒展',
-                '屏显清晰'
-            ];
-            const storeDetailScenes = [
-                '聊天气泡',
-                '标题横幅',
-                '手账日记',
-                '便签清单',
-                '弹窗提示',
-                '卡片标题',
-                '长文阅读',
-                '海报文案',
-                '角色设定'
-            ];
-            const storeDetailTips = [
-                '建议字号 14-16 更舒服',
-                '浅色背景更显清透',
-                '标题可加粗突出重点',
-                '正文行距 1.5 更好读',
-                '短句更有节奏感',
-                '适合日常聊天与记录'
-            ];
-            const storeDetailStories = [
-                '像把午后风折进字里，读起来松弛又轻快。',
-                '希望你在每一次输入时都能感到被柔光包裹。',
-                '把生活里的小确幸写成能长期阅读的温度。',
-                '用更清晰的笔画，把每句话留住一段呼吸。',
-                '愿它在屏幕上也保持纸感的温柔触感。',
-                '像一杯温热的奶茶，适合慢慢读完。',
-                '把沉稳藏在边角里，让内容更聚焦。',
-                '希望每一段对话都有一个安静的背景音。',
-                '让字形替你说一句“我在认真听”。'
-            ];
             const storeDetailBenefits = [
                 '购买后永久可用，支持全局应用',
                 '可随时在字体库中切换',
                 '购买记录写入钱包明细'
             ];
-
-            function pickFromList(list, startIndex, count) {
-                const result = [];
-                for (let i = 0; i < count; i += 1) {
-                    result.push(list[(startIndex + i) % list.length]);
-                }
-                return result;
-            }
 
             function getFontFormatLabel(url) {
                 const cleanUrl = String(url || '').split('?')[0].split('#')[0].toLowerCase();
@@ -13957,11 +14971,8 @@
 
             function getStoreDetailMeta(item, index) {
                 const mood = storeDetailMoods[index % storeDetailMoods.length];
-                const traits = pickFromList(storeDetailTraits, index, 3);
-                const scenes = pickFromList(storeDetailScenes, index + 2, 3);
-                const tips = pickFromList(storeDetailTips, index + 1, 2);
-                const story = storeDetailStories[index % storeDetailStories.length];
-                return { mood, traits, scenes, tips, story };
+                const story = buildStoreStory(item, index);
+                return { mood, story };
             }
 
             function getFontStoreState() {
@@ -13978,11 +14989,17 @@
                 if (!manager) {
                     return null;
                 }
+                const legacyNames = Array.isArray(item.legacyNames) ? item.legacyNames : [];
+                const currentName = String(item.name || '').trim();
                 return manager.getAllFonts().find((font) => {
                     if (font.storeId && font.storeId === item.id) {
                         return true;
                     }
-                    return String(font.name || '').trim() === item.name;
+                    const fontName = String(font.name || '').trim();
+                    if (fontName === currentName) {
+                        return true;
+                    }
+                    return legacyNames.some((legacy) => String(legacy || '').trim() === fontName);
                 }) || null;
             }
 
@@ -13993,7 +15010,12 @@
                 if (activeFont.storeId && activeFont.storeId === item.id) {
                     return true;
                 }
-                return String(activeFont.name || '').trim() === item.name;
+                const legacyNames = Array.isArray(item.legacyNames) ? item.legacyNames : [];
+                const activeName = String(activeFont.name || '').trim();
+                if (activeName === String(item.name || '').trim()) {
+                    return true;
+                }
+                return legacyNames.some((legacy) => String(legacy || '').trim() === activeName);
             }
 
             
@@ -14658,6 +15680,47 @@
                         border-radius: 999px;
                         background: rgba(255, 246, 239, 0.9);
                         border: 1px solid rgba(255, 206, 171, 0.7);
+                    }
+
+                    #decoration-main-page .decoration-store-pagination {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        margin-top: 12px;
+                        flex-wrap: wrap;
+                    }
+
+                    #decoration-main-page .decoration-store-pagination-label {
+                        font-size: 12px;
+                        color: #b9849f;
+                    }
+
+                    #decoration-main-page .decoration-store-pagination-buttons {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 6px;
+                    }
+
+                    #decoration-main-page .decoration-store-page-btn {
+                        min-width: 28px;
+                        height: 28px;
+                        padding: 0 8px;
+                        border-radius: 999px;
+                        border: 1px solid #ffd1e2;
+                        background: #fff;
+                        color: #b56c89;
+                        font-size: 12px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    }
+
+                    #decoration-main-page .decoration-store-page-btn.active,
+                    #decoration-main-page .decoration-store-page-btn:disabled {
+                        background: linear-gradient(135deg, #ffb4cf 0%, #ff95ba 100%);
+                        color: #fff;
+                        border-color: transparent;
+                        cursor: default;
                     }
 
                     #decoration-main-page .decoration-store-detail {
@@ -15454,13 +16517,23 @@
                 const ownedSet = new Set((storeState.owned || []).map(String));
                 const activeFont = manager ? manager.getActiveFont() : null;
                 const currentCoins = Number(AppState.user && AppState.user.coins || 0);
+                const storeRowsPerPage = 5;
+                const storeColumns = 3;
+                const storePageSize = storeRowsPerPage * storeColumns;
+                const totalPages = Math.max(1, Math.ceil(fontStoreItems.length / storePageSize));
+                const currentPage = Math.min(Math.max(Number(state.storePage || 1), 1), totalPages);
+                if (state.storePage !== currentPage) {
+                    state.storePage = currentPage;
+                }
+                const pageStartIndex = (currentPage - 1) * storePageSize;
+                const pageItems = fontStoreItems.slice(pageStartIndex, pageStartIndex + storePageSize);
 
                 const ownedCount = fontStoreItems.filter((item) => {
                     const installedFont = getInstalledFontForItem(item, manager);
                     return ownedSet.has(item.id) || !!installedFont;
                 }).length;
 
-                const cardsHTML = fontStoreItems.map((item, index) => {
+                const cardsHTML = pageItems.map((item) => {
                     const installedFont = getInstalledFontForItem(item, manager);
                     const isInstalled = !!installedFont;
                     const isOwned = ownedSet.has(item.id);
@@ -15472,7 +16545,7 @@
                             <div class="decoration-store-card-head">
                                 <div class="decoration-store-name">${escapeHtml(item.name)}</div>
                             </div>
-                            <div class="decoration-store-author">作者：${escapeHtml(item.author)}</div>
+                            <div class="decoration-store-author">${escapeHtml(item.author)}</div>
                             <div class="decoration-store-actions">
                                 <div class="decoration-store-price">${priceText}</div>
                             </div>
@@ -15480,11 +16553,28 @@
                     `;
                 }).join('');
 
+                const paginationButtons = Array.from({ length: totalPages }, (_, index) => {
+                    const pageNumber = index + 1;
+                    const isActive = pageNumber === currentPage;
+                    return `
+                        <button class="decoration-store-page-btn${isActive ? ' active' : ''}" data-store-page="${pageNumber}" ${isActive ? 'aria-current="page" disabled' : ''} aria-label="第${pageNumber}页">${pageNumber}</button>
+                    `;
+                }).join('');
+
+                const paginationHTML = `
+                    <div class="decoration-store-pagination">
+                        <span class="decoration-store-pagination-label">页面</span>
+                        <div class="decoration-store-pagination-buttons">
+                            ${paginationButtons}
+                        </div>
+                    </div>
+                `;
+
                 panel.innerHTML = `
                     <div class="decoration-card decoration-store-hero">
                         <div class="decoration-store-hero-head">
                             <div>
-                                <div class="decoration-store-hero-title">字体商店</div>
+                                <div class="decoration-store-hero-title">虚拟字体商店</div>
                                 <div class="decoration-store-hero-sub">购买后会自动加入字体库，随时可应用</div>
                             </div>
                             <span class="decoration-inline-badge">喵币支付</span>
@@ -15506,6 +16596,7 @@
                         <div class="decoration-store-grid">
                             ${cardsHTML}
                         </div>
+                        ${paginationHTML}
                     </div>
                 `;
 
@@ -15533,11 +16624,10 @@
                         const detailAction = detailIsActive ? 'none' : (detailIsInstalled ? 'apply' : (detailIsOwned ? 'install' : 'buy'));
                         const detailActionLabel = detailIsActive ? '使用中' : (detailIsInstalled ? '应用' : (detailIsOwned ? '下载' : '购买'));
                         const detailStatus = detailIsActive ? '使用中' : (detailIsInstalled ? '已安装' : (detailIsOwned ? '已购' : '未购买'));
+                        const detailStatusLabel = (detailStatus === '未购买' || detailStatus === '已购') ? '' : detailStatus;
+                        const detailStatusBadge = detailStatusLabel ? `<span class="decoration-inline-badge">${detailStatusLabel}</span>` : '';
                         const detailPrice = (detailIsOwned || detailIsInstalled) ? '已拥有' : `${detailItem.price} 喵币`;
                         const detailBadge = detailItem.badge ? `<span class="decoration-store-detail-tag">${escapeHtml(detailItem.badge)}</span>` : '';
-                        const detailTraitTags = detailMeta.traits.map(trait => `<span class="decoration-store-detail-tag">${escapeHtml(trait)}</span>`).join('');
-                        const detailSceneTags = detailMeta.scenes.map(scene => `<span class="decoration-store-detail-tag">${escapeHtml(scene)}</span>`).join('');
-                        const detailTips = detailMeta.tips.map(tip => `<li>${escapeHtml(tip)}</li>`).join('');
                         const detailBenefits = storeDetailBenefits.map(item => `<li>${escapeHtml(item)}</li>`).join('');
 
                         panel.insertAdjacentHTML('beforeend', `
@@ -15552,44 +16642,23 @@
 
                                     <div class="decoration-store-detail-hero">
                                         <div class="decoration-store-detail-name">${escapeHtml(detailItem.name)}</div>
-                                        <div class="decoration-store-detail-author">作者：${escapeHtml(detailItem.author)}</div>
+                                        <div class="decoration-store-detail-author">贡献者：${escapeHtml(detailItem.author)}</div>
                                         <div class="decoration-store-detail-tags">
                                             ${detailBadge}
                                             <span class="decoration-store-detail-tag">${detailFormat}</span>
                                             <span class="decoration-store-detail-tag">${escapeHtml(detailMeta.mood)}</span>
-                                            <span class="decoration-inline-badge">${detailStatus}</span>
+                                            ${detailStatusBadge}
                                         </div>
                                     </div>
 
                                     <div class="decoration-store-detail-section">
-                                        <div class="decoration-store-detail-label">作者有话说</div>
+                                        <div class="decoration-store-detail-label">评语</div>
                                         <div class="decoration-store-detail-text">${escapeHtml(detailItem.quote)}</div>
-                                    </div>
-
-                                    <div class="decoration-store-detail-section">
-                                        <div class="decoration-store-detail-label">字体气质</div>
-                                        <div class="decoration-store-detail-tags">
-                                            ${detailTraitTags}
-                                        </div>
-                                    </div>
-
-                                    <div class="decoration-store-detail-section">
-                                        <div class="decoration-store-detail-label">适用场景</div>
-                                        <div class="decoration-store-detail-tags">
-                                            ${detailSceneTags}
-                                        </div>
                                     </div>
 
                                     <div class="decoration-store-detail-section">
                                         <div class="decoration-store-detail-label">设计故事</div>
                                         <div class="decoration-store-detail-text">${escapeHtml(detailMeta.story)}</div>
-                                    </div>
-
-                                    <div class="decoration-store-detail-section">
-                                        <div class="decoration-store-detail-label">上手建议</div>
-                                        <ul class="decoration-store-detail-list">
-                                            ${detailTips}
-                                        </ul>
                                     </div>
 
                                     <div class="decoration-store-detail-section">
@@ -15642,6 +16711,17 @@
                         if (itemId) {
                             openFontStoreDetail(itemId);
                         }
+                    };
+                });
+
+                panel.querySelectorAll('[data-store-page]').forEach((button) => {
+                    button.onclick = () => {
+                        const pageValue = Number(button.dataset.storePage);
+                        if (!Number.isFinite(pageValue) || pageValue < 1 || pageValue === state.storePage) {
+                            return;
+                        }
+                        state.storePage = pageValue;
+                        renderFontStorePanel();
                     };
                 });
 

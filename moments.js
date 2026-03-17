@@ -171,6 +171,11 @@ class MomentsManager {
       interval: 30, // 分钟
       count: 1 // 每次生成几条
     };
+    this.autoMomentsSettings = {
+      enabled: false,
+      groupIds: [],
+      characterIds: []
+    };
     this.autoReplyEnabled = true;
     
     // 加载数据
@@ -191,6 +196,8 @@ class MomentsManager {
         this.comments = data.comments || {};
         this.notifications = data.notifications || [];
         this.autoSettings = data.autoSettings || this.autoSettings;
+        this.autoMomentsSettings = data.autoMomentsSettings || this.autoMomentsSettings;
+        this.autoReplyEnabled = data.autoReplyEnabled !== undefined ? data.autoReplyEnabled : this.autoReplyEnabled;
       } catch (e) {
         console.error('加载朋友圈数据失败:', e);
       }
@@ -231,7 +238,9 @@ class MomentsManager {
       moments: this.moments,
       comments: this.comments,
       notifications: this.notifications,
-      autoSettings: this.autoSettings
+      autoSettings: this.autoSettings,
+      autoMomentsSettings: this.autoMomentsSettings,
+      autoReplyEnabled: this.autoReplyEnabled
     };
     try {
       localStorage.setItem('momentsData', JSON.stringify(data));
@@ -400,14 +409,27 @@ class MomentsManager {
 
   // 新增朋友圈
   addMoment(data) {
+    const visibilityGroups = Array.isArray(data.visibilityGroups)
+      ? data.visibilityGroups.filter(Boolean)
+      : (data.visibility ? [data.visibility] : ['group_all']);
+
+    if (visibilityGroups.includes('group_all')) {
+      visibilityGroups.splice(0, visibilityGroups.length, 'group_all');
+    }
+
+    const normalizedVisibilityName = data.visibilityName || (visibilityGroups[0] === 'group_all'
+      ? '所有好友'
+      : visibilityGroups.join('、'));
+
     const moment = {
       id: 'moment_' + Date.now(),
       author: data.author || this.getUserName(),
       authorAvatar: data.authorAvatar || this.getUserAvatar(),
       content: data.content || '',
       images: data.images || [],
-      visibility: data.visibility || 'group_all', // 可见范围（分组ID）
-      visibilityName: data.visibilityName || '所有好友', // 可见范围名称（用于显示）
+      visibility: data.visibility || visibilityGroups[0] || 'group_all', // 可见范围（兼容字段）
+      visibilityGroups: visibilityGroups,
+      visibilityName: normalizedVisibilityName, // 可见范围名称（用于显示）
       isUserPost: data.isUserPost !== false,
       createdAt: new Date().toISOString(),
       likes: 0,
@@ -468,7 +490,7 @@ class MomentsManager {
         // 获取该朋友圈的发布者（目标角色）
         const moment = this.moments.find(m => m.id === momentId);
         if (moment && moment.author) {
-          MomentsGroupInteraction.onUserComment(momentId, commentData.content, moment.author);
+          MomentsGroupInteraction.onUserComment(momentId, commentData.content, comment.id, moment.author);
         }
       } else {
         // 备选方案：使用旧的回复生成方法
@@ -498,6 +520,12 @@ class MomentsManager {
 
     comment.replies.push(reply);
     this.saveToStorage();
+
+    if (this.autoReplyEnabled && replyData.isUserReply) {
+      if (typeof MomentsGroupInteraction !== 'undefined') {
+        MomentsGroupInteraction.onUserReply(momentId, commentId, replyData.content, comment.author);
+      }
+    }
 
     return reply;
   }
@@ -660,12 +688,18 @@ class MomentsManager {
       fromAvatar: data.fromAvatar,
       content: data.content,
       momentId: data.momentId,
+      commentId: data.commentId,
+      replyId: data.replyId,
       isRead: false,
       createdAt: new Date().toISOString()
     };
 
     this.notifications.unshift(notification);
     this.saveToStorage();
+
+    if (typeof updateNotificationBadge === 'function') {
+      updateNotificationBadge();
+    }
 
     return notification;
   }
@@ -681,7 +715,14 @@ class MomentsManager {
     if (notif) {
       notif.isRead = true;
       this.saveToStorage();
+      if (typeof updateNotificationBadge === 'function') {
+        updateNotificationBadge();
+      }
     }
+  }
+
+  getUnreadNotificationCount() {
+    return this.notifications.filter(n => !n.isRead).length;
   }
 
   // 渲染朋友圈列表
@@ -774,27 +815,50 @@ class MomentsManager {
                 commentItem.className = 'comment-item';
                 const authorName = (comment && comment.author) || '未知用户';
                 const commentContent = (comment && comment.content) || '';
-                commentItem.innerHTML = `
-                  <div class="comment-header">
-                    <div>
-                      <span class="comment-user">${authorName}</span>
-                      <span style="color: #666;">: ${commentContent}</span>
-                      ${comment && comment.isUserComment ? `<button class="comment-delete-btn" onclick="momentsManager.deleteComment('${moment.id}', '${comment.id}'); momentsManager.renderMoments();">×</button>` : ''}
-                    </div>
-                  </div>
-                  ${this.renderReplies(comment.replies)}
-                `;
 
-                if (comment.replies && comment.replies.length > 0) {
-                  const repliesHTML = comment.replies.map(reply => `
-                    <div class="reply-item">
-                      <div class="reply-header">
-                        <span class="reply-user">${reply.author || '未知用户'}</span>
-                        <span style="color: #666;">: ${reply.content || ''}</span>
-                      </div>
-                    </div>
-                  `).join('');
-                  commentItem.innerHTML += repliesHTML;
+                const header = document.createElement('div');
+                header.className = 'comment-header';
+
+                const authorEl = document.createElement('span');
+                authorEl.className = 'comment-user';
+                authorEl.textContent = authorName;
+
+                const textEl = document.createElement('span');
+                textEl.className = 'comment-text';
+                textEl.textContent = `: ${commentContent}`;
+
+                header.appendChild(authorEl);
+                header.appendChild(textEl);
+
+                if (comment && comment.isUserComment) {
+                  const deleteBtn = document.createElement('button');
+                  deleteBtn.className = 'comment-delete-btn';
+                  deleteBtn.textContent = '×';
+                  deleteBtn.addEventListener('click', () => {
+                    this.deleteComment(moment.id, comment.id);
+                    this.renderMoments();
+                  });
+                  header.appendChild(deleteBtn);
+                }
+
+                commentItem.appendChild(header);
+
+                const actions = document.createElement('div');
+                actions.className = 'comment-actions';
+                if (!comment.isUserComment) {
+                  const replyBtn = document.createElement('button');
+                  replyBtn.className = 'comment-reply-btn';
+                  replyBtn.textContent = '回复';
+                  replyBtn.addEventListener('click', () => {
+                    openReplyToComment(moment.id, comment.id, authorName);
+                  });
+                  actions.appendChild(replyBtn);
+                }
+                commentItem.appendChild(actions);
+
+                const repliesHTML = this.renderReplies(comment.replies);
+                if (repliesHTML) {
+                  commentItem.insertAdjacentHTML('beforeend', repliesHTML);
                 }
 
                 commentsSection.appendChild(commentItem);
@@ -826,16 +890,19 @@ class MomentsManager {
   }
 
   // 渲染回复
-  renderReplies(replies) {
+  renderReplies(replies, highlightReplyId = '') {
     if (!replies || replies.length === 0) return '';
-    return replies.map(reply => `
-      <div class="reply-item">
+    return replies.map(reply => {
+      const isHighlight = highlightReplyId && reply.id === highlightReplyId;
+      return `
+      <div class="reply-item${isHighlight ? ' highlight' : ''}" data-reply-id="${reply.id || ''}">
         <div class="reply-header">
           <span class="reply-user">${reply.author}</span>
           <span style="color: #666;">: ${reply.content}</span>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   // 格式化时间
@@ -984,6 +1051,9 @@ function initializePage() {
   // 初始化朋友圈列表
   momentsManager.renderMoments();
 
+  // 初始化通知徽章
+  updateNotificationBadge();
+
   // 注意：已禁用 monitorAvatarChanges，朋友圈个人资料完全独立
   // monitorAvatarChanges();
   
@@ -1076,7 +1146,7 @@ function closeMomentDialog() {
   }
 }
 
-function openCommentModal(momentId) {
+function openCommentModal(momentId, highlightCommentId = '', highlightReplyId = '') {
   try {
     const modal = document.getElementById('commentModal');
     const commentThread = document.getElementById('commentThread');
@@ -1086,6 +1156,9 @@ function openCommentModal(momentId) {
       return;
     }
 
+    ensureReplyHint();
+    clearReplyTarget();
+
     // 显示该朋友圈的所有评论
     const comments = momentsManager.getMomentComments(momentId) || [];
     commentThread.innerHTML = '';
@@ -1093,18 +1166,49 @@ function openCommentModal(momentId) {
     comments.forEach(comment => {
       try {
         if (!comment) return;
-        
+
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment-item';
+        if (highlightCommentId && comment.id === highlightCommentId) {
+          commentDiv.classList.add('highlight');
+        }
+
         const authorName = (comment && comment.author) || '未知用户';
         const commentContent = (comment && comment.content) || '';
-        commentDiv.innerHTML = `
-          <div class="comment-header">
-            <span class="comment-user">${authorName}</span>
-            <span style="color: #666;">: ${commentContent}</span>
-          </div>
-          ${momentsManager.renderReplies(comment.replies)}
-        `;
+
+        const header = document.createElement('div');
+        header.className = 'comment-header';
+
+        const authorEl = document.createElement('span');
+        authorEl.className = 'comment-user';
+        authorEl.textContent = authorName;
+
+        const textEl = document.createElement('span');
+        textEl.className = 'comment-text';
+        textEl.textContent = `: ${commentContent}`;
+
+        header.appendChild(authorEl);
+        header.appendChild(textEl);
+        commentDiv.appendChild(header);
+
+        const actions = document.createElement('div');
+        actions.className = 'comment-actions';
+        if (!comment.isUserComment) {
+          const replyBtn = document.createElement('button');
+          replyBtn.className = 'comment-reply-btn';
+          replyBtn.textContent = '回复';
+          replyBtn.addEventListener('click', () => {
+            setReplyTarget(authorName, comment.id);
+          });
+          actions.appendChild(replyBtn);
+        }
+        commentDiv.appendChild(actions);
+
+        const repliesHTML = momentsManager.renderReplies(comment.replies, highlightReplyId);
+        if (repliesHTML) {
+          commentDiv.insertAdjacentHTML('beforeend', repliesHTML);
+        }
+
         commentThread.appendChild(commentDiv);
       } catch (e) {
         console.log('处理单个评论出错:', e.message);
@@ -1113,7 +1217,18 @@ function openCommentModal(momentId) {
 
     // 保存momentId以便提交时使用
     modal.dataset.momentId = momentId;
+    modal.dataset.highlightCommentId = highlightCommentId || '';
+    modal.dataset.highlightReplyId = highlightReplyId || '';
     modal.classList.add('show');
+
+    if (highlightCommentId) {
+      setTimeout(() => {
+        const highlightEl = commentThread.querySelector('.comment-item.highlight');
+        if (highlightEl && highlightEl.scrollIntoView) {
+          highlightEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 60);
+    }
   } catch (e) {
     console.log('openCommentModal出错:', e.message);
   }
@@ -1130,9 +1245,88 @@ function closeCommentModal() {
     if (commentInputText) {
       commentInputText.value = '';
     }
+    clearReplyTarget();
   } catch (e) {
     console.log('closeCommentModal出错:', e.message);
   }
+}
+
+function ensureReplyHint() {
+  const modal = document.getElementById('commentModal');
+  if (!modal) return;
+
+  const body = modal.querySelector('.modal-body');
+  if (!body) return;
+
+  let hint = document.getElementById('commentReplyHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'commentReplyHint';
+    hint.className = 'comment-reply-hint';
+    hint.innerHTML = `
+      <span id="commentReplyHintText"></span>
+      <button type="button" id="commentReplyCancel" class="comment-reply-cancel">取消</button>
+    `;
+
+    const inputBox = body.querySelector('.comment-input-box');
+    if (inputBox) {
+      body.insertBefore(hint, inputBox);
+    } else {
+      body.appendChild(hint);
+    }
+
+    const cancelBtn = hint.querySelector('#commentReplyCancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => clearReplyTarget());
+    }
+  }
+}
+
+function setReplyTarget(authorName, commentId) {
+  const modal = document.getElementById('commentModal');
+  if (!modal) return;
+
+  ensureReplyHint();
+  modal.dataset.replyToCommentId = commentId;
+  modal.dataset.replyToAuthor = authorName || '';
+
+  const hint = document.getElementById('commentReplyHint');
+  const hintText = document.getElementById('commentReplyHintText');
+  if (hint) {
+    hint.style.display = 'flex';
+  }
+  if (hintText) {
+    hintText.textContent = `回复 ${authorName || '对方'}`;
+  }
+
+  const input = document.getElementById('commentInputText');
+  if (input) {
+    input.placeholder = `回复 ${authorName || '对方'}...`;
+    input.focus();
+  }
+}
+
+function clearReplyTarget() {
+  const modal = document.getElementById('commentModal');
+  if (modal) {
+    delete modal.dataset.replyToCommentId;
+    delete modal.dataset.replyToAuthor;
+  }
+
+  const hint = document.getElementById('commentReplyHint');
+  if (hint) {
+    hint.style.display = 'none';
+  }
+
+  const input = document.getElementById('commentInputText');
+  if (input) {
+    input.placeholder = '输入评论...';
+  }
+}
+
+function openReplyToComment(momentId, commentId, authorName) {
+  openCommentModal(momentId, commentId);
+  setReplyTarget(authorName, commentId);
 }
 
 function openNotificationModal() {
@@ -1273,12 +1467,21 @@ function publishMoment() {
     }
     
     const groupSelect = document.getElementById('groupSelect');
-    const groupId = groupSelect ? groupSelect.value : 'group_all';
+    const selectedGroupIds = groupSelect
+      ? Array.from(groupSelect.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
+      : ['group_all'];
+    const visibilityGroups = selectedGroupIds.length > 0 ? selectedGroupIds : ['group_all'];
+    const normalizedVisibilityGroups = visibilityGroups.includes('group_all') ? ['group_all'] : visibilityGroups;
     
     // 获取选中的分组信息
     const groups = momentsManager.getFriendGroups();
-    const selectedGroup = groups.find(g => g.id === groupId);
-    const groupName = selectedGroup ? selectedGroup.name : '所有好友';
+    const groupNameMap = {};
+    groups.forEach(g => {
+      if (g && g.id) groupNameMap[g.id] = g.name || '未命名分组';
+    });
+    const visibilityName = normalizedVisibilityGroups[0] === 'group_all'
+      ? '所有好友'
+      : normalizedVisibilityGroups.map(id => groupNameMap[id] || '未命名分组').join('、');
 
     if (!text && images.length === 0) {
       alert('请输入文字或选择图片');
@@ -1295,20 +1498,21 @@ function publishMoment() {
       authorAvatar: userAvatar,
       content: text,
       images: images,
-      visibility: groupId,
-      visibilityName: groupName,
+      visibilityGroups: normalizedVisibilityGroups,
+      visibility: normalizedVisibilityGroups[0] === 'group_all' ? 'group_all' : normalizedVisibilityGroups.join(','),
+      visibilityName: visibilityName,
       isUserPost: true
     });
     
     console.log('✓ 朋友圈已发布');
-    console.log('  可见范围:', groupName, `(${groupId})`);
+    console.log('  可见范围:', visibilityName, `(${normalizedVisibilityGroups.join(',')})`);
     console.log('  内容:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
     
     // 刷新显示
     momentsManager.renderMoments();
     closeMomentDialog();
 
-    alert('发布成功！\n可见范围：' + groupName);
+    alert('发布成功！\n可见范围：' + visibilityName);
   } catch (e) {
     console.log('publishMoment出错:', e.message);
     alert('发布失败');
@@ -1357,14 +1561,24 @@ function submitComment() {
     
     const text = commentInputText.value.trim();
     if (!text) return;
+    const replyToCommentId = modal.dataset.replyToCommentId || '';
 
-    momentsManager.addComment(momentId, {
-      content: text,
-      isUserComment: true
-    });
-
-    momentsManager.renderMoments();
-    closeCommentModal();
+    if (replyToCommentId) {
+      momentsManager.addReply(momentId, replyToCommentId, {
+        content: text,
+        isUserReply: true
+      });
+      momentsManager.renderMoments();
+      clearReplyTarget();
+      openCommentModal(momentId, replyToCommentId);
+    } else {
+      momentsManager.addComment(momentId, {
+        content: text,
+        isUserComment: true
+      });
+      momentsManager.renderMoments();
+      closeCommentModal();
+    }
   } catch (e) {
     console.log('submitComment出错:', e.message);
   }
@@ -1919,19 +2133,19 @@ function showNotifications() {
     }
 
     const notifications = momentsManager.notifications || [];
+    const unreadNotifications = notifications.filter(n => n && !n.isRead);
 
-    if (notifications.length === 0) {
-      list.innerHTML = '<p style="text-align: center; color: #999;">暂无通知</p>';
+    if (unreadNotifications.length === 0) {
+      list.innerHTML = '<p style="text-align: center; color: #999;">暂无未读通知</p>';
     } else {
-      list.innerHTML = notifications.map(notif => {
+      list.innerHTML = unreadNotifications.map(notif => {
         try {
           const from = (notif && notif.from) || '未知用户';
           const content = (notif && notif.content) || '';
           const time = (notif && momentsManager.formatTime(notif.createdAt)) || '刚刚';
-          const unreadClass = (notif && !notif.isRead) ? 'unread' : '';
           
           return `
-            <div class="notification-item ${unreadClass}">
+            <div class="notification-item unread" data-notification-id="${notif.id}" data-moment-id="${notif.momentId || ''}" data-comment-id="${notif.commentId || ''}" data-reply-id="${notif.replyId || ''}">
               <div class="notification-header">
                 <span class="notification-user">${from}</span>
                 <span class="notification-time">${time}</span>
@@ -1944,11 +2158,71 @@ function showNotifications() {
           return '';
         }
       }).join('');
+
+      list.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const notifId = item.dataset.notificationId;
+          const momentId = item.dataset.momentId;
+          const commentId = item.dataset.commentId;
+          const replyId = item.dataset.replyId;
+          handleNotificationClick(notifId, momentId, commentId, replyId);
+        });
+      });
     }
 
     modal.classList.add('show');
   } catch (e) {
     console.log('showNotifications出错:', e.message);
+  }
+}
+
+function handleNotificationClick(notificationId, momentId, commentId, replyId) {
+  try {
+    if (!notificationId) return;
+    momentsManager.markNotificationAsRead(notificationId);
+    closeNotificationModal();
+
+    if (momentId) {
+      scrollToMoment(momentId);
+      openCommentModal(momentId, commentId || '', replyId || '');
+    }
+  } catch (e) {
+    console.log('处理通知点击出错:', e.message);
+  }
+}
+
+function scrollToMoment(momentId) {
+  try {
+    const element = document.getElementById('moment_' + momentId) || document.getElementById(momentId);
+    if (element && element.scrollIntoView) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (e) {
+    console.log('滚动到朋友圈出错:', e.message);
+  }
+}
+
+function updateNotificationBadge() {
+  try {
+    const btn = document.getElementById('notificationBtn');
+    if (!btn || !momentsManager) return;
+
+    let badge = btn.querySelector('.notification-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'notification-badge';
+      btn.appendChild(badge);
+    }
+
+    const count = momentsManager.getUnreadNotificationCount();
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) {
+    console.log('更新通知徽章出错:', e.message);
   }
 }
 
@@ -2160,45 +2434,88 @@ function changeProfileAvatar(input) {
 // ====== 工具函数 ======
 
 function initGroupSelect() {
-  const select = document.getElementById('groupSelect');
-  if (!select) return;
+  const container = document.getElementById('groupSelect');
+  if (!container) return;
   
   try {
     // 直接从AppState获取最新的好友分组数据，确保完全同步
     const groups = momentsManager.getFriendGroups();
+    const friends = momentsManager.getFriends();
+    const groupCountMap = {};
+    friends.forEach(friend => {
+      const groupId = friend.friendGroupId || 'group_default';
+      groupCountMap[groupId] = (groupCountMap[groupId] || 0) + 1;
+    });
     
     console.log('=== 初始化朋友圈分组选择 ===');
     console.log('从AppState.friendGroups获取到的分组:', groups);
     
-    if (!groups || groups.length === 0) {
+    const safeGroups = Array.isArray(groups) ? groups.filter(group => group && group.id) : [];
+
+    let optionsHTML = `
+      <label class="group-select-item">
+        <input type="checkbox" value="group_all" checked>
+        <span>所有好友</span>
+      </label>
+    `;
+
+    if (!safeGroups || safeGroups.length === 0) {
       console.log('⚠️ 未获取到好友分组，显示默认分组');
-      // 如果没有分组，显示一个提示选项
-      select.innerHTML = `
-        <option value="group_all">所有好友(请先在好友页面创建分组)</option>
+      container.innerHTML = optionsHTML + `
+        <label class="group-select-item">
+          <input type="checkbox" value="group_default" data-group-id="group_default">
+          <span>默认分组</span>
+        </label>
       `;
       return;
     }
-    
-    // 添加"所有好友"选项作为第一个选项
-    let optionsHTML = '<option value="group_all">所有好友</option>';
-    
-    // 添加所有从好友页面同步的分组
-    optionsHTML += groups.map(group => {
-      if (!group || !group.id) {
-        return '';
-      }
+
+    optionsHTML += safeGroups.map(group => {
       const groupName = group.name || '未命名分组';
-      const memberCount = (group.memberIds && Array.isArray(group.memberIds)) ? group.memberIds.length : 0;
-      return `<option value="${group.id}">${groupName} (${memberCount}人)</option>`;
+      const memberCount = groupCountMap[group.id] || 0;
+      return `
+        <label class="group-select-item">
+          <input type="checkbox" value="${group.id}" data-group-id="${group.id}">
+          <span>${groupName} (${memberCount}人)</span>
+        </label>
+      `;
     }).join('');
     
-    select.innerHTML = optionsHTML;
-    console.log('✓ 朋友圈分组选择已更新，共', groups.length + 1, '个选项(含"所有好友")');
+    container.innerHTML = optionsHTML;
+
+    const allCheckbox = container.querySelector('input[value="group_all"]');
+    const groupCheckboxes = Array.from(container.querySelectorAll('input[data-group-id]'));
+
+    if (allCheckbox) {
+      allCheckbox.addEventListener('change', () => {
+        if (allCheckbox.checked) {
+          groupCheckboxes.forEach(cb => { cb.checked = false; });
+        }
+      });
+    }
+
+    groupCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked && allCheckbox) {
+          allCheckbox.checked = false;
+        }
+
+        const anyChecked = groupCheckboxes.some(item => item.checked);
+        if (!anyChecked && allCheckbox) {
+          allCheckbox.checked = true;
+        }
+      });
+    });
+
+    console.log('✓ 朋友圈分组选择已更新，共', safeGroups.length + 1, '个选项(含"所有好友")');
   } catch (e) {
     console.error('初始化好友分组出错:', e.message);
     // 降级处理
-    select.innerHTML = `
-      <option value="group_all">所有好友(加载失败)</option>
+    container.innerHTML = `
+      <label class="group-select-item">
+        <input type="checkbox" value="group_all" checked>
+        <span>所有好友(加载失败)</span>
+      </label>
     `;
   }
 }
@@ -2429,6 +2746,7 @@ function initAutoMomentsGroupList() {
   
   try {
     const groups = momentsManager.getFriendGroups();
+    const selectedGroupIds = (momentsManager.autoMomentsSettings && momentsManager.autoMomentsSettings.groupIds) || [];
     
     if (!groups || groups.length === 0) {
       groupListContainer.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">暂无分组</div>';
@@ -2437,12 +2755,20 @@ function initAutoMomentsGroupList() {
     
     // 生成分组列表（复选框）
     let html = '<div style="padding:10px 0;">';
-    
+    const allChecked = selectedGroupIds.includes('group_all') ? 'checked' : '';
+    html += `
+      <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:background 0.2s;">
+        <input type="checkbox" class="autoMomentsGroupCheckbox" value="group_all" data-name="所有好友" style="cursor:pointer;" ${allChecked}>
+        <span>所有好友</span>
+      </label>
+    `;
+
     groups.forEach(group => {
       const groupId = group.id;
+      const checked = selectedGroupIds.includes(groupId) ? 'checked' : '';
       html += `
         <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:background 0.2s;">
-          <input type="checkbox" class="autoMomentsGroupCheckbox" value="${groupId}" data-name="${group.name}" style="cursor:pointer;">
+          <input type="checkbox" class="autoMomentsGroupCheckbox" value="${groupId}" data-name="${group.name}" style="cursor:pointer;" ${checked}>
           <span>${group.name || '未命名分组'}</span>
         </label>
       `;
@@ -2452,9 +2778,35 @@ function initAutoMomentsGroupList() {
     groupListContainer.innerHTML = html;
     
     // 绑定分组复选框变化事件
+    const allCheckbox = groupListContainer.querySelector('input[value="group_all"]');
+    const groupCheckboxes = Array.from(groupListContainer.querySelectorAll('.autoMomentsGroupCheckbox'))
+      .filter(cb => cb.value !== 'group_all');
+
     document.querySelectorAll('.autoMomentsGroupCheckbox').forEach(checkbox => {
       checkbox.addEventListener('change', updateAutoMomentsCharacterList);
     });
+
+    if (allCheckbox) {
+      allCheckbox.addEventListener('change', () => {
+        if (allCheckbox.checked) {
+          groupCheckboxes.forEach(cb => { cb.checked = false; });
+        }
+      });
+    }
+
+    groupCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked && allCheckbox) {
+          allCheckbox.checked = false;
+        }
+        const anyChecked = groupCheckboxes.some(item => item.checked);
+        if (!anyChecked && allCheckbox) {
+          allCheckbox.checked = true;
+        }
+      });
+    });
+
+    updateAutoMomentsCharacterList();
     
     console.log('✓ 自动生成朋友圈分组列表已初始化');
   } catch (e) {
@@ -2501,11 +2853,14 @@ function updateAutoMomentsCharacterList() {
     // 生成角色列表（复选框）
     let html = '<div style="padding:10px 0;">';
     
+    const selectedCharacterIds = (momentsManager.autoMomentsSettings && momentsManager.autoMomentsSettings.characterIds) || [];
+
     allCharacters.forEach(character => {
       const charId = character.id || character.name;
+      const checked = selectedCharacterIds.includes(charId) ? 'checked' : '';
       html += `
         <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:background 0.2s;">
-          <input type="checkbox" class="autoMomentsCharacterCheckbox" value="${charId}" data-name="${character.name}" style="cursor:pointer;">
+          <input type="checkbox" class="autoMomentsCharacterCheckbox" value="${charId}" data-name="${character.name}" style="cursor:pointer;" ${checked}>
           <span>${character.name || '未命名'}</span>
         </label>
       `;

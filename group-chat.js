@@ -9,6 +9,51 @@
     let selectedFriendIds = [];
     let customMembers = [];
 
+    function getGroupChatGroups() {
+        const groups = (window.AppState && Array.isArray(AppState.groupChatGroups))
+            ? AppState.groupChatGroups.slice()
+            : [];
+
+        if (!groups.some(group => group.id === 'group_default')) {
+            groups.unshift({ id: 'group_default', name: '默认分组', memberIds: [] });
+        }
+
+        return groups;
+    }
+
+    function resolveGroupChatGroupId(selectedId) {
+        const groups = getGroupChatGroups();
+        if (groups.some(group => group.id === selectedId)) return selectedId;
+        const fallback = groups.find(group => group.id === 'group_default') || groups[0];
+        return fallback ? fallback.id : 'group_default';
+    }
+
+    function initGroupChatGroupSelect() {
+        const select = document.getElementById('cg-group-chat-group-select');
+        if (!select) return;
+
+        const groups = getGroupChatGroups();
+        select.innerHTML = groups.map(group => {
+            const label = group.name || '未命名分组';
+            return '<option value="' + group.id + '">' + label + '</option>';
+        }).join('');
+
+        select.value = 'group_default';
+    }
+
+    function getNextGroupChatSortIndex(groupId) {
+        const groups = (window.AppState && Array.isArray(AppState.groups)) ? AppState.groups : [];
+        let maxIndex = -1;
+        groups.forEach(function(groupChat) {
+            const currentGroupId = groupChat.groupChatGroupId || 'group_default';
+            if (currentGroupId !== groupId) return;
+            if (typeof groupChat.groupSortIndex === 'number') {
+                maxIndex = Math.max(maxIndex, groupChat.groupSortIndex);
+            }
+        });
+        return maxIndex + 1;
+    }
+
     function openCreateGroupPage() {
         selectedFriendIds = [];
         customMembers = [];
@@ -33,6 +78,8 @@
         // 重置头像标签
         const avatarLabel = avatarPicker && avatarPicker.closest('.avatar-wrapper') && avatarPicker.closest('.avatar-wrapper').querySelector('.avatar-label');
         if (avatarLabel) avatarLabel.textContent = '点击上传群头像';
+
+        initGroupChatGroupSelect();
 
         renderFriendSelection();
         renderSelectedBar();
@@ -202,6 +249,10 @@
         var name = document.getElementById('group-name-input').value.trim();
         var avatar = document.getElementById('group-avatar-input').value.trim();
         var announcement = document.getElementById('group-desc-input').value.trim();
+        var groupSelect = document.getElementById('cg-group-chat-group-select');
+        var selectedGroupId = groupSelect ? groupSelect.value : 'group_default';
+        var groupChatGroupId = resolveGroupChatGroupId(selectedGroupId);
+        var groupSortIndex = getNextGroupChatSortIndex(groupChatGroupId);
 
         if (!name) {
             if (typeof showToast === 'function') showToast('请输入群聊名称');
@@ -246,7 +297,9 @@
             announcement: announcement,
             memberCount: allMembers.length,
             members: allMembers,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            groupChatGroupId: groupChatGroupId,
+            groupSortIndex: groupSortIndex
         };
 
         AppState.groups.push(group);

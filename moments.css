@@ -396,6 +396,11 @@ body {
     font-size: 12px;
 }
 
+.comment-item.highlight {
+    background: #fff1f6;
+    border: 1px solid rgba(255, 107, 157, 0.35);
+}
+
 .comment-reply-btn,
 .comment-delete-btn {
     color: #bbb;
@@ -422,6 +427,59 @@ body {
     background: #f0f0f0;
     border-radius: 4px;
     font-size: 12px;
+}
+
+.reply-item.highlight {
+    background: #ffe9f1;
+    border: 1px solid rgba(255, 107, 157, 0.35);
+}
+
+.comment-reply-hint {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    background: #fff5f9;
+    border: 1px solid #ffd6e1;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #ff6b9d;
+}
+
+.comment-reply-cancel {
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    color: #999;
+    cursor: pointer;
+}
+
+.comment-reply-cancel:hover {
+    color: #666;
+}
+
+.moments-icon-btn {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ff5a8b;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(255, 90, 139, 0.35);
 }
 
 .reply-header {
