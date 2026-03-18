@@ -83,6 +83,10 @@ const MobileResponsiveAdapter = {
         chatMutationObserver: null,
         editableFocusBound: false,
         displayModeListenersBound: false,
+        chatRuntimeBound: false,
+        chatRuntimeObserver: null,
+        chatRuntimeEnabled: false,
+        chatPanelResizeObserver: null,
     },
 
     // 初始化
@@ -104,6 +108,7 @@ const MobileResponsiveAdapter = {
         this.observeChatLayout();
         this.setupEventListeners();
         this.fixCommonIssues();
+        this.enableUnifiedChatRuntime();
 
         console.log('✅ 移动端适配系统初始化完成');
     },
@@ -122,6 +127,83 @@ const MobileResponsiveAdapter = {
         }
 
         return false;
+    },
+
+    toCssPixels: function(value) {
+        const parsed = parseFloat(value);
+        if (!Number.isFinite(parsed)) {
+            return 0;
+        }
+        return Math.max(0, parsed);
+    },
+
+    updateEffectiveSafeAreaVariables: function(innerHeight, screenViewportHeight, keyboardOpen, isPWA) {
+        const root = document.documentElement;
+        const computed = window.getComputedStyle(root);
+
+        const safeTopRawValue = computed.getPropertyValue('--safe-area-inset-top-raw');
+        const safeBottomRawValue = computed.getPropertyValue('--safe-area-inset-bottom-raw');
+        const safeLeftRawValue = computed.getPropertyValue('--safe-area-inset-left-raw');
+        const safeRightRawValue = computed.getPropertyValue('--safe-area-inset-right-raw');
+
+        const safeTop = this.toCssPixels(safeTopRawValue || computed.getPropertyValue('--safe-area-inset-top'));
+        const safeBottom = this.toCssPixels(safeBottomRawValue || computed.getPropertyValue('--safe-area-inset-bottom'));
+        const safeLeft = this.toCssPixels(safeLeftRawValue || computed.getPropertyValue('--safe-area-inset-left'));
+        const safeRight = this.toCssPixels(safeRightRawValue || computed.getPropertyValue('--safe-area-inset-right'));
+
+        const roundedInnerHeight = Math.max(0, Math.round(innerHeight || 0));
+        const roundedScreenHeight = Math.max(0, Math.round(screenViewportHeight || 0));
+        const insetGap = roundedScreenHeight > 0 ? Math.max(0, roundedScreenHeight - roundedInnerHeight) : 0;
+        const totalInset = safeTop + safeBottom;
+
+        const isClose = function(a, b) {
+            return Math.abs(a - b) <= 2;
+        };
+
+        const viewportAlreadyInset = totalInset > 0 && insetGap >= (totalInset - 2);
+        const topAlreadyInset = safeTop > 0 && (isClose(insetGap, safeTop) || viewportAlreadyInset);
+        const bottomAlreadyInset = safeBottom > 0 && (isClose(insetGap, safeBottom) || viewportAlreadyInset);
+
+        let effectiveTop = safeTop;
+        let effectiveBottom = safeBottom;
+        let effectiveLeft = safeLeft;
+        let effectiveRight = safeRight;
+
+        if (viewportAlreadyInset) {
+            effectiveLeft = 0;
+            effectiveRight = 0;
+        }
+
+        if (topAlreadyInset) {
+            effectiveTop = 0;
+        }
+
+        if (bottomAlreadyInset) {
+            effectiveBottom = 0;
+        }
+
+        if (keyboardOpen) {
+            effectiveBottom = 0;
+        }
+
+        if (this.browsers.isIOS && isPWA && !topAlreadyInset && effectiveTop < 1) {
+            effectiveTop = safeBottom >= 20
+                ? Math.max(effectiveTop, Math.round(safeBottom + 8))
+                : Math.max(effectiveTop, 20);
+        }
+
+        root.style.setProperty('--safe-area-top-effective', `${Math.round(effectiveTop)}px`);
+        root.style.setProperty('--safe-area-bottom-effective', `${Math.round(effectiveBottom)}px`);
+        root.style.setProperty('--safe-area-left-effective', `${Math.round(effectiveLeft)}px`);
+        root.style.setProperty('--safe-area-right-effective', `${Math.round(effectiveRight)}px`);
+
+        // Canonical safe-area variables consumed by page modules.
+        root.style.setProperty('--safe-area-inset-top', `${Math.round(effectiveTop)}px`);
+        root.style.setProperty('--safe-area-inset-bottom', `${Math.round(effectiveBottom)}px`);
+        root.style.setProperty('--safe-area-inset-left', `${Math.round(effectiveLeft)}px`);
+        root.style.setProperty('--safe-area-inset-right', `${Math.round(effectiveRight)}px`);
+
+        root.classList.toggle('viewport-safe-area-inset', viewportAlreadyInset);
     },
 
     // 统一更新视口相关变量
@@ -179,6 +261,8 @@ const MobileResponsiveAdapter = {
         root.style.setProperty('--keyboard-height', keyboardOpen ? `${keyboardDelta}px` : '0px');
         root.style.setProperty('--chat-keyboard-offset', keyboardOpen ? `${keyboardDelta}px` : '0px');
 
+        this.updateEffectiveSafeAreaVariables(innerHeight, screenViewportHeight, keyboardOpen, isPWA);
+
         root.classList.toggle('keyboard-open', keyboardOpen);
         if (body) {
             body.classList.toggle('keyboard-open', keyboardOpen);
@@ -215,6 +299,9 @@ const MobileResponsiveAdapter = {
             this.applyAdaptationScheme();
             this.updateViewportMetrics();
             this.updateChatLayoutMetrics();
+            if (this.state.chatRuntimeEnabled) {
+                this.syncChatRuntimeElements();
+            }
         });
     },
 
@@ -277,6 +364,254 @@ const MobileResponsiveAdapter = {
                 attributes: true,
                 attributeFilter: ['class'],
             });
+        }
+    },
+
+    enableUnifiedChatRuntime: function() {
+        const isTouchCapable = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        const shouldEnable = isTouchCapable || this.browsers.isIOS || this.browsers.isAndroid;
+
+        this.state.chatRuntimeEnabled = shouldEnable;
+
+        if (!shouldEnable) {
+            return;
+        }
+
+        document.documentElement.classList.add('mobile-layout-ready');
+        this.bindChatRuntimeHandlers();
+        this.syncChatRuntimeElements();
+    },
+
+    bindChatRuntimeHandlers: function() {
+        if (!this.state.chatRuntimeEnabled) {
+            return;
+        }
+
+        if (this.state.chatRuntimeBound) {
+            return;
+        }
+
+        this.state.chatRuntimeBound = true;
+
+        document.addEventListener('focusin', (event) => {
+            if (!this.isEditableElement(event.target)) {
+                return;
+            }
+
+            if (event.target.id === 'chat-input') {
+                this.scheduleViewportUpdate();
+                window.setTimeout(() => {
+                    const chatMessages = document.getElementById('chat-messages');
+                    if (chatMessages) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                }, 220);
+            }
+        });
+
+        if (typeof MutationObserver !== 'undefined' && !this.state.chatRuntimeObserver) {
+            this.state.chatRuntimeObserver = new MutationObserver(() => {
+                this.syncChatRuntimeElements();
+            });
+
+            this.state.chatRuntimeObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+            });
+        }
+    },
+
+    focusChatInputSafely: function(inputEl) {
+        if (!inputEl) {
+            return;
+        }
+
+        if (document.activeElement === inputEl) {
+            return;
+        }
+
+        try {
+            inputEl.focus({ preventScroll: true });
+        } catch (error) {
+            inputEl.focus();
+        }
+    },
+
+    syncChatRuntimeElements: function() {
+        if (!this.state.chatRuntimeEnabled) {
+            return;
+        }
+
+        const chatPage = document.getElementById('chat-page');
+        if (chatPage) {
+            chatPage.classList.add('layout-runtime-ready');
+        }
+
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput && chatInput.dataset.mobileRuntimeBound !== '1') {
+            chatInput.dataset.mobileRuntimeBound = '1';
+            chatInput.style.setProperty('pointer-events', 'auto');
+            chatInput.style.setProperty('touch-action', 'manipulation');
+            chatInput.style.setProperty('-webkit-user-select', 'text');
+            chatInput.style.setProperty('user-select', 'text');
+
+            chatInput.addEventListener('touchend', () => {
+                this.focusChatInputSafely(chatInput);
+            }, { passive: true });
+
+            chatInput.addEventListener('click', () => {
+                this.focusChatInputSafely(chatInput);
+            });
+        }
+
+        const chatBackBtn = document.getElementById('chat-back-btn');
+        if (chatBackBtn && chatBackBtn.dataset.mobileRuntimeBound !== '1') {
+            chatBackBtn.dataset.mobileRuntimeBound = '1';
+            chatBackBtn.style.setProperty('pointer-events', 'auto');
+            chatBackBtn.style.setProperty('touch-action', 'manipulation');
+            chatBackBtn.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.08)');
+
+            chatBackBtn.addEventListener('touchstart', () => {
+                chatBackBtn.style.opacity = '0.65';
+            }, { passive: true });
+
+            chatBackBtn.addEventListener('touchend', () => {
+                chatBackBtn.style.opacity = '1';
+            }, { passive: true });
+
+            chatBackBtn.addEventListener('touchcancel', () => {
+                chatBackBtn.style.opacity = '1';
+            }, { passive: true });
+        }
+
+        this.observeChatBottomPanels();
+        this.applyChatBottomOverlayOffset();
+    },
+
+    observeChatBottomPanels: function() {
+        if (typeof ResizeObserver === 'undefined') {
+            return;
+        }
+
+        const emojiLib = document.getElementById('emoji-library');
+        const morePanel = document.getElementById('toolbar-more-panel');
+
+        if (!emojiLib && !morePanel) {
+            return;
+        }
+
+        if (!this.state.chatPanelResizeObserver) {
+            this.state.chatPanelResizeObserver = new ResizeObserver(() => {
+                this.applyChatBottomOverlayOffset();
+            });
+        }
+
+        if (emojiLib && emojiLib.dataset.mobilePanelObserved !== '1') {
+            emojiLib.dataset.mobilePanelObserved = '1';
+            this.state.chatPanelResizeObserver.observe(emojiLib);
+        }
+
+        if (morePanel && morePanel.dataset.mobilePanelObserved !== '1') {
+            morePanel.dataset.mobilePanelObserved = '1';
+            this.state.chatPanelResizeObserver.observe(morePanel);
+        }
+    },
+
+    getBottomPanelRenderedHeight: function(panelElement) {
+        if (!panelElement) {
+            return 0;
+        }
+
+        const rectHeight = Math.round(panelElement.getBoundingClientRect().height || 0);
+        if (rectHeight > 0) {
+            return rectHeight;
+        }
+
+        const computed = window.getComputedStyle(panelElement);
+        const maxHeightText = (computed.maxHeight || '').trim();
+        if (!maxHeightText) {
+            return 0;
+        }
+
+        if (maxHeightText.endsWith('px')) {
+            const pxValue = parseFloat(maxHeightText);
+            return Number.isFinite(pxValue) ? Math.max(0, Math.round(pxValue)) : 0;
+        }
+
+        if (maxHeightText.includes('vh')) {
+            const vhValue = parseFloat(maxHeightText);
+            if (!Number.isFinite(vhValue)) {
+                return 0;
+            }
+            return Math.max(0, Math.round((window.innerHeight * vhValue) / 100));
+        }
+
+        return 0;
+    },
+
+    getVisibleBottomPanelOffset: function() {
+        const emojiLib = document.getElementById('emoji-library');
+        const morePanel = document.getElementById('toolbar-more-panel');
+
+        let offset = 0;
+
+        if (emojiLib && emojiLib.classList.contains('show')) {
+            const emojiComputed = window.getComputedStyle(emojiLib);
+            if (emojiComputed.display !== 'none' && emojiComputed.visibility !== 'hidden') {
+                offset = Math.max(offset, this.getBottomPanelRenderedHeight(emojiLib));
+            }
+        }
+
+        if (morePanel && morePanel.classList.contains('show')) {
+            const moreComputed = window.getComputedStyle(morePanel);
+            if (moreComputed.display !== 'none' && moreComputed.visibility !== 'hidden') {
+                offset = Math.max(offset, this.getBottomPanelRenderedHeight(morePanel));
+            }
+        }
+
+        return Math.max(0, Math.round(offset));
+    },
+
+    applyChatBottomOverlayOffset: function() {
+        const inputArea = document.querySelector('.chat-input-area');
+        const toolbar = document.getElementById('chat-toolbar') || document.querySelector('.chat-toolbar');
+        const chatMessages = document.getElementById('chat-messages');
+
+        if (!inputArea && !toolbar && !chatMessages) {
+            return;
+        }
+
+        const offset = this.getVisibleBottomPanelOffset();
+        const root = document.documentElement;
+        root.style.setProperty('--chat-panel-offset', `${offset}px`);
+
+        let shouldStickToBottom = false;
+        if (chatMessages) {
+            const distanceFromBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
+            shouldStickToBottom = distanceFromBottom <= 28;
+        }
+
+        const translateValue = offset > 0 ? `translateY(-${offset}px)` : 'translateY(0)';
+
+        if (inputArea) {
+            inputArea.style.transform = translateValue;
+        }
+
+        if (toolbar) {
+            toolbar.style.transform = translateValue;
+        }
+
+        if (chatMessages) {
+            // 内容区使用底部补偿，避免整体上移后进入顶部导航区域。
+            chatMessages.style.transform = 'translateY(0)';
+            chatMessages.style.marginBottom = `${offset}px`;
+            chatMessages.style.scrollPaddingBottom = `${Math.max(12, offset + 12)}px`;
+
+            if (shouldStickToBottom) {
+                requestAnimationFrame(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+            }
         }
     },
 

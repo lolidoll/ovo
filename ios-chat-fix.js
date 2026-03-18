@@ -10,6 +10,11 @@
 
 (function() {
     'use strict';
+
+    if (window.__UNIFIED_CHAT_LAYOUT__) {
+        console.log('🔧 统一布局模式已启用，跳过旧版 ios-chat-fix 逻辑');
+        return;
+    }
     
     // 检测是否为 iOS 设备
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;

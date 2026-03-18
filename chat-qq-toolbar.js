@@ -138,8 +138,13 @@
     function resetBottomAreaPosition() {
         const inputArea = document.querySelector('.chat-input-area');
         const toolbar = document.getElementById('chat-toolbar');
+        const chatMessages = document.getElementById('chat-messages');
         if (inputArea) inputArea.style.transform = 'translateY(0)';
         if (toolbar) toolbar.style.transform = 'translateY(0)';
+        if (chatMessages) {
+            chatMessages.style.transform = 'translateY(0)';
+            chatMessages.style.marginBottom = '0px';
+        }
     }
 
     /**
@@ -149,7 +154,8 @@
         const morePanel = document.getElementById('toolbar-more-panel');
         const inputArea = document.querySelector('.chat-input-area');
         const toolbar = document.getElementById('chat-toolbar');
-        if (!morePanel || !inputArea || !toolbar) return;
+        const chatMessages = document.getElementById('chat-messages');
+        if (!morePanel) return;
 
         if (!morePanel.classList.contains('show')) {
             resetBottomAreaPosition();
@@ -171,8 +177,14 @@
 
         if (panelHeight > 0) {
             const offset = Math.round(panelHeight);
-            inputArea.style.transform = `translateY(-${offset}px)`;
-            toolbar.style.transform = `translateY(-${offset}px)`;
+            const translateValue = `translateY(-${offset}px)`;
+            if (inputArea) inputArea.style.transform = translateValue;
+            if (toolbar) toolbar.style.transform = translateValue;
+            if (chatMessages) {
+                // 聊天内容区使用底部留白补偿，避免上移后覆盖到顶部导航区域。
+                chatMessages.style.transform = 'translateY(0)';
+                chatMessages.style.marginBottom = `${offset}px`;
+            }
         }
     }
 

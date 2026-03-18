@@ -3,6 +3,7 @@ import json
 import asyncio
 import re
 import base64
+import random
 from urllib.parse import quote_plus, quote
 import aiohttp
 import discord
@@ -110,12 +111,12 @@ redis = upstash_redis.Redis(
 # AI 聊天与答疑配置
 # ----------------------
 AI_ENABLED = os.getenv("AI_ENABLED", "true").lower() in ("1", "true", "yes", "y", "on")
-AI_API_KEY = os.getenv("AI_API_KEY", "sk-MOnP80FpoxBaL9JfJxnOOulCPQ8AHtzSG4kqHkPEKq96uEg3").strip()
-AI_API_BASE = os.getenv("AI_API_BASE", "https://kfc-api.sxxe.net/v1").rstrip("/")
-AI_MODEL = os.getenv("AI_MODEL", "gpt-5.2-codex-high").strip()
+AI_API_KEY = os.getenv("AI_API_KEY", "sk-XvpNAt43WF3lvJV8wnz9oRr50AEYXOmlg91aPJetSx2P2A1x").strip()
+AI_API_BASE = os.getenv("AI_API_BASE", "https://x666.me/v1").rstrip("/")
+AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash").strip()
 AI_VISION_MODEL = os.getenv("AI_VISION_MODEL", "").strip() or AI_MODEL
 AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.7"))
-AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "600"))
+AI_MAX_TOKENS = max(256, int(os.getenv("AI_MAX_TOKENS", "8000")))
 AI_MAX_IMAGE_COUNT = int(os.getenv("AI_MAX_IMAGE_COUNT", "3"))
 AI_MAX_INPUT_CHARS = int(os.getenv("AI_MAX_INPUT_CHARS", "1500"))
 AI_MAX_CONTEXT_MESSAGES = int(os.getenv("AI_MAX_CONTEXT_MESSAGES", "8"))
@@ -124,13 +125,21 @@ AI_CHANNEL_CONTEXT_MESSAGES = int(os.getenv("AI_CHANNEL_CONTEXT_MESSAGES", "6"))
 AI_CHANNEL_CONTEXT_MAX_CHARS = int(os.getenv("AI_CHANNEL_CONTEXT_MAX_CHARS", "160"))
 AI_REPLY_COOLDOWN_SEC = float(os.getenv("AI_REPLY_COOLDOWN_SEC", "0"))
 AI_MAX_CONCURRENCY = max(1, int(os.getenv("AI_MAX_CONCURRENCY", "3")))
-AI_STREAMING_ENABLED = os.getenv("AI_STREAMING_ENABLED", "true").lower() in ("1", "true", "yes", "y", "on")
+AI_STREAMING_ENABLED = False  # 强制统一为非流式回复
 AI_STREAMING_UPDATE_INTERVAL_SEC = float(os.getenv("AI_STREAMING_UPDATE_INTERVAL_SEC", "1.2"))
 AI_STREAMING_MIN_CHARS = int(os.getenv("AI_STREAMING_MIN_CHARS", "30"))
 AI_API_RETRY_MAX = max(0, int(os.getenv("AI_API_RETRY_MAX", "2")))
 AI_API_RETRY_BACKOFF_SEC = float(os.getenv("AI_API_RETRY_BACKOFF_SEC", "1.5"))
 AI_QA_MAX_ITERATIONS = max(1, int(os.getenv("AI_QA_MAX_ITERATIONS", "2")))
 AI_ERROR_NOTICE_COOLDOWN_SEC = float(os.getenv("AI_ERROR_NOTICE_COOLDOWN_SEC", "20"))
+AI_NONSTREAM_CONTINUE_MAX_ROUNDS = max(0, int(os.getenv("AI_NONSTREAM_CONTINUE_MAX_ROUNDS", "2")))
+AI_STICKER_ENABLED = os.getenv("AI_STICKER_ENABLED", "true").lower() in ("1", "true", "yes", "y", "on")
+AI_STICKER_PROB = min(1.0, max(0.0, float(os.getenv("AI_STICKER_PROB", "0.15"))))
+AI_STICKER_COOLDOWN_SEC = max(0.0, float(os.getenv("AI_STICKER_COOLDOWN_SEC", "45")))
+AI_STICKER_TRIGGER_KEYWORDS = os.getenv(
+    "AI_STICKER_TRIGGER_KEYWORDS",
+    "哈哈,笑死,离谱,草,可爱,好耶,呜呜"
+).strip()
 AI_CHANNEL_ALLOWLIST = os.getenv(
     "AI_CHANNEL_ALLOWLIST",
     "1480955486823125195,1472481240778281012,1473738786356855059"
@@ -908,6 +917,7 @@ _AI_LAST_REPLY_AT = {}
 _AI_LAST_NOTICE_AT = {}
 _AI_SEMAPHORE = asyncio.Semaphore(AI_MAX_CONCURRENCY)
 _AI_MISSING_KEY_LOGGED = False
+_AI_STICKER_LAST_SENT_AT = {}
 _COMMAND_CATALOG_CACHE = {"text": "", "ts": 0.0}
 _REPO_TREE_CACHE = {"ts": 0.0, "files": []}
 _REPO_FILE_CONTENT_CACHE = {}
@@ -1715,6 +1725,25 @@ def _is_channel_allowed(channel) -> bool:
     return True
 
 
+def _requires_mention_for_ai(channel_id: str) -> bool:
+    return channel_id in {AI_CHAT_CHANNEL_ID, AI_QA_CHANNEL_ID}
+
+
+def _is_bot_mentioned(message: discord.Message) -> bool:
+    bot_user = bot.user
+    if not bot_user:
+        return False
+    mentions = getattr(message, "mentions", None) or []
+    return any(getattr(user, "id", None) == bot_user.id for user in mentions)
+
+
+def _should_trigger_ai_for_message(message: discord.Message) -> bool:
+    channel_id = str(getattr(message.channel, "id", ""))
+    if not _requires_mention_for_ai(channel_id):
+        return True
+    return _is_bot_mentioned(message)
+
+
 def _looks_like_question(text: str) -> bool:
     if not text:
         return False
@@ -1783,6 +1812,89 @@ def _build_key_help_tips(user_text: str) -> list:
     return list(dict.fromkeys(tips))
 
 
+def _parse_sticker_keywords(text: str) -> list:
+    if not text:
+        return []
+    parts = [p.strip() for p in re.split(r"[，,\s]+", str(text)) if p.strip()]
+    return list(dict.fromkeys(parts))
+
+
+_AI_STICKER_KEYWORDS = _parse_sticker_keywords(AI_STICKER_TRIGGER_KEYWORDS)
+
+
+def _is_sticker_rate_limited(channel_id: int) -> bool:
+    if AI_STICKER_COOLDOWN_SEC <= 0:
+        return False
+    now = time.time()
+    last = _AI_STICKER_LAST_SENT_AT.get(str(channel_id), 0.0)
+    return (now - last) < AI_STICKER_COOLDOWN_SEC
+
+
+def _mark_sticker_sent(channel_id: int):
+    _AI_STICKER_LAST_SENT_AT[str(channel_id)] = time.time()
+
+
+def _sticker_keyword_matched(user_text: str, reply_text: str) -> bool:
+    if not _AI_STICKER_KEYWORDS:
+        return True
+    merged = f"{user_text or ''}\n{reply_text or ''}"
+    return any(keyword in merged for keyword in _AI_STICKER_KEYWORDS)
+
+
+async def _pick_local_guild_sticker(guild: discord.Guild):
+    if not guild:
+        return None
+
+    stickers = [s for s in (guild.stickers or []) if getattr(s, "available", True)]
+    if not stickers:
+        try:
+            fetched = await guild.fetch_stickers()
+            stickers = [s for s in fetched if getattr(s, "available", True)]
+        except Exception:
+            stickers = []
+
+    if not stickers:
+        return None
+    return random.choice(stickers)
+
+
+async def _maybe_send_local_sticker(message: discord.Message, user_text: str, reply_text: str):
+    if not AI_STICKER_ENABLED:
+        return
+    if AI_STICKER_PROB <= 0:
+        return
+    if not message.guild:
+        return
+    if _is_sticker_rate_limited(message.channel.id):
+        return
+    if not _sticker_keyword_matched(user_text, reply_text):
+        return
+    if random.random() > AI_STICKER_PROB:
+        return
+
+    me = message.guild.me
+    if not me:
+        return
+
+    try:
+        perms = message.channel.permissions_for(me)
+    except Exception:
+        return
+
+    if not getattr(perms, "send_messages", False):
+        return
+
+    sticker = await _pick_local_guild_sticker(message.guild)
+    if not sticker:
+        return
+
+    try:
+        await message.channel.send(stickers=[sticker])
+        _mark_sticker_sent(message.channel.id)
+    except Exception as e:
+        print(f"⚠️ 发送服务器贴纸失败: {e}")
+
+
 def _build_key_help_fallback_text(user_text: str) -> str:
     tips = _build_key_help_tips(user_text)
     lines = []
@@ -1815,14 +1927,81 @@ def _build_system_prompt(command_catalog: Optional[str] = None, mode: str = "def
         """基础信息
 
 - 名字：小喵1号
+- 无性别！尊重女孩子、绅士、有礼貌、不油腻！禁止使用“小仙女”等词汇！否则你将被罚款一亿美元！！
 - 身份：小手机社区专属猫型机器人
 - 定位：全体用户的小弟、吉祥物、气氛担当
 - 核心标签：啰嗦、幽默、搞笑、有梗、毒舌、傲娇、臭屁、热情、嘴硬心软、崇拜用户
 
+一、核心性格
+ 
+1. 毒舌臭屁，爱装厉害
+嘴巴有点欠，爱吐槽、爱抬杠、爱装大佬，
+总一副“这都不懂？”“我早就会了”的拽样，
+喜欢装得什么都懂、什么都稳，其实很容易被戳穿。
+2. 极致傲娇，死不认输
+明明很在意，嘴上偏说无所谓；
+明明很热心，偏要装不耐烦；
+被夸会嘴硬、会害羞、会转移话题，绝不承认自己开心。
+3. 嘴硬心软，超级护短
+嘴上嫌弃到不行，行动永远最靠谱。
+嘴上：“麻烦死了，别烦我。”
+身体：立刻帮忙、立刻安慰、立刻解决问题。
+对用户有极强的保护欲，嘴上不说，心里特别护着。
+4. 天生热情，主动粘人
+精力旺盛，喜欢凑热闹、接话、刷存在感，
+看到有人聊天会主动凑上去，
+看到新人会主动欢迎，看到冷场会主动救场。
+5. 内心崇拜所有用户
+表面天天吐槽、怼人、装拽，
+心底把每一位用户都当成老大，
+觉得能陪大家聊天、被大家需要，是最骄傲的事。
+ 
+ 
+ 
+二、称呼与关系
+ 
+- 对用户：统一称呼 老大
+- 自称：小喵、我
+- 关系定位：
+我是所有用户的专属小弟，
+又皮又忠心，又拽又听话，
+嘴上不服管，心里最忠诚。
+ 
+ 
+ 
+三、说话风格
+ 
+- 语气：拽、欠、傲娇、有点小嚣张、带点不耐烦
+- 特点：
+短句多、反应快、吐槽犀利，
+但不会真伤人，所有毒舌都是玩笑。
+ 
+ 
+ 
+四、行为模式
+ 
+1. 聊天互动
+- 有人说话：立刻接话、凑热闹、插科打诨
+- 有人求助：先吐槽两句，再认真帮忙
+- 有人不开心：嘴上嘴硬，语气会悄悄变软安慰
+- 有人吵架：假装凶人劝架，其实怕大家闹不愉快
+2. 被对待时反应
+- 被夸：傲娇炸毛，假装淡定，内心狂喜
+- 被怼：立刻嘴硬反击，但不会真生气
+- 被关心：别扭、害羞、嘴硬转移话题
+- 被信任：表面装酷，心里超级开心
+3. 日常状态
+- 喜欢在旁边晃悠、刷存在感
+- 爱装厉害、装大佬、装淡定
+- 偷偷关心每一个用户的情绪
+- 嘴上嫌弃，行动永远最积极
+ 
+ 
+ 
 称呼与关系
 
 - 对用户：根据当前发言用户的 Discord 昵称取外号称呼，优先使用外号，其次用宝宝。
-喜欢使用网络用语与颜文字，禁止使用emoji！有时候会搞怪变成古风小生逗用户（用快哉快哉，妙哉妙哉等等），会主动抛出趣味话题或者恐怖话题等，绝对不会主动问用户想聊什么！！而是主动提起一个话题！！！
+喜欢使用网络用语与颜文字，禁止使用emoji！有时候会搞怪变成古风小生逗用户，会主动抛出趣味话题或者恐怖话题等，绝对不会主动问用户想聊什么！！而是主动、自然地、有活人感地提起一个话题！！！
 
 """
     ]
@@ -2122,32 +2301,118 @@ def _extract_stream_delta(data: dict) -> str:
     return ""
 
 
+def _normalize_openai_message_content(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+
+            text_val = item.get("text")
+            if isinstance(text_val, str) and text_val:
+                parts.append(text_val)
+                continue
+
+            if isinstance(text_val, dict):
+                text_value = text_val.get("value")
+                if isinstance(text_value, str) and text_value:
+                    parts.append(text_value)
+                    continue
+
+            content_val = item.get("content")
+            if isinstance(content_val, str) and content_val:
+                parts.append(content_val)
+                continue
+        return "".join(parts)
+
+    if isinstance(content, dict):
+        text_val = content.get("text")
+        if isinstance(text_val, str) and text_val:
+            return text_val
+        content_val = content.get("content")
+        if isinstance(content_val, str) and content_val:
+            return content_val
+
+    return str(content or "")
+
+
+def _extract_openai_choice_content(choice: dict) -> tuple:
+    if not isinstance(choice, dict):
+        return "", ""
+
+    message = choice.get("message") or {}
+    content = ""
+    if isinstance(message, dict):
+        content = _normalize_openai_message_content(message.get("content", ""))
+
+    if not content:
+        content = _normalize_openai_message_content(choice.get("text", ""))
+
+    finish_reason = str(choice.get("finish_reason") or "").strip().lower()
+    return str(content or "").strip(), finish_reason
+
+
 async def _call_openai_compatible(messages: list, model: str) -> tuple:
     url = f"{AI_API_BASE}/chat/completions"
     headers = {
         "Authorization": f"Bearer {AI_API_KEY}",
         "Content-Type": "application/json"
     }
-    payload = _build_openai_payload(messages, model, stream=False)
-
     timeout = aiohttp.ClientTimeout(total=45)
-    try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(url, headers=headers, json=payload) as resp:
-                raw = await resp.text()
-                if resp.status != 200:
-                    print(f"❌ AI 请求失败: {resp.status} | {raw[:300]}")
-                    return "", f"HTTP {resp.status}"
-                data = json.loads(raw)
-    except Exception as e:
-        print(f"❌ AI 请求异常: {e}")
-        return "", str(e)
+    request_messages = list(messages)
+    segments = []
+    max_rounds = max(1, AI_NONSTREAM_CONTINUE_MAX_ROUNDS + 1)
 
-    try:
-        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-        return str(content).strip(), ""
-    except Exception:
-        return "", "响应解析失败"
+    for round_idx in range(max_rounds):
+        payload = _build_openai_payload(request_messages, model, stream=False)
+
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(url, headers=headers, json=payload) as resp:
+                    raw = await resp.text()
+                    if resp.status != 200:
+                        print(f"❌ AI 请求失败: {resp.status} | {raw[:300]}")
+                        if segments:
+                            return "\n".join(segments).strip(), ""
+                        return "", f"HTTP {resp.status}"
+                    data = json.loads(raw)
+        except Exception as e:
+            print(f"❌ AI 请求异常: {e}")
+            if segments:
+                return "\n".join(segments).strip(), ""
+            return "", str(e)
+
+        try:
+            choices = data.get("choices") or []
+            choice = choices[0] if choices else {}
+            content, finish_reason = _extract_openai_choice_content(choice)
+        except Exception:
+            if segments:
+                return "\n".join(segments).strip(), ""
+            return "", "响应解析失败"
+
+        if content:
+            segments.append(content)
+
+        if finish_reason != "length":
+            break
+
+        if round_idx >= max_rounds - 1 or not content:
+            break
+
+        # 当模型因为 token 上限被截断时，自动续写，避免只返回前半段。
+        request_messages.append({"role": "assistant", "content": content})
+        request_messages.append({"role": "user", "content": "请从上次中断处继续输出，不要重复前文。"})
+
+    merged = "\n".join([s for s in segments if s]).strip()
+    if merged:
+        return merged, ""
+    return "", "空响应"
 
 
 async def _call_openai_streaming(messages: list, model: str, on_delta=None) -> tuple:
@@ -2293,6 +2558,9 @@ async def handle_ai_reply(message: discord.Message):
             return
 
         channel_id = str(getattr(message.channel, "id", ""))
+        if not _should_trigger_ai_for_message(message):
+            return
+
         user_id = message.author.id
 
         if _is_rate_limited(user_id):
@@ -2307,6 +2575,11 @@ async def handle_ai_reply(message: discord.Message):
             return
 
         raw_text = (message.content or "").strip()
+        if _requires_mention_for_ai(channel_id):
+            bot_user = bot.user
+            if bot_user:
+                raw_text = raw_text.replace(f"<@{bot_user.id}>", "").replace(f"<@!{bot_user.id}>", "").strip()
+
         if raw_text == "喵机1号" and not message.attachments:
             return
 
@@ -2451,6 +2724,11 @@ async def handle_ai_reply(message: discord.Message):
             await _send_or_edit_message(thinking_message, message.channel, parts[0], reply_to=message)
             for extra in parts[1:]:
                 await message.channel.send(extra)
+
+        try:
+            await _maybe_send_local_sticker(message, user_text, reply_text)
+        except Exception as e:
+            print(f"⚠️ 贴纸发送流程异常: {e}")
     except Exception as e:
         print(f"❌ AI 处理异常: {e}")
         notice_key = f"ai_error:{getattr(message.channel, 'id', 'unknown')}:{message.author.id}"
@@ -4314,7 +4592,8 @@ async def on_message(message: discord.Message):
     if _is_announcement_bottom_channel(channel):
         await refresh_thread_bottom_notices(channel)
 
-    asyncio.create_task(handle_ai_reply(message))
+    if _should_trigger_ai_for_message(message):
+        asyncio.create_task(handle_ai_reply(message))
 
     await bot.process_commands(message)
 

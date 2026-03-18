@@ -339,8 +339,13 @@
                     // 恢复输入框和工具栏位置
                     const inputArea = document.querySelector('.chat-input-area');
                     const toolbar = document.getElementById('chat-toolbar');
+                    const chatMessages = document.getElementById('chat-messages');
                     if (inputArea) inputArea.style.transform = 'translateY(0)';
                     if (toolbar) toolbar.style.transform = 'translateY(0)';
+                    if (chatMessages) {
+                        chatMessages.style.transform = 'translateY(0)';
+                        chatMessages.style.marginBottom = '0px';
+                    }
                     
                     console.log('📱 点击外部关闭表情包库 (' + e.type + ')');
                 }

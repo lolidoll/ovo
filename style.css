@@ -1496,10 +1496,10 @@
             justify-content: space-between;
             gap: 12px;
             padding: 12px 14px;
-            background: var(--friend-card);
-            border: 1px solid var(--friend-border);
-            border-radius: 14px;
-            box-shadow: var(--friend-shadow);
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
             cursor: pointer;
         }
 
@@ -1675,6 +1675,118 @@
 
         #friend-page .drag-arming {
             box-shadow: 0 0 0 2px var(--friend-accent) inset;
+        }
+
+        .friend-theme-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(57, 21, 40, 0.28);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            z-index: 100040;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .friend-theme-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .friend-theme-modal-panel {
+            width: min(92vw, 360px);
+            background: linear-gradient(180deg, #fffafd 0%, #fff2f8 100%);
+            border: 1px solid #f6d5e4;
+            border-radius: 18px;
+            box-shadow: 0 18px 40px rgba(224, 125, 165, 0.28);
+            padding: 18px;
+            transform: translateY(16px) scale(0.98);
+            transition: transform 0.2s ease;
+        }
+
+        .friend-theme-modal.show .friend-theme-modal-panel {
+            transform: translateY(0) scale(1);
+        }
+
+        .friend-theme-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #bf5f88;
+            letter-spacing: 0.2px;
+        }
+
+        .friend-theme-modal-message {
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #8f6679;
+        }
+
+        .friend-theme-modal-input {
+            margin-top: 14px;
+            width: 100%;
+            height: 42px;
+            border: 1px solid #efcade;
+            border-radius: 12px;
+            padding: 0 12px;
+            background: #fff;
+            color: #5a3f4d;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .friend-theme-modal-input::placeholder {
+            color: #b694a5;
+        }
+
+        .friend-theme-modal-input:focus {
+            border-color: #e48ab1;
+            box-shadow: 0 0 0 3px rgba(228, 138, 177, 0.16);
+        }
+
+        .friend-theme-modal-input.is-textarea {
+            height: 96px;
+            padding: 10px 12px;
+            resize: vertical;
+        }
+
+        .friend-theme-modal-actions {
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .friend-theme-modal-btn {
+            min-width: 84px;
+            height: 36px;
+            border-radius: 18px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .friend-theme-modal-btn.ghost {
+            border-color: #f0cedd;
+            color: #a6778f;
+            background: #fff;
+        }
+
+        .friend-theme-modal-btn.primary {
+            background: linear-gradient(135deg, #ffbfd6 0%, #ea8eb1 100%);
+            color: #fff;
+            box-shadow: 0 8px 16px rgba(234, 142, 177, 0.3);
+        }
+
+        .friend-theme-modal-btn.primary.danger {
+            background: linear-gradient(135deg, #ff9eb4 0%, #f26b8f 100%);
+            box-shadow: 0 8px 16px rgba(242, 107, 143, 0.34);
         }
 
 
@@ -2232,10 +2344,11 @@
             position: fixed;
             top: 55px;
             right: 15px;
-            background-color: #fff;
+            background: linear-gradient(180deg, #fffafd 0%, #fff3f9 100%);
+            border: 1px solid #ffd9e8;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 150;
+            box-shadow: 0 14px 34px rgba(219, 122, 159, 0.24);
+            z-index: 100020;
             opacity: 0;
             visibility: hidden;
             transform: scale(0.9) translateY(-10px);
@@ -2243,6 +2356,8 @@
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             min-width: 180px;
             overflow: hidden;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
 
         .add-popup.show {
@@ -3066,7 +3181,7 @@
         }
 
         .popup-item:active {
-            background-color: #f5f5f5;
+            background-color: #fff0f7;
         }
 
         .popup-icon {
@@ -3082,12 +3197,13 @@
 
         .popup-text {
             font-size: 15px;
-            color: #333;
+            color: #a85f82;
+            font-weight: 600;
         }
 
         .popup-divider {
             height: 1px;
-            background-color: #f0f0f0;
+            background-color: #f8d9e7;
             margin: 0 15px;
         }
 
@@ -9287,8 +9403,8 @@
         @supports (-webkit-touch-callout: none) and (-webkit-appearance: none) {
 
             /* 当输入框获得焦点时 */
-            .chat-input:focus~.chat-toolbar,
-            .chat-input-area:has(.chat-input:focus)~.chat-toolbar {
+            html:not(.mobile-layout-ready) .chat-input:focus~.chat-toolbar,
+            html:not(.mobile-layout-ready) .chat-input-area:has(.chat-input:focus)~.chat-toolbar {
                 position: relative !important;
                 bottom: auto !important;
                 transform: none !important;

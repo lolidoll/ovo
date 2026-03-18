@@ -291,12 +291,14 @@
 .cg-custom-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 300;
+    background: rgba(57, 21, 40, 0.28);
+    z-index: 100041;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 .cg-custom-modal-content {
     background: #fff;
@@ -570,6 +572,9 @@
 
 .cg-custom-modal {
     background: rgba(255, 210, 225, 0.35);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 100041;
 }
 
 .cg-custom-modal-content {

@@ -1,5 +1,11 @@
         const DEFAULT_APP_BACKGROUND_IMAGE = 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg';
         const SUMMARY_PROMPT_V2 = '使用角色的第一人称写「精简记忆卡片」。不要引用原句，改写为更有画面感的精简总结。输出按以下分区，每区之间空一行：\n\n【剧情回顾】\n(概况完整覆盖所有剧情节点，<=150字)\n\n【关键事件】\n- ... (1-3条，每条<=12字)\n\n【约定】\n- ... / 暂无\n\n【纪念日】\n- ... / 暂无\n\n【成长】\n(1句，<=30字)\n\n【情感羁绊】\n阶段：...\n补充：...\n\n规则：\n- 仅输出以上栏目，不要输出【封面】、标题、章节或“本次总结”。\n- 输入会包含【章节名】【对话对象】，仅用于理解，不要在输出中直接复写标签。\n- 没有信息写“暂无”。\n- 可适度渲染情绪但不编造事实。\n- 简体中文。';
+        const DEFAULT_BOTTOM_TAB_ICONS = Object.freeze({
+            'msg-page': 'https://img.heliar.top/file/1772512170161_IMG_20260303_122659.png',
+            'friend-page': 'https://img.heliar.top/file/1772512176402_IMG_20260303_122742.png',
+            'moments-page': 'https://img.heliar.top/file/1772512167877_IMG_20260303_122718.png',
+            'channel-page': 'https://img.heliar.top/file/1772512170486_IMG_20260303_122811.png'
+        });
 
         // 应用状态
         const AppState = {
@@ -105,6 +111,9 @@
             fontStore: {
                 owned: []
             },
+            bottomTabIcons: {
+                ...DEFAULT_BOTTOM_TAB_ICONS
+            },
             importedCards: [],
             conversationStates: {},  // 运行时状态：{ convId: { isApiCalling, isTyping, isVoiceCallApiCalling } }
             notification: {
@@ -113,6 +122,45 @@
                 hideDelay: 5000  // 5秒后自动隐藏
             }
         };
+
+        function isBottomTabId(tabId) {
+            return Object.prototype.hasOwnProperty.call(DEFAULT_BOTTOM_TAB_ICONS, tabId);
+        }
+
+        function getDefaultBottomTabIcons() {
+            return {
+                ...DEFAULT_BOTTOM_TAB_ICONS
+            };
+        }
+
+        function normalizeBottomTabIcons(iconMap) {
+            const defaults = getDefaultBottomTabIcons();
+            const source = iconMap && typeof iconMap === 'object' ? iconMap : {};
+            Object.keys(defaults).forEach((tabId) => {
+                const value = typeof source[tabId] === 'string' ? source[tabId].trim() : '';
+                defaults[tabId] = value || defaults[tabId];
+            });
+            return defaults;
+        }
+
+        function applyBottomTabIcons(iconMap = null) {
+            const normalizedMap = normalizeBottomTabIcons(iconMap || (AppState && AppState.bottomTabIcons));
+
+            if (AppState && typeof AppState === 'object') {
+                AppState.bottomTabIcons = {
+                    ...normalizedMap
+                };
+            }
+
+            Object.keys(normalizedMap).forEach((tabId) => {
+                const iconEl = document.querySelector(`.tab-item[data-tab="${tabId}"] .tab-icon-img`);
+                if (iconEl && iconEl.getAttribute('src') !== normalizedMap[tabId]) {
+                    iconEl.setAttribute('src', normalizedMap[tabId]);
+                }
+            });
+
+            return normalizedMap;
+        }
 
         function getEffectiveUserBackgroundImage(bgImage) {
             const normalizedBgImage = typeof bgImage === 'string' ? bgImage.trim() : '';
@@ -312,6 +360,7 @@
                 initNotificationSystem();
                 initApiSettingsUI();
                 initWorldbookUI();
+                applyBottomTabIcons();
                 
                 // 初始化搜索栏显示状态
                 const msgSearchBar = document.getElementById('msg-search-bar');
@@ -518,9 +567,11 @@
                     if (!Array.isArray(AppState.fontStore.owned)) {
                         AppState.fontStore.owned = [];
                     }
+                    AppState.bottomTabIcons = normalizeBottomTabIcons(AppState.bottomTabIcons);
                     console.log('加载数据成功，用户背景图:', AppState.user.bgImage);
                 } else {
                     console.log('没有保存的数据');
+                    AppState.bottomTabIcons = normalizeBottomTabIcons(AppState.bottomTabIcons);
                 }
 
                 const legacySummaryPromptA = '你是一个专业的对话总结员。请为下面的对话内容生成一份简洁准确的总结。总结应该：1. 抓住对话的核心内容和主题；2. 保留重要信息和决策；3. 简洁明了，长度适中（200-300字）；4. 用简体中文或原语言撰写。';
@@ -878,6 +929,8 @@
                         tab.addEventListener('touchend', handleTouchEnd, { passive: false });
                     }
                 });
+
+                applyBottomTabIcons();
                 
                 console.log('✅ 底部标签栏事件初始化完成');
             }
@@ -1472,7 +1525,15 @@
             // 更多按钮 - 显示/隐藏更多功能弹出层
             const btnMore = document.getElementById('btn-more');
             const morePanel = document.getElementById('toolbar-more-panel');
-            if (btnMore && morePanel) {
+            const useQQToolbarMorePanel = Boolean(
+                window.__UNIFIED_CHAT_LAYOUT__ ||
+                (window.QQToolbar && typeof window.QQToolbar.toggleMorePanel === 'function')
+            );
+
+            if (useQQToolbarMorePanel) {
+                // 统一模式下由 chat-qq-toolbar.js 接管，避免 display 模式与 class 模式冲突。
+                if (morePanel) morePanel.style.display = '';
+            } else if (btnMore && morePanel) {
                 btnMore.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const isVisible = morePanel.style.display !== 'none';
@@ -1582,6 +1643,7 @@
                 const btnEmoji = document.getElementById('btn-emoji');
                 const inputArea = document.querySelector('.chat-input-area');
                 const toolbar = document.getElementById('chat-toolbar');
+                const chatMessages = document.getElementById('chat-messages');
                 
                 if (emojiLib && emojiLib.classList.contains('show')) {
                     if (!e.target.closest('#emoji-library') && !e.target.closest('#btn-emoji')) {
@@ -1590,6 +1652,10 @@
                         // 恢复输入框和工具栏到初始位置
                         if (inputArea) inputArea.style.transform = 'translateY(0)';
                         if (toolbar) toolbar.style.transform = 'translateY(0)';
+                        if (chatMessages) {
+                            chatMessages.style.transform = 'translateY(0)';
+                            chatMessages.style.marginBottom = '0px';
+                        }
                     }
                 }
             });
@@ -1964,6 +2030,189 @@
         let friendDragPayload = null;
         let groupChatDragPayload = null;
 
+        let friendCollapsedStateTimer = null;
+        const FRIEND_COLLAPSE_STATE_KEY = 'ovo.friend.collapsed-state.v1';
+
+        function loadFriendCollapsedStateCache() {
+            if (loadFriendCollapsedStateCache._loaded) {
+                return;
+            }
+            loadFriendCollapsedStateCache._loaded = true;
+            try {
+                const raw = localStorage.getItem(FRIEND_COLLAPSE_STATE_KEY);
+                if (!raw) {
+                    return;
+                }
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object') {
+                    return;
+                }
+                if (parsed.friend && typeof parsed.friend === 'object') {
+                    AppState.groupCollapsedStates = Object.assign({}, AppState.groupCollapsedStates || {}, parsed.friend);
+                }
+                if (parsed.groupChat && typeof parsed.groupChat === 'object') {
+                    AppState.groupChatCollapsedStates = Object.assign({}, AppState.groupChatCollapsedStates || {}, parsed.groupChat);
+                }
+            } catch (error) {
+                console.warn('⚠️ 读取分组折叠缓存失败:', error);
+            }
+        }
+
+        function persistFriendCollapsedStateCache() {
+            if (friendCollapsedStateTimer) {
+                clearTimeout(friendCollapsedStateTimer);
+            }
+            friendCollapsedStateTimer = setTimeout(() => {
+                try {
+                    localStorage.setItem(FRIEND_COLLAPSE_STATE_KEY, JSON.stringify({
+                        friend: AppState.groupCollapsedStates || {},
+                        groupChat: AppState.groupChatCollapsedStates || {}
+                    }));
+                } catch (error) {
+                    console.warn('⚠️ 保存分组折叠缓存失败:', error);
+                }
+            }, 80);
+        }
+
+        function openFriendThemeDialog(options = {}) {
+            const {
+                mode = 'confirm',
+                title = '提示',
+                message = '',
+                value = '',
+                placeholder = '',
+                maxLength = 32,
+                multiline = false,
+                confirmText = '确定',
+                cancelText = '取消',
+                danger = false
+            } = options;
+
+            const existing = document.getElementById('friend-theme-modal');
+            if (existing) {
+                existing.remove();
+            }
+
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.id = 'friend-theme-modal';
+                overlay.className = 'friend-theme-modal';
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
+
+                const panel = document.createElement('div');
+                panel.className = 'friend-theme-modal-panel';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'friend-theme-modal-title';
+                titleEl.textContent = title;
+                panel.appendChild(titleEl);
+
+                if (message) {
+                    const messageEl = document.createElement('div');
+                    messageEl.className = 'friend-theme-modal-message';
+                    messageEl.textContent = message;
+                    panel.appendChild(messageEl);
+                }
+
+                let inputEl = null;
+                if (mode === 'input') {
+                    inputEl = document.createElement(multiline ? 'textarea' : 'input');
+                    inputEl.className = multiline
+                        ? 'friend-theme-modal-input is-textarea'
+                        : 'friend-theme-modal-input';
+                    if (!multiline) {
+                        inputEl.type = 'text';
+                    }
+                    inputEl.placeholder = placeholder;
+                    inputEl.maxLength = maxLength;
+                    inputEl.value = value || '';
+                    panel.appendChild(inputEl);
+                }
+
+                const actions = document.createElement('div');
+                actions.className = 'friend-theme-modal-actions';
+
+                const showCancel = mode !== 'alert';
+                if (showCancel) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.type = 'button';
+                    cancelBtn.className = 'friend-theme-modal-btn ghost';
+                    cancelBtn.textContent = cancelText;
+                    actions.appendChild(cancelBtn);
+                    cancelBtn.addEventListener('click', function() {
+                        close(mode === 'input' ? null : false);
+                    });
+                }
+
+                const confirmBtn = document.createElement('button');
+                confirmBtn.type = 'button';
+                confirmBtn.className = danger
+                    ? 'friend-theme-modal-btn primary danger'
+                    : 'friend-theme-modal-btn primary';
+                confirmBtn.textContent = confirmText;
+                actions.appendChild(confirmBtn);
+
+                confirmBtn.addEventListener('click', function() {
+                    if (mode === 'input') {
+                        close(inputEl ? inputEl.value : '');
+                        return;
+                    }
+                    close(true);
+                });
+
+                panel.appendChild(actions);
+                overlay.appendChild(panel);
+
+                let closed = false;
+                const close = function(result) {
+                    if (closed) {
+                        return;
+                    }
+                    closed = true;
+                    document.removeEventListener('keydown', onKeyDown);
+                    overlay.classList.remove('show');
+                    setTimeout(() => {
+                        overlay.remove();
+                    }, 180);
+                    resolve(result);
+                };
+
+                const onKeyDown = function(event) {
+                    if (event.key === 'Escape') {
+                        close(mode === 'input' ? null : false);
+                        return;
+                    }
+                    if (mode === 'input' && !multiline && event.key === 'Enter') {
+                        event.preventDefault();
+                        close(inputEl ? inputEl.value : '');
+                    }
+                };
+
+                overlay.addEventListener('click', function(event) {
+                    if (event.target === overlay) {
+                        close(mode === 'input' ? null : false);
+                    }
+                });
+
+                document.addEventListener('keydown', onKeyDown);
+                document.body.appendChild(overlay);
+
+                requestAnimationFrame(() => {
+                    overlay.classList.add('show');
+                    if (inputEl) {
+                        inputEl.focus();
+                        if (!multiline) {
+                            const len = inputEl.value.length;
+                            inputEl.setSelectionRange(len, len);
+                        }
+                    } else {
+                        confirmBtn.focus();
+                    }
+                });
+            });
+        }
+
         function ensureFriendSortIndex() {
             if (!Array.isArray(AppState.friends)) return;
             const groups = {};
@@ -2149,6 +2398,7 @@
             const count = document.querySelector('.group-header[data-group="common"] .group-count');
             const isManageMode = getFriendManageMode();
             updateFriendManageButton();
+            loadFriendCollapsedStateCache();
             
             if (!friendList) return;
 
@@ -2179,15 +2429,6 @@
             });
             
             count.textContent = `(${AppState.friends.length}/${AppState.friends.length})`;
-            
-            if (AppState.friends.length === 0 && !isManageMode) {
-                friendList.innerHTML = `
-                    <div class="empty-state" style="padding: 30px 20px;">
-                        <div class="empty-text">暂无好友</div>
-                    </div>
-                `;
-                return;
-            }
             
             friendList.innerHTML = '';
 
@@ -2227,7 +2468,6 @@
                     const bIndex = Number.isFinite(b.friendSortIndex) ? b.friendSortIndex : 0;
                     return aIndex - bIndex;
                 });
-                if (groupFriends.length === 0 && !isManageMode) return;
                 
                 const isCollapsed = AppState.groupCollapsedStates[group.id] || false;
                 const canMoveUp = isManageMode && groupIndex > 0;
@@ -2259,11 +2499,18 @@
                     </div>
                 `;
                 
-                // 添加折叠展开事件
-                groupHeader.addEventListener('click', function() {
-                    AppState.groupCollapsedStates[group.id] = !AppState.groupCollapsedStates[group.id];
-                    saveToStorage();
-                    renderFriends();
+                // 添加折叠展开事件（就地切换，避免整列表重渲染）
+                groupHeader.addEventListener('click', function(e) {
+                    if (e.target.closest('.friend-subgroup-action') || e.target.closest('.friend-drag-handle') || e.target.closest('select')) {
+                        return;
+                    }
+                    const nextCollapsed = !(AppState.groupCollapsedStates[group.id] || false);
+                    AppState.groupCollapsedStates[group.id] = nextCollapsed;
+                    groupHeader.dataset.collapsed = String(nextCollapsed);
+                    groupHeader.classList.toggle('is-collapsed', nextCollapsed);
+                    groupHeader.setAttribute('aria-expanded', String(!nextCollapsed));
+                    friendsContainer.classList.toggle('is-collapsed', nextCollapsed);
+                    persistFriendCollapsedStateCache();
                 });
                 
                 friendList.appendChild(groupHeader);
@@ -2366,13 +2613,29 @@
             }
         }
 
-        function addFriendGroup() {
-            const groupName = prompt('请输入分组名称：', '');
-            if (!groupName || !groupName.trim()) return;
-            
+        async function addFriendGroup() {
+            const groupName = await openFriendThemeDialog({
+                mode: 'input',
+                title: '新增好友分组',
+                placeholder: '请输入分组名称',
+                maxLength: 20,
+                confirmText: '创建'
+            });
+            if (groupName === null) return;
+
+            const finalName = String(groupName).trim();
+            if (!finalName) {
+                showToast('分组名称不能为空');
+                return;
+            }
+
+            if (!Array.isArray(AppState.friendGroups)) {
+                AppState.friendGroups = [];
+            }
+
             AppState.friendGroups.push({
                 id: generateId(),
-                name: groupName.trim(),
+                name: finalName,
                 memberIds: []
             });
             
@@ -2381,24 +2644,45 @@
             showToast('分组已添加');
         }
 
-        function editFriendGroup(groupId) {
+        async function editFriendGroup(groupId) {
             const group = AppState.friendGroups.find(g => g.id === groupId);
             if (!group) return;
+
+            const newName = await openFriendThemeDialog({
+                mode: 'input',
+                title: '编辑好友分组',
+                value: group.name || '',
+                placeholder: '请输入分组名称',
+                maxLength: 20,
+                confirmText: '保存'
+            });
+            if (newName === null) return;
+
+            const finalName = String(newName).trim();
+            if (!finalName) {
+                showToast('分组名称不能为空');
+                return;
+            }
             
-            const newName = prompt('编辑分组名称：', group.name);
-            if (!newName || !newName.trim()) return;
-            
-            group.name = newName.trim();
+            group.name = finalName;
             saveToStorage();
             renderFriends();
             showToast('分组已更新');
         }
 
-        function deleteFriendGroup(groupId) {
+        async function deleteFriendGroup(groupId) {
             const group = AppState.friendGroups.find(g => g.id === groupId);
             if (!group || group.id === 'group_default') return;
-            
-            if (!confirm(`确定要删除分组 "${group.name}" 吗？该分组中的好友将移到默认分组`)) return;
+
+            const confirmed = await openFriendThemeDialog({
+                mode: 'confirm',
+                title: '删除好友分组',
+                message: `确定要删除分组“${group.name}”吗？该分组中的好友将移到默认分组。`,
+                confirmText: '删除',
+                cancelText: '取消',
+                danger: true
+            });
+            if (!confirmed) return;
             
             // 将该分组中的好友移到默认分组
             AppState.friends.forEach(friend => {
@@ -2582,6 +2866,7 @@
             const count = document.querySelector('.group-header[data-group="groups"] .group-count');
             const isManageMode = getGroupManageMode();
             updateGroupManageButton();
+            loadFriendCollapsedStateCache();
 
             if (!groupList || !count) return;
 
@@ -2596,15 +2881,6 @@
 
             const groups = Array.isArray(AppState.groups) ? AppState.groups : [];
             count.textContent = `(${groups.length}/${groups.length})`;
-            
-            if (groups.length === 0 && !isManageMode) {
-                groupList.innerHTML = `
-                    <div class="empty-state" style="padding: 30px 20px;">
-                        <div class="empty-text">暂无群聊</div>
-                    </div>
-                `;
-                return;
-            }
             
             const groupedChats = {};
             AppState.groupChatGroups.forEach(group => {
@@ -2656,7 +2932,6 @@
                     const bIndex = Number.isFinite(b.groupSortIndex) ? b.groupSortIndex : 0;
                     return aIndex - bIndex;
                 });
-                if (groupChats.length === 0 && !isManageMode) return;
                 
                 const isCollapsed = AppState.groupChatCollapsedStates[group.id] || false;
                 const canMoveUp = isManageMode && groupIndex > 0;
@@ -2687,10 +2962,17 @@
                     </div>
                 `;
                 
-                groupHeader.addEventListener('click', function() {
-                    AppState.groupChatCollapsedStates[group.id] = !AppState.groupChatCollapsedStates[group.id];
-                    saveToStorage();
-                    renderGroups();
+                groupHeader.addEventListener('click', function(e) {
+                    if (e.target.closest('.friend-subgroup-action') || e.target.closest('.friend-drag-handle') || e.target.closest('select')) {
+                        return;
+                    }
+                    const nextCollapsed = !(AppState.groupChatCollapsedStates[group.id] || false);
+                    AppState.groupChatCollapsedStates[group.id] = nextCollapsed;
+                    groupHeader.dataset.collapsed = String(nextCollapsed);
+                    groupHeader.classList.toggle('is-collapsed', nextCollapsed);
+                    groupHeader.setAttribute('aria-expanded', String(!nextCollapsed));
+                    groupContainer.classList.toggle('is-collapsed', nextCollapsed);
+                    persistFriendCollapsedStateCache();
                 });
                 
                 groupList.appendChild(groupHeader);
@@ -2788,9 +3070,21 @@
             }
         }
 
-        function addGroupChatGroup() {
-            const groupName = prompt('请输入分组名称：', '');
-            if (!groupName || !groupName.trim()) return;
+        async function addGroupChatGroup() {
+            const groupName = await openFriendThemeDialog({
+                mode: 'input',
+                title: '新增群聊分组',
+                placeholder: '请输入分组名称',
+                maxLength: 20,
+                confirmText: '创建'
+            });
+            if (groupName === null) return;
+
+            const finalName = String(groupName).trim();
+            if (!finalName) {
+                showToast('分组名称不能为空');
+                return;
+            }
 
             if (!Array.isArray(AppState.groupChatGroups)) {
                 AppState.groupChatGroups = [];
@@ -2798,7 +3092,7 @@
 
             AppState.groupChatGroups.push({
                 id: generateId(),
-                name: groupName.trim(),
+                name: finalName,
                 memberIds: []
             });
 
@@ -2807,24 +3101,45 @@
             showToast('分组已添加');
         }
 
-        function editGroupChatGroup(groupId) {
+        async function editGroupChatGroup(groupId) {
             const group = AppState.groupChatGroups.find(g => g.id === groupId);
             if (!group) return;
 
-            const newName = prompt('编辑分组名称：', group.name);
-            if (!newName || !newName.trim()) return;
+            const newName = await openFriendThemeDialog({
+                mode: 'input',
+                title: '编辑群聊分组',
+                value: group.name || '',
+                placeholder: '请输入分组名称',
+                maxLength: 20,
+                confirmText: '保存'
+            });
+            if (newName === null) return;
 
-            group.name = newName.trim();
+            const finalName = String(newName).trim();
+            if (!finalName) {
+                showToast('分组名称不能为空');
+                return;
+            }
+
+            group.name = finalName;
             saveToStorage();
             renderGroups();
             showToast('分组已更新');
         }
 
-        function deleteGroupChatGroup(groupId) {
+        async function deleteGroupChatGroup(groupId) {
             const group = AppState.groupChatGroups.find(g => g.id === groupId);
             if (!group || group.id === 'group_default') return;
 
-            if (!confirm(`确定要删除分组 "${group.name}" 吗？该分组中的群聊将移到默认分组`)) return;
+            const confirmed = await openFriendThemeDialog({
+                mode: 'confirm',
+                title: '删除群聊分组',
+                message: `确定要删除分组“${group.name}”吗？该分组中的群聊将移到默认分组。`,
+                confirmText: '删除',
+                cancelText: '取消',
+                danger: true
+            });
+            if (!confirmed) return;
 
             AppState.groups.forEach(groupChat => {
                 if (groupChat.groupChatGroupId === groupId) {
@@ -5069,6 +5384,7 @@
             const chatToolbar = document.getElementById('chat-toolbar');
             const inputArea = document.querySelector('.chat-input-area');
             const emojiLib = document.getElementById('emoji-library');
+            const chatMessages = document.getElementById('chat-messages');
             
             // 确保工具栏隐藏
             if (chatToolbar) {
@@ -5077,6 +5393,10 @@
             }
             if (inputArea) {
                 inputArea.style.transform = 'translateY(0)';
+            }
+            if (chatMessages) {
+                chatMessages.style.transform = 'translateY(0)';
+                chatMessages.style.marginBottom = '0px';
             }
             if (emojiLib) {
                 emojiLib.classList.remove('show');
@@ -11223,6 +11543,7 @@
             const lib = document.getElementById('emoji-library');
             const inputArea = document.querySelector('.chat-input-area');
             const toolbar = document.getElementById('chat-toolbar');
+            const chatMessages = document.getElementById('chat-messages');
             
             const isShowing = lib.classList.contains('show');
             
@@ -11234,6 +11555,10 @@
                 // 恢复输入框和工具栏到初始位置
                 inputArea.style.transform = 'translateY(0)';
                 toolbar.style.transform = 'translateY(0)';
+                if (chatMessages) {
+                    chatMessages.style.transform = 'translateY(0)';
+                    chatMessages.style.marginBottom = '0px';
+                }
             } else {
                 // 显示表情库
                 lib.classList.add('show');
@@ -11367,6 +11692,7 @@
             const lib = document.getElementById('emoji-library');
             const inputArea = document.querySelector('.chat-input-area');
             const toolbar = document.getElementById('chat-toolbar');
+            const chatMessages = document.getElementById('chat-messages');
             
             const isShowing = lib.classList.contains('show');
             
@@ -11378,6 +11704,10 @@
                 // 恢复输入框和工具栏到初始位置
                 inputArea.style.transform = 'translateY(0)';
                 toolbar.style.transform = 'translateY(0)';
+                if (chatMessages) {
+                    chatMessages.style.transform = 'translateY(0)';
+                    chatMessages.style.marginBottom = '0px';
+                }
             } else {
                 // 显示表情库
                 lib.classList.add('show');
@@ -11397,8 +11727,9 @@
             const lib = document.getElementById('emoji-library');
             const inputArea = document.querySelector('.chat-input-area');
             const toolbar = document.getElementById('chat-toolbar');
+            const chatMessages = document.getElementById('chat-messages');
             
-            if (!lib || !inputArea || !toolbar) return;
+            if (!lib) return;
             
             if (lib.classList.contains('show')) {
                 // 表情库显示时，计算其高度
@@ -11415,8 +11746,14 @@
                 }
                 
                 // 设置transform使输入框和工具栏紧挨着表情库
-                inputArea.style.transform = `translateY(-${libHeight}px)`;
-                toolbar.style.transform = `translateY(-${libHeight}px)`;
+                const translateValue = `translateY(-${libHeight}px)`;
+                if (inputArea) inputArea.style.transform = translateValue;
+                if (toolbar) toolbar.style.transform = translateValue;
+                if (chatMessages) {
+                    // 聊天内容区不做整体上移，改为底部补偿避免侵入顶部栏。
+                    chatMessages.style.transform = 'translateY(0)';
+                    chatMessages.style.marginBottom = `${Math.round(libHeight)}px`;
+                }
             }
         }
         
@@ -14651,7 +14988,7 @@
                 document.getElementById('app-container').appendChild(page);
             }
 
-            const allowedTabs = ['font', 'font-store', 'msg', 'friend'];
+            const allowedTabs = ['font', 'font-store', 'msg', 'friend', 'tab-icons'];
             const initialTab = allowedTabs.includes(defaultTab) ? defaultTab : 'font-store';
 
             const state = {
@@ -14659,6 +14996,12 @@
                 storeDetailId: null,
                 storePage: 1
             };
+            const bottomTabIconItems = [
+                { tabId: 'msg-page', label: '消息' },
+                { tabId: 'friend-page', label: '好友' },
+                { tabId: 'moments-page', label: '动态' },
+                { tabId: 'channel-page', label: '频道' }
+            ];
             const baseFontStoreItems = [
                 {
                     id: 'zoean-dawn-pixel',
@@ -14807,6 +15150,81 @@
                 { name: '一颗萌布丁', url: 'https://nos.netease.com/ysf/010535bedecb1311389aff770ef68203.ttf' }
             ];
 
+            const tailboneFontsRaw = [
+                { name: '小雨转晴', url: 'https://img.heliar.top/file/1769648531317_小雨转晴70.ttf' },
+                { name: '摸鱼十字', url: 'https://img.heliar.top/file/1769648544096_摸鱼十字70.ttf' },
+                { name: '蝴蝶结一', url: 'https://img.heliar.top/file/1769648948979_蝴蝶结一70.ttf' },
+                { name: '蝴蝶结二', url: 'https://img.heliar.top/file/1769648952916_蝴蝶结二70.ttf' },
+                { name: '日文符', url: 'https://img.heliar.top/file/1769648944850_听-日文符70.ttf' },
+                { name: '摸鱼韩', url: 'https://file.icve.com.cn/file_doc/qdqqd/5701769651015319.ttf' },
+                { name: '爪爪结一', url: 'https://file.icve.com.cn/file_doc/qdqqd/7151769651021558.ttf' },
+                { name: '爪爪结二', url: 'https://file.icve.com.cn/file_doc/qdqqd/8941769651030070.ttf' },
+                { name: '爪爪结三', url: 'https://file.icve.com.cn/file_doc/qdqqd/9091769651042038.ttf' },
+                { name: '爪爪结四', url: 'https://file.icve.com.cn/file_doc/qdqqd/4171769651050588.ttf' },
+                { name: '白夜行', url: 'https://file.icve.com.cn/file_doc/qdqqd/4221769730069165.ttf' },
+                { name: '日系星', url: 'https://file.icve.com.cn/file_doc/qdqqd/4761769730071660.ttf' },
+                { name: '零度', url: 'https://file.icve.com.cn/file_doc/qdqqd/8021769730074187.ttf' },
+                { name: '落日圆', url: 'https://file.icve.com.cn/file_doc/qdqqd/5161769730075930.ttf' },
+                { name: '梦醒时分', url: 'https://file.icve.com.cn/file_doc/qdqqd/3821769730078587.ttf' },
+                { name: '梦醒时分中粗', url: 'https://file.icve.com.cn/file_doc/qdqqd/6481769730081024.ttf' },
+                { name: '喵言喵语', url: 'https://file.icve.com.cn/file_doc/qdqqd/8211769730083629.ttf' },
+                { name: '黑盒子', url: 'https://file.icve.com.cn/file_doc/qdqqd/2421769730088624.ttf' },
+                { name: '漫游萝', url: 'https://file.icve.com.cn/file_doc/qdqqd/4511769730574885.ttf' },
+                { name: '绣针细', url: 'https://file.icve.com.cn/file_doc/qdqqd/7101769730581311.ttf' },
+                { name: '绣针常规', url: 'https://file.icve.com.cn/file_doc/qdqqd/3371769731064001.ttf' },
+                { name: '绣针粗', url: 'https://file.icve.com.cn/file_doc/qdqqd/8941769731066936.ttf' },
+                { name: '六黑花', url: 'https://file.icve.com.cn/file_doc/qdqqd/8631769732499948.ttf' },
+                { name: '花渡', url: 'https://file.icve.com.cn/file_doc/qdqqd/2841769732481470.ttf' },
+                { name: '心跳的悸动', url: 'https://file.icve.com.cn/file_doc/qdqqd/9291769731069940.ttf' },
+                { name: '简修1.0', url: 'https://file.icve.com.cn/file_doc/qdqqd/7511769731368461.ttf' },
+                { name: '繁语', url: 'https://file.icve.com.cn/file_doc/qdqqd/1291769731370532.ttf' },
+                { name: '终字体', url: 'https://file.icve.com.cn/file_doc/qdqqd/7261769731375808.ttf' },
+                { name: '春庭暮', url: 'https://file.icve.com.cn/file_doc/qdqqd/5741769731378623.ttf' },
+                { name: '有喵饼', url: 'https://file.icve.com.cn/file_doc/qdqqd/1691769731383557.ttf' },
+                { name: '自用爪爪结', url: 'https://file.icve.com.cn/file_doc/qdqqd/3121769731387522.ttf' },
+                { name: '折耳兔', url: 'https://file.icve.com.cn/file_doc/qdqqd/3111769732023035.ttf' },
+                { name: '原来是巴库', url: 'https://file.icve.com.cn/file_doc/qdqqd/4711769732026552.ttf' },
+                { name: '喵卷', url: 'https://file.icve.com.cn/file_doc/qdqqd/9771769732060162.ttf' },
+                { name: '见录', url: 'https://file.icve.com.cn/file_doc/qdqqd/8171769732484743.ttf' },
+                { name: '眼睛喵', url: 'https://file.icve.com.cn/file_doc/qdqqd/3031769732796702.ttf' },
+                { name: '南来北往人海相望', url: 'https://img.heliar.top/file/1769293644546_南来北往人海相望.ttf' },
+                { name: '我们之间就结束吧', url: 'https://img.heliar.top/file/1769293639862_我们之间就结束吧.ttf' },
+                { name: '迷途知返的该是我', url: 'https://img.heliar.top/file/1769293647985_迷途知返的该是我.ttf' },
+                { name: '爱恨随意心甘情愿', url: 'https://img.heliar.top/file/1769293646127_爱恨随意心甘情愿.ttf' },
+                { name: '桃桃荔枝奶冻', url: 'https://img.heliar.top/file/1769293499706_桃桃荔枝奶冻.ttf' },
+                { name: '古早味的小猫鱼干', url: 'https://img.heliar.top/file/1769295395469_古早味的小猫鱼干.ttf' },
+                { name: '夏天在没有天花板的地方', url: 'https://img.heliar.top/file/1769295399378_夏天在没有天花板的地方.ttf' },
+                { name: '小狗的伞永远倾向你', url: 'https://img.heliar.top/file/1769295400610_小狗的伞永远倾向你.ttf' }
+            ];
+
+            const sunceFontsRaw = [
+                { name: '瞄准我的月亮', url: 'https://img.heliar.top/file/1773798973563_瞄准我的月亮.ttf' },
+                { name: '暖暖的酒窝', url: 'https://img.heliar.top/file/1773798966817_暖暖的酒窝.ttf' },
+                { name: '少女革命', url: 'https://img.heliar.top/file/1773798983184_少女革命.ttf' },
+                { name: '日系の小清新', url: 'https://img.heliar.top/file/1773798958610_日系の小清新.ttf' },
+                { name: '小熊趴在云朵', url: 'https://img.heliar.top/file/1773799011485_小熊趴在云朵.ttf' }
+            ];
+
+            const pearFontsRaw = [
+                { name: '奶霜甜点', url: 'https://img.heliar.top/file/1773236666968_甜品店90.ttf' },
+                { name: '云朵奶盖', url: 'https://file.icve.com.cn/file_doc/qdqqd/4451773237935948.ttf' },
+                { name: '蜜桃汽水', url: 'https://file.icve.com.cn/file_doc/qdqqd/9911773238105469.ttf' },
+                { name: '午后布丁', url: 'https://file.icve.com.cn/file_doc/qdqqd/8091773238221098.ttf' },
+                { name: '软糖日记', url: 'https://file.icve.com.cn/file_doc/qdqqd/3401773238318605.ttf' },
+                { name: '青柠奶冻', url: 'https://file.icve.com.cn/file_doc/qdqqd/4831773502633367.ttf' },
+                { name: '雾凇绵绵', url: 'https://file.icve.com.cn/file_doc/qdqqd/6511773501239043.ttf' },
+                { name: '晚风可颂', url: 'https://file.icve.com.cn/file_doc/qdqqd/9911773502284901.ttf' },
+                { name: '奶盐星光', url: 'https://file.icve.com.cn/file_doc/qdqqd/7001773505142687.ttf' },
+                { name: '砂糖手札', url: 'https://file.icve.com.cn/file_doc/qdqqd/7181773505014435.ttf' }
+            ];
+
+            const customContributorFontsRaw = [
+                { name: '苹方体', author: 'Peace Dove', url: 'https://raw.githubusercontent.com/gezagaga0708-stack/-/main/苹方体.ttf' },
+                { name: '寄给冬天的情诗', author: '喜羊羊', url: 'https://test.fukit.cn/autoupload/f/KoaHMPd6vC8-1sSz_faJStiO_OyvX7mIgxFBfDMDErs/20260302/bLDI/JiGeiDongTianDeQingShi-2.ttf' },
+                { name: '手書き風フォント「からかぜ」', author: 'Levoglucose', url: 'https://img.heliar.top/file/1773799690481_karakaze-R.ttf' },
+                { name: '夜すがら手書きフォント1.2', author: 'Levoglucose', url: 'https://img.heliar.top/file/1773799809892_yosugaraver1_2.ttf' }
+            ];
+
             const mintBadges = ['人气', '轻柔', '灵动', '治愈', '元气', '清新', '温柔', '软萌', '舒缓'];
             const mintAccents = ['#ffb677', '#ffd166', '#f7aef8', '#b8f2e6', '#a0c4ff', '#ffadad', '#caffbf', '#9bf6ff', '#ffc6ff'];
             const mintPrices = [18, 20, 22, 24, 26, 28, 30, 32, 34];
@@ -14932,7 +15350,59 @@
                 };
             });
 
-            const rawFontStoreItems = baseFontStoreItems.concat(mintFonts);
+            const tailboneFonts = tailboneFontsRaw.map((item, index) => {
+                return {
+                    id: `tailbone-${index + 1}`,
+                    name: item.name,
+                    author: '尾骨痣',
+                    url: item.url,
+                    price: mintPrices[(index + 3) % mintPrices.length],
+                    quote: '',
+                    badge: mintBadges[(index + 2) % mintBadges.length],
+                    accent: mintAccents[(index + 4) % mintAccents.length]
+                };
+            });
+
+            const sunceFonts = sunceFontsRaw.map((item, index) => {
+                return {
+                    id: `sunce-${index + 1}`,
+                    name: item.name,
+                    author: '孙策你好做吗',
+                    url: item.url,
+                    price: mintPrices[(index + 5) % mintPrices.length],
+                    quote: '',
+                    badge: mintBadges[(index + 1) % mintBadges.length],
+                    accent: mintAccents[(index + 6) % mintAccents.length]
+                };
+            });
+
+            const pearFonts = pearFontsRaw.map((item, index) => {
+                return {
+                    id: `pear-${index + 1}`,
+                    name: item.name,
+                    author: '小梨',
+                    url: item.url,
+                    price: mintPrices[(index + 4) % mintPrices.length],
+                    quote: '',
+                    badge: mintBadges[(index + 3) % mintBadges.length],
+                    accent: mintAccents[(index + 2) % mintAccents.length]
+                };
+            });
+
+            const customContributorFonts = customContributorFontsRaw.map((item, index) => {
+                return {
+                    id: `custom-${index + 1}`,
+                    name: item.name,
+                    author: item.author,
+                    url: item.url,
+                    price: mintPrices[(index + 6) % mintPrices.length],
+                    quote: '',
+                    badge: mintBadges[(index + 4) % mintBadges.length],
+                    accent: mintAccents[(index + 5) % mintAccents.length]
+                };
+            });
+
+            const rawFontStoreItems = baseFontStoreItems.concat(mintFonts, tailboneFonts, sunceFonts, pearFonts, customContributorFonts);
             const fontStoreItems = rawFontStoreItems.map((item, index) => {
                 const normalizedName = buildStoreChineseName(item.name, index);
                 const legacyNames = normalizedName !== item.name ? [item.name] : [];
@@ -15031,6 +15501,7 @@
                         <button class="decoration-tab-btn" data-tab="font" role="tab" aria-selected="false">我的字体</button>
                         <button class="decoration-tab-btn" data-tab="msg" role="tab" aria-selected="false">消息页面</button>
                         <button class="decoration-tab-btn" data-tab="friend" role="tab" aria-selected="false">好友页面</button>
+                        <button class="decoration-tab-btn" data-tab="tab-icons" role="tab" aria-selected="false">底部导航</button>
                     </div>
 
                     <div class="decoration-tab-panels">
@@ -15038,6 +15509,7 @@
                         <section class="decoration-tab-panel" data-panel="font"></section>
                         <section class="decoration-tab-panel" data-panel="msg"></section>
                         <section class="decoration-tab-panel" data-panel="friend"></section>
+                        <section class="decoration-tab-panel" data-panel="tab-icons"></section>
                     </div>
 
                     <div class="decoration-modal-mask hidden" id="decoration-modal-mask">
@@ -15519,6 +15991,56 @@
                         font-weight: 700;
                     }
 
+                    #decoration-main-page .decoration-tab-icon-hero {
+                        background: linear-gradient(135deg, #fff9fd 0%, #ffeef6 100%);
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 10px;
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-item {
+                        border: 1px solid #ffe2ee;
+                        border-radius: 12px;
+                        background: #fff;
+                        padding: 10px;
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-preview-wrap {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 10px;
+                        border: 1px solid #ffd9e8;
+                        background: #fff8fc;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-preview {
+                        width: 24px;
+                        height: 24px;
+                        object-fit: contain;
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-input {
+                        margin-top: 6px;
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-actions {
+                        display: grid;
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                        gap: 6px;
+                    }
+
+                    #decoration-main-page .decoration-tab-icon-actions .decoration-btn {
+                        min-height: 34px;
+                        padding: 0 8px;
+                    }
+
                     #decoration-main-page .decoration-inline-badge {
                         display: inline-flex;
                         align-items: center;
@@ -15952,6 +16474,14 @@
                             grid-template-columns: 1fr;
                         }
 
+                        #decoration-main-page .decoration-tab-icon-grid {
+                            grid-template-columns: 1fr;
+                        }
+
+                        #decoration-main-page .decoration-tab-icon-actions {
+                            grid-template-columns: 1fr;
+                        }
+
                     }
                 </style>
             `;
@@ -16007,6 +16537,10 @@
                     renderBackgroundPanel('friend');
                     return;
                 }
+                if (state.activeTab === 'tab-icons') {
+                    renderTabIconPanel();
+                    return;
+                }
                 renderFontPanel();
             }
 
@@ -16057,6 +16591,231 @@
                         }
                     };
                 });
+            }
+
+            function renderTabIconPanel() {
+                const panel = page.querySelector('[data-panel="tab-icons"]');
+                if (!panel) {
+                    return;
+                }
+
+                const normalizedIcons = normalizeBottomTabIcons(AppState.bottomTabIcons);
+                const defaultIcons = getDefaultBottomTabIcons();
+                const labelMap = bottomTabIconItems.reduce((result, item) => {
+                    result[item.tabId] = item.label;
+                    return result;
+                }, {});
+
+                const cardsHTML = bottomTabIconItems.map((item) => {
+                    const currentIcon = normalizedIcons[item.tabId] || defaultIcons[item.tabId];
+                    const isDefault = currentIcon === defaultIcons[item.tabId];
+                    return `
+                        <div class="decoration-tab-icon-item">
+                            <div class="decoration-bg-head">
+                                <div class="decoration-tab-icon-preview-wrap">
+                                    <img class="decoration-tab-icon-preview" src="${escapeHtml(currentIcon)}" alt="${escapeHtml(item.label)}" data-tab-icon-preview="${item.tabId}">
+                                </div>
+                                <div class="decoration-grow">
+                                    <div class="decoration-item-name">${escapeHtml(item.label)}</div>
+                                    <div class="decoration-item-meta">${isDefault ? '当前为默认图标' : '已自定义图标'}</div>
+                                </div>
+                                ${isDefault ? '<span class="decoration-inline-badge">默认</span>' : '<span class="decoration-inline-badge">自定义</span>'}
+                            </div>
+
+                            <div class="decoration-field">
+                                <div class="decoration-label">
+                                    <span>图标链接</span>
+                                </div>
+                                <input class="decoration-input decoration-tab-icon-input" data-tab-icon-url-input="${item.tabId}" value="${escapeHtml(currentIcon)}" placeholder="https://example.com/icon.png">
+                            </div>
+
+                            <div class="decoration-tab-icon-actions">
+                                <button class="decoration-btn primary" data-tab-icon-action="apply-url" data-tab-id="${item.tabId}">应用链接</button>
+                                <button class="decoration-btn" data-tab-icon-action="upload" data-tab-id="${item.tabId}">本地上传</button>
+                                <button class="decoration-btn danger" data-tab-icon-action="reset" data-tab-id="${item.tabId}">恢复默认</button>
+                            </div>
+
+                            <input type="file" accept="image/*" style="display:none;" data-tab-icon-file-input="${item.tabId}">
+                        </div>
+                    `;
+                }).join('');
+
+                panel.innerHTML = `
+                    <div class="decoration-card decoration-tab-icon-hero">
+                        <div class="decoration-bg-hero-head">
+                            <div>
+                                <div class="decoration-bg-hero-title">底部导航图标</div>
+                                <div class="decoration-bg-hero-sub">支持自定义消息、好友、动态、频道四个图标，可输入链接或上传本地图片</div>
+                            </div>
+                            <span class="decoration-inline-badge">实时生效</span>
+                        </div>
+
+                        <div class="decoration-bg-current">
+                            <div class="decoration-grow">
+                                <div class="decoration-font-current-label">说明</div>
+                                <div class="decoration-font-current-name">修改后会立即应用到底部导航，并自动保存</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="decoration-card">
+                        <div class="decoration-font-list-title">
+                            <span>导航入口图标 (${bottomTabIconItems.length})</span>
+                            <span>推荐 24x24 透明 PNG</span>
+                        </div>
+                        <div class="decoration-tab-icon-grid">
+                            ${cardsHTML}
+                        </div>
+
+                        <div class="decoration-bg-main-actions">
+                            <button class="decoration-btn danger decoration-bg-main-btn" id="decoration-reset-all-tab-icons">恢复全部默认图标</button>
+                        </div>
+                    </div>
+                `;
+
+                const persistTabIcon = (tabId, iconSrc) => {
+                    if (!isBottomTabId(tabId)) {
+                        return false;
+                    }
+                    const value = String(iconSrc || '').trim();
+                    if (!value) {
+                        return false;
+                    }
+                    AppState.bottomTabIcons = {
+                        ...normalizeBottomTabIcons(AppState.bottomTabIcons),
+                        [tabId]: value
+                    };
+                    applyBottomTabIcons(AppState.bottomTabIcons);
+                    saveToStorage();
+                    return true;
+                };
+
+                const validateImageSource = (source) => {
+                    return new Promise((resolve) => {
+                        const image = new Image();
+                        image.onload = () => resolve(true);
+                        image.onerror = () => resolve(false);
+                        image.src = source;
+                    });
+                };
+
+                const handleTabIconFileUpload = (file, tabId) => {
+                    if (!file || !file.type.startsWith('image/')) {
+                        showToast('请选择图片文件');
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast('图标大小不能超过5MB');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const success = persistTabIcon(tabId, reader.result);
+                        if (!success) {
+                            showToast('图标保存失败');
+                            return;
+                        }
+                        showToast(`${labelMap[tabId] || '导航'}图标已更新`);
+                        renderTabIconPanel();
+                    };
+                    reader.onerror = () => {
+                        showToast('读取图片失败');
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                panel.querySelectorAll('[data-tab-icon-preview]').forEach((imgEl) => {
+                    imgEl.onerror = () => {
+                        const tabId = imgEl.dataset.tabIconPreview;
+                        const fallback = defaultIcons[tabId];
+                        if (fallback) {
+                            imgEl.src = fallback;
+                        }
+                    };
+                });
+
+                panel.querySelectorAll('[data-tab-icon-file-input]').forEach((inputEl) => {
+                    inputEl.onchange = () => {
+                        const tabId = inputEl.dataset.tabIconFileInput;
+                        const file = inputEl.files && inputEl.files[0];
+                        if (!tabId || !file) {
+                            return;
+                        }
+                        handleTabIconFileUpload(file, tabId);
+                    };
+                });
+
+                panel.querySelectorAll('[data-tab-icon-action]').forEach((button) => {
+                    button.onclick = async () => {
+                        const action = button.dataset.tabIconAction;
+                        const tabId = button.dataset.tabId;
+                        const label = labelMap[tabId] || '导航';
+                        if (!isBottomTabId(tabId)) {
+                            return;
+                        }
+
+                        if (action === 'upload') {
+                            const fileInput = panel.querySelector(`[data-tab-icon-file-input="${tabId}"]`);
+                            if (fileInput) {
+                                fileInput.click();
+                            }
+                            return;
+                        }
+
+                        if (action === 'apply-url') {
+                            const inputEl = panel.querySelector(`[data-tab-icon-url-input="${tabId}"]`);
+                            const iconUrl = inputEl ? inputEl.value.trim() : '';
+                            if (!iconUrl) {
+                                showToast('请输入图标链接');
+                                return;
+                            }
+                            const valid = await validateImageSource(iconUrl);
+                            if (!valid) {
+                                showToast('图标链接不可用，请检查后重试');
+                                return;
+                            }
+                            const success = persistTabIcon(tabId, iconUrl);
+                            if (!success) {
+                                showToast('图标保存失败');
+                                return;
+                            }
+                            showToast(`${label}图标已更新`);
+                            renderTabIconPanel();
+                            return;
+                        }
+
+                        if (action === 'reset') {
+                            const success = persistTabIcon(tabId, defaultIcons[tabId]);
+                            if (!success) {
+                                showToast('重置失败');
+                                return;
+                            }
+                            showToast(`${label}图标已恢复默认`);
+                            renderTabIconPanel();
+                        }
+                    };
+                });
+
+                const resetAllButton = panel.querySelector('#decoration-reset-all-tab-icons');
+                if (resetAllButton) {
+                    resetAllButton.onclick = async () => {
+                        const confirmed = await showDecorationDialog({
+                            title: '恢复默认图标',
+                            message: '确定恢复全部底部导航图标为默认吗？',
+                            confirmText: '恢复',
+                            cancelText: '取消'
+                        });
+                        if (!confirmed) {
+                            return;
+                        }
+                        AppState.bottomTabIcons = getDefaultBottomTabIcons();
+                        applyBottomTabIcons(AppState.bottomTabIcons);
+                        saveToStorage();
+                        showToast('已恢复全部默认图标');
+                        renderTabIconPanel();
+                    };
+                }
             }
 
             function renderBackgroundPanel(pageType = 'msg') {

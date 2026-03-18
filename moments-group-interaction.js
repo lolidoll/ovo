@@ -225,6 +225,29 @@ const MomentsGroupInteraction = {
     }
   },
 
+  getVisibleCharactersForMoment: function(moment) {
+    if (!moment) return [];
+
+    const visibilityGroups = moment.visibilityGroups && moment.visibilityGroups.length > 0
+      ? moment.visibilityGroups
+      : (moment.visibility ? [moment.visibility] : ['group_all']);
+
+    const groupCharacters = this.getGroupCharacters(visibilityGroups);
+    const selectedCharacterIds = Array.isArray(moment.visibilityCharacterIds)
+      ? moment.visibilityCharacterIds.map(id => String(id || '')).filter(Boolean)
+      : [];
+
+    if (selectedCharacterIds.length === 0) {
+      return groupCharacters;
+    }
+
+    const selectedSet = new Set(selectedCharacterIds);
+    return groupCharacters.filter(character => {
+      const charId = String((character && (character.id || character.name)) || '');
+      return !!charId && selectedSet.has(charId);
+    });
+  },
+
   /**
    * 获取角色的设定信息
    * @param {Object} character - 角色对象
@@ -351,7 +374,11 @@ const MomentsGroupInteraction = {
     const momentText = moment && moment.content ? String(moment.content).trim() : '';
     const momentAuthor = (moment && moment.author) || '用户';
     const momentVisibility = (moment && moment.visibilityName) || '';
-    const imageCount = moment && Array.isArray(moment.images) ? moment.images.filter(Boolean).length : 0;
+    const normalImageCount = moment && Array.isArray(moment.images) ? moment.images.filter(Boolean).length : 0;
+    const descriptionCards = moment && Array.isArray(moment.descriptionCards)
+      ? moment.descriptionCards.filter(card => card && typeof card.description === 'string' && card.description.trim())
+      : [];
+    const imageCount = normalImageCount + descriptionCards.length;
 
     userLines.push('【朋友圈内容】');
     userLines.push(`发布者：${momentAuthor}`);
@@ -359,11 +386,21 @@ const MomentsGroupInteraction = {
     if (momentVisibility) {
       userLines.push(`可见范围：${momentVisibility}`);
     }
-    if (imageCount > 0) {
-      userLines.push(`图片数量：${imageCount}张（请识图）`);
-      if (imageCount > 4) {
-        userLines.push('提示：图片较多，仅发送前4张供识图。');
+
+    if (normalImageCount > 0) {
+      userLines.push(`图片数量：${imageCount}张（其中真实图片${normalImageCount}张，请识图）`);
+      if (normalImageCount > 4) {
+        userLines.push('提示：真实图片较多，仅发送前4张供识图。');
       }
+    } else if (descriptionCards.length > 0) {
+      userLines.push(`图片数量：${descriptionCards.length}张（文字描述卡片）`);
+    }
+
+    if (descriptionCards.length > 0) {
+      userLines.push('图片内容描述（来自文字描述卡片）：');
+      descriptionCards.forEach((card, index) => {
+        userLines.push(`${index + 1}. ${card.description.trim()}`);
+      });
     }
 
     if (context.existingComments && context.existingComments.length > 0) {
@@ -388,14 +425,14 @@ const MomentsGroupInteraction = {
       }
       userLines.push('要求：');
       userLines.push('1. 保持角色设定，不能OOC（出戏）');
-      userLines.push('2. 回复要自然、有趣、符合角色性格');
+      userLines.push('2. 回复要自然、活人感、符合角色性格');
       userLines.push('3. 长度：10-60字');
       userLines.push('4. 只输出回复内容，不要包含其他文字');
     } else {
       userLines.push(`请作为${roleSettings.name || '角色'}对这条朋友圈进行评论。`);
       userLines.push('要求：');
       userLines.push('1. 保持角色设定，不能OOC（出戏）');
-      userLines.push('2. 评论要自然、有趣、符合角色性格');
+      userLines.push('2. 评论要自然、活人感、符合角色性格');
       userLines.push('3. 长度：10-60字');
       userLines.push('4. 只输出评论内容，不要包含其他文字');
       if (context.existingComments && context.existingComments.length > 0) {
@@ -527,8 +564,12 @@ const MomentsGroupInteraction = {
         : (moment.visibility ? [moment.visibility] : ['group_all']);
       console.log('  可见范围:', visibilityGroups.join(','));
 
-      // 获取分组内的所有角色
-      const characters = this.getGroupCharacters(visibilityGroups);
+      if (Array.isArray(moment.visibilityCharacterIds) && moment.visibilityCharacterIds.length > 0) {
+        console.log('  指定角色数量:', moment.visibilityCharacterIds.length);
+      }
+
+      // 获取该朋友圈可见范围内的角色（支持分组内子集）
+      const characters = this.getVisibleCharactersForMoment(moment);
       console.log(`  分组内角色数: ${characters.length}`);
 
       if (characters.length === 0) {
@@ -659,12 +700,8 @@ const MomentsGroupInteraction = {
       console.log('  用户评论:', userComment);
       console.log('  目标角色:', targetCharacterName);
 
-      const visibilityGroups = moment.visibilityGroups && moment.visibilityGroups.length > 0
-        ? moment.visibilityGroups
-        : (moment.visibility ? [moment.visibility] : ['group_all']);
-
-      // 获取分组内的所有角色
-      const characters = this.getGroupCharacters(visibilityGroups);
+      // 获取该朋友圈可见范围内的角色（支持分组内子集）
+      const characters = this.getVisibleCharactersForMoment(moment);
       if (!characters || characters.length === 0) {
         console.log('  分组内没有角色，跳过回复');
         return;
@@ -755,11 +792,7 @@ const MomentsGroupInteraction = {
       console.log('💬 用户回复评论，触发角色回复...');
       console.log('  用户回复:', userReply);
 
-      const visibilityGroups = moment.visibilityGroups && moment.visibilityGroups.length > 0
-        ? moment.visibilityGroups
-        : (moment.visibility ? [moment.visibility] : ['group_all']);
-
-      const characters = this.getGroupCharacters(visibilityGroups);
+      const characters = this.getVisibleCharactersForMoment(moment);
       if (!characters || characters.length === 0) {
         console.log('  分组内没有角色，跳过回复');
         return;

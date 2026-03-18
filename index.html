@@ -81,6 +81,11 @@
     <style>
     </style>
     <script>
+        // 统一聊天布局修复总开关：避免多个旧适配脚本互相覆盖布局。
+        window.__UNIFIED_CHAT_LAYOUT__ = true;
+        window.__USE_MOBILE_RESPONSIVE_ADAPTER_ONLY__ = true;
+    </script>
+    <script>
         // 处理manifest.json加载失败（本地开发环境CORS问题）
         (function() {
             const manifestLink = document.querySelector('link[rel="manifest"]');
@@ -98,6 +103,13 @@
     <script>
         // 移动端全屏适配 - 动态计算视口高度
         (function() {
+            if (window.__USE_MOBILE_RESPONSIVE_ADAPTER_ONLY__) {
+                const initialHeight = Math.max(320, Math.round(window.innerHeight || document.documentElement.clientHeight || 0));
+                document.documentElement.style.setProperty('--vh', `${initialHeight * 0.01}px`);
+                document.documentElement.style.setProperty('--app-height', `${initialHeight}px`);
+                return;
+            }
+
             // 强制使用自动适配模式
             const adaptMode = 'auto';
             
@@ -286,6 +298,7 @@
         
     </script>
     <link rel="stylesheet" href="ios-pwa-fixes/ios-pwa-fullscreen.css?v=20260316-pwafix5">
+    <script src="indexeddb-storage-bridge.js"></script>
     <script src="ios-pwa-fixes/ios-pwa-fix.js?v=20260316-pwafix5" defer></script>
     <script src="background-keep-alive.js"></script>
     <script src="key-auth.js"></script>
@@ -1840,6 +1853,548 @@
                         background: var(--light-pink);
                     }
 
+                    #moments-page .feed-description-cards {
+                        padding-left: 0;
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                        margin-bottom: 10px;
+                    }
+
+                    #moments-page .feed-description-card {
+                        position: relative;
+                        width: 150px;
+                        height: 150px;
+                        border: none;
+                        border-radius: 8px;
+                        background: transparent;
+                        box-shadow: none;
+                        perspective: 1000px;
+                        cursor: pointer;
+                    }
+
+                    #moments-page .feed-description-card .moment-photo-card-inner {
+                        position: relative;
+                        width: 100%;
+                        height: 100%;
+                        transform-style: preserve-3d;
+                        transition: transform 0.34s ease;
+                    }
+
+                    #moments-page .feed-description-card.is-flipped .moment-photo-card-inner {
+                        transform: rotateY(180deg);
+                    }
+
+                    #moments-page .feed-description-card .moment-photo-card-face {
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        backface-visibility: hidden;
+                        border: 1px solid #f0d6e1;
+                        box-shadow: 0 5px 13px rgba(206, 120, 151, 0.23);
+                    }
+
+                    #moments-page .feed-description-card-cover {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                        background: #f7eef2;
+                    }
+
+                    #moments-page .feed-description-card-back {
+                        transform: rotateY(180deg);
+                        background: linear-gradient(180deg, #fffdfd 0%, #fff4f9 100%);
+                        padding: 7px 7px 6px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                    }
+
+                    #moments-page .feed-description-card-title {
+                        font-size: 10px;
+                        color: #ac7086;
+                        font-weight: 600;
+                        letter-spacing: 0.2px;
+                        padding-bottom: 4px;
+                        border-bottom: 1px solid #f5dcea;
+                    }
+
+                    #moments-page .feed-description-card-text {
+                        margin-top: 5px;
+                        font-size: 11px;
+                        color: #5f3344;
+                        line-height: 1.45;
+                        word-break: break-word;
+                        max-height: 118px;
+                        overflow: auto;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal {
+                        background: rgba(255, 236, 244, 0.72);
+                        backdrop-filter: blur(6px);
+                        -webkit-backdrop-filter: blur(6px);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .modal-content {
+                        width: min(560px, 94vw);
+                        max-height: 88vh;
+                        border-radius: 22px;
+                        border: 1px solid #ffdbe8;
+                        padding: 0;
+                        background: linear-gradient(180deg, #fffefe 0%, #fff5f9 100%);
+                        box-shadow: 0 24px 54px rgba(225, 133, 168, 0.24);
+                        overflow: hidden;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-compose-header {
+                        display: grid;
+                        grid-template-columns: auto 1fr auto;
+                        align-items: center;
+                        gap: 10px;
+                        padding: 12px 14px;
+                        border-bottom: 1px solid #ffe2ec;
+                        background: linear-gradient(180deg, #fffafc 0%, #fff4f8 100%);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-compose-header h3 {
+                        margin: 0;
+                        text-align: center;
+                        font-size: 16px;
+                        color: #bb5f84;
+                        font-weight: 700;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-head-btn {
+                        border: none;
+                        background: transparent;
+                        color: #b17692;
+                        font-size: 14px;
+                        padding: 7px 10px;
+                        border-radius: 999px;
+                        cursor: pointer;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-head-btn:hover {
+                        background: #ffeef5;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-head-btn.primary {
+                        background: linear-gradient(135deg, #ff7eae 0%, #ff92bc 100%);
+                        color: #fff;
+                        box-shadow: 0 8px 18px rgba(255, 124, 174, 0.34);
+                        padding: 8px 14px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-head-btn.primary:hover {
+                        background: linear-gradient(135deg, #ff74a8 0%, #ff8ab7 100%);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-compose-body {
+                        margin: 0;
+                        padding: 14px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-compose-textarea {
+                        width: 100%;
+                        min-height: 220px;
+                        border: 1px solid #f0c4d8;
+                        border-radius: 14px;
+                        padding: 12px 13px;
+                        font-family: var(--pixel-font);
+                        font-size: 14px;
+                        line-height: 1.55;
+                        color: #6f4458;
+                        background: #fff;
+                        resize: vertical;
+                        margin-bottom: 0;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-compose-textarea:focus {
+                        outline: none;
+                        border-color: #ff85b1;
+                        box-shadow: 0 0 0 3px rgba(255, 133, 177, 0.16);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-attachment-strip {
+                        display: flex;
+                        gap: 10px;
+                        min-height: 0;
+                        overflow-x: auto;
+                        padding-bottom: 2px;
+                        margin-bottom: 0;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-attachment-item {
+                        position: relative;
+                        flex: 0 0 118px;
+                        width: 118px;
+                        height: 118px;
+                        border: 1px solid #ffd8e8;
+                        border-radius: 14px;
+                        overflow: hidden;
+                        background: #fff;
+                        box-shadow: 0 6px 16px rgba(255, 150, 186, 0.22);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-image-attachment img {
+                        width: 100%;
+                        height: 100%;
+                        display: block;
+                        object-fit: cover;
+                        max-width: none;
+                        max-height: none;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-card-preview {
+                        cursor: pointer;
+                        perspective: 1000px;
+                        background: transparent;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-card-preview .moment-photo-card-inner {
+                        position: relative;
+                        width: 100%;
+                        height: 100%;
+                        transform-style: preserve-3d;
+                        transition: transform 0.34s ease;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-card-preview.is-flipped .moment-photo-card-inner {
+                        transform: rotateY(180deg);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-card-preview .moment-photo-card-face {
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 13px;
+                        overflow: hidden;
+                        backface-visibility: hidden;
+                        border: 1px solid #f0d6e1;
+                        box-shadow: 0 5px 13px rgba(206, 120, 151, 0.23);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-cover {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                        background: #f7eef2;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-card-preview .moment-photo-card-back {
+                        transform: rotateY(180deg);
+                        background: linear-gradient(180deg, #fffdfd 0%, #fff4f9 100%);
+                        padding: 7px 7px 6px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-content {
+                        padding: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-title {
+                        font-size: 10px;
+                        color: #ac7086;
+                        font-weight: 600;
+                        letter-spacing: 0.2px;
+                        padding-bottom: 4px;
+                        border-bottom: 1px solid #f5dcea;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-description-text {
+                        font-size: 11px;
+                        color: #5f3344;
+                        line-height: 1.45;
+                        word-break: break-word;
+                        max-height: 86px;
+                        overflow: auto;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .remove-btn {
+                        top: 6px;
+                        right: 6px;
+                        width: 22px;
+                        height: 22px;
+                        font-size: 14px;
+                        box-shadow: 0 4px 10px rgba(255, 101, 151, 0.35);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-compose-tools {
+                        display: flex;
+                        gap: 10px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-tool-btn {
+                        flex: 1;
+                        border-radius: 11px;
+                        border-color: #f5b8d1;
+                        color: #b86084;
+                        background: #fff;
+                        font-size: 13px;
+                        padding: 9px 12px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moment-tool-btn:hover {
+                        background: #fff1f7;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-privacy-trigger {
+                        width: 100%;
+                        border: 1px solid #f5d6e3;
+                        border-radius: 14px;
+                        background: linear-gradient(180deg, #fffefe 0%, #fff7fa 100%);
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        padding: 11px 12px;
+                        cursor: pointer;
+                        text-align: left;
+                        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-privacy-trigger:hover {
+                        border-color: #efbfd4;
+                        box-shadow: 0 8px 16px rgba(248, 176, 205, 0.22);
+                        transform: translateY(-1px);
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-privacy-main {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 3px;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-privacy-title {
+                        font-size: 13px;
+                        color: #95556f;
+                        font-weight: 700;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-privacy-desc {
+                        font-size: 12px;
+                        color: #a97088;
+                    }
+
+                    #moments-page #momentModal.moments-compose-modal .moments-privacy-arrow {
+                        color: #c58aa2;
+                        font-size: 16px;
+                        line-height: 1;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal {
+                        background: rgba(255, 236, 245, 0.76);
+                        backdrop-filter: blur(8px);
+                        -webkit-backdrop-filter: blur(8px);
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .modal-content {
+                        width: min(500px, 92vw);
+                        max-height: 84vh;
+                        border-radius: 20px;
+                        border: 1px solid #ffd7e6;
+                        padding: 0;
+                        background: linear-gradient(180deg, #fffefe 0%, #fff4f9 100%);
+                        box-shadow: 0 26px 56px rgba(225, 133, 168, 0.26);
+                        overflow: hidden;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .modal-header {
+                        margin: 0;
+                        padding: 14px 16px 12px;
+                        border-bottom: 1px solid #ffe3ee;
+                        background: linear-gradient(180deg, #fffafd 0%, #fff4f9 100%);
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .modal-header h3 {
+                        margin: 0;
+                        color: #b25c80;
+                        font-size: 16px;
+                        font-weight: 700;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .modal-body {
+                        margin: 0;
+                        padding: 12px 12px 14px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moments-privacy-content {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-select-block {
+                        border: 1px solid #f8dce8;
+                        border-radius: 14px;
+                        background: #fff;
+                        padding: 9px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-select-block-title {
+                        margin: 0 0 8px 0;
+                        font-size: 13px;
+                        color: #9b5a75;
+                        font-weight: 700;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-group-list,
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                        border: 1px solid #f4d6e4;
+                        border-radius: 10px;
+                        padding: 6px;
+                        max-height: 180px;
+                        overflow-y: auto;
+                        background: #fff;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .group-select-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 13px;
+                        color: #7a455c;
+                        padding: 7px 8px;
+                        border-radius: 9px;
+                        margin-bottom: 0;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .group-select-item:hover,
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-item:hover {
+                        background: #fff5fa;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .group-select-item input,
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-item input {
+                        appearance: none;
+                        -webkit-appearance: none;
+                        width: 17px;
+                        height: 17px;
+                        border-radius: 6px;
+                        border: 1.5px solid #e3b4c8;
+                        background: #fff;
+                        cursor: pointer;
+                        transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+                        flex-shrink: 0;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .group-select-item input:checked,
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-item input:checked {
+                        background: #ff8fb7;
+                        border-color: #ff8fb7;
+                        box-shadow: inset 0 0 0 3px #ffedf5;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-section-head {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        margin-bottom: 8px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-mini-btn {
+                        border: 1px solid #f3c6da;
+                        background: #fff;
+                        color: #af6685;
+                        border-radius: 8px;
+                        font-size: 12px;
+                        padding: 4px 10px;
+                        cursor: pointer;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-mini-btn:hover {
+                        background: #fff3f8;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-item {
+                        display: grid;
+                        grid-template-columns: auto 1fr auto;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 7px 8px;
+                        border-radius: 9px;
+                        cursor: pointer;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-name {
+                        font-size: 13px;
+                        color: #714257;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-character-group {
+                        font-size: 11px;
+                        color: #ad7590;
+                        background: #fff1f7;
+                        border: 1px solid #ffdce9;
+                        border-radius: 999px;
+                        padding: 2px 8px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .moment-empty-text {
+                        font-size: 12px;
+                        color: #ac7a90;
+                        text-align: center;
+                        padding: 14px 8px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .privacy-modal-actions {
+                        display: block;
+                        width: 100%;
+                        margin-top: 8px;
+                    }
+
+                    #moments-page #momentPrivacyModal.moments-privacy-modal .privacy-modal-actions .submit-btn {
+                        border-radius: 12px;
+                        padding: 10px 16px;
+                        min-width: 0;
+                        width: 100%;
+                        display: block;
+                    }
+
+                    @media (max-width: 600px) {
+                        #moments-page .feed-description-cards {
+                            padding-left: 0;
+                        }
+
+                        #moments-page #momentModal.moments-compose-modal .modal-content {
+                            width: calc(100vw - 16px);
+                            max-height: 90vh;
+                            border-radius: 18px;
+                        }
+
+                        #moments-page #momentModal.moments-compose-modal .moments-compose-tools {
+                            flex-direction: column;
+                        }
+
+                        #moments-page #momentModal.moments-compose-modal .moment-attachment-item {
+                            flex-basis: 108px;
+                            width: 108px;
+                            height: 108px;
+                        }
+
+                        #moments-page #momentPrivacyModal.moments-privacy-modal .modal-content {
+                            width: calc(100vw - 14px);
+                            max-height: 88vh;
+                        }
+                    }
+
                     #moments-page .notification-item {
                         padding: 10px;
                         margin-bottom: 10px;
@@ -2097,37 +2652,76 @@
                 </div>
 
                 <!-- 发布朋友圈对话框 -->
-                <div class="modal" id="momentModal">
+                <div class="modal moments-compose-modal" id="momentModal">
                     <div class="modal-content">
-                        <div class="modal-header">
+                        <div class="moments-compose-header">
+                            <button type="button" class="moments-head-btn" onclick="closeMomentDialog()">取消</button>
                             <h3>发布朋友圈</h3>
-                            <button class="close-btn" onclick="closeMomentDialog()">×</button>
+                            <button type="button" class="moments-head-btn primary" onclick="publishMoment()">发布</button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body moments-compose-body">
                             <!-- 文字输入 -->
-                            <textarea id="momentText" placeholder="说说你的想法..."></textarea>
-                            
-                            <!-- 图片预览 -->
-                            <div id="imagePreview" class="image-preview">
-                                <!-- 图片将在这里显示 -->
+                            <textarea id="momentText" class="moment-compose-textarea" placeholder="分享新鲜事..."></textarea>
+
+                            <!-- 附件预览 -->
+                            <div id="imagePreview" class="image-preview moment-attachment-strip">
                             </div>
-                            
-                            <!-- 好友分组选择 -->
-                            <div class="group-select">
-                                <label>分组可见：</label>
-                                <div id="groupSelect" class="group-select-list">
-                                    <!-- 选项将动态生成 -->
-                                </div>
-                                <div class="group-select-hint">可多选，选择“所有好友”将覆盖其它分组</div>
-                            </div>
-                            
-                            <!-- 按钮区 -->
-                            <div class="modal-actions">
-                                <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
-                                    添加图片
+
+                            <!-- 工具按钮 -->
+                            <div class="moments-compose-tools">
+                                <button type="button" class="upload-btn moment-tool-btn" onclick="document.getElementById('imageInput').click()">
+                                    添加本地图片
+                                </button>
+                                <button type="button" class="upload-btn moment-tool-btn" onclick="openMomentDescriptionCardDialog()">
+                                    添加文字描述卡片
                                 </button>
                                 <input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="handleImageSelect(this)">
-                                <button class="submit-btn" onclick="publishMoment()">发布</button>
+                            </div>
+
+                            <!-- 可见范围入口 -->
+                            <button type="button" class="moments-privacy-trigger" onclick="openMomentPrivacyModal()">
+                                <div class="moments-privacy-main">
+                                    <span class="moments-privacy-title">谁可以看</span>
+                                    <span class="moments-privacy-desc" id="momentPrivacySummary">未设置</span>
+                                </div>
+                                <span class="moments-privacy-arrow">›</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 谁可以看弹窗 -->
+                <div class="modal moments-privacy-modal" id="momentPrivacyModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>谁可以看</h3>
+                            <button class="close-btn" onclick="closeMomentPrivacyModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="moments-privacy-content">
+                                <div class="moment-select-block group-select">
+                                    <h4 class="moment-select-block-title">分组</h4>
+                                    <div id="groupSelect" class="group-select-list moment-group-list">
+                                        <!-- 选项将动态生成 -->
+                                    </div>
+                                </div>
+
+                                <div class="moment-select-block">
+                                    <div class="moment-section-head">
+                                        <h4 class="moment-select-block-title">角色</h4>
+                                        <div class="moment-character-actions">
+                                            <button type="button" class="moment-mini-btn" onclick="toggleMomentCharacterSelection(true)">全选</button>
+                                            <button type="button" class="moment-mini-btn" onclick="toggleMomentCharacterSelection(false)">清空</button>
+                                        </div>
+                                    </div>
+                                    <div id="momentCharacterSelect" class="moment-character-list">
+                                        <div class="moment-empty-text">请先选择分组</div>
+                                    </div>
+                                </div>
+
+                                <div class="privacy-modal-actions">
+                                    <button class="submit-btn" onclick="closeMomentPrivacyModal()">完成</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4525,6 +5119,10 @@
     <!-- Edge和Chrome全屏修复脚本 -->
     <script>
         (function() {
+            if (window.__USE_MOBILE_RESPONSIVE_ADAPTER_ONLY__) {
+                return;
+            }
+
             // 检测浏览器和设备
             const ua = navigator.userAgent;
             const isEdge = /Edg/.test(ua);

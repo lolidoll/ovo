@@ -17,10 +17,155 @@ function checkMomentsPageReady() {
 // 删除确认相关变量
 let pendingDeleteMomentId = null;
 const DEFAULT_MOMENTS_BACKGROUND_IMAGE = 'https://img.heliar.top/file/1772604265513_IMG_20260304_104453.jpg';
+const DEFAULT_MOMENT_DESCRIPTION_CARD_IMAGE = 'https://img.heliar.top/file/1773290751509_IMG_20260312_124453.jpg';
+const MOMENTS_BG_SAVE_PRESETS = [
+  { maxSide: 1600, quality: 0.86 },
+  { maxSide: 1200, quality: 0.78 },
+  { maxSide: 900, quality: 0.7 }
+];
 
 function getEffectiveMomentsBackgroundImage(bgImage) {
   const normalizedBgImage = typeof bgImage === 'string' ? bgImage.trim() : '';
   return normalizedBgImage || DEFAULT_MOMENTS_BACKGROUND_IMAGE;
+}
+
+function escapeMomentHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char] || char));
+}
+
+function escapeMomentAttr(value) {
+  return escapeMomentHtml(value).replace(/`/g, '&#96;');
+}
+
+function readImageFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (!e.target || !e.target.result) {
+        reject(new Error('读取图片失败'));
+        return;
+      }
+      resolve(String(e.target.result));
+    };
+    reader.onerror = () => reject(new Error('读取图片失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function optimizeDataUrlForStorage(dataUrl, options = {}) {
+  const source = String(dataUrl || '');
+  if (!source.startsWith('data:image/')) {
+    return Promise.resolve(source);
+  }
+
+  const maxSide = Number(options.maxSide) > 0 ? Number(options.maxSide) : 1280;
+  const quality = Number(options.quality) > 0 ? Number(options.quality) : 0.8;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const naturalWidth = img.naturalWidth || img.width || 0;
+        const naturalHeight = img.naturalHeight || img.height || 0;
+        if (!naturalWidth || !naturalHeight) {
+          resolve(source);
+          return;
+        }
+
+        const scale = Math.min(1, maxSide / Math.max(naturalWidth, naturalHeight));
+        const width = Math.max(1, Math.round(naturalWidth * scale));
+        const height = Math.max(1, Math.round(naturalHeight * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(source);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let optimized = '';
+        try {
+          optimized = canvas.toDataURL('image/webp', quality);
+        } catch (e) {
+          optimized = '';
+        }
+
+        if (!optimized || optimized === 'data:,') {
+          optimized = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        if (!optimized || optimized === 'data:,') {
+          resolve(source);
+          return;
+        }
+
+        resolve(optimized.length < source.length ? optimized : source);
+      } catch (e) {
+        resolve(source);
+      }
+    };
+
+    img.onerror = () => resolve(source);
+    img.src = source;
+  });
+}
+
+async function prepareImageFileForStorage(file, options = {}) {
+  const rawDataUrl = await readImageFileAsDataURL(file);
+  return optimizeDataUrlForStorage(rawDataUrl, options);
+}
+
+function verifyMomentsBackgroundSaved(bgImageData) {
+  try {
+    const saved = localStorage.getItem('momentsProfileData');
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    return !!(parsed && parsed.bgImage === bgImageData);
+  } catch (e) {
+    return false;
+  }
+}
+
+function getMomentDescriptionCardImage() {
+  return window.PHOTO_DESCRIPTION_CARD_IMAGE || DEFAULT_MOMENT_DESCRIPTION_CARD_IMAGE;
+}
+
+function attachMomentDescriptionFlipCards(scope) {
+  const root = scope || document;
+  const cards = root.querySelectorAll('.moment-photo-flip-card');
+  cards.forEach(card => {
+    if (card.dataset.flipBound === '1') return;
+    card.dataset.flipBound = '1';
+
+    const cardInner = card.querySelector('.moment-photo-card-inner');
+    if (!cardInner) return;
+
+    const toggleFlip = function (event) {
+      if (event) {
+        event.stopPropagation();
+      }
+      const isFlipped = card.classList.toggle('is-flipped');
+      cardInner.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+    };
+
+    card.addEventListener('click', toggleFlip);
+    card.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleFlip(event);
+      }
+    });
+  });
 }
 
 // 显示删除确认弹窗
@@ -413,6 +558,23 @@ class MomentsManager {
       ? data.visibilityGroups.filter(Boolean)
       : (data.visibility ? [data.visibility] : ['group_all']);
 
+    const visibilityCharacterIds = Array.isArray(data.visibilityCharacterIds)
+      ? data.visibilityCharacterIds.filter(Boolean)
+      : [];
+
+    const visibilityCharacterNames = Array.isArray(data.visibilityCharacterNames)
+      ? data.visibilityCharacterNames.filter(Boolean)
+      : [];
+
+    const descriptionCards = Array.isArray(data.descriptionCards)
+      ? data.descriptionCards
+        .filter(card => card && typeof card.description === 'string' && card.description.trim())
+        .map(card => ({
+          description: card.description.trim(),
+          cardImage: card.cardImage || getMomentDescriptionCardImage()
+        }))
+      : [];
+
     if (visibilityGroups.includes('group_all')) {
       visibilityGroups.splice(0, visibilityGroups.length, 'group_all');
     }
@@ -427,8 +589,11 @@ class MomentsManager {
       authorAvatar: data.authorAvatar || this.getUserAvatar(),
       content: data.content || '',
       images: data.images || [],
+      descriptionCards: descriptionCards,
       visibility: data.visibility || visibilityGroups[0] || 'group_all', // 可见范围（兼容字段）
       visibilityGroups: visibilityGroups,
+      visibilityCharacterIds: visibilityCharacterIds,
+      visibilityCharacterNames: visibilityCharacterNames,
       visibilityName: normalizedVisibilityName, // 可见范围名称（用于显示）
       isUserPost: data.isUserPost !== false,
       createdAt: new Date().toISOString(),
@@ -633,34 +798,9 @@ class MomentsManager {
     }
   }
 
-  // 生成随机评论（简化版，实际应调用API）
-  generateRandomComment(momentContent) {
-    const comments = [
-      '😂哈哈，我也是这样的！',
-      '好羡慕呀，什么时候一起去？',
-      '赞赞赞👍👍👍',
-      '太棒了！',
-      '同感同感！',
-      '开心就好！',
-      '嗯嗯，我支持你！',
-      '这个我也喜欢！'
-    ];
-    return comments[Math.floor(Math.random() * comments.length)];
-  }
 
-  // 生成随机回复
-  generateRandomReply(commentContent) {
-    const replies = [
-      '谢谢你呀！😊',
-      '一起呀，约好了！',
-      '哈哈，你也来吧！',
-      '谢谢支持！',
-      '对对对，就是这样！',
-      '我也是呢！',
-      '改天约！'
-    ];
-    return replies[Math.floor(Math.random() * replies.length)];
-  }
+
+ 
 
   // 删除朋友圈 (内部方法，由确认弹窗调用)
   deleteMoment(momentId) {
@@ -754,13 +894,19 @@ class MomentsManager {
           const header = document.createElement('div');
           header.className = 'feed-header';
           const authorAvatar = moment.authorAvatar || '';
-          const avatarHTML = authorAvatar ? `<img src="${authorAvatar}" class="feed-avatar" alt="头像">` : '';
+          const safeAuthorAvatar = escapeMomentAttr(authorAvatar);
+          const avatarHTML = authorAvatar ? `<img src="${safeAuthorAvatar}" class="feed-avatar" alt="头像">` : '';
+          const safeAuthorName = escapeMomentHtml(moment.author || '未知用户');
           const visibilityName = moment.visibilityName || '所有好友';
-          const visibilityBadge = moment.isUserPost ? `<span class="visibility-badge" title="可见范围：${visibilityName}">${visibilityName}</span>` : '';
+          const safeVisibilityName = escapeMomentHtml(visibilityName);
+          const safeVisibilityTitle = escapeMomentAttr(visibilityName);
+          const visibilityBadge = moment.isUserPost
+            ? `<span class="visibility-badge" title="可见范围：${safeVisibilityTitle}">${safeVisibilityName}</span>`
+            : '';
           header.innerHTML = `
             ${avatarHTML}
             <div class="feed-user-info">
-              <span class="feed-username">${moment.author || '未知用户'}</span>
+              <span class="feed-username">${safeAuthorName}</span>
             </div>
             ${visibilityBadge}
             <button class="feed-delete-btn" onclick="showDeleteConfirm('${moment.id}')" title="删除此朋友圈">×</button>
@@ -775,8 +921,35 @@ class MomentsManager {
           let imagesHTML = '';
           if (moment.images && moment.images.length > 0) {
             imagesHTML = `<div class="feed-images">
-              ${moment.images.map(img => `<img src="${img}" alt="图片" onclick="viewImage(this.src)">`).join('')}
+              ${moment.images.map(img => {
+                const safeImageUrl = escapeMomentAttr(img || '');
+                return `<img src="${safeImageUrl}" alt="图片" onclick="viewImage(this.src)">`;
+              }).join('')}
             </div>`;
+          }
+
+          let descriptionCardsHTML = '';
+          const descriptionCards = Array.isArray(moment.descriptionCards)
+            ? moment.descriptionCards.filter(card => card && card.description)
+            : [];
+          if (descriptionCards.length > 0) {
+            descriptionCardsHTML = `<div class="feed-images feed-description-cards">${descriptionCards.map(card => {
+              const safeCardImage = escapeMomentAttr(card.cardImage || getMomentDescriptionCardImage());
+              const safeDescription = escapeMomentHtml(card.description || '');
+              return `
+                <div class="feed-description-card moment-photo-flip-card" role="button" tabindex="0" aria-label="图片描述卡片">
+                  <div class="moment-photo-card-inner">
+                    <div class="moment-photo-card-face feed-description-card-front">
+                      <img src="${safeCardImage}" class="feed-description-card-cover" alt="图片描述卡片">
+                    </div>
+                    <div class="moment-photo-card-face feed-description-card-back">
+                      <div class="feed-description-card-title">图片描述</div>
+                      <div class="feed-description-card-text">${safeDescription || '（无描述）'}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}</div>`;
           }
 
           // 操作按钮和时间
@@ -872,12 +1045,17 @@ class MomentsManager {
 
           feedItem.appendChild(header);
           feedItem.appendChild(content);
+          if (descriptionCardsHTML) {
+            feedItem.innerHTML += descriptionCardsHTML;
+          }
           if (imagesHTML) {
             feedItem.innerHTML += imagesHTML;
           }
           feedItem.appendChild(actions);
           feedItem.appendChild(commentInput);
           feedItem.appendChild(commentsSection);
+
+          attachMomentDescriptionFlipCards(feedItem);
 
           feedList.appendChild(feedItem);
         } catch (e) {
@@ -1111,6 +1289,10 @@ function openMomentDialog() {
   try {
     // 打开朋友圈对话框前，重新加载好友分组
     initGroupSelect();
+    renderMomentAttachmentPlaceholder();
+    updateMomentPrivacySummary();
+    closeMomentPrivacyModal();
+
     const momentModal = document.getElementById('momentModal');
     if (momentModal) {
       momentModal.classList.add('show');
@@ -1136,6 +1318,22 @@ function closeMomentDialog() {
     if (imagePreview) {
       imagePreview.innerHTML = '';
     }
+
+    renderMomentAttachmentPlaceholder();
+
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput) {
+      imageInput.value = '';
+    }
+
+    const characterContainer = document.getElementById('momentCharacterSelect');
+    if (characterContainer) {
+      characterContainer.innerHTML = '<div class="moment-empty-text">请先选择分组</div>';
+    }
+
+    closeMomentPrivacyModal();
+
+    updateMomentPrivacySummary();
     
     const momentInput = document.getElementById('momentInput');
     if (momentInput) {
@@ -1143,6 +1341,32 @@ function closeMomentDialog() {
     }
   } catch (e) {
     console.log('closeMomentDialog出错:', e.message);
+  }
+}
+
+function openMomentPrivacyModal() {
+  try {
+    // 每次打开都刷新分组与角色数据，避免过期
+    initGroupSelect();
+    updateMomentPrivacySummary();
+
+    const modal = document.getElementById('momentPrivacyModal');
+    if (modal) {
+      modal.classList.add('show');
+    }
+  } catch (e) {
+    console.log('openMomentPrivacyModal出错:', e.message);
+  }
+}
+
+function closeMomentPrivacyModal() {
+  try {
+    const modal = document.getElementById('momentPrivacyModal');
+    if (modal) {
+      modal.classList.remove('show');
+    }
+  } catch (e) {
+    console.log('closeMomentPrivacyModal出错:', e.message);
   }
 }
 
@@ -1394,6 +1618,316 @@ function closeMoreModal() {
 
 // ====== 朋友圈发布相关 ======
 
+function renderMomentAttachmentPlaceholder() {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+
+  const hasAttachment = !!preview.querySelector('.moment-attachment-item');
+  if (hasAttachment) {
+    preview.style.display = 'flex';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function createMomentAttachmentRemoveButton(container) {
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-btn';
+  removeBtn.type = 'button';
+  removeBtn.textContent = '×';
+  removeBtn.onclick = function (e) {
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+      if (container && container.parentNode) {
+        container.remove();
+      }
+      renderMomentAttachmentPlaceholder();
+    } catch (err) {
+      console.log('删除附件出错:', err.message);
+    }
+  };
+  return removeBtn;
+}
+
+function appendMomentImageAttachment(imageSrc) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview || !imageSrc) return;
+
+  const container = document.createElement('div');
+  container.className = 'moment-attachment-item moment-image-attachment';
+  container.dataset.attachmentType = 'image';
+
+  const img = document.createElement('img');
+  img.src = imageSrc;
+  img.dataset.attachmentRole = 'image';
+  img.alt = '图片附件';
+  container.appendChild(img);
+  container.appendChild(createMomentAttachmentRemoveButton(container));
+
+  preview.appendChild(container);
+  renderMomentAttachmentPlaceholder();
+}
+
+function openMomentDescriptionCardDialog() {
+  try {
+    let modal = document.getElementById('moment-description-card-modal');
+    if (modal) {
+      modal.remove();
+    }
+
+    modal = document.createElement('div');
+    modal.id = 'moment-description-card-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(255,235,244,0.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;';
+
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+
+    modal.innerHTML = `
+      <div style="width:min(360px,100%);background:linear-gradient(180deg,#fffdfd 0%,#fff3f8 100%);border:1px solid #ffd7e8;border-radius:16px;box-shadow:0 14px 36px rgba(226,130,164,0.24);overflow:hidden;">
+        <div style="padding:14px 16px 12px;border-bottom:1px solid #ffe3ef;background:linear-gradient(180deg,#fff8fb 0%,#fff2f8 100%);">
+          <h3 style="margin:0;font-size:16px;color:#9f4e6f;font-weight:700;letter-spacing:0.3px;">添加文字描述卡片</h3>
+        </div>
+        <div style="padding:14px 16px 6px;">
+          <textarea id="moment-desc-card-input" placeholder="请输入文字描述..." style="width:100%;height:108px;padding:10px 11px;border:1px solid #f3bfd5;border-radius:10px;font-size:13px;line-height:1.5;resize:vertical;background:#fffdfd;color:#5f3847;outline:none;"></textarea>
+        </div>
+        <div style="padding:12px 14px;border-top:1px solid #ffe4ef;display:flex;gap:10px;justify-content:flex-end;background:#fff9fc;">
+          <button type="button" id="moment-desc-card-cancel" style="padding:8px 16px;border:1px solid #efc3d7;border-radius:9px;background:#fff;cursor:pointer;font-size:13px;color:#8f4d67;">取消</button>
+          <button type="button" id="moment-desc-card-submit" style="padding:8px 18px;border:none;border-radius:9px;background:linear-gradient(135deg,#ff7cae 0%,#ff94bf 100%);box-shadow:0 6px 14px rgba(255,123,172,0.35);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">添加</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const input = document.getElementById('moment-desc-card-input');
+    const cancelBtn = document.getElementById('moment-desc-card-cancel');
+    const submitBtn = document.getElementById('moment-desc-card-submit');
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => modal.remove());
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        const desc = input ? input.value.trim() : '';
+        if (!desc) {
+          alert('请先输入文字描述');
+          return;
+        }
+        addMomentDescriptionCard(desc);
+        modal.remove();
+      });
+    }
+
+    if (input) {
+      input.focus();
+    }
+  } catch (e) {
+    console.log('打开描述卡片弹窗出错:', e.message);
+  }
+}
+
+function addMomentDescriptionCard(descriptionText) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+
+  const text = String(descriptionText || '').trim();
+  if (!text) {
+    alert('请先输入文字描述');
+    return;
+  }
+
+  const cardImage = getMomentDescriptionCardImage();
+  const safeCardImage = escapeMomentAttr(cardImage);
+  const safeDescription = escapeMomentHtml(text);
+
+  const container = document.createElement('div');
+  container.className = 'moment-attachment-item moment-description-card-preview moment-photo-flip-card';
+  container.dataset.attachmentType = 'description';
+  container.dataset.description = text;
+  container.dataset.cardImage = cardImage;
+  container.setAttribute('role', 'button');
+  container.setAttribute('tabindex', '0');
+  container.setAttribute('aria-label', '图片描述卡片');
+  container.innerHTML = `
+    <div class="moment-photo-card-inner">
+      <div class="moment-photo-card-face moment-photo-card-front">
+        <img src="${safeCardImage}" class="moment-description-cover" alt="图片描述卡片">
+      </div>
+      <div class="moment-photo-card-face moment-photo-card-back">
+        <div class="moment-description-content">
+          <div class="moment-description-title">图片描述</div>
+          <div class="moment-description-text">${safeDescription}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  container.appendChild(createMomentAttachmentRemoveButton(container));
+
+  preview.appendChild(container);
+  attachMomentDescriptionFlipCards(container);
+  renderMomentAttachmentPlaceholder();
+}
+
+function getSelectedMomentGroupIds() {
+  const groupSelect = document.getElementById('groupSelect');
+  if (!groupSelect) return [];
+  return Array.from(groupSelect.querySelectorAll('.moment-group-checkbox:checked'))
+    .map(cb => cb.value)
+    .filter(Boolean);
+}
+
+function updateMomentPrivacySummary() {
+  const summaryEl = document.getElementById('momentPrivacySummary');
+  if (!summaryEl) return;
+
+  const selectedGroupIds = getSelectedMomentGroupIds();
+  if (selectedGroupIds.length === 0) {
+    summaryEl.textContent = '未设置';
+    return;
+  }
+
+  const groups = momentsManager.getFriendGroups();
+  const groupNameMap = {};
+  (Array.isArray(groups) ? groups : []).forEach(group => {
+    if (group && group.id) {
+      groupNameMap[group.id] = group.name || '未命名分组';
+    }
+  });
+
+  const groupNames = selectedGroupIds.map(id => groupNameMap[id] || '未命名分组');
+  const groupLabel = groupNames.length <= 2
+    ? groupNames.join('、')
+    : `${groupNames.slice(0, 2).join('、')} 等${groupNames.length}组`;
+
+  const selectedCharacters = Array.from(document.querySelectorAll('#momentCharacterSelect .moment-character-checkbox:checked'));
+  if (selectedCharacters.length === 0) {
+    summaryEl.textContent = `${groupLabel} · 分组内全部角色可见`;
+    return;
+  }
+
+  summaryEl.textContent = `${groupLabel} · 指定 ${selectedCharacters.length} 位角色可见`;
+}
+
+function getMomentCharactersByGroupIds(groupIds) {
+  const selectedGroupIds = Array.isArray(groupIds) ? groupIds.filter(Boolean) : [];
+  if (selectedGroupIds.length === 0) return [];
+
+  const groups = momentsManager.getFriendGroups();
+  const friends = momentsManager.getFriends();
+  const safeFriends = Array.isArray(friends) ? friends : [];
+  const safeGroups = Array.isArray(groups) ? groups : [];
+
+  const friendsById = new Map();
+  safeFriends.forEach(friend => {
+    if (friend && friend.id) {
+      friendsById.set(friend.id, friend);
+    }
+  });
+
+  const groupById = new Map();
+  safeGroups.forEach(group => {
+    if (group && group.id) {
+      groupById.set(group.id, group);
+    }
+  });
+
+  const characterMap = new Map();
+  const addCharacter = (friend) => {
+    if (!friend) return;
+    const charId = String(friend.id || friend.name || '');
+    if (!charId) return;
+    if (!characterMap.has(charId)) {
+      characterMap.set(charId, friend);
+    }
+  };
+
+  selectedGroupIds.forEach(groupId => {
+    const groupInfo = groupById.get(groupId);
+    if (groupInfo && Array.isArray(groupInfo.memberIds)) {
+      groupInfo.memberIds.forEach(memberId => {
+        const friend = friendsById.get(memberId);
+        addCharacter(friend);
+      });
+    }
+
+    safeFriends.forEach(friend => {
+      const friendGroupId = friend && friend.friendGroupId ? friend.friendGroupId : 'group_default';
+      if (friendGroupId === groupId) {
+        addCharacter(friend);
+      }
+    });
+  });
+
+  return Array.from(characterMap.values());
+}
+
+function updateMomentCharacterSelect() {
+  const container = document.getElementById('momentCharacterSelect');
+  if (!container) return;
+
+  const selectedGroupIds = getSelectedMomentGroupIds();
+  if (selectedGroupIds.length === 0) {
+    container.innerHTML = '<div class="moment-empty-text">请先选择至少一个分组</div>';
+    updateMomentPrivacySummary();
+    return;
+  }
+
+  const previousSelectedIds = new Set(
+    Array.from(container.querySelectorAll('.moment-character-checkbox:checked')).map(cb => cb.value)
+  );
+
+  const characters = getMomentCharactersByGroupIds(selectedGroupIds);
+  if (characters.length === 0) {
+    container.innerHTML = '<div class="moment-empty-text">所选分组暂无角色</div>';
+    updateMomentPrivacySummary();
+    return;
+  }
+
+  const groups = momentsManager.getFriendGroups();
+  const groupNameMap = {};
+  (Array.isArray(groups) ? groups : []).forEach(group => {
+    if (group && group.id) {
+      groupNameMap[group.id] = group.name || '未命名分组';
+    }
+  });
+
+  container.innerHTML = characters.map((character, index) => {
+    const charId = String(character.id || character.name || `friend_${index}`);
+    const charName = character.name || character.nickname || character.id || '未命名角色';
+    const groupId = character.friendGroupId || 'group_default';
+    const groupName = groupNameMap[groupId] || '未分组';
+    const checked = previousSelectedIds.has(charId) ? 'checked' : '';
+    return `
+      <label class="moment-character-item">
+        <input type="checkbox" class="moment-character-checkbox" value="${escapeMomentAttr(charId)}" data-name="${escapeMomentAttr(charName)}" ${checked}>
+        <span class="moment-character-name">${escapeMomentHtml(charName)}</span>
+        <span class="moment-character-group">${escapeMomentHtml(groupName)}</span>
+      </label>
+    `;
+  }).join('');
+
+  Array.from(container.querySelectorAll('.moment-character-checkbox')).forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      updateMomentPrivacySummary();
+    });
+  });
+
+  updateMomentPrivacySummary();
+}
+
+function toggleMomentCharacterSelection(selectAll) {
+  const checkboxes = document.querySelectorAll('#momentCharacterSelect .moment-character-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = !!selectAll;
+  });
+  updateMomentPrivacySummary();
+}
+
 function handleImageSelect(input) {
   try {
     if (!input || !input.files) return;
@@ -1405,46 +1939,15 @@ function handleImageSelect(input) {
       return;
     }
 
-    files.forEach((file, index) => {
-      try {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            if (!e.target || !e.target.result) return;
-            
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.style.position = 'relative';
-
-            const container = document.createElement('div');
-            container.style.position = 'relative';
-            container.style.display = 'inline-block';
-            container.appendChild(img);
-
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-btn';
-            removeBtn.textContent = '×';
-            removeBtn.onclick = function (e) {
-              try {
-                e.preventDefault();
-                e.stopPropagation();
-                container.remove();
-              } catch (e) {
-                console.log('删除图片出错:', e.message);
-              }
-            };
-            container.appendChild(removeBtn);
-
-            preview.appendChild(container);
-          } catch (e) {
-            console.log('处理图片加载出错:', e.message);
-          }
-        };
-        reader.readAsDataURL(file);
-      } catch (e) {
-        console.log('读取文件出错:', e.message);
-      }
+    files.forEach(file => {
+      readImageFileAsDataURL(file).then(result => {
+        appendMomentImageAttachment(result);
+      }).catch(err => {
+        console.log('读取图片出错:', err.message);
+      });
     });
+
+    input.value = '';
   } catch (e) {
     console.log('handleImageSelect出错:', e.message);
   }
@@ -1461,17 +1964,39 @@ function publishMoment() {
     const text = momentTextEl.value.trim();
     
     const imagePreview = document.getElementById('imagePreview');
-    let images = [];
+    const images = [];
+    const descriptionCards = [];
     if (imagePreview) {
-      images = Array.from(imagePreview.querySelectorAll('img')).map(img => img.src || '');
+      const attachments = Array.from(imagePreview.querySelectorAll('.moment-attachment-item'));
+      attachments.forEach((item, index) => {
+        const type = item.dataset.attachmentType;
+        if (type === 'description') {
+          const description = String(item.dataset.description || '').trim();
+          if (!description) return;
+          descriptionCards.push({
+            description,
+            cardImage: item.dataset.cardImage || getMomentDescriptionCardImage(),
+            id: `desc_${Date.now()}_${index}`
+          });
+          return;
+        }
+
+        const imageEl = item.querySelector('img[data-attachment-role="image"]') || item.querySelector('img');
+        if (imageEl && imageEl.src) {
+          images.push(imageEl.src);
+        }
+      });
     }
-    
-    const groupSelect = document.getElementById('groupSelect');
-    const selectedGroupIds = groupSelect
-      ? Array.from(groupSelect.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
-      : ['group_all'];
-    const visibilityGroups = selectedGroupIds.length > 0 ? selectedGroupIds : ['group_all'];
-    const normalizedVisibilityGroups = visibilityGroups.includes('group_all') ? ['group_all'] : visibilityGroups;
+
+    const selectedGroupIds = getSelectedMomentGroupIds();
+    if (selectedGroupIds.length === 0) {
+      alert('请至少选择一个分组');
+      return;
+    }
+
+    const selectedCharacterCheckboxes = Array.from(document.querySelectorAll('#momentCharacterSelect .moment-character-checkbox:checked'));
+    const visibilityCharacterIds = selectedCharacterCheckboxes.map(cb => cb.value).filter(Boolean);
+    const visibilityCharacterNames = selectedCharacterCheckboxes.map(cb => cb.dataset.name || cb.value).filter(Boolean);
     
     // 获取选中的分组信息
     const groups = momentsManager.getFriendGroups();
@@ -1479,12 +2004,19 @@ function publishMoment() {
     groups.forEach(g => {
       if (g && g.id) groupNameMap[g.id] = g.name || '未命名分组';
     });
-    const visibilityName = normalizedVisibilityGroups[0] === 'group_all'
-      ? '所有好友'
-      : normalizedVisibilityGroups.map(id => groupNameMap[id] || '未命名分组').join('、');
 
-    if (!text && images.length === 0) {
-      alert('请输入文字或选择图片');
+    const groupNames = selectedGroupIds.map(id => groupNameMap[id] || '未命名分组');
+    let visibilityName = `${groupNames.join('、')} · 分组内全部角色`;
+    if (visibilityCharacterNames.length > 0) {
+      const previewNames = visibilityCharacterNames.slice(0, 3).join('、');
+      const namesText = visibilityCharacterNames.length > 3
+        ? `${previewNames} 等${visibilityCharacterNames.length}位`
+        : previewNames;
+      visibilityName = `${groupNames.join('、')} · 指定角色：${namesText}`;
+    }
+
+    if (!text && images.length === 0 && descriptionCards.length === 0) {
+      alert('请输入文字，或添加图片/文字描述卡片');
       return;
     }
 
@@ -1498,21 +2030,31 @@ function publishMoment() {
       authorAvatar: userAvatar,
       content: text,
       images: images,
-      visibilityGroups: normalizedVisibilityGroups,
-      visibility: normalizedVisibilityGroups[0] === 'group_all' ? 'group_all' : normalizedVisibilityGroups.join(','),
+      descriptionCards: descriptionCards,
+      visibilityGroups: selectedGroupIds,
+      visibility: selectedGroupIds.join(','),
+      visibilityCharacterIds: visibilityCharacterIds,
+      visibilityCharacterNames: visibilityCharacterNames,
       visibilityName: visibilityName,
       isUserPost: true
     });
     
     console.log('✓ 朋友圈已发布');
-    console.log('  可见范围:', visibilityName, `(${normalizedVisibilityGroups.join(',')})`);
+    console.log('  可见范围:', visibilityName, `(${selectedGroupIds.join(',')})`);
+    console.log('  指定角色数:', visibilityCharacterNames.length);
+    console.log('  图片数:', images.length, '描述卡片数:', descriptionCards.length);
     console.log('  内容:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
     
     // 刷新显示
     momentsManager.renderMoments();
     closeMomentDialog();
 
-    alert('发布成功！\n可见范围：' + visibilityName);
+    const details = [
+      '发布成功！',
+      `可见范围：${visibilityName}`,
+      `图片 ${images.length} 张，描述卡片 ${descriptionCards.length} 张`
+    ];
+    alert(details.join('\n'));
   } catch (e) {
     console.log('publishMoment出错:', e.message);
     alert('发布失败');
@@ -2227,7 +2769,7 @@ function updateNotificationBadge() {
 }
 
 // ====== 背景设置 ======
-function changeBackground(input) {
+async function changeBackground(input) {
   try {
     if (!input || !input.files || !input.files[0]) {
       console.log('未选择文件');
@@ -2235,36 +2777,47 @@ function changeBackground(input) {
     }
     
     const file = input.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = function (e) {
+
+    if (!momentsManager || !momentsManager.profileData) {
+      console.log('momentsManager未就绪，无法保存背景图');
+      return;
+    }
+
+    const previousBgImage = momentsManager.profileData.bgImage || '';
+    let savedBgImageData = '';
+
+    for (const preset of MOMENTS_BG_SAVE_PRESETS) {
       try {
-        if (!e.target || !e.target.result) return;
-        
-        const bgImageData = e.target.result;
-        const bgUrl = `url('${bgImageData}')`;
-        
-        // 保存背景图到 localStorage
-        if (momentsManager && momentsManager.profileData) {
-          momentsManager.profileData.bgImage = bgImageData;
-          momentsManager.saveToStorage();
-          console.log('朋友圈背景图已保存到 localStorage');
+        const candidateData = await prepareImageFileForStorage(file, preset);
+        if (!candidateData) continue;
+
+        momentsManager.profileData.bgImage = candidateData;
+        momentsManager.saveToStorage();
+
+        if (verifyMomentsBackgroundSaved(candidateData)) {
+          savedBgImageData = candidateData;
+          break;
         }
-        
-        // 应用背景图
-        applyMomentsBgImage(bgUrl);
-      } catch (e) {
-        console.log('背景加载处理出错:', e.message);
+      } catch (error) {
+        console.log('保存背景图候选版本失败:', error.message);
       }
-    };
-    
-    reader.onerror = function (e) {
-      console.log('读取背景文件出错:', e.message);
-    };
-    
-    reader.readAsDataURL(file);
+    }
+
+    if (!savedBgImageData) {
+      momentsManager.profileData.bgImage = previousBgImage;
+      momentsManager.saveToStorage();
+      alert('背景图保存失败，请尝试选择更小的图片');
+      return;
+    }
+
+    applyMomentsBgImage(`url('${savedBgImageData}')`);
+    console.log('朋友圈背景图已保存到 localStorage');
   } catch (e) {
     console.log('changeBackground出错:', e.message);
+  } finally {
+    if (input) {
+      input.value = '';
+    }
   }
 }
 
@@ -2438,6 +2991,10 @@ function initGroupSelect() {
   if (!container) return;
   
   try {
+    const previousSelected = new Set(
+      Array.from(container.querySelectorAll('.moment-group-checkbox:checked')).map(cb => cb.value)
+    );
+
     // 直接从AppState获取最新的好友分组数据，确保完全同步
     const groups = momentsManager.getFriendGroups();
     const friends = momentsManager.getFriends();
@@ -2452,71 +3009,58 @@ function initGroupSelect() {
     
     const safeGroups = Array.isArray(groups) ? groups.filter(group => group && group.id) : [];
 
-    let optionsHTML = `
-      <label class="group-select-item">
-        <input type="checkbox" value="group_all" checked>
-        <span>所有好友</span>
-      </label>
-    `;
-
     if (!safeGroups || safeGroups.length === 0) {
       console.log('⚠️ 未获取到好友分组，显示默认分组');
-      container.innerHTML = optionsHTML + `
+      container.innerHTML = `
         <label class="group-select-item">
-          <input type="checkbox" value="group_default" data-group-id="group_default">
+          <input type="checkbox" class="moment-group-checkbox" value="group_default" data-group-id="group_default" checked>
           <span>默认分组</span>
         </label>
       `;
+      updateMomentCharacterSelect();
       return;
     }
 
-    optionsHTML += safeGroups.map(group => {
+    const optionsHTML = safeGroups.map((group, index) => {
       const groupName = group.name || '未命名分组';
       const memberCount = groupCountMap[group.id] || 0;
+      const checked = previousSelected.size > 0
+        ? previousSelected.has(group.id)
+        : index === 0;
       return `
         <label class="group-select-item">
-          <input type="checkbox" value="${group.id}" data-group-id="${group.id}">
-          <span>${groupName} (${memberCount}人)</span>
+          <input type="checkbox" class="moment-group-checkbox" value="${escapeMomentAttr(group.id)}" data-group-id="${escapeMomentAttr(group.id)}" ${checked ? 'checked' : ''}>
+          <span>${escapeMomentHtml(groupName)} (${memberCount}人)</span>
         </label>
       `;
     }).join('');
     
     container.innerHTML = optionsHTML;
 
-    const allCheckbox = container.querySelector('input[value="group_all"]');
-    const groupCheckboxes = Array.from(container.querySelectorAll('input[data-group-id]'));
-
-    if (allCheckbox) {
-      allCheckbox.addEventListener('change', () => {
-        if (allCheckbox.checked) {
-          groupCheckboxes.forEach(cb => { cb.checked = false; });
-        }
-      });
-    }
-
+    const groupCheckboxes = Array.from(container.querySelectorAll('.moment-group-checkbox'));
     groupCheckboxes.forEach(cb => {
-      cb.addEventListener('change', () => {
-        if (cb.checked && allCheckbox) {
-          allCheckbox.checked = false;
+      cb.addEventListener('change', (event) => {
+        const checkedList = groupCheckboxes.filter(item => item.checked);
+        if (checkedList.length === 0 && event && event.target) {
+          event.target.checked = true;
         }
-
-        const anyChecked = groupCheckboxes.some(item => item.checked);
-        if (!anyChecked && allCheckbox) {
-          allCheckbox.checked = true;
-        }
+        updateMomentCharacterSelect();
       });
     });
 
-    console.log('✓ 朋友圈分组选择已更新，共', safeGroups.length + 1, '个选项(含"所有好友")');
+    updateMomentCharacterSelect();
+
+    console.log('✓ 朋友圈分组选择已更新，共', safeGroups.length, '个分组选项');
   } catch (e) {
     console.error('初始化好友分组出错:', e.message);
     // 降级处理
     container.innerHTML = `
       <label class="group-select-item">
-        <input type="checkbox" value="group_all" checked>
-        <span>所有好友(加载失败)</span>
+        <input type="checkbox" class="moment-group-checkbox" value="group_default" checked>
+        <span>默认分组(加载失败)</span>
       </label>
     `;
+    updateMomentCharacterSelect();
   }
 }
 
